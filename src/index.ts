@@ -14,6 +14,7 @@ import {
   cmdTexts,
   cmdTracks,
 } from "./commands/inspect.js";
+import { cmdAddKeyframe, cmdKenBurns } from "./commands/keyframe.js";
 import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template.js";
 import { loadDraft } from "./draft.js";
 import { CliError, die, type Flags, requireArgs } from "./utils/cli.js";
@@ -64,6 +65,15 @@ Edit:
   export-srt <project>                          Export subtitles to SRT
   batch      <project>                          Run multiple edits from stdin (JSONL)
 
+Keyframes:
+  add-keyframe <project> <id> <time> --property <p> --value <v> [--curve <c>]
+               Insert/update a keyframe at <time> on <id>.
+               Properties: scale_x, scale_y, position_x, position_y, rotation, alpha
+               Curves:     linear (default), ease-in, ease-out, ease-in-out
+  ken-burns    <project> <id> --from <scale> --to <scale> [--curve <c>]
+               Apply a Ken Burns zoom — paired scale_x/scale_y keyframes
+               from t=0 to t=segment.duration. Default curve: ease-out.
+
 Templates:
   save-template  <project> <id> <name> --out <path>
   apply-template <project> <template.json> <start> <duration> [text override]
@@ -106,6 +116,16 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.template = args[++i];
     } else if (a === "--drafts" && i + 1 < args.length) {
       flags.drafts = args[++i];
+    } else if (a === "--property" && i + 1 < args.length) {
+      flags.property = args[++i];
+    } else if (a === "--value" && i + 1 < args.length) {
+      flags.value = args[++i];
+    } else if (a === "--curve" && i + 1 < args.length) {
+      flags.curve = args[++i];
+    } else if (a === "--from" && i + 1 < args.length) {
+      flags.from = args[++i];
+    } else if (a === "--to" && i + 1 < args.length) {
+      flags.to = args[++i];
     } else {
       positional.push(a);
     }
@@ -214,6 +234,14 @@ function main(): void {
       break;
     case "batch":
       cmdBatch(draft, filePath, flags);
+      break;
+    case "add-keyframe":
+      requireArgs(positional, 4, "capcut-david add-keyframe <project> <id> <time> --property <p> --value <v>");
+      cmdAddKeyframe(draft, filePath, positional[2], positional[3], flags.property, flags.value, flags.curve, flags);
+      break;
+    case "ken-burns":
+      requireArgs(positional, 3, "capcut-david ken-burns <project> <id> --from <scale> --to <scale>");
+      cmdKenBurns(draft, filePath, positional[2], flags.from, flags.to, flags.curve, flags);
       break;
     default:
       die(`Unknown command: ${cmd}. Run 'capcut-david --help' for usage.`);

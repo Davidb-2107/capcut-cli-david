@@ -9,7 +9,54 @@ per [`RELEASE.md`](../RELEASE.md) §4.
 ## [Unreleased]
 
 ### Planned
-- `0.3.x` — Ken Burns + keyframe commands (Phase C)
+- `0.4.x` — `psycho-build` YAML manifest pipeline (Phase D)
+
+## [0.3.0] — 2026-05-12
+
+Phase C — creation primitives: keyframes and Ken Burns. Two new commands, zero
+behavioral change to existing surface.
+
+### Added
+- `capcut-david add-keyframe <project> <id> <time> --property <p> --value <v> [--curve <c>]`
+  — generic per-property keyframe insertion. Properties: `scale_x`, `scale_y`,
+  `position_x`, `position_y`, `rotation`, `alpha`. Maintains sort order by
+  `time_offset` in `segment.common_keyframes[*].keyframe_list`. A keyframe at
+  an existing `time_offset` is replaced in place. Curves: `linear` (default),
+  `ease-in`, `ease-out`, `ease-in-out`.
+- `capcut-david ken-burns <project> <id> --from <scale> --to <scale> [--curve <c>]`
+  — opinionated paired `KFTypeScaleX` + `KFTypeScaleY` keyframes from `t=0`
+  to `t=segment.target_timerange.duration`. Wipes any existing scale_x /
+  scale_y containers on the segment before writing (deterministic output).
+  Default curve: `ease-out` (CapCut "Cubic Out" preset). Refuses to act on
+  segments without a `clip` block (e.g. audio).
+- `test/keyframe.test.mjs` — 33 new tests (134 total): 6-property happy
+  paths, insertion ordering, replace-at-same-time, curve override profiles,
+  Ken Burns parity against `ken-burns-draft.json` (handle ratios 0.32 /
+  −0.4 against keyframe interval, tolerance ±0.001), 13 error paths
+  (missing flags, invalid property, out-of-range alpha, time exceeds
+  duration, invalid curve, audio segment, etc.).
+
+### Changed
+- `--help` adds a new `Keyframes:` section documenting both commands.
+- `Flags` interface (`src/utils/cli.ts`) adds `property`, `value`, `curve`,
+  `from`, `to` string fields. Additive — does not affect any existing
+  command.
+
+### Compatibility
+- No schema change. Output JSON for `common_keyframes[*]` matches the shape
+  in `test-fixtures/fixtures/ken-burns-draft.json` (container with
+  `id`/`material_id`/`property_type`/`keyframe_list`, keyframe with
+  `id`/`curveType`/`time_offset`/`left_control`/`right_control`/`values`/`string_value`/`graphID`).
+- Curve handle ratios for `ease-out` are empirically backed by the shipped
+  fixture (`0.32` and `-0.4`). `ease-in` and `ease-in-out` use CSS
+  `cubic-bezier` interior handles (`0.42`); fixture verification of those
+  presets is deferred to a future minor.
+- Zero runtime dependencies preserved.
+
+### Coverage
+- Aggregate on `src/commands/*` + `src/draft.ts`: **93.70 % lines,
+  91.67 % functions** (above the 80 % gate).
+- `dist/commands/keyframe.js`: **97.86 % lines**.
 
 ## [0.2.0] — 2026-05-12
 
@@ -100,7 +147,8 @@ First release of the fork. Baseline = upstream `capcut-cli@0.2.2` (commit `c9223
 - Node ≥ 18; CI matrix covers Node 18, 20, 22.
 - JianYing 6+ remains unsupported (encrypted `draft_content.json` — see `COMPATIBILITY.md` §5).
 
-[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Davidb-2107/capcut-cli-david/releases/tag/v0.2.0
 [0.2.0-beta.0]: https://github.com/Davidb-2107/capcut-cli-david/releases/tag/v0.2.0-beta.0
 [0.1.0]: https://github.com/Davidb-2107/capcut-cli-david/releases/tag/v0.1.0

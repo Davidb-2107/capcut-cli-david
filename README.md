@@ -16,9 +16,9 @@ Create and edit CapCut / JianYing projects from the command line. Build drafts f
 
 | Phase | Goal | Version | State |
 |---|---|---|---|
-| A | Fork + restructure + ship 0.1.0 | `0.1.0` | this release |
-| B | Fixture-backed tests for every command | `0.2.0` | next |
-| C | `add-keyframe` + `ken-burns` | `0.3.0` | planned |
+| A | Fork + restructure + ship 0.1.0 | `0.1.0` | ✅ shipped |
+| B | Fixture-backed tests for every command | `0.2.0` | ✅ shipped |
+| C | `add-keyframe` + `ken-burns` | `0.3.0` | ✅ shipped |
 | D | `psycho-build` pipeline | `0.4.0` | planned |
 | E | SKILL.md + docs polish + `1.0.0` | `1.0.0` | planned |
 
@@ -74,6 +74,24 @@ capcut-david apply-template ./other gold-title.json 0s 5s "Chapter Three"
 # Batch (JSONL on stdin)
 echo '{"cmd":"set-text","id":"a1b2c3","text":"Line one"}
 {"cmd":"shift-all","offset":"+0.3s","track":"text"}' | capcut-david batch ./project
+```
+
+## New in 0.3.0 — Keyframes
+
+```bash
+# Generic keyframe — insert one keyframe on any animatable property.
+# Properties: scale_x | scale_y | position_x | position_y | rotation | alpha
+# Curves:     linear (default) | ease-in | ease-out | ease-in-out
+capcut-david add-keyframe ./project a1b2c3 0s    --property scale_x --value 1.0
+capcut-david add-keyframe ./project a1b2c3 2.5s  --property scale_x --value 1.5 --curve ease-out
+capcut-david add-keyframe ./project a1b2c3 1s    --property alpha   --value 0.5
+
+# Opinionated Ken Burns — paired scale_x + scale_y keyframes from t=0 to
+# t=segment.duration. Default curve is ease-out (matches CapCut's "Cubic Out"
+# preset). Wipes any pre-existing scale keyframes on the segment.
+capcut-david ken-burns ./project a1b2c3 --from 1.0 --to 1.5            # zoom in
+capcut-david ken-burns ./project a1b2c3 --from 1.5 --to 1.0            # zoom out
+capcut-david ken-burns ./project a1b2c3 --from 1.0 --to 1.2 --curve linear
 ```
 
 Full command help: `capcut-david --help`.

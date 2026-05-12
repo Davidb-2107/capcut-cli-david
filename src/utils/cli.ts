@@ -12,6 +12,11 @@ export interface Flags {
   volume?: number;
   template?: string;
   drafts?: string;
+  property?: string;
+  value?: string;
+  curve?: string;
+  from?: string;
+  to?: string;
 }
 
 export class CliError extends Error {
