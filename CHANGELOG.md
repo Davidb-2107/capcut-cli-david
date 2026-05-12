@@ -4,16 +4,16 @@ All notable changes to `capcut-cli-david` are documented here.
 Format follows [Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/);
 this project adheres to [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html).
 Fork-specific sub-sections (*Synced from upstream*, *Compatibility*) are added
-per [`RELEASE.md`](../RELEASE.md) §4.
+per [`RELEASE.md`](./RELEASE.md) §4.
 
 ## [Unreleased]
 
 ### Planned
-- `1.0.0` — graduation to stable per [`RELEASE.md`](../RELEASE.md) §1 once `1.0.0-rc.1` soaks clean.
+- `1.0.0` — graduation to stable per [`RELEASE.md`](./RELEASE.md) §1 once `1.0.0-rc.1` soaks clean.
 
 ## [1.0.0] — TBD
 
-**Stable release.** Full SemVer guarantees per [`RELEASE.md`](../RELEASE.md) §1 now in effect.
+**Stable release.** Full SemVer guarantees per [`RELEASE.md`](./RELEASE.md) §1 now in effect.
 
 ### Highlights
 - _(Final highlights go here — pulled from cumulative 0.x → 1.0 work.)_
@@ -46,10 +46,11 @@ Phase E packaging consolidation — graduation prep. **No new commands** (featur
 - `docs/draft-schema/` (7 files, ~3000 lines) — in-repo reverse-engineered reference for CapCut's `draft_content.json` schema: overview, tracks/segments, materials, keyframes & animations, effects/filters/stickers, and version differences.
 - `docs/README.md` — thin docs index pointing at `draft-schema/` and the existing top-level docs (`RELEASE.md`, `UPSTREAM.md`, `COMPATIBILITY.md`).
 - `release-notes/` — per-version GitHub release-notes drafts (this directory). Each release tag pulls its body from the matching file.
+- `COMPATIBILITY.md`, `UPSTREAM.md`, `RELEASE.md` — meta-docs moved from the upstream planning vault into the repo root so README + CHANGELOG cross-links resolve on GitHub and in the npm tarball.
 
 ### Changed
 - `README.md` — full rewrite: tagline + comparison table (vs upstream `cutcli` and `capcut-cli`) + Quickstart + command index + pointers to `skills/capcut-david/SKILL.md` and `docs/draft-schema/`.
-- `package.json` — `files` array extended to ship `skills/` and `docs/` with the npm package alongside the existing `dist/`, `templates/`, `README.md`, `LICENSE`, `NOTICE`.
+- `package.json` — `version` → `0.5.0`. `files` array extended to ship `skills/`, `docs/`, `release-notes/`, `CHANGELOG.md`, `COMPATIBILITY.md`, `UPSTREAM.md`, `RELEASE.md` with the npm package alongside the existing `dist/`, `templates/`, `README.md`, `LICENSE`, `NOTICE`.
 
 ### Compatibility
 - CapCut: same as 0.4.0 (≥ 5.x desktop / JianYing 移动剪辑 ≥ 12.x).
@@ -238,7 +239,7 @@ First release of the fork. Baseline = upstream `capcut-cli@0.2.2` (commit `c9223
 - Upstream README's Gumroad CTAs and `utm_*` tracking parameters (per `UPSTREAM.md` §5; not a license requirement, but a courtesy not to piggyback on upstream's marketing funnel).
 
 ### Synced from upstream
-- Initial baseline: upstream commit `c922338` (v0.2.2, 2026-05-07). Future syncs land via the `upstream-sync` branch per [`UPSTREAM.md`](../UPSTREAM.md) §2.
+- Initial baseline: upstream commit `c922338` (v0.2.2, 2026-05-07). Future syncs land via the `upstream-sync` branch per [`UPSTREAM.md`](./UPSTREAM.md) §2.
 
 ### Compatibility
 - Tested against CapCut 8.x desktop on Windows + macOS (per `COMPATIBILITY.md` §1).

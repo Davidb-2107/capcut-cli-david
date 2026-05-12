@@ -20,6 +20,11 @@ demande une commande capcut-david spécifique — appliquer la commande directem
 Trigger phrases : "storyboard", "génère un script", "crée une vidéo de X secondes",
 "planifie une séquence", "brief".
 
+> **Note (v0.5.0):** Steps below mention `capcut-david query animations` and
+> `capcut-david query filters` (catalogue lookup). That sub-command is **planned
+> for v0.6.0** and is not yet available in v0.5.0. Until then, hard-code names
+> from `docs/draft-schema/04-effects-filters-stickers.md`.
+
 ## The 3 steps — execute in order, never skip
 
 ### Step 1 — Storyboard table

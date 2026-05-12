@@ -21,6 +21,11 @@ animation.
 Trigger phrases : "style TikTok", "comme sur TikTok", "caption qui bounce",
 "keyword coloré", "Reels", "Shorts".
 
+> **Note (v0.5.0):** Some recipes call `capcut-david query animations …`
+> (catalogue lookup). That sub-command is **planned for v0.6.0** and is not yet
+> available in v0.5.0. Until then, hard-code animation names from
+> `docs/draft-schema/04-effects-filters-stickers.md`.
+
 ## Recipes
 
 ### Recipe 1 — Keyword Highlight (most-used)

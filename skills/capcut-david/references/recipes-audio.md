@@ -21,6 +21,11 @@ est purement visuelle sans contrainte audio.
 Trigger phrases : "colle sur la musique", "audio-driven", "voiceover",
 "beat drop", "ducket la musique".
 
+> **Note (v0.5.0):** Some recipes call `capcut-david query audio-duration --url …`
+> (catalogue lookup). That sub-command is **planned for v0.6.0** and is not yet
+> available in v0.5.0. Until then, probe duration with `ffprobe` (or curl + a
+> known-duration asset) and pass the µs value directly to `--duration`.
+
 ## Recipes
 
 ### Recipe 1 — Easy draft (fastest path)

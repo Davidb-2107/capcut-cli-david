@@ -17,7 +17,7 @@ description: >-
 when_to_use: >-
   Any time the user wants to programmatically generate, modify, or read a CapCut
   draft_content.json file. Supersedes cut-draft / cut-storyboard / cut-motion /
-  cut-audio / cut-tiktok once capcut-cli-david v0.1.0 ships (Phase E).
+  cut-audio / cut-tiktok as of capcut-cli-david v0.5.0 (Phase E shipped 2026-05-12).
 when_not_to_use: >-
   • Rendering or exporting an MP4 — capcut-david produces drafts to open in CapCut
     desktop, not a renderer.
@@ -25,7 +25,7 @@ when_not_to_use: >-
   • Mobile / Web / Linux CapCut variants (out of scope).
   • Pure orchestration of three TikTok micro-skills → use TikTokPsychoNiche instead.
 deprecates: [cut-draft, cut-storyboard, cut-motion, cut-audio, cut-tiktok]
-deprecation_gate: "capcut-cli-david v0.1.0 ships (Phase E of master plan)"
+deprecation_gate: "capcut-cli-david v0.5.0 shipped 2026-05-12 (Phase E)"
 ---
 
 # capcut-david — Unified CapCut Draft CLI
@@ -34,9 +34,11 @@ deprecation_gate: "capcut-cli-david v0.1.0 ships (Phase E of master plan)"
 `draft_content.json` projects. It is the Node.js fork of `renezander030/capcut-cli`
 extended with cutcli-style creation commands (keyframes, Ken Burns, animations).
 
-> **Status:** This skill is a **draft** scoped to the planned v0.1.0 CLI surface.
-> Until capcut-cli-david v0.1.0 ships (Phase E), continue using the cut-* skills.
-> See §Migration for the cutover plan.
+> **Status:** Published with capcut-cli-david **v0.5.0** (Phase E, 2026-05-12).
+> This skill supersedes the 5 legacy `cut-*` skills — see §Migration for the
+> cutover plan. The `query` command referenced in some recipes is **planned for
+> v0.6.0**; until then, hard-code animation/filter names from
+> [`docs/draft-schema/04-effects-filters-stickers.md`](../../docs/draft-schema/04-effects-filters-stickers.md).
 
 ---
 
@@ -74,8 +76,9 @@ capcut-david", "build a CapCut project".
 
 ## Time, units, coordinates
 
-- **Time:** microseconds. `1s = 1_000_000`. Use `--start 0 --end 3000000` (or
-  the human-readable form `--start 0 --end 3s` if v0.1.0 ships the parser).
+- **Time:** microseconds. `1s = 1_000_000`. Use `--start 0 --end 3000000`. The
+  human-readable form `--start 0 --end 3s` is supported by `parseTimeInput` in
+  utility code; CLI flags accept µs directly in v0.5.0.
 - **Coords:** normalized `[-1, 1]`, `(0,0)` = screen center, `+Y` = up, `+X` = right.
   `(−1,−1)` is bottom-left.
 - **Filter intensity:** `[0, 1]` (UI slider value ÷ 100 — see `docs/draft-schema/05`).
@@ -84,7 +87,7 @@ capcut-david", "build a CapCut project".
 
 ---
 
-## Core CLI surface (planned v0.1.0)
+## Core CLI surface (v0.5.0)
 
 ```bash
 # Create
@@ -224,7 +227,7 @@ caption_preset: tiktok-bottom
    silently — you'll see a broken animation, not an error.
 6. **One keyword per caption.** Multi-keyword highlight is supported by the
    schema (N non-overlapping `range` styles per `docs/draft-schema/02-materials.md`)
-   but the v0.1.0 `add-text` CLI exposes one slot to stay simple.
+   but the v0.5.0 `add-text` CLI exposes one slot to stay simple.
 7. **Writes are conservative.** capcut-david emits the cutcli-shape variant
    (`new_version: "167.0.0"`, no `loudnesses` ref) unless `--ui-shape` is passed.
    This maximises forward-compat with CapCut 8.x and JianYing 5.x.
@@ -246,8 +249,10 @@ caption_preset: tiktok-bottom
 | `cut-tiktok` | TikTok palettes, hook structure, timing rules | §Recipes / TikTok caption preset + `references/recipes-tiktok.md` |
 
 **Cutover** — all 5 cut-* skills move to `~/.claude/skills.deprecated/` on the day
-capcut-cli-david v0.1.0 publishes to npm (Phase E). No phased migration window:
-solo user, no external consumers.
+capcut-cli-david **v1.0.0** publishes to npm (end of Phase E). v0.5.0 is the
+"both work in parallel" beat for self-validation; cut-* skills get
+`deprecated: true` frontmatter + a redirect note at 1.0.0 publish. No phased
+migration window beyond that — solo user, no external consumers.
 
 **What is NOT replaced:**
 - `TikTokPsychoNiche` — orchestrator of `1_CapCut-Draft-Builder` / `CapCut-CaptionStyling` /
