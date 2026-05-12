@@ -9,7 +9,38 @@ per [`RELEASE.md`](../RELEASE.md) §4.
 ## [Unreleased]
 
 ### Planned
-- `0.2.0` — fixture-backed `node:test` suite for every existing command (Phase B)
+- `0.3.x` — Ken Burns + keyframe commands (Phase C)
+
+## [0.2.0-beta.0] — 2026-05-12
+
+First beta of the Phase B test suite. No behavioral change to any command — purely additive coverage.
+
+### Added
+- Fixture-backed `node:test` suite covering every existing command (102 tests total, replaces the 9-test Phase A smoke suite):
+  - `test/create.test.mjs` — `init`, `add-video`, `add-audio`, `add-text` (14 tests).
+  - `test/edit.test.mjs` — `set-text`, `shift`, `shift-all`, `speed`, `volume`, `opacity`, `trim` (22 tests).
+  - `test/inspect.test.mjs` — `info`, `tracks`, `materials`, `segments`, `texts`, `export-srt`, `segment`, `material` (24 tests).
+  - `test/template.test.mjs` — `save-template`, `apply-template` (10 tests).
+  - `test/cut.test.mjs` — `cut` long-form → short (9 tests).
+  - `test/batch.test.mjs` — JSONL stdin orchestration (11 tests).
+- Shared test helpers under `test/helpers/`:
+  - `load-fixture.mjs` — `FIXTURES` keys + `loadFixture(key)` (fresh parse per call).
+  - `tmp-draft.mjs` — deep-clones a fixture into `os.tmpdir()`; cleans up via `t.after()` so tests run isolated.
+  - `spawn-cli.mjs` — spawns the built `dist/index.js`, parses JSON stdout + JSON error on stderr.
+- `npm run test:coverage` — runs `node --test --experimental-test-coverage` with `--test-coverage-lines=80 --test-coverage-functions=80` against `dist/commands/**/*.js` and `dist/draft.js`.
+- CI: new `coverage` job (Node 22 / ubuntu-latest) wired into the `ci-pass` gate.
+
+### Coverage
+- Aggregate on `src/commands/*` + `src/draft.ts`: **93.03 % lines, 95.65 % functions** (well above the 80 % gate).
+- Per file: batch 100 %, edit 100 %, cut 98.70 %, create 97.76 %, template 93.53 %, draft 89.66 %, inspect 80.41 %.
+
+### Notes
+- Test files are `.test.mjs` (not `.test.ts`) so the Node 18 cell in the CI matrix can execute them without a TypeScript stripper. Tests import the compiled CLI from `dist/...js`, mirroring the existing `smoke.test.mjs` pattern.
+- Each test that mutates a draft gets a fresh tmp copy of the fixture; no test mutates the on-disk fixture corpus.
+
+### Compatibility
+- No behavioral or schema changes. Pure test addition.
+- Same Node ≥ 18 / 3-OS support as 0.1.0.
 
 ## [0.1.0] — 2026-05-12
 
@@ -63,5 +94,6 @@ First release of the fork. Baseline = upstream `capcut-cli@0.2.2` (commit `c9223
 - Node ≥ 18; CI matrix covers Node 18, 20, 22.
 - JianYing 6+ remains unsupported (encrypted `draft_content.json` — see `COMPATIBILITY.md` §5).
 
-[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v0.2.0-beta.0...HEAD
+[0.2.0-beta.0]: https://github.com/Davidb-2107/capcut-cli-david/releases/tag/v0.2.0-beta.0
 [0.1.0]: https://github.com/Davidb-2107/capcut-cli-david/releases/tag/v0.1.0
