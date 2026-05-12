@@ -86,6 +86,34 @@ jobs:
         run: npm test
 
   # ---------------------------------------------------------------------------
+  # Coverage gate — runs node:test coverage on a single Node 22 / ubuntu slot.
+  # Threshold: ≥80% lines AND ≥80% functions on src/commands/* and src/draft.ts
+  # (the modules promised stable by Phase B). Node 18 lacks
+  # --experimental-test-coverage, so we don't run this on the full matrix.
+  # ---------------------------------------------------------------------------
+  coverage:
+    name: Coverage (≥80% lines + functions)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (tsc)
+        run: npm run build
+
+      - name: Run tests with coverage gate
+        run: npm run test:coverage
+
+  # ---------------------------------------------------------------------------
   # Fixture integrity — runs the existing cross-reference validator against
   # all 9 anonymized CapCut drafts. Pure Python, Ubuntu-only is sufficient.
   # ---------------------------------------------------------------------------
@@ -111,17 +139,19 @@ jobs:
   ci-pass:
     name: CI Pass
     if: always()
-    needs: [lint, test, fixture-integrity]
+    needs: [lint, test, coverage, fixture-integrity]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all jobs succeeded
         run: |
           if [ "${{ needs.lint.result }}" != "success" ] || \
              [ "${{ needs.test.result }}" != "success" ] || \
+             [ "${{ needs.coverage.result }}" != "success" ] || \
              [ "${{ needs.fixture-integrity.result }}" != "success" ]; then
             echo "::error::One or more required jobs failed."
             echo "lint=${{ needs.lint.result }}"
             echo "test=${{ needs.test.result }}"
+            echo "coverage=${{ needs.coverage.result }}"
             echo "fixture-integrity=${{ needs.fixture-integrity.result }}"
             exit 1
           fi
