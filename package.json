@@ -1,61 +1,64 @@
 {
-  "name": "capcut-cli",
-  "version": "0.2.2",
-  "description": "CLI to create and edit CapCut projects — build drafts from scratch, add video/audio/text, subtitles, timing, speed, volume, templates, cut long-form to shorts. No API needed.",
+  "name": "capcut-cli-david",
+  "version": "0.1.0",
+  "description": "Fork of capcut-cli — CapCut/JianYing draft CLI extended with creation primitives (keyframes, Ken Burns) and the psycho-build pipeline for the TikTok paranoia niche.",
   "type": "module",
   "bin": {
-    "capcut": "dist/index.js",
-    "capcut-cli": "dist/index.js"
+    "capcut-david": "dist/index.js"
   },
   "files": [
     "dist",
-    "examples",
     "README.md",
-    "README.zh-CN.md",
-    "LICENSE"
+    "LICENSE",
+    "NOTICE"
   ],
   "scripts": {
+    "lint": "biome ci .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "tsc --noEmit",
     "build": "tsc",
-    "prepublishOnly": "tsc",
-    "dev": "node --import tsx src/index.ts"
+    "test": "node --test --test-reporter=spec",
+    "dev": "node --import tsx src/index.ts",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "capcut",
-    "capcut-editor",
+    "capcut-cli",
     "capcut-draft",
     "capcut-srt",
     "capcut-subtitles",
-    "capcut-json",
     "capcut-template",
     "capcut-automation",
-    "capcut-api",
-    "capcut-project",
     "jianying",
     "draft_content",
-    "draft_info",
-    "srt-export",
-    "subtitle-editor",
-    "video-to-shorts",
-    "long-video-to-shorts",
-    "batch-edit",
-    "video-editing",
+    "keyframes",
+    "ken-burns",
+    "psycho-build",
+    "tiktok",
     "video-automation",
     "ai-video-editor",
-    "mcp",
     "cli"
   ],
-  "author": "René Zander",
+  "author": "David Beles <davidb-2107@users.noreply.github.com>",
+  "contributors": [
+    "Rene Zander <renezander030@gmail.com> (https://renezander.com) — original capcut-cli author"
+  ],
   "license": "MIT",
+  "homepage": "https://github.com/Davidb-2107/capcut-cli-david#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/renezander030/capcut-cli.git"
+    "url": "git+https://github.com/Davidb-2107/capcut-cli-david.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Davidb-2107/capcut-cli-david/issues"
   },
   "engines": {
     "node": ">=18"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
     "@types/node": "^25.6.0",
     "tsx": "^4.0.0",
-    "typescript": "^5.5.0"
+    "typescript": "^5.6.0"
   }
 }

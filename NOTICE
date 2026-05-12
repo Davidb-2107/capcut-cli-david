@@ -1,0 +1,19 @@
+capcut-cli-david
+================
+
+This project is a fork of capcut-cli by Rene Zander, extended for the
+TikTok psycho/paranoia niche and unified with creation primitives
+inspired by cutcli.
+
+Upstream:
+  capcut-cli — https://github.com/renezander030/capcut-cli
+  Copyright (c) 2026 Rene Zander
+  MIT License — see LICENSE
+
+Schema reverse-engineering inspiration:
+  cutcli (closed-source Go binary) — https://github.com/guol1nag/cutcli-cookbook
+  No code copied; schema documented from observed draft outputs.
+
+Fork-specific additions and the psycho-build pipeline:
+  Copyright (c) 2026 David Beles
+  MIT License — see LICENSE

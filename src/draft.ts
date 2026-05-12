@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 export interface Timerange {
@@ -95,10 +95,7 @@ export interface Draft {
 export function findDraft(input: string): string {
   const resolved = resolve(input);
   if (existsSync(resolved) && statSync(resolved).isFile()) return resolved;
-  const candidates = [
-    resolve(resolved, "draft_content.json"),
-    resolve(resolved, "draft_info.json"),
-  ];
+  const candidates = [resolve(resolved, "draft_content.json"), resolve(resolved, "draft_info.json")];
   for (const p of candidates) {
     if (existsSync(p) && statSync(p).isFile()) return p;
   }
@@ -139,7 +136,10 @@ export function extractText(content: string): string {
     const parsed = JSON.parse(content);
     if (parsed.text) return parsed.text;
   } catch {
-    return content.replace(/<[^>]*>/g, "").replace(/\[|\]/g, "").trim();
+    return content
+      .replace(/<[^>]*>/g, "")
+      .replace(/\[|\]/g, "")
+      .trim();
   }
   return content;
 }
@@ -178,11 +178,11 @@ export function findSegment(draft: Draft, id: string): { track: Track; segment: 
 }
 
 export function findMaterial<T extends { id: string }>(arr: T[], id: string): T | undefined {
-  return arr.find(m => m.id === id);
+  return arr.find((m) => m.id === id);
 }
 
 export function getTracksByType(draft: Draft, type: string): Track[] {
-  return draft.tracks.filter(t => t.type === type);
+  return draft.tracks.filter((t) => t.type === type);
 }
 
 export function getMaterialTypes(draft: Draft): Array<{ type: string; count: number }> {
@@ -192,7 +192,10 @@ export function getMaterialTypes(draft: Draft): Array<{ type: string; count: num
     .sort((a, b) => b.count - a.count);
 }
 
-export function findMaterialGlobal(draft: Draft, id: string): { type: string; material: Record<string, unknown> } | null {
+export function findMaterialGlobal(
+  draft: Draft,
+  id: string,
+): { type: string; material: Record<string, unknown> } | null {
   const shortId = id.toLowerCase();
   for (const [type, arr] of Object.entries(draft.materials)) {
     if (!Array.isArray(arr)) continue;

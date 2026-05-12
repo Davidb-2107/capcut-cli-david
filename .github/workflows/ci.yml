@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - upstream-sync
+      - "feat/**"
+      - "david/**"
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+# Cancel in-flight runs for the same ref, except on master where every push must complete.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
+
+env:
+  FORCE_COLOR: "1"
+  # Fail fast on npm warnings that hide real issues.
+  npm_config_fund: "false"
+  npm_config_audit: "false"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Lint + typecheck — fast feedback before fanning out to the matrix.
+  # Biome handles style + simple AST rules. tsc handles semantic types.
+  # ---------------------------------------------------------------------------
+  lint:
+    name: Lint + Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Biome (lint + format check)
+        run: npm run lint
+
+      - name: TypeScript typecheck
+        run: npm run typecheck
+
+  # ---------------------------------------------------------------------------
+  # Build + test matrix — 3 Node × 3 OS = 9 jobs.
+  # fail-fast: false so we always see the full failure surface, not just the
+  # first red square. Required by the engines.node>=18 promise in package.json.
+  # ---------------------------------------------------------------------------
+  test:
+    name: Test (Node ${{ matrix.node }} / ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (tsc)
+        run: npm run build
+
+      - name: Run tests (node:test)
+        run: npm test
+
+  # ---------------------------------------------------------------------------
+  # Fixture integrity — runs the existing cross-reference validator against
+  # all 9 anonymized CapCut drafts. Pure Python, Ubuntu-only is sufficient.
+  # ---------------------------------------------------------------------------
+  fixture-integrity:
+    name: Fixture integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate all anonymized fixtures
+        run: python test-fixtures/_final_integrity.py
+
+  # ---------------------------------------------------------------------------
+  # CI gate — single required check for branch protection rules.
+  # Aggregates the three job groups; if any fails the gate fails.
+  # ---------------------------------------------------------------------------
+  ci-pass:
+    name: CI Pass
+    if: always()
+    needs: [lint, test, fixture-integrity]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all jobs succeeded
+        run: |
+          if [ "${{ needs.lint.result }}" != "success" ] || \
+             [ "${{ needs.test.result }}" != "success" ] || \
+             [ "${{ needs.fixture-integrity.result }}" != "success" ]; then
+            echo "::error::One or more required jobs failed."
+            echo "lint=${{ needs.lint.result }}"
+            echo "test=${{ needs.test.result }}"
+            echo "fixture-integrity=${{ needs.fixture-integrity.result }}"
+            exit 1
+          fi
+          echo "All required jobs passed."

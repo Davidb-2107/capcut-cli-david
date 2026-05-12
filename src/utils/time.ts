@@ -28,7 +28,6 @@ export function formatDuration(us: number): string {
 }
 
 export function parseTimeInput(input: string): number {
-  // "+0.5s", "-1s", "1.5s", "+500ms", "1:30", "0:05.5"
   const negative = input.startsWith("-");
   const clean = input.replace(/^[+-]/, "");
 
@@ -50,7 +49,6 @@ export function parseTimeInput(input: string): number {
     }
     return (negative ? -1 : 1) * secondsToUs(totalSec);
   }
-  // bare number = seconds
   const val = parseFloat(clean);
   if (isNaN(val)) throw new Error(`Invalid time: ${input}`);
   return (negative ? -1 : 1) * secondsToUs(val);
