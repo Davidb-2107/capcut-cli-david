@@ -9,7 +9,52 @@ per [`RELEASE.md`](../RELEASE.md) §4.
 ## [Unreleased]
 
 ### Planned
-- `0.5.x` — packaging consolidation, bundled `capcut-david` skill (Phase E)
+- `1.0.0` — graduation to stable per [`RELEASE.md`](../RELEASE.md) §1 once `1.0.0-rc.1` soaks clean.
+
+## [1.0.0] — TBD
+
+**Stable release.** Full SemVer guarantees per [`RELEASE.md`](../RELEASE.md) §1 now in effect.
+
+### Highlights
+- _(Final highlights go here — pulled from cumulative 0.x → 1.0 work.)_
+
+### Migration from 0.x
+- _(See `release-notes/1.0.0.md` for the full migration guide.)_
+
+### Deprecated and removed
+- The 5 legacy `cut-*` Claude skills are deprecated as of this release. Migrate to the unified `capcut-david` skill bundled in this package.
+
+### Compatibility
+- CapCut: ≥ 5.x desktop (cutcli 167.x and CapCut-UI 169.x both supported).
+- JianYing 6+: unsupported (encrypted draft).
+- Node: ≥ 18.
+- Runtime deps: zero.
+
+## [1.0.0-rc.1] — TBD
+
+Release candidate for 1.0.0. No code changes vs 0.5.0 unless flagged below.
+
+_(To be finalized at RC publish. Expected to contain: post-0.5.0 soak feedback fixes, docs polish, skill-cutover orchestration in `~/.claude/skills/`. Bump to `1.0.0` if no fixes after the soak window; bump `1.0.0-rc.N+1` otherwise.)_
+
+## [0.5.0] — 2026-05-12
+
+Phase E packaging consolidation — graduation prep. **No new commands** (feature-frozen per Phase E constraints). The fork ships its own Claude Code skill bundle and an in-repo CapCut draft-schema reference, in service of the imminent `1.0.0` graduation.
+
+### Added
+- `skills/capcut-david/SKILL.md` — unified Claude Code skill that supersedes `cut-draft`, `cut-storyboard`, `cut-motion`, `cut-audio`, and `cut-tiktok` (the 5 legacy `cut-*` skills). Bundled with the npm package under `skills/`.
+- `skills/capcut-david/references/recipes-{motion,audio,tiktok,storyboard}.md` — full recipes migrated and consolidated from the 5 source skills, normalised against the `capcut-david` command surface.
+- `docs/draft-schema/` (7 files, ~3000 lines) — in-repo reverse-engineered reference for CapCut's `draft_content.json` schema: overview, tracks/segments, materials, keyframes & animations, effects/filters/stickers, and version differences.
+- `docs/README.md` — thin docs index pointing at `draft-schema/` and the existing top-level docs (`RELEASE.md`, `UPSTREAM.md`, `COMPATIBILITY.md`).
+- `release-notes/` — per-version GitHub release-notes drafts (this directory). Each release tag pulls its body from the matching file.
+
+### Changed
+- `README.md` — full rewrite: tagline + comparison table (vs upstream `cutcli` and `capcut-cli`) + Quickstart + command index + pointers to `skills/capcut-david/SKILL.md` and `docs/draft-schema/`.
+- `package.json` — `files` array extended to ship `skills/` and `docs/` with the npm package alongside the existing `dist/`, `templates/`, `README.md`, `LICENSE`, `NOTICE`.
+
+### Compatibility
+- CapCut: same as 0.4.0 (≥ 5.x desktop / JianYing 移动剪辑 ≥ 12.x).
+- Node: `engines.node >= 18` (unchanged).
+- Runtime deps: still zero.
 
 ## [0.4.0] — 2026-05-12
 
@@ -200,7 +245,11 @@ First release of the fork. Baseline = upstream `capcut-cli@0.2.2` (commit `c9223
 - Node ≥ 18; CI matrix covers Node 18, 20, 22.
 - JianYing 6+ remains unsupported (encrypted `draft_content.json` — see `COMPATIBILITY.md` §5).
 
-[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.0.0-rc.1...v1.0.0
+[1.0.0-rc.1]: https://github.com/Davidb-2107/capcut-cli-david/compare/v0.5.0...v1.0.0-rc.1
+[0.5.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Davidb-2107/capcut-cli-david/releases/tag/v0.2.0
 [0.2.0-beta.0]: https://github.com/Davidb-2107/capcut-cli-david/releases/tag/v0.2.0-beta.0
