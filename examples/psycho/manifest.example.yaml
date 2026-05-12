@@ -1,0 +1,36 @@
+# Psycho-niche TikTok pipeline manifest. Feeds `capcut-david psycho-build`.
+#
+# Run:
+#   capcut-david psycho-build examples/psycho/manifest.example.yaml --seed 42
+#
+# Output: a CapCut draft at examples/psycho/build/paranoia-spiral/ with
+#   - 3 image segments (each with a Ken Burns push-in)
+#   - voice narration + ambient music (statically ducked to 25%)
+#   - SRT-driven caption track styled gold
+title: Paranoia Spiral
+resolution: { width: 1080, height: 1920 }
+fps: 30
+seed: 42
+
+images:
+  - path: ./assets/img1.jpg
+    duration: 3s
+    ken_burns: { from: 1.0, to: 1.3, curve: ease-out }
+  - path: ./assets/img2.jpg
+    duration: 3s
+    ken_burns: { from: 1.3, to: 1.0, curve: ease-out }
+  - path: ./assets/img3.jpg
+    duration: 3s
+    ken_burns: { from: 1.0, to: 1.4, curve: ease-out }
+
+voice:
+  path: ./assets/narration.mp3
+  volume: 1.0
+
+music:
+  path: ./assets/ambient.mp3
+  volume: 0.25
+
+captions:
+  srt: ./assets/captions.srt
+  style: { font_size: 24, color: "#FFD700", align: 0 }

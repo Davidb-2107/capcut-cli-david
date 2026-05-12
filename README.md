@@ -19,7 +19,7 @@ Create and edit CapCut / JianYing projects from the command line. Build drafts f
 | A | Fork + restructure + ship 0.1.0 | `0.1.0` | ✅ shipped |
 | B | Fixture-backed tests for every command | `0.2.0` | ✅ shipped |
 | C | `add-keyframe` + `ken-burns` | `0.3.0` | ✅ shipped |
-| D | `psycho-build` pipeline | `0.4.0` | planned |
+| D | `psycho-build` pipeline | `0.4.0` | ✅ shipped |
 | E | SKILL.md + docs polish + `1.0.0` | `1.0.0` | planned |
 
 See [`RELEASE.md`](../RELEASE.md) for the full release contract.
@@ -95,6 +95,50 @@ capcut-david ken-burns ./project a1b2c3 --from 1.0 --to 1.2 --curve linear
 ```
 
 Full command help: `capcut-david --help`.
+
+## New in 0.4.0 — `psycho-build` pipeline (Quickstart)
+
+One command builds a complete TikTok-format (1080×1920) draft from a YAML
+manifest. Composes `init` + `add-video` (×N) + `ken-burns` (×N) +
+`add-audio` (voice + music with static ducking) + `add-text` (from SRT).
+
+```bash
+capcut-david psycho-build examples/psycho/manifest.example.yaml \
+  --out ./build/paranoia-spiral \
+  --seed 42
+```
+
+A minimal manifest:
+
+```yaml
+title: Paranoia Spiral
+resolution: { width: 1080, height: 1920 }
+fps: 30
+
+images:
+  - path: ./assets/img1.jpg
+    duration: 3s
+    ken_burns: { from: 1.0, to: 1.3, curve: ease-out }
+  - path: ./assets/img2.jpg
+    duration: 3s
+    ken_burns: { from: 1.3, to: 1.0, curve: ease-out }
+
+voice:
+  path: ./assets/narration.mp3
+  volume: 1.0
+music:
+  path: ./assets/ambient.mp3
+  volume: 0.25                                # statically ducked
+
+captions:
+  srt: ./assets/captions.srt
+  style: { font_size: 24, color: "#FFD700", align: 0 }
+```
+
+`--seed` (or `seed:` in the manifest) makes the build deterministic — same
+inputs produce a byte-identical draft, so you can diff outputs in CI.
+
+See [`examples/psycho/`](examples/psycho/) for the runnable sample.
 
 ## Output modes
 

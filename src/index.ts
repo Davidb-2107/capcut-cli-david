@@ -15,6 +15,7 @@ import {
   cmdTracks,
 } from "./commands/inspect.js";
 import { cmdAddKeyframe, cmdKenBurns } from "./commands/keyframe.js";
+import { cmdPsychoBuild } from "./commands/pipeline.js";
 import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template.js";
 import { loadDraft } from "./draft.js";
 import { CliError, die, type Flags, requireArgs } from "./utils/cli.js";
@@ -79,6 +80,11 @@ Templates:
   apply-template <project> <template.json> <start> <duration> [text override]
                  [--x <n>] [--y <n>]
 
+Pipeline:
+  psycho-build <manifest.yaml> [--out <dir>] [--seed <n>]
+               Build a complete TikTok-format draft from a YAML manifest
+               (images + ken-burns + voice + music + SRT captions).
+
 Project:
   cut        <project> <start> <end> --out <path>
 
@@ -126,6 +132,8 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.from = args[++i];
     } else if (a === "--to" && i + 1 < args.length) {
       flags.to = args[++i];
+    } else if (a === "--seed" && i + 1 < args.length) {
+      flags.seed = args[++i];
     } else {
       positional.push(a);
     }
@@ -146,6 +154,11 @@ function main(): void {
 
   if (cmd === "init") {
     cmdInit(positional, flags);
+    process.exit(0);
+  }
+
+  if (cmd === "psycho-build") {
+    cmdPsychoBuild(positional, flags);
     process.exit(0);
   }
 

@@ -1,8 +1,16 @@
 import { randomUUID } from "node:crypto";
 import type { Draft, Segment, Timerange } from "../draft.js";
 
+let uuidProvider: (() => string) | null = null;
+
+// Override the UUID source for deterministic builds (pipeline --seed).
+// Pass null to restore randomUUID.
+export function setUuidProvider(fn: (() => string) | null): void {
+  uuidProvider = fn;
+}
+
 export function uuid(): string {
-  return randomUUID();
+  return uuidProvider ? uuidProvider() : randomUUID();
 }
 
 export function hexToRgb(hex: string): [number, number, number] {

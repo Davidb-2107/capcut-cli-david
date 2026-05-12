@@ -17,6 +17,7 @@ export interface Flags {
   curve?: string;
   from?: string;
   to?: string;
+  seed?: string;
 }
 
 export class CliError extends Error {

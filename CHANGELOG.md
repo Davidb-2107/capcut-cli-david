@@ -9,7 +9,60 @@ per [`RELEASE.md`](../RELEASE.md) §4.
 ## [Unreleased]
 
 ### Planned
-- `0.4.x` — `psycho-build` YAML manifest pipeline (Phase D)
+- `0.5.x` — packaging consolidation, bundled `capcut-david` skill (Phase E)
+
+## [0.4.0] — 2026-05-12
+
+Phase D — the `psycho-build` YAML manifest pipeline. A single command that
+composes the existing creation primitives (`init` + `add-video` × N +
+`ken-burns` × N + `add-audio` × 2 + `add-text` × M) into a complete
+TikTok-format (1080×1920) draft. Zero new draft-writing code lives in the
+pipeline module — it orchestrates only.
+
+### Added
+- `capcut-david psycho-build <manifest.yaml> [--out <dir>] [--seed <n>]`
+  — consumes a YAML manifest describing images (each with optional
+  `ken_burns`), an optional voice track, optional music track (statically
+  ducked via `volume`), and optional SRT-driven captions with a style
+  preset. Produces a draft directory ready to open in CapCut.
+- `src/commands/pipeline.ts` — hand-rolled YAML subset parser (block +
+  flow mappings/sequences, scalars, quoted strings, comments, line-numbered
+  errors), hand-rolled SRT parser (HH:MM:SS,mmm timing, multi-line text,
+  CRLF tolerant, optional index line), manifest validator with field-level
+  error messages, mulberry32 + FNV-1a seeded UUID generator for
+  deterministic builds (RFC 4122 v4 layout).
+- `--seed <n>` global flag — same seed + same manifest → byte-identical
+  draft. Seed may also live in the manifest under `seed:` (the CLI flag
+  wins).
+- `examples/psycho/manifest.example.yaml` + placeholder assets
+  (`assets/img{1,2,3}.jpg`, `assets/narration.mp3`, `assets/ambient.mp3`,
+  `assets/captions.srt`) + `examples/psycho/README.md` Quickstart.
+- `templates/minimal/draft_content.json` — bundled empty-draft template
+  for `init`-style operations from the pipeline (shipped via
+  `package.json:files`).
+- `test/pipeline.test.mjs` — 39 new tests (212 total): YAML parser units
+  (scalars, quoted strings, nested blocks, flow values, comments, errors),
+  SRT parser units (3-entry blocks, multiline text, CRLF, missing index,
+  empty input, malformed timestamps), manifest validator coverage (every
+  required field's specific error message), duration parser, seeded UUID
+  determinism, full E2E build vs the example manifest with structural
+  assertions, determinism check (same seed twice → identical draft modulo
+  volatile path fields), different-seed-different-ids check, and three
+  CLI-level happy/error paths.
+
+### Changed
+- `--help` adds a new `Pipeline:` section documenting `psycho-build`.
+- `src/utils/companion.ts` — `setUuidProvider(fn | null)` is new and lets
+  pipeline.ts swap `randomUUID` for a seeded generator without touching
+  any other module. Existing UUID semantics unchanged when no provider
+  is installed.
+- `package.json` — `files` includes `templates/` so the bundled minimal
+  draft template ships with the npm package.
+
+### Compatibility
+- CapCut: same as 0.3.0 (≥ 5.x desktop / JianYing 移动剪辑 ≥ 12.x).
+- Node: `engines.node >= 18` (unchanged).
+- Runtime deps: still zero. Pipeline is built entirely on Node stdlib.
 
 ## [0.3.0] — 2026-05-12
 

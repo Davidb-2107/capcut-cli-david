@@ -1,0 +1,11 @@
+1
+00:00:00,000 --> 00:00:03,000
+Something is wrong with this image.
+
+2
+00:00:03,000 --> 00:00:06,000
+You felt it the moment you looked.
+
+3
+00:00:06,000 --> 00:00:09,000
+But you can't say why.
