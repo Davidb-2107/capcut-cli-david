@@ -11,6 +11,12 @@ per [`RELEASE.md`](../RELEASE.md) §4.
 ### Planned
 - `0.3.x` — Ken Burns + keyframe commands (Phase C)
 
+## [0.2.0] — 2026-05-12
+
+Stable release of the Phase B test suite. Identical content to `0.2.0-beta.0`; promoted to `latest` after beta soak verified the published tarball + CI gate behave as designed.
+
+See [`0.2.0-beta.0`](#020-beta0--2026-05-12) below for the full change list.
+
 ## [0.2.0-beta.0] — 2026-05-12
 
 First beta of the Phase B test suite. No behavioral change to any command — purely additive coverage.
@@ -94,6 +100,7 @@ First release of the fork. Baseline = upstream `capcut-cli@0.2.2` (commit `c9223
 - Node ≥ 18; CI matrix covers Node 18, 20, 22.
 - JianYing 6+ remains unsupported (encrypted `draft_content.json` — see `COMPATIBILITY.md` §5).
 
-[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v0.2.0-beta.0...HEAD
+[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Davidb-2107/capcut-cli-david/releases/tag/v0.2.0
 [0.2.0-beta.0]: https://github.com/Davidb-2107/capcut-cli-david/releases/tag/v0.2.0-beta.0
 [0.1.0]: https://github.com/Davidb-2107/capcut-cli-david/releases/tag/v0.1.0
