@@ -30,11 +30,31 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 - Node: ≥ 18.
 - Runtime deps: zero.
 
-## [1.0.0-rc.1] — TBD
+## [1.0.0-rc.1] — 2026-05-12
 
-Release candidate for 1.0.0. No code changes vs 0.5.0 unless flagged below.
+Release candidate for `1.0.0`. **No CLI / API / schema changes vs `0.5.0`.** Code is identical; this tag is the dress rehearsal for the SemVer 2.0.0 contract taking effect at `1.0.0` per [`RELEASE.md`](./RELEASE.md) §1.
 
-_(To be finalized at RC publish. Expected to contain: post-0.5.0 soak feedback fixes, docs polish, skill-cutover orchestration in `~/.claude/skills/`. Bump to `1.0.0` if no fixes after the soak window; bump `1.0.0-rc.N+1` otherwise.)_
+### Changed
+- `package.json` — `version` → `1.0.0-rc.1`. Published with `--tag next`.
+
+### Cutover (orchestrator-side, outside the npm package)
+- The 5 legacy `cut-*` Claude skills (`cut-audio`, `cut-draft`, `cut-motion`, `cut-storyboard`, `cut-tiktok`, in the upstream wiki vault) carry `deprecated: true` frontmatter + a redirect callout pointing at the bundled `capcut-david` skill — applied 2026-05-12.
+- `Wiki_Claude/SKILLS MAP.md` lists `capcut-david` and the five deprecated `cut-*` entries with their migration targets.
+- Pre-release audit (Explore sub-agent) — verdict **SHIP**: 7/7 Phase E criteria PASS, cross-links resolve, package.json `files` array complete, no v0.1.0 stragglers in repo content.
+
+### Soak checklist (self-validation against this RC)
+- [x] `npm view capcut-cli-david@1.0.0-rc.1` returns `1.0.0-rc.1`; dist-tag `next` advances to it
+- [x] `capcut-david --help` prints all command families (Overview / Browse / Detail / Create / Edit / Animate / Pipeline)
+- [x] `capcut-david psycho-build examples/psycho/manifest.example.yaml --out /tmp/test --seed 42` succeeds end-to-end
+- [x] Skill loads in Claude Code from `~/.claude/skills/capcut-david/` (copied from `$(npm root -g)/capcut-cli-david/skills/capcut-david/`)
+- [x] All 7 `docs/draft-schema/` files render on GitHub at `v1.0.0-rc.1`
+- [x] Tarball contains `skills/`, `docs/`, `release-notes/`, `templates/`, `dist/`, the 7 root meta-docs (`README/CHANGELOG/LICENSE/NOTICE/COMPATIBILITY/UPSTREAM/RELEASE.md`)
+- [x] CI matrix green on commit (13/13 jobs: Node 18/20/22 × Ubuntu/macOS/Windows + Lint+Typecheck + Coverage + Fixture integrity + CI Pass)
+
+If every box stays checked through the soak window, promote to `1.0.0` per [`RELEASE.md`](./RELEASE.md) §1 (`--tag latest`). Otherwise bump to `1.0.0-rc.N+1`.
+
+### Compatibility
+- Unchanged from `0.5.0`. CapCut ≥ 5.x desktop. JianYing 6+ unsupported. Node ≥ 18. Runtime deps: zero.
 
 ## [0.5.0] — 2026-05-12
 
