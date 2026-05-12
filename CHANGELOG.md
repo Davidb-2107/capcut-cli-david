@@ -9,26 +9,44 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ## [Unreleased]
 
 ### Planned
-- `1.0.0` — graduation to stable per [`RELEASE.md`](./RELEASE.md) §1 once `1.0.0-rc.1` soaks clean.
+- `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
-## [1.0.0] — TBD
+## [1.0.0] — 2026-05-12
 
-**Stable release.** Full SemVer guarantees per [`RELEASE.md`](./RELEASE.md) §1 now in effect.
+**Stable release.** Full SemVer 2.0.0 guarantees per [`RELEASE.md`](./RELEASE.md) §1 now in effect. **Code-identical to `0.5.0` and `1.0.0-rc.1`** — what changes is the contract.
 
 ### Highlights
-- _(Final highlights go here — pulled from cumulative 0.x → 1.0 work.)_
+- The fork graduates after 5 implementation phases (A → E):
+  - `0.1.0` — fork from `renezander030/capcut-cli`, modular `src/` (Phase A)
+  - `0.2.0` — fixture-backed `node:test` harness, ≥80% coverage, full CI matrix (Phase B)
+  - `0.3.0` — creation primitives `add-keyframe` and `ken-burns` (Phase C)
+  - `0.4.0` — `psycho-build` YAML manifest pipeline (Phase D)
+  - `0.5.0` — packaging consolidation: bundled `capcut-david` skill, in-repo schema docs, README rewrite (Phase E)
+- 27 CLI commands across 6 families. 173 tests, ≥80% coverage. 3000+ lines of in-repo schema reference. Zero runtime deps. Tarball ~110 kB / 52 files.
 
 ### Migration from 0.x
-- _(See `release-notes/1.0.0.md` for the full migration guide.)_
+- Pinned to `0.4.0` or `0.5.0` → `1.0.0`: no change. CLI surface byte-identical between `0.5.0`, `1.0.0-rc.1`, `1.0.0`. Just bump the pin.
+- Pinned to `0.1.0–0.3.0`: surface is additive across `0.x`; nothing was removed. Review use of inspect family (added `0.1.0`) and creation primitives (added `0.3.0`).
+- `cut-*` Claude skills users (`cut-audio`, `cut-draft`, `cut-motion`, `cut-storyboard`, `cut-tiktok`): deprecated since `2026-05-12` with `deprecated: true` frontmatter + redirect callouts pointing at the bundled `capcut-david` skill. Install the new skill from `$(npm root -g)/capcut-cli-david/skills/capcut-david/`.
+
+### Changed
+- `package.json` — `version` → `1.0.0`. Dist-tag `latest` advances to `1.0.0` (was `0.4.0`).
+- `release-notes/1.0.0.md` — finalised from placeholder to the published GitHub release body (Highlights / Migration / Roadmap / Thanks).
 
 ### Deprecated and removed
-- The 5 legacy `cut-*` Claude skills are deprecated as of this release. Migrate to the unified `capcut-david` skill bundled in this package.
+- The 5 legacy `cut-*` Claude skills are deprecated. Migrate to the unified `capcut-david` skill bundled in this package.
+- Removed nothing else. The full `0.x` CLI surface is preserved.
 
 ### Compatibility
-- CapCut: ≥ 5.x desktop (cutcli 167.x and CapCut-UI 169.x both supported).
-- JianYing 6+: unsupported (encrypted draft).
-- Node: ≥ 18.
-- Runtime deps: zero.
+- CapCut: ≥ 5.x desktop (Windows + macOS); both `cutcli`-shape (`new_version: 167.x`) and CapCut-UI shape (`169.x`) supported.
+- JianYing 6+: unsupported (encrypted draft) — see [`COMPATIBILITY.md`](./COMPATIBILITY.md) §5.
+- Node: `engines.node >= 18`.
+- Runtime deps: zero (Node stdlib only).
+
+### Roadmap (1.x — non-binding)
+- `1.x.0` — `capcut-david query` (animation / sticker / effect / filter catalogue lookup; recipe-referenced)
+- `1.x.0` — `capcut-david validate <project>` (schema-invariant linter)
+- `1.x.0` — JianYing 6+ research; `psycho-build` dynamic audio ducking
 
 ## [1.0.0-rc.1] — 2026-05-12
 
