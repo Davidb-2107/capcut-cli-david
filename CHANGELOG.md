@@ -11,6 +11,33 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.1.0] — 2026-05-12
+
+First minor after 1.0 graduation. Closes the two post-1.0 bugs filed against the published surface: `psycho-build` drafts now appear in CapCut's UI (Bug #1), and `init` works out-of-the-box without `--template` (Bug #2). Additive only — no breaking changes.
+
+### Added
+- `capcut-david register <draft-dir> [--projects-root <dir>]` — append a built draft to CapCut's `<projects-root>/root_meta_info.json` `.all_draft_store[]` so it surfaces in the CapCut UI. Idempotent on `draft_id`. Cross-platform default projects-root (Win: `%LOCALAPPDATA%/CapCut/User Data/Projects/com.lveditor.draft`; macOS: `~/Movies/CapCut/User Data/Projects/com.lveditor.draft`; Linux best-effort under `~/.local/share/CapCut/...`).
+- `--register` flag on `psycho-build` — when passed, runs the equivalent of `register <draft-dir>` after emitting the draft. `--projects-root <dir>` overrides the default.
+- `psycho-build` now also emits **`draft_meta_info.json`** and **`draft_info.json`** alongside `draft_content.json`. These are the two CapCut sidecar files required for the draft to be indexed; without them the draft existed on disk but was invisible in the CapCut UI.
+- `src/utils/capcut-paths.ts` — shared helpers `resolveTemplateDir()`, `defaultProjectsRoot()`, `nowUs()`. Replaces the per-module template-path resolution previously duplicated in `pipeline.ts` and shipped broken in `create.ts:cmdInit`.
+
+### Fixed
+- **Bug #1** — `psycho-build` produced drafts that were invisible in CapCut's UI. The output directory contained `draft_content.json` + `assets/` but was missing `draft_meta_info.json` + `draft_info.json`, and no entry was created in `root_meta_info.json`. Fix: `psycho-build` now always emits the two sidecar metadata files; the `--register` flag handles the root-meta indexing.
+- **Bug #2** — `capcut-david init` (with no `--template` flag) tried to copy `../CapCutAPI/template`, a path inherited from the upstream Python project that never existed in this fork's distribution. Fix: default template now resolves to the bundled `templates/minimal/` via `resolveTemplateDir()`. Default `--drafts` also became cross-platform (was hard-coded to macOS `~/Movies/CapCut/...`).
+
+### Changed
+- `PsychoBuildResult` interface (`src/commands/pipeline.ts`) is additive: new fields `metaInfoPath`, `draftInfoPath`, `registered`, `registerRootMetaPath`. CLI output for `psycho-build` likewise gains `meta_info_path`, `draft_info_path`, `registered`, `register_root_meta_path`.
+- `Flags` interface (`src/utils/cli.ts`) gains `register?: boolean` and `projectsRoot?: string`.
+- `package.json` — `version` → `1.1.0`. `files`, `bin`, `engines`, deps unchanged.
+
+### Compatibility
+- CapCut: same as 1.0.0 (≥ 5.x desktop on Windows + macOS).
+- JianYing 6+: unsupported (encrypted draft) — unchanged from 1.0.0.
+- Node: `engines.node >= 18` (unchanged).
+- Runtime deps: zero (unchanged).
+- 21 new tests (194 total, up from 173). Aggregate coverage on `src/commands/*` + `src/draft.ts` remains above the 80% gate.
+- All existing CLI commands and on-disk draft shapes are byte-identical to 1.0.0. `draft_content.json` output is unchanged.
+
 ## [1.0.0] — 2026-05-12
 
 **Stable release.** Full SemVer 2.0.0 guarantees per [`RELEASE.md`](./RELEASE.md) §1 now in effect. **Code-identical to `0.5.0` and `1.0.0-rc.1`** — what changes is the contract.
@@ -284,7 +311,8 @@ First release of the fork. Baseline = upstream `capcut-cli@0.2.2` (commit `c9223
 - Node ≥ 18; CI matrix covers Node 18, 20, 22.
 - JianYing 6+ remains unsupported (encrypted `draft_content.json` — see `COMPATIBILITY.md` §5).
 
-[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.0.0-rc.1...v1.0.0
 [1.0.0-rc.1]: https://github.com/Davidb-2107/capcut-cli-david/compare/v0.5.0...v1.0.0-rc.1
 [0.5.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v0.4.0...v0.5.0
