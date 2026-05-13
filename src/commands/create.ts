@@ -1,6 +1,7 @@
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { type Draft, saveDraft, type Timerange, type Track } from "../draft.js";
+import { type Draft, type Segment, saveDraft, type Timerange, type Track } from "../draft.js";
+import { defaultProjectsRoot, resolveTemplateDir } from "../utils/capcut-paths.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { baseSegment, createCompanionMaterials, hexToRgb, registerCompanions, uuid } from "../utils/companion.js";
 import { parseTimeInput } from "../utils/time.js";
@@ -337,14 +338,124 @@ export function addVideo(
   return { segmentId: segId, materialId: matId, trackId: track.id };
 }
 
+// --- Video Effect (FX) ---
+
+export interface AddEffectOptions {
+  resourceId: string;
+  name: string;
+  start: number;
+  duration: number;
+  value?: number;
+  bindSegmentId?: string;
+}
+
+export function addEffect(
+  draft: Draft,
+  _filePath: string,
+  opts: AddEffectOptions,
+): { segmentId: string; materialId: string; trackId: string } {
+  const segId = uuid();
+  const matId = uuid();
+  const value = opts.value ?? 1.0;
+  const applyTargetType = opts.bindSegmentId ? 0 : 2;
+
+  let track = draft.tracks.find((t) => t.type === "effect");
+  if (!track) {
+    track = {
+      id: uuid(),
+      type: "effect",
+      name: "",
+      attribute: 0,
+      segments: [],
+      is_default_name: false,
+      flag: 0,
+    } as unknown as Track;
+    draft.tracks.push(track);
+  }
+
+  const videoEffect: Record<string, unknown> = {
+    id: matId,
+    effect_id: opts.resourceId,
+    resource_id: opts.resourceId,
+    name: opts.name,
+    type: "video_effect",
+    sub_type: 0,
+    bind_segment_id: opts.bindSegmentId ?? "",
+    transparent_params: "",
+    path: "",
+    value,
+    category_id: "1111",
+    category_name: "Video effects",
+    platform: "all",
+    apply_target_type: applyTargetType,
+    source_platform: 1,
+    version: "",
+    item_effect_type: 0,
+    adjust_params: [],
+    time_range: null,
+    formula_id: "",
+    apply_time_range: null,
+    render_index: 0,
+    track_render_index: 0,
+    common_keyframes: [],
+    request_id: "",
+    algorithm_artifact_path: "",
+    disable_effect_faces: [],
+    covering_relation_change: 0,
+    enable_mask: true,
+    effect_mask: [],
+    enable_video_mask_stroke: true,
+    enable_video_mask_shadow: true,
+  };
+  (draft.materials.video_effects as unknown as Array<Record<string, unknown>>).push(videoEffect);
+
+  const timerange: Timerange = { start: opts.start, duration: opts.duration };
+  const seg = {
+    id: segId,
+    material_id: matId,
+    source_timerange: null,
+    target_timerange: timerange,
+    render_timerange: { start: 0, duration: 0 },
+    desc: "",
+    state: 0,
+    speed: 1,
+    volume: 1,
+    last_nonzero_volume: 1,
+    is_loop: false,
+    is_tone_modify: false,
+    reverse: false,
+    intensifies_audio: false,
+    cartoon: false,
+    clip: null,
+    uniform_scale: null,
+    extra_material_refs: [],
+    render_index: 11000,
+    track_render_index: 0,
+    keyframe_refs: [],
+    enable_lut: false,
+    enable_adjust: false,
+    enable_hsl: false,
+    visible: true,
+    group_id: "",
+  } as unknown as Segment;
+  track.segments.push(seg);
+
+  return { segmentId: segId, materialId: matId, trackId: track.id };
+}
+
 // --- CLI wrappers ---
 
 export function cmdInit(positional: string[], flags: Flags): void {
   const name = positional[1];
   if (!name) die("Missing name. Usage: capcut-david init <name> [--template <dir>] [--drafts <dir>]");
-  const cliDir = new URL(".", import.meta.url).pathname.replace(/\/dist\/$/, "");
-  const templateDir = flags.template ?? `${cliDir}/../CapCutAPI/template`;
-  const draftsDir = flags.drafts ?? `${process.env.HOME || "~"}/Movies/CapCut/User Data/Projects/com.lveditor.draft`;
+  let templateDir: string;
+  try {
+    templateDir = flags.template ?? resolveTemplateDir();
+  } catch (e) {
+    die(e instanceof Error ? e.message : String(e));
+  }
+  const draftsDir = flags.drafts ?? defaultProjectsRoot();
+  if (!existsSync(draftsDir)) mkdirSync(draftsDir, { recursive: true });
   const result = initDraft({ name, templateDir, draftsDir });
   out({ ok: true, name, draft_path: result.draftPath, file_path: result.filePath }, flags);
   if (!flags.quiet) process.stderr.write(`Created: ${result.draftPath}\n`);
@@ -442,6 +553,51 @@ export function cmdAddText(draft: Draft, filePath: string, positional: string[],
       material_id: result.materialId,
       track_id: result.trackId,
       text,
+      start_us: start,
+      duration_us: duration,
+    },
+    flags,
+  );
+}
+
+export function cmdAddEffect(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
+  const resourceId = positional[2];
+  const effectName = positional[3];
+  const startStr = positional[4];
+  const durationStr = positional[5];
+  if (!resourceId || !effectName || !startStr || !durationStr) {
+    die("Usage: capcut-david add-effect <project> <resource-id> <name> <start> <duration>");
+  }
+  const start = parseTimeInput(startStr);
+  const duration = parseTimeInput(durationStr);
+  let effectValue: number | undefined;
+  if (flags.value !== undefined) {
+    effectValue = parseFloat(flags.value);
+    if (Number.isNaN(effectValue) || effectValue < 0 || effectValue > 1) {
+      die("--value must be a number in range [0, 1]");
+    }
+  }
+  const opts: AddEffectOptions = {
+    resourceId,
+    name: effectName,
+    start,
+    duration,
+    value: effectValue,
+    bindSegmentId: flags.bind,
+  };
+  const result = addEffect(draft, filePath, opts);
+  saveDraft(filePath, draft);
+  out(
+    {
+      ok: true,
+      segment_id: result.segmentId,
+      material_id: result.materialId,
+      track_id: result.trackId,
+      resource_id: resourceId,
+      name: effectName,
+      value: effectValue ?? 1.0,
+      apply_target_type: opts.bindSegmentId ? 0 : 2,
+      bind_segment_id: opts.bindSegmentId ?? "",
       start_us: start,
       duration_us: duration,
     },

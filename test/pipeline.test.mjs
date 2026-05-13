@@ -400,3 +400,125 @@ test("cli: psycho-build nonexistent manifest returns CliError", () => {
   ok(r.errorJson);
   match(r.errorJson.error, /Manifest not found/);
 });
+
+// =============================================================
+// CapCut visibility — psycho-build must emit draft_meta_info.json
+// and draft_info.json so CapCut can index the draft.
+// (Bug #1 from master plan §Post-1.0 bugs discovered.)
+// =============================================================
+
+test("e2e: psychoBuild emits draft_meta_info.json with required CapCut fields", (t) => {
+  const tmp = scratchDir(t);
+  const manifest = copyExampleTo(tmp);
+  const outDir = resolve(tmp, "build", "paranoia-spiral");
+  const result = psychoBuild(manifest, outDir, "42");
+
+  const metaPath = resolve(result.draftPath, "draft_meta_info.json");
+  ok(existsSync(metaPath), "draft_meta_info.json should be emitted alongside draft_content.json");
+  strictEqual(result.metaInfoPath, metaPath, "result should expose metaInfoPath");
+
+  const meta = JSON.parse(readFileSync(metaPath, "utf-8"));
+  strictEqual(typeof meta.draft_id, "string");
+  ok(meta.draft_id.length > 0);
+  strictEqual(meta.draft_name, "paranoia-spiral");
+  strictEqual(meta.draft_fold_path, outDir);
+  strictEqual(meta.draft_root_path, dirname(outDir));
+  strictEqual(meta.tm_duration, 9_000_000, "tm_duration should match total_duration_us");
+  ok(typeof meta.tm_draft_create === "number" && meta.tm_draft_create > 0);
+  ok(typeof meta.tm_draft_modified === "number" && meta.tm_draft_modified > 0);
+  strictEqual(meta.draft_new_version, "164.0.0");
+  ok(Array.isArray(meta.draft_materials));
+});
+
+test("e2e: psychoBuild emits draft_info.json with canvas_config + config block", (t) => {
+  const tmp = scratchDir(t);
+  const manifest = copyExampleTo(tmp);
+  const outDir = resolve(tmp, "build", "paranoia-spiral");
+  const result = psychoBuild(manifest, outDir, "42");
+
+  const infoPath = resolve(result.draftPath, "draft_info.json");
+  ok(existsSync(infoPath), "draft_info.json should be emitted alongside draft_content.json");
+  strictEqual(result.draftInfoPath, infoPath, "result should expose draftInfoPath");
+
+  const info = JSON.parse(readFileSync(infoPath, "utf-8"));
+  ok(info.canvas_config, "draft_info.json must contain canvas_config");
+  strictEqual(info.canvas_config.width, 1080);
+  strictEqual(info.canvas_config.height, 1920);
+  strictEqual(info.canvas_config.ratio, "original");
+  ok(info.config, "draft_info.json must contain config block");
+  strictEqual(typeof info.config.adjust_max_index, "number");
+  strictEqual(typeof info.config.maintrack_adsorb, "boolean");
+});
+
+test("e2e: emitted draft_meta_info.json id matches draft_content.json id (case-insensitive)", (t) => {
+  const tmp = scratchDir(t);
+  const manifest = copyExampleTo(tmp);
+  const outDir = resolve(tmp, "build", "out-id-match");
+  const result = psychoBuild(manifest, outDir, "stable-seed");
+
+  const draft = JSON.parse(readFileSync(result.filePath, "utf-8"));
+  const meta = JSON.parse(readFileSync(result.metaInfoPath, "utf-8"));
+  const info = JSON.parse(readFileSync(result.draftInfoPath, "utf-8"));
+  strictEqual(meta.draft_id.toLowerCase(), draft.id.toLowerCase(), "draft_meta_info.draft_id must match draft_content.id");
+  strictEqual(info.id.toLowerCase(), draft.id.toLowerCase(), "draft_info.id must match draft_content.id");
+});
+
+test("e2e: psychoBuild without registerOpt does not touch root_meta_info.json", (t) => {
+  const tmp = scratchDir(t);
+  const manifest = copyExampleTo(tmp);
+  const outDir = resolve(tmp, "build", "no-register");
+  const projectsRoot = resolve(tmp, "fake-projects-root");
+  mkdirSync(projectsRoot, { recursive: true });
+  const rootPath = resolve(projectsRoot, "root_meta_info.json");
+  // Pre-seed an empty root so we can detect any unwanted writes.
+  writeFileSync(rootPath, JSON.stringify({ all_draft_store: [], draft_ids: [], root_path: projectsRoot }), "utf-8");
+
+  const before = readFileSync(rootPath, "utf-8");
+  const result = psychoBuild(manifest, outDir, "42");
+  const after = readFileSync(rootPath, "utf-8");
+  strictEqual(after, before, "root_meta_info.json must remain untouched without --register");
+  strictEqual(result.registered, false, "result.registered should be false by default");
+});
+
+test("e2e: psychoBuild with registerOpt registers draft in root_meta_info.json", (t) => {
+  const tmp = scratchDir(t);
+  const manifest = copyExampleTo(tmp);
+  const outDir = resolve(tmp, "build", "with-register");
+  const projectsRoot = resolve(tmp, "fake-projects-root");
+  mkdirSync(projectsRoot, { recursive: true });
+
+  const result = psychoBuild(manifest, outDir, "42", { register: true, projectsRoot });
+  strictEqual(result.registered, true, "result.registered should be true when --register passed");
+
+  const root = JSON.parse(readFileSync(resolve(projectsRoot, "root_meta_info.json"), "utf-8"));
+  ok(Array.isArray(root.all_draft_store));
+  strictEqual(root.all_draft_store.length, 1, "should have one registered draft");
+  const entry = root.all_draft_store[0];
+  // draft_name is the --out basename (user-chosen draft folder name),
+  // not the manifest title slug.
+  strictEqual(entry.draft_name, "with-register");
+  strictEqual(entry.draft_fold_path, outDir);
+  strictEqual(entry.tm_duration, 9_000_000);
+});
+
+test("cli: psycho-build --register flag triggers registration", (t) => {
+  const tmp = scratchDir(t);
+  const manifest = copyExampleTo(tmp);
+  const outDir = resolve(tmp, "build", "cli-register");
+  const projectsRoot = resolve(tmp, "cli-projects-root");
+  mkdirSync(projectsRoot, { recursive: true });
+
+  const r = runCli([
+    "psycho-build", manifest,
+    "--out", outDir,
+    "--seed", "42",
+    "--register",
+    "--projects-root", projectsRoot,
+  ]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  ok(r.json, `expected JSON on stdout, got: ${r.stdout}`);
+  strictEqual(r.json.registered, true);
+
+  const root = JSON.parse(readFileSync(resolve(projectsRoot, "root_meta_info.json"), "utf-8"));
+  strictEqual(root.all_draft_store.length, 1);
+});

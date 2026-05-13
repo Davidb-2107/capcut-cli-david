@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { cmdBatch } from "./commands/batch.js";
-import { cmdAddAudio, cmdAddText, cmdAddVideo, cmdInit } from "./commands/create.js";
+import { cmdAddAudio, cmdAddEffect, cmdAddText, cmdAddVideo, cmdInit } from "./commands/create.js";
 import { cmdCut } from "./commands/cut.js";
 import { cmdOpacity, cmdSetText, cmdShift, cmdShiftAll, cmdSpeed, cmdTrim, cmdVolume } from "./commands/edit.js";
 import {
@@ -16,6 +16,7 @@ import {
 } from "./commands/inspect.js";
 import { cmdAddKeyframe, cmdKenBurns } from "./commands/keyframe.js";
 import { cmdPsychoBuild } from "./commands/pipeline.js";
+import { cmdRegister } from "./commands/register.js";
 import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template.js";
 import { loadDraft } from "./draft.js";
 import { CliError, die, type Flags, requireArgs } from "./utils/cli.js";
@@ -52,8 +53,11 @@ Add:
   add-audio  <project> <file> <start> <duration> [--volume <n>] [--track-name <s>]
   add-video  <project> <file> <start> <duration> [--track-name <s>]
   add-text   <project> <start> <duration> <text>
-             [--font-size <n>] [--color <hex>] [--align <0|1|2>]
-             [--x <n>] [--y <n>] [--track-name <s>]
+              [--font-size <n>] [--color <hex>] [--align <0|1|2>]
+              [--x <n>] [--y <n>] [--track-name <s>]
+  add-effect <project> <resource-id> <name> <start> <duration>
+              [--value <n>] [--bind <segment-id>]
+              Apply a video effect (FX) via its catalogue resource ID.
 
 Edit:
   set-text   <project> <id> <text>              Change text content
@@ -82,8 +86,15 @@ Templates:
 
 Pipeline:
   psycho-build <manifest.yaml> [--out <dir>] [--seed <n>]
+               [--register] [--projects-root <dir>]
                Build a complete TikTok-format draft from a YAML manifest
                (images + ken-burns + voice + music + SRT captions).
+               --register: also index the draft so it appears in CapCut's UI.
+
+Register:
+  register   <draft-dir> [--projects-root <dir>]
+               Append a built draft to CapCut's root_meta_info.json so it
+               shows up in the CapCut UI. Idempotent.
 
 Project:
   cut        <project> <start> <end> --out <path>
@@ -134,6 +145,12 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.to = args[++i];
     } else if (a === "--seed" && i + 1 < args.length) {
       flags.seed = args[++i];
+    } else if (a === "--bind" && i + 1 < args.length) {
+      flags.bind = args[++i];
+    } else if (a === "--register") {
+      flags.register = true;
+    } else if (a === "--projects-root" && i + 1 < args.length) {
+      flags.projectsRoot = args[++i];
     } else {
       positional.push(a);
     }
@@ -159,6 +176,11 @@ function main(): void {
 
   if (cmd === "psycho-build") {
     cmdPsychoBuild(positional, flags);
+    process.exit(0);
+  }
+
+  if (cmd === "register") {
+    cmdRegister(positional, flags);
     process.exit(0);
   }
 
@@ -255,6 +277,14 @@ function main(): void {
     case "ken-burns":
       requireArgs(positional, 3, "capcut-david ken-burns <project> <id> --from <scale> --to <scale>");
       cmdKenBurns(draft, filePath, positional[2], flags.from, flags.to, flags.curve, flags);
+      break;
+    case "add-effect":
+      requireArgs(
+        positional,
+        6,
+        "capcut-david add-effect <project> <resource-id> <name> <start> <duration> [--value <n>] [--bind <segment-id>]",
+      );
+      cmdAddEffect(draft, filePath, positional, flags);
       break;
     default:
       die(`Unknown command: ${cmd}. Run 'capcut-david --help' for usage.`);

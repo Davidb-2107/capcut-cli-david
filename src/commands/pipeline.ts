@@ -1,12 +1,14 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadDraft, saveDraft } from "../draft.js";
+import { nowUs, resolveTemplateDir as resolveSharedTemplateDir } from "../utils/capcut-paths.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { setUuidProvider } from "../utils/companion.js";
 import { secondsToUs } from "../utils/time.js";
 import { addAudio, addText, addVideo, initDraft } from "./create.js";
 import { cmdKenBurns } from "./keyframe.js";
+import { registerDraft } from "./register.js";
 
 // =============================================================
 // YAML (subset) parser
@@ -548,17 +550,132 @@ function slugify(s: string): string {
 }
 
 function resolveTemplateDir(): string {
-  // dist/commands/pipeline.js → ../../templates/minimal at runtime; in dev (tsx)
-  // we resolve relative to src/commands/pipeline.ts. Both end up at <pkg>/templates/minimal.
-  const here = dirname(fileURLToPath(import.meta.url));
-  const candidates = [
-    resolve(here, "..", "..", "templates", "minimal"),
-    resolve(here, "..", "..", "..", "templates", "minimal"),
-  ];
-  for (const c of candidates) {
-    if (existsSync(resolve(c, "draft_content.json"))) return c;
+  // Thin wrapper that surfaces the shared helper's failure as a CliError.
+  try {
+    return resolveSharedTemplateDir();
+  } catch (e) {
+    die(e instanceof Error ? e.message : String(e));
   }
-  die("Bundled template not found. Expected templates/minimal/draft_content.json in package.");
+}
+
+// =============================================================
+// CapCut metadata file builders
+// CapCut indexes drafts by reading three files per project. We emit them
+// alongside draft_content.json so the freshly-built psycho draft is visible
+// in the CapCut UI without manual import.
+// =============================================================
+
+function buildDraftMetaInfo(opts: {
+  draftId: string;
+  draftName: string;
+  draftFoldPath: string;
+  draftRootPath: string;
+  totalDurationUs: number;
+}): Record<string, unknown> {
+  const now = nowUs();
+  return {
+    cloud_draft_cover: false,
+    cloud_draft_sync: false,
+    cloud_package_completed_time: "",
+    draft_cloud_capcut_purchase_info: "",
+    draft_cloud_last_action_download: false,
+    draft_cloud_package_type: "",
+    draft_cloud_purchase_info: "",
+    draft_cloud_template_id: "",
+    draft_cloud_tutorial_info: "",
+    draft_cloud_videocut_purchase_info: "",
+    draft_cover: "draft_cover.jpg",
+    draft_deeplink_url: "",
+    draft_enterprise_info: {
+      draft_enterprise_extra: "",
+      draft_enterprise_id: "",
+      draft_enterprise_name: "",
+      enterprise_material: [],
+    },
+    draft_fold_path: opts.draftFoldPath,
+    draft_id: opts.draftId,
+    draft_is_ae_produce: false,
+    draft_is_ai_packaging_used: false,
+    draft_is_ai_shorts: false,
+    draft_is_ai_translate: false,
+    draft_is_article_video_draft: false,
+    draft_is_cloud_temp_draft: false,
+    draft_is_from_deeplink: "false",
+    draft_is_invisible: false,
+    draft_is_web_article_video: false,
+    draft_materials: [
+      { type: 0, value: [] },
+      { type: 1, value: [] },
+      { type: 2, value: [] },
+      { type: 3, value: [] },
+      { type: 6, value: [] },
+      { type: 7, value: [] },
+      { type: 8, value: [] },
+    ],
+    draft_materials_copied_info: [],
+    draft_name: opts.draftName,
+    draft_need_rename_folder: false,
+    draft_new_version: "164.0.0",
+    draft_removable_storage_device: "",
+    draft_root_path: opts.draftRootPath,
+    draft_segment_extra_info: [],
+    draft_timeline_materials_size_: 0,
+    draft_type: "",
+    draft_web_article_video_enter_from: "",
+    tm_draft_cloud_completed: "",
+    tm_draft_cloud_entry_id: -1,
+    tm_draft_cloud_modified: 0,
+    tm_draft_cloud_parent_entry_id: -1,
+    tm_draft_cloud_space_id: -1,
+    tm_draft_cloud_user_id: -1,
+    tm_draft_create: now,
+    tm_draft_modified: now,
+    tm_draft_removed: 0,
+    tm_duration: opts.totalDurationUs,
+  };
+}
+
+function buildDraftInfo(opts: { draftId: string; width: number; height: number }): Record<string, unknown> {
+  return {
+    canvas_config: { height: opts.height, ratio: "original", width: opts.width, background: null },
+    color_space: 0,
+    config: {
+      adjust_max_index: 1,
+      attachment_info: [],
+      combination_max_index: 1,
+      export_range: null,
+      extract_audio_last_index: 1,
+      lyrics_recognition_id: "",
+      lyrics_sync: true,
+      lyrics_taskinfo: [],
+      maintrack_adsorb: true,
+      material_save_mode: 0,
+      multi_language_current: "none",
+      multi_language_list: [],
+      multi_language_main: "none",
+      multi_language_mode: "none",
+      original_sound_last_index: 1,
+      record_audio_last_index: 1,
+      sticker_max_index: 1,
+      subtitle_keywords_config: null,
+      subtitle_recognition_id: "",
+      subtitle_sync: true,
+      subtitle_taskinfo: [],
+      system_font_list: [],
+      video_mute: false,
+      voice_change_sync: false,
+      zoom_info_params: null,
+      use_float_render: false,
+    },
+    cover: "",
+    create_time: 0,
+    duration: 0,
+    id: opts.draftId,
+    new_version: "164.0.0",
+    platform: "windows",
+    update_time: 0,
+    version: 0,
+  };
 }
 
 // =============================================================
@@ -568,18 +685,28 @@ function resolveTemplateDir(): string {
 export interface PsychoBuildResult {
   draftPath: string;
   filePath: string;
+  metaInfoPath: string;
+  draftInfoPath: string;
   total_duration_us: number;
   images: number;
   voice: boolean;
   music: boolean;
   captions: number;
   seeded: boolean;
+  registered: boolean;
+  registerRootMetaPath?: string;
+}
+
+export interface PsychoBuildRegisterOpts {
+  register: boolean;
+  projectsRoot?: string;
 }
 
 export function psychoBuild(
   manifestPath: string,
   outOpt: string | undefined,
   seedOpt: string | undefined,
+  registerOpt?: PsychoBuildRegisterOpts,
 ): PsychoBuildResult {
   if (!existsSync(manifestPath)) die(`Manifest not found: ${manifestPath}`);
   const manifestAbs = resolve(manifestPath);
@@ -679,15 +806,49 @@ export function psychoBuild(
 
     saveDraft(filePath, draft);
 
+    // Emit CapCut's two sidecar metadata files so the draft is visible in the
+    // CapCut UI's project list. draft_content.json alone is not enough.
+    const draftFoldPath = draftPath;
+    const draftRootPath = dirname(draftPath);
+    const metaInfo = buildDraftMetaInfo({
+      draftId: draft.id,
+      draftName: name,
+      draftFoldPath,
+      draftRootPath,
+      totalDurationUs: totalUs,
+    });
+    const metaInfoPath = resolve(draftPath, "draft_meta_info.json");
+    writeFileSync(metaInfoPath, JSON.stringify(metaInfo, null, 0), "utf-8");
+
+    const draftInfo = buildDraftInfo({
+      draftId: draft.id,
+      width: manifest.resolution.width,
+      height: manifest.resolution.height,
+    });
+    const draftInfoPath = resolve(draftPath, "draft_info.json");
+    writeFileSync(draftInfoPath, JSON.stringify(draftInfo, null, 0), "utf-8");
+
+    let registered = false;
+    let registerRootMetaPath: string | undefined;
+    if (registerOpt?.register) {
+      const reg = registerDraft({ draftDir: draftPath, projectsRoot: registerOpt.projectsRoot });
+      registered = true;
+      registerRootMetaPath = reg.rootMetaPath;
+    }
+
     return {
       draftPath,
       filePath,
+      metaInfoPath,
+      draftInfoPath,
       total_duration_us: totalUs,
       images: imageCount,
       voice: !!manifest.voice,
       music: !!manifest.music,
       captions: captionCount,
       seeded: effectiveSeed !== undefined,
+      registered,
+      registerRootMetaPath,
     };
   } finally {
     setUuidProvider(null);
@@ -696,19 +857,29 @@ export function psychoBuild(
 
 export function cmdPsychoBuild(positional: string[], flags: Flags): void {
   const manifestPath = positional[1];
-  if (!manifestPath) die("Usage: capcut-david psycho-build <manifest.yaml> [--out <dir>] [--seed <n>]");
-  const result = psychoBuild(manifestPath, flags.out, flags.seed);
+  if (!manifestPath)
+    die(
+      "Usage: capcut-david psycho-build <manifest.yaml> [--out <dir>] [--seed <n>] [--register] [--projects-root <dir>]",
+    );
+  const registerOpt: PsychoBuildRegisterOpts | undefined = flags.register
+    ? { register: true, projectsRoot: flags.projectsRoot }
+    : undefined;
+  const result = psychoBuild(manifestPath, flags.out, flags.seed, registerOpt);
   out(
     {
       ok: true,
       draft_path: result.draftPath,
       file_path: result.filePath,
+      meta_info_path: result.metaInfoPath,
+      draft_info_path: result.draftInfoPath,
       total_duration_us: result.total_duration_us,
       images: result.images,
       voice: result.voice,
       music: result.music,
       captions: result.captions,
       seeded: result.seeded,
+      registered: result.registered,
+      register_root_meta_path: result.registerRootMetaPath,
     },
     flags,
   );

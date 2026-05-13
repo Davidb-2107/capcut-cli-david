@@ -6,7 +6,7 @@ import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { basename, dirname, resolve, join } from "node:path";
 
-import { addAudio, addText, addVideo, initDraft } from "../dist/commands/create.js";
+import { addAudio, addEffect, addText, addVideo, initDraft } from "../dist/commands/create.js";
 import { loadDraft, saveDraft } from "../dist/draft.js";
 
 import { FIXTURES, fixturePath } from "./helpers/load-fixture.mjs";
@@ -72,6 +72,26 @@ test("init (CLI): missing <name> arg returns CliError with status=1", () => {
   strictEqual(r.status, 1);
   ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
   match(r.errorJson.error, /Missing name/i);
+});
+
+// Regression: Bug #2 from master plan — `init` looked for a non-existent
+// `dist/CapCutAPI/template` path. After the 1.1.0 fix it must default to the
+// bundled `templates/minimal/` and work without --template.
+test("init (CLI): defaults to bundled template when --template is omitted", (t) => {
+  const draftsDir = makeScratchDir(t);
+  const name = "default-template-init";
+  // Provide --drafts but NOT --template — exercises the default template path.
+  const r = runCli(["init", name, "--drafts", draftsDir]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  ok(r.json, `expected JSON on stdout, got: ${r.stdout}`);
+  strictEqual(r.json.ok, true);
+
+  const draftPath = resolve(draftsDir, name);
+  ok(existsSync(draftPath), "draft dir should be created in draftsDir");
+  ok(
+    existsSync(resolve(draftPath, "draft_content.json")),
+    "default template must populate draft_content.json"
+  );
 });
 
 test("init: initDraft throws when target draft directory already exists", (t) => {
@@ -385,4 +405,147 @@ test("add-video: .png extension uses materialType='photo'", (t) => {
   const mat = draft.materials.videos.find((m) => m.id === result.materialId);
   strictEqual(mat.type, "photo", ".png should map to photo materialType");
   strictEqual(mat.has_audio, false, "photo materials should have has_audio=false");
+});
+
+// =============================================================
+// add-effect / addEffect
+// =============================================================
+
+const VHS_HORROR_ID = "7583016187584417032";
+
+test("add-effect: registers video_effect material + effect track + segment", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const { draft } = loadDraft(filePath);
+
+  const effectsBefore = draft.materials.video_effects?.length ?? 0;
+  const tracksBefore = draft.tracks.length;
+
+  const result = addEffect(draft, filePath, {
+    resourceId: VHS_HORROR_ID,
+    name: "VHS Horror",
+    start: 0,
+    duration: 5_000_000,
+  });
+
+  match(result.segmentId, UUID_RE);
+  match(result.materialId, UUID_RE);
+  match(result.trackId, UUID_RE);
+
+  strictEqual(draft.tracks.length, tracksBefore + 1, "should add one effect track");
+  const effectTrack = draft.tracks.find((tr) => tr.id === result.trackId);
+  ok(effectTrack, "effect track should be findable by id");
+  strictEqual(effectTrack.type, "effect");
+  strictEqual(effectTrack.segments.length, 1);
+  strictEqual(effectTrack.segments[0].id, result.segmentId);
+
+  const seg = effectTrack.segments[0];
+  strictEqual(seg.material_id, result.materialId);
+  strictEqual(seg.target_timerange.start, 0);
+  strictEqual(seg.target_timerange.duration, 5_000_000);
+  strictEqual(seg.clip, null, "effect segment should have null clip");
+
+  strictEqual(
+    (draft.materials.video_effects ?? []).length,
+    effectsBefore + 1,
+    "should add one video_effect material",
+  );
+  const mat = (draft.materials.video_effects ?? []).find((m) => m.id === result.materialId);
+  ok(mat, "video_effect material should be present");
+  strictEqual(mat.name, "VHS Horror");
+  strictEqual(mat.resource_id, VHS_HORROR_ID);
+  strictEqual(mat.type, "video_effect");
+  strictEqual(mat.value, 1.0);
+  strictEqual(mat.apply_target_type, 2, "default should be global/track-wide");
+
+  // Persistence
+  saveDraft(filePath, draft);
+  const { draft: reloaded } = loadDraft(filePath);
+  ok(
+    reloaded.materials.video_effects?.some((m) => m.id === result.materialId),
+    "video_effect material should persist through save+load",
+  );
+  ok(
+    reloaded.tracks.some((tr) => tr.id === result.trackId),
+    "effect track should persist through save+load",
+  );
+});
+
+test("add-effect: with --bind creates segment-specific effect (apply_target_type=0)", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
+  const { draft } = loadDraft(filePath);
+
+  const firstSegId = draft.tracks.find((tr) => tr.type === "video")?.segments[0]?.id;
+  ok(firstSegId, "fixture should have at least one video segment to bind to");
+
+  const result = addEffect(draft, filePath, {
+    resourceId: VHS_HORROR_ID,
+    name: "VHS Horror",
+    start: 0,
+    duration: 3_000_000,
+    bindSegmentId: firstSegId,
+  });
+
+  const mat = (draft.materials.video_effects ?? []).find((m) => m.id === result.materialId);
+  ok(mat);
+  strictEqual(mat.apply_target_type, 0, "bound effect should have apply_target_type=0");
+  strictEqual(mat.bind_segment_id, firstSegId, "bind_segment_id should match");
+});
+
+test("add-effect: custom --value is written to material", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const { draft } = loadDraft(filePath);
+
+  const result = addEffect(draft, filePath, {
+    resourceId: VHS_HORROR_ID,
+    name: "VHS Horror",
+    start: 0,
+    duration: 3_000_000,
+    value: 0.5,
+  });
+
+  const mat = (draft.materials.video_effects ?? []).find((m) => m.id === result.materialId);
+  ok(mat);
+  strictEqual(mat.value, 0.5, "value should be 0.5");
+});
+
+test("add-effect (CLI happy): spawns, writes JSON, persists to disk", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const r = runCli(["add-effect", filePath, VHS_HORROR_ID, "VHS Horror", "0", "5s"]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  ok(r.json, `expected JSON on stdout, got: ${r.stdout}`);
+  strictEqual(r.json.ok, true);
+  match(r.json.segment_id, UUID_RE);
+  match(r.json.material_id, UUID_RE);
+  match(r.json.track_id, UUID_RE);
+  strictEqual(r.json.resource_id, VHS_HORROR_ID);
+  strictEqual(r.json.name, "VHS Horror");
+  strictEqual(r.json.value, 1.0);
+  strictEqual(r.json.start_us, 0);
+  strictEqual(r.json.duration_us, 5_000_000);
+
+  const after = JSON.parse(readFileSync(filePath, "utf-8"));
+  ok(
+    after.materials.video_effects?.some((m) => m.id === r.json.material_id),
+    "video_effect material should be persisted",
+  );
+  ok(
+    after.tracks.some((tr) => tr.id === r.json.track_id),
+    "effect track should be persisted",
+  );
+});
+
+test("add-effect (CLI): missing args returns error", () => {
+  const fixture = fixturePath(FIXTURES.MINIMAL);
+  const r = runCli(["add-effect", fixture]);
+  strictEqual(r.status, 1);
+  ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
+  match(r.errorJson.error, /Usage: capcut-david add-effect/i);
+});
+
+test("add-effect (CLI): --value out of range returns error", () => {
+  const fixture = fixturePath(FIXTURES.MINIMAL);
+  const r = runCli(["add-effect", fixture, VHS_HORROR_ID, "Test", "0", "3s", "--value", "2.5"]);
+  strictEqual(r.status, 1);
+  ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
+  match(r.errorJson.error, /--value must be a number in range/i);
 });
