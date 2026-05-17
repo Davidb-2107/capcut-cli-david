@@ -11,7 +11,7 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
-## [1.1.0] — 2026-05-12
+## [1.1.0] — 2026-05-17
 
 First minor after 1.0 graduation. Closes the two post-1.0 bugs filed against the published surface: `psycho-build` drafts now appear in CapCut's UI (Bug #1), and `init` works out-of-the-box without `--template` (Bug #2). Additive only — no breaking changes.
 
