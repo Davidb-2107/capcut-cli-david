@@ -1,5 +1,6 @@
+import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
 import { defaultProjectsRoot, nowUs } from "../utils/capcut-paths.js";
 import { die, type Flags, out } from "../utils/cli.js";
 
@@ -114,9 +115,6 @@ export function registerDraft(opts: RegisterOptions): RegisterResult {
     );
   }
   const meta = JSON.parse(readFileSync(metaPath, "utf-8")) as Record<string, unknown>;
-  const draftId = typeof meta.draft_id === "string" ? meta.draft_id : "";
-  const draftName = typeof meta.draft_name === "string" ? meta.draft_name : "";
-  if (!draftId || !draftName) die(`draft_meta_info.json in ${draftDir} is missing draft_id or draft_name.`);
 
   const projectsRoot = resolve(opts.projectsRoot ?? defaultProjectsRoot());
   if (!existsSync(projectsRoot)) mkdirSync(projectsRoot, { recursive: true });
@@ -134,7 +132,36 @@ export function registerDraft(opts: RegisterOptions): RegisterResult {
     root = { all_draft_store: [], draft_ids: [], root_path: projectsRoot };
   }
 
-  if (root.all_draft_store.some((e) => e.draft_id === draftId)) {
+  // Identity comes from the directory on disk, never the (possibly stale)
+  // sidecar — a draft generated at path A then copied to path B still
+  // carries A's name/path in draft_meta_info.json.
+  const draftName = basename(draftDir);
+  let draftId = typeof meta.draft_id === "string" && meta.draft_id ? meta.draft_id : randomUUID();
+  // Same draft_id already used by a *different* folder (e.g. `cp -r`) ⇒
+  // this copy needs its own id or CapCut collapses them.
+  if (root.all_draft_store.some((e) => e.draft_id === draftId && e.draft_fold_path !== draftDir)) {
+    draftId = randomUUID();
+  }
+
+  // Keep the sidecar consistent with where the draft actually lives so
+  // CapCut and root_meta_info.json agree.
+  let sidecarDirty = false;
+  if (meta.draft_name !== draftName) {
+    meta.draft_name = draftName;
+    sidecarDirty = true;
+  }
+  if (meta.draft_fold_path !== draftDir) {
+    meta.draft_fold_path = draftDir;
+    sidecarDirty = true;
+  }
+  if (meta.draft_id !== draftId) {
+    meta.draft_id = draftId;
+    sidecarDirty = true;
+  }
+  if (sidecarDirty) writeFileSync(metaPath, JSON.stringify(meta), "utf-8");
+
+  // Idempotent on the on-disk location: re-registering the same dir is a no-op.
+  if (root.all_draft_store.some((e) => e.draft_fold_path === draftDir)) {
     return { draftId, draftName, rootMetaPath, added: false };
   }
 

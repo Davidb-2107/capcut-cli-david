@@ -153,3 +153,80 @@ test("cli: register on second call reports added=false", (t) => {
   strictEqual(r2.status, 0);
   strictEqual(r2.json.added, false);
 });
+
+// --- Bug #3: register must re-derive name/path from the dir, not trust the sidecar ---
+
+test("register: copied draft re-derives draft_name + draft_fold_path from the target dir", (t) => {
+  // A draft generated at "origin-A", then copied to a differently-named folder.
+  // The copied sidecar still carries origin-A's name + path (stale).
+  const { projectsRoot, draftDir: originDir } = makeFakeDraft(t, "origin-A");
+  const copiedDir = resolve(projectsRoot, "copied-B");
+  mkdirSync(copiedDir, { recursive: true });
+  writeFileSync(
+    resolve(copiedDir, "draft_meta_info.json"),
+    readFileSync(resolve(originDir, "draft_meta_info.json"), "utf-8"),
+    "utf-8",
+  );
+  writeFileSync(
+    resolve(copiedDir, "draft_content.json"),
+    readFileSync(resolve(originDir, "draft_content.json"), "utf-8"),
+    "utf-8",
+  );
+
+  const result = registerDraft({ draftDir: copiedDir, projectsRoot });
+
+  strictEqual(result.added, true);
+  strictEqual(result.draftName, "copied-B", "draftName must come from the dir basename, not the stale sidecar");
+
+  const root = JSON.parse(readFileSync(result.rootMetaPath, "utf-8"));
+  strictEqual(root.all_draft_store.length, 1);
+  const entry = root.all_draft_store[0];
+  strictEqual(entry.draft_name, "copied-B", "entry.draft_name must be the new folder name");
+  strictEqual(entry.draft_fold_path, copiedDir, "entry.draft_fold_path must be the resolved target dir");
+
+  // The sidecar in the copied folder must be rewritten so CapCut and the
+  // entry agree on where the draft lives.
+  const sidecar = JSON.parse(readFileSync(resolve(copiedDir, "draft_meta_info.json"), "utf-8"));
+  strictEqual(sidecar.draft_name, "copied-B");
+  strictEqual(sidecar.draft_fold_path, copiedDir);
+});
+
+test("register: draft_id colliding with a different folder gets a fresh id; both indexed", (t) => {
+  const collidingId = "AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEEEEEE";
+  const { projectsRoot, draftDir: dirAlpha } = makeFakeDraft(t, "alpha", { draft_id: collidingId });
+  const firstRoot = resolve(projectsRoot, "root_meta_info.json");
+
+  const a = registerDraft({ draftDir: dirAlpha, projectsRoot });
+  strictEqual(a.added, true);
+
+  // A second, DIFFERENT draft that happens to carry the same draft_id
+  // (e.g. produced by `cp -r` of the first). It must still get indexed.
+  const dirBeta = resolve(projectsRoot, "beta");
+  mkdirSync(dirBeta, { recursive: true });
+  writeFileSync(
+    resolve(dirBeta, "draft_meta_info.json"),
+    JSON.stringify({
+      draft_id: collidingId,
+      draft_name: "alpha",
+      draft_fold_path: dirAlpha,
+      tm_draft_create: Date.now() * 1000,
+      tm_duration: 9_000_000,
+    }),
+    "utf-8",
+  );
+  writeFileSync(resolve(dirBeta, "draft_content.json"), JSON.stringify({ id: collidingId }), "utf-8");
+
+  const b = registerDraft({ draftDir: dirBeta, projectsRoot });
+  strictEqual(b.added, true, "beta must be indexed despite id collision");
+  ok(b.draftId !== collidingId, "beta must receive a fresh draft_id");
+  ok(UUID_RE.test(b.draftId), "fresh draft_id must be a v4 UUID");
+
+  const root = JSON.parse(readFileSync(firstRoot, "utf-8"));
+  strictEqual(root.all_draft_store.length, 2, "both alpha and beta must be present");
+  ok(root.all_draft_store.some((e) => e.draft_fold_path === dirAlpha));
+  ok(root.all_draft_store.some((e) => e.draft_fold_path === dirBeta));
+
+  // beta's sidecar must be rewritten with the fresh id so it stays consistent.
+  const betaSidecar = JSON.parse(readFileSync(resolve(dirBeta, "draft_meta_info.json"), "utf-8"));
+  strictEqual(betaSidecar.draft_id, b.draftId);
+});

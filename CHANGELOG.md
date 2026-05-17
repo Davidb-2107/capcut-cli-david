@@ -11,6 +11,16 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.1.1] — 2026-05-17
+
+Patch fixing Bug #3, found during end-to-end verification of 1.1.0: the standalone `register` command failed on copied or moved drafts. Additive bugfix — no breaking changes, `draft_content.json` output byte-identical.
+
+### Fixed
+- **Bug #3** — `capcut-david register <dir>` trusted the target's `draft_meta_info.json` for `draft_name` / `draft_fold_path` instead of re-deriving them from the directory argument. A draft generated at path A then copied to CapCut path B kept A's name and path, so the `root_meta_info.json` entry pointed at the wrong location and CapCut couldn't open it. Dedup was also keyed on `draft_id`; a `cp -r` keeps the same id, so `register` returned `{"added": false}` and indexed nothing. Fix: `register` now derives `draft_name` from `basename(<dir>)` and `draft_fold_path` from the resolved absolute `<dir>`, rewrites the sidecar to match, regenerates a fresh `draft_id` when it collides with a *different* folder, and dedups on `draft_fold_path`. The `psycho-build --out <dir> --register` one-shot is unaffected (verified — it already writes a correct `--out`-derived sidecar before registering).
+
+### Changed
+- `register` idempotency key changed from `draft_id` to `draft_fold_path` (supersedes the "Idempotent on `draft_id`" note in [1.1.0]). Re-registering the same directory is still a no-op (`added: false`); registering a different directory that carries a duplicate `draft_id` now succeeds with a freshly generated id instead of being silently skipped. `register` also rewrites the target's `draft_meta_info.json` (`draft_name` / `draft_fold_path` / `draft_id`) so the sidecar stays consistent with the draft's on-disk location.
+
 ## [1.1.0] — 2026-05-17
 
 First minor after 1.0 graduation. Closes the two post-1.0 bugs filed against the published surface: `psycho-build` drafts now appear in CapCut's UI (Bug #1), and `init` works out-of-the-box without `--template` (Bug #2). Additive only — no breaking changes.
