@@ -396,7 +396,58 @@ test("cmdKenBurns: curve override changes control points", (t) => {
 
   deepStrictEqual(linearStart.right_control, { x: 0, y: 0 });
   notStrictEqual(easeStart.right_control.x, 0);
-  strictEqual(easeStart.right_control.y, -0.47);
+  strictEqual(easeStart.right_control.y, 0.47);
+});
+
+test("cmdKenBurns: ease-out start.right_control.y = round(0.94 × Δ) — zoom-in 1.0→1.12", (t) => {
+  const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
+  const { draft } = loadDraft(filePath);
+  const { seg } = firstVideoSegment(draft);
+
+  cmdKenBurns(draft, filePath, seg.id, "1.0", "1.12", "ease-out", flagsQuiet);
+
+  const scaleX = seg.common_keyframes.find((c) => c.property_type === "KFTypeScaleX");
+  const start = scaleX.keyframe_list[0];
+  const end = scaleX.keyframe_list[1];
+  const dur = seg.target_timerange.duration;
+
+  // Δ = 1.12 − 1.0 = 0.12 ; round(0.94 × 0.12, 6) = 0.1128 (NOT the legacy fixed -0.47)
+  strictEqual(start.right_control.y, 0.1128);
+  strictEqual(start.right_control.x, Math.round(0.32 * dur));
+  deepStrictEqual(start.left_control, { x: 0, y: 0 });
+  strictEqual(end.left_control.y, 0);
+  deepStrictEqual(end.right_control, { x: 0, y: 0 });
+});
+
+test("cmdKenBurns: ease-out Δ=-0.5 preserves canonical Cubic Out y = -0.47 (parity lock)", (t) => {
+  const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
+  const { draft } = loadDraft(filePath);
+  const { seg } = firstVideoSegment(draft);
+
+  cmdKenBurns(draft, filePath, seg.id, "1.5", "1.0", "ease-out", flagsQuiet);
+
+  const start = seg.common_keyframes.find((c) => c.property_type === "KFTypeScaleX").keyframe_list[0];
+  // round(0.94 × (1.0 − 1.5), 6) = round(0.94 × -0.5, 6) = -0.47 : the proven ground-truth value.
+  strictEqual(start.right_control.y, -0.47);
+});
+
+test("cmdKenBurns: ease-out start.right_control.y is sign-symmetric in Δ", (t) => {
+  const { filePath: fIn } = tmpDraft(CLEAN_FIXTURE, t);
+  const { filePath: fOut } = tmpDraft(CLEAN_FIXTURE, t);
+  const { draft: dIn } = loadDraft(fIn);
+  const { draft: dOut } = loadDraft(fOut);
+  const { seg: segIn } = firstVideoSegment(dIn);
+  const { seg: segOut } = firstVideoSegment(dOut);
+
+  cmdKenBurns(dIn, fIn, segIn.id, "1.0", "1.5", "ease-out", flagsQuiet); // Δ = +0.5
+  cmdKenBurns(dOut, fOut, segOut.id, "1.5", "1.0", "ease-out", flagsQuiet); // Δ = -0.5
+
+  const yIn = segIn.common_keyframes.find((c) => c.property_type === "KFTypeScaleX").keyframe_list[0].right_control.y;
+  const yOut = segOut.common_keyframes.find((c) => c.property_type === "KFTypeScaleX").keyframe_list[0].right_control.y;
+
+  strictEqual(yIn, 0.47);
+  strictEqual(yOut, -0.47);
+  strictEqual(yIn, -yOut);
 });
 
 // ---------------------------------------------------------------------------

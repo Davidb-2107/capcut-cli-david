@@ -18,12 +18,15 @@ export const PROPERTY_MAP: Record<string, string> = {
 };
 
 // Bezier handle profile per curve. Handle x is expressed as a ratio of the
-// interval between adjacent keyframes (in microseconds); y is the easing
-// factor (dimensionless). The `ease-out` profile is derived empirically from
-// the "Cubic Out" preset embedded in test-fixtures/fixtures/ken-burns-draft.json:
+// interval between adjacent keyframes (in microseconds). Handle y is NOT a
+// fixed absolute: CapCut's "Cubic Out" preset writes
+//   start.right_control.y = ratio × Δvalue   (Δ = end.value − start.value),
+// where ratio ≈ 0.94 (see KEN_BURNS_CUBIC_OUT_RIGHT_Y_RATIO). The -0.47 in
+// test-fixtures/fixtures/ken-burns-draft.json is only the Δ=-0.5 case (that
+// fixture zooms 1.5 → 1.0): 0.94 × -0.5 = -0.47. end.left_control.y = 0.
+// x ratios, empirically from the same fixture:
 //   - start.right_control.x / interval =  234667 / 733333 ≈ +0.32
 //   - end.left_control.x   / interval = -293333 / 733333 ≈ -0.4
-//   - start.right_control.y = -0.47 ; end.left_control.y = 0
 // Other curves use CSS cubic-bezier(P1.x, P1.y, P2.x, P2.y) interior handles
 // remapped from a normalized [0,1] interval onto absolute microseconds.
 interface CurveProfile {
@@ -36,11 +39,25 @@ interface CurveProfile {
 const CURVE_PROFILES: Record<CurveName, CurveProfile> = {
   linear: { startRightXRatio: 0, startRightY: 0, endLeftXRatio: 0, endLeftY: 0 },
   "ease-in": { startRightXRatio: 0.42, startRightY: 0, endLeftXRatio: 0, endLeftY: 0 },
+  // NOTE: startRightY: -0.47 is a LEGACY FIXED value consumed ONLY by
+  // computeControlPoints (the cmdAddKeyframe path — intentionally NOT made
+  // Δ-scaled here: no proven ground truth for the incremental path). cmdKenBurns
+  // ignores this field for "ease-out" and derives y = ratio × Δ via
+  // KEN_BURNS_CUBIC_OUT_RIGHT_Y_RATIO. Do not "simplify" the two to agree.
   "ease-out": { startRightXRatio: 0.32, startRightY: -0.47, endLeftXRatio: -0.4, endLeftY: 0 },
   "ease-in-out": { startRightXRatio: 0.42, startRightY: 0, endLeftXRatio: -0.42, endLeftY: 0 },
 };
 
 export const KEN_BURNS_DEFAULT_CURVE: CurveName = "ease-out";
+
+// CapCut "Cubic Out": the first keyframe of a pair encodes
+//   start.right_control.y = ratio × Δvalue   (Δ = toVal − fromVal),
+// NOT a fixed absolute. The historically hard-coded -0.47 was only the
+// Δ = -0.5 special case (0.94 × -0.5). Proven by:
+//   - CapCut-ZoomFX/Tools/tests/fixtures/cubic-out-groundtruth.json (real capture)
+//   - cutcli-fix tools/cutcli-fix/curves.py (CUBIC_OUT_RIGHT_CONTROL_KF1_RATIOS.y)
+//   - CapCut-ZoomFX/docs/superpowers/2026-05-19-cubic-out-parity-findings.md
+export const KEN_BURNS_CUBIC_OUT_RIGHT_Y_RATIO = 0.94;
 
 interface ControlPoint {
   x: number;
@@ -226,9 +243,11 @@ export function cmdKenBurns(
   }
 
   const profile = CURVE_PROFILES[curve];
+  const dv = toVal - fromVal; // validated above: finite, non-zero, fromVal/toVal > 0
   const startRight: ControlPoint = {
     x: Math.round(profile.startRightXRatio * duration),
-    y: profile.startRightY,
+    // CapCut "Cubic Out": y = ratio × Δvalue, NOT a fixed absolute (Δ=-0.5 → -0.47).
+    y: curve === "ease-out" ? Math.round(KEN_BURNS_CUBIC_OUT_RIGHT_Y_RATIO * dv * 1e6) / 1e6 : profile.startRightY,
   };
   const endLeft: ControlPoint = {
     x: Math.round(profile.endLeftXRatio * duration),
