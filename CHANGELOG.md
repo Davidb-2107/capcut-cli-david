@@ -25,7 +25,7 @@ Minor release. Corrects a latent easing bug in `ken-burns`: the start keyframe's
 - CapCut ≥ 5.x desktop (Windows + macOS), JianYing 6+ unsupported — unchanged.
 - Node `>= 18` — unchanged.
 - Runtime dependencies: zero — unchanged.
-- 3 new tests (196 tracked tests). All tracked tests pass (the pre-existing `cmdKenBurns: curve override changes control points` assertion was corrected from `-0.47` to `0.47` — it had encoded the bug). Aggregate coverage stays above the 80% gate.
+- 3 new tests (199 tracked tests). All tracked tests pass (the pre-existing `cmdKenBurns: curve override changes control points` assertion was corrected from `-0.47` to `0.47` — it had encoded the bug). Aggregate coverage stays above the 80% gate.
 - `draft_content.json` output is **not** byte-identical to 1.1.1 for `ken-burns` with `to − from ≠ -0.5` (intended correctness fix; see **Changed**).
 
 ## [1.1.1] — 2026-05-17
