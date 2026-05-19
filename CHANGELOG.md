@@ -11,6 +11,23 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.2.0] — 2026-05-19
+
+Minor release. Corrects a latent easing bug in `ken-burns`: the start keyframe's outgoing Bezier handle `y` was a fixed absolute (`-0.47`) regardless of the zoom range, so easing was wrong for every range except exactly `to − from = -0.5`. **Not** byte-identical for `Δ ≠ -0.5` (hence minor, not patch) — see **Changed**.
+
+### Fixed
+- **`ken-burns` ease-out easing** — `cmdKenBurns` wrote `start.right_control.y = -0.47` (the `CURVE_PROFILES["ease-out"]` fixed value) for every zoom, ignoring the value delta. CapCut's "Cubic Out" preset encodes `start.right_control.y = round(0.94 × (toVal − fromVal), 6)`; the `-0.47` was only the `Δ = -0.5` special case (a `1.5 → 1.0` zoom). A zoom-in `1.0 → 1.12` (`Δ = +0.12`) was getting `-0.47` instead of `0.1128` — a grossly wrong curve. Fix: `cmdKenBurns` now derives `y` from `0.94 × Δ` for `ease-out` (other curves keep their profile `y`, all `0`). Validated against the real-capture ground truth (`CapCut-ZoomFX/Tools/tests/fixtures/cubic-out-groundtruth.json`) and the cutcli-fix parity model. The incremental `add-keyframe` / `computeControlPoints` path is intentionally **not** changed (no proven ground truth there) — see release note backlog.
+
+### Changed
+- `ken-burns` draft output: `start.right_control.y` now varies with the zoom delta (`round(0.94 × (to − from), 6)`). Output is byte-identical to 1.1.1 **only** when `to − from = -0.5` (e.g. `1.5 → 1.0`); for any other range the value changes (from the previously-wrong `-0.47` to the correct Δ-scaled value). `start.right_control.x`, `end.left_control`, the `x` ratios, and all non-`ease-out` curves are unchanged. `cmdAddKeyframe` output is byte-identical.
+
+### Compatibility
+- CapCut ≥ 5.x desktop (Windows + macOS), JianYing 6+ unsupported — unchanged.
+- Node `>= 18` — unchanged.
+- Runtime dependencies: zero — unchanged.
+- 3 new tests (196 tracked tests). All tracked tests pass (the pre-existing `cmdKenBurns: curve override changes control points` assertion was corrected from `-0.47` to `0.47` — it had encoded the bug). Aggregate coverage stays above the 80% gate.
+- `draft_content.json` output is **not** byte-identical to 1.1.1 for `ken-burns` with `to − from ≠ -0.5` (intended correctness fix; see **Changed**).
+
 ## [1.1.1] — 2026-05-17
 
 Patch fixing Bug #3, found during end-to-end verification of 1.1.0: the standalone `register` command failed on copied or moved drafts. Additive bugfix — no breaking changes, `draft_content.json` output byte-identical.
