@@ -338,7 +338,9 @@ First release of the fork. Baseline = upstream `capcut-cli@0.2.2` (commit `c9223
 - Node ≥ 18; CI matrix covers Node 18, 20, 22.
 - JianYing 6+ remains unsupported (encrypted `draft_content.json` — see `COMPATIBILITY.md` §5).
 
-[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.1.1...v1.2.0
+[1.1.1]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.0.0-rc.1...v1.0.0
 [1.0.0-rc.1]: https://github.com/Davidb-2107/capcut-cli-david/compare/v0.5.0...v1.0.0-rc.1
