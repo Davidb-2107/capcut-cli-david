@@ -18,13 +18,20 @@ export const PROPERTY_MAP: Record<string, string> = {
 };
 
 // Bezier handle profile per curve. Handle x is expressed as a ratio of the
-// interval between adjacent keyframes (in microseconds). Handle y is NOT a
-// fixed absolute: CapCut's "Cubic Out" preset writes
-//   start.right_control.y = ratio × Δvalue   (Δ = end.value − start.value),
-// where ratio ≈ 0.94 (see KEN_BURNS_CUBIC_OUT_RIGHT_Y_RATIO). The -0.47 in
-// test-fixtures/fixtures/ken-burns-draft.json is only the Δ=-0.5 case (that
-// fixture zooms 1.5 → 1.0): 0.94 × -0.5 = -0.47. end.left_control.y = 0.
-// x ratios, empirically from the same fixture:
+// interval between adjacent keyframes (in microseconds). Handle y for the
+// "ease-out" curve is NOT a fixed absolute: CapCut's "Cubic Out" preset
+// writes start.right_control.y = round(0.94 × Δvalue, 6), where
+// Δ = rightKf.value − leftKf.value. The historical -0.47 was only the
+// Δ = -0.5 case (0.94 × -0.5). end.left_control.y = 0 across all supported
+// curves.
+//
+// Both code paths converge on this model via the shared helper
+// computeSegmentHandles:
+//   - cmdKenBurns (v1.2.0+) — pair-construction path
+//   - cmdAddKeyframe (v1.3.0+) — incremental path with retro-update of
+//     neighbor handles on insertion
+//
+// x ratios, empirically from test-fixtures/fixtures/ken-burns-draft.json:
 //   - start.right_control.x / interval =  234667 / 733333 ≈ +0.32
 //   - end.left_control.x   / interval = -293333 / 733333 ≈ -0.4
 // Other curves use CSS cubic-bezier(P1.x, P1.y, P2.x, P2.y) interior handles
@@ -39,12 +46,10 @@ interface CurveProfile {
 const CURVE_PROFILES: Record<CurveName, CurveProfile> = {
   linear: { startRightXRatio: 0, startRightY: 0, endLeftXRatio: 0, endLeftY: 0 },
   "ease-in": { startRightXRatio: 0.42, startRightY: 0, endLeftXRatio: 0, endLeftY: 0 },
-  // NOTE: startRightY: -0.47 is a LEGACY FIXED value consumed ONLY by
-  // computeControlPoints (the cmdAddKeyframe path — intentionally NOT made
-  // Δ-scaled here: no proven ground truth for the incremental path). cmdKenBurns
-  // ignores this field for "ease-out" and derives y = ratio × Δ via
-  // KEN_BURNS_CUBIC_OUT_RIGHT_Y_RATIO. Do not "simplify" the two to agree.
-  "ease-out": { startRightXRatio: 0.32, startRightY: -0.47, endLeftXRatio: -0.4, endLeftY: 0 },
+  // ease-out: Δ-scaled y comes from KEN_BURNS_CUBIC_OUT_RIGHT_Y_RATIO via
+  // computeSegmentHandles (shared model with cmdKenBurns). startRightY=0
+  // here is intentionally the no-op fallback — never consumed for ease-out.
+  "ease-out": { startRightXRatio: 0.32, startRightY: 0, endLeftXRatio: -0.4, endLeftY: 0 },
   "ease-in-out": { startRightXRatio: 0.42, startRightY: 0, endLeftXRatio: -0.42, endLeftY: 0 },
 };
 
@@ -138,23 +143,49 @@ function computeSegmentHandles(
   };
 }
 
-function computeControlPoints(
+// Compute control points for a newly inserted/replaced keyframe, AND
+// produce retro-update payloads for the two neighbors (prev.right and
+// next.left) so the curve specified at insertion applies coherently to
+// both adjacent segments (prev→new and new→next).
+//
+// Semantics: the curve of the inserted kf wins on its two adjacent
+// segments — aligned with CapCut UI behavior. Δ-scaling for right.y is
+// ease-out only (cf. KEN_BURNS_CUBIC_OUT_RIGHT_Y_RATIO); other curves
+// keep right.y = 0. x is always interval × ratio.
+//
+// Edge cases:
+//   - no prev → newLeft = {0, 0}, no prevRetro.
+//   - no next → newRight = {0, 0}, no nextRetro.
+//   - solitary kf → left = right = {0, 0} (no segment to encode).
+function computeKfHandlesAndRetroUpdates(
   curve: CurveName,
   timeOffset: number,
-  segDuration: number,
+  value: number,
   kfList: Keyframe[],
-): { left: ControlPoint; right: ControlPoint } {
-  if (curve === "linear") {
-    return { left: { x: 0, y: 0 }, right: { x: 0, y: 0 } };
-  }
-  const profile = CURVE_PROFILES[curve];
+): {
+  newLeft: ControlPoint;
+  newRight: ControlPoint;
+  prevRetro: { kf: Keyframe; right: ControlPoint } | null;
+  nextRetro: { kf: Keyframe; left: ControlPoint } | null;
+} {
   const prev = kfList.filter((k) => k.time_offset < timeOffset).sort((a, b) => b.time_offset - a.time_offset)[0];
   const next = kfList.filter((k) => k.time_offset > timeOffset).sort((a, b) => a.time_offset - b.time_offset)[0];
-  const intervalLeft = prev ? timeOffset - prev.time_offset : Math.max(1, timeOffset);
-  const intervalRight = next ? next.time_offset - timeOffset : Math.max(1, segDuration - timeOffset);
+
+  const leftSegment = prev
+    ? computeSegmentHandles(curve, prev.values[0], value, timeOffset - prev.time_offset)
+    : null;
+  const rightSegment = next
+    ? computeSegmentHandles(curve, value, next.values[0], next.time_offset - timeOffset)
+    : null;
+
+  const newLeft: ControlPoint = leftSegment ? leftSegment.rightKfLeft : { x: 0, y: 0 };
+  const newRight: ControlPoint = rightSegment ? rightSegment.leftKfRight : { x: 0, y: 0 };
+
   return {
-    left: { x: Math.round(profile.endLeftXRatio * intervalLeft), y: profile.endLeftY },
-    right: { x: Math.round(profile.startRightXRatio * intervalRight), y: profile.startRightY },
+    newLeft,
+    newRight,
+    prevRetro: prev && leftSegment ? { kf: prev, right: leftSegment.leftKfRight } : null,
+    nextRetro: next && rightSegment ? { kf: next, left: rightSegment.rightKfLeft } : null,
   };
 }
 
@@ -207,8 +238,11 @@ export function cmdAddKeyframe(
 
   const container = getOrCreateContainer(seg, kfType);
   const kfList = container.keyframe_list;
-  const { left, right } = computeControlPoints(curve, timeOffset, segDuration, kfList);
-  const kf = makeKeyframe(timeOffset, value, left, right);
+  const { newLeft, newRight, prevRetro, nextRetro } =
+    computeKfHandlesAndRetroUpdates(curve, timeOffset, value, kfList);
+  if (prevRetro) prevRetro.kf.right_control = prevRetro.right;
+  if (nextRetro) nextRetro.kf.left_control = nextRetro.left;
+  const kf = makeKeyframe(timeOffset, value, newLeft, newRight);
 
   const existingIdx = kfList.findIndex((k) => k.time_offset === timeOffset);
   if (existingIdx >= 0) {

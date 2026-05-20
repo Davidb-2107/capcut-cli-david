@@ -124,7 +124,7 @@ test("cmdAddKeyframe: linear curve sets all control points to {0,0}", (t) => {
   deepStrictEqual(kf.right_control, { x: 0, y: 0 });
 });
 
-test("cmdAddKeyframe: ease-out curve produces non-zero right_control with negative y", (t) => {
+test("cmdAddKeyframe: ease-out solitary kf has {0,0} handles (no neighbor → no easing)", (t) => {
   const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
   const { draft } = loadDraft(filePath);
   const { seg } = firstVideoSegment(draft);
@@ -132,24 +132,52 @@ test("cmdAddKeyframe: ease-out curve produces non-zero right_control with negati
   cmdAddKeyframe(draft, filePath, seg.id, "0", "scale_x", "1.0", "ease-out", flagsQuiet);
 
   const kf = seg.common_keyframes[0].keyframe_list[0];
-  ok(kf.right_control.x > 0, `right_control.x should be > 0 for ease-out, got ${kf.right_control.x}`);
-  strictEqual(kf.right_control.y, -0.47);
+  deepStrictEqual(kf.left_control,  { x: 0, y: 0 });
+  deepStrictEqual(kf.right_control, { x: 0, y: 0 });
 });
 
-test("cmdAddKeyframe: ease-in differs from ease-out (different handle profile)", (t) => {
+test("cmdAddKeyframe: ease-out paired kfs produce Δ-scaled prev.right (canonical dv=+0.5)", (t) => {
+  const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
+  const { draft } = loadDraft(filePath);
+  const { seg } = firstVideoSegment(draft);
+  const dur = seg.target_timerange.duration;
+
+  cmdAddKeyframe(draft, filePath, seg.id, "0",                       "scale_x", "1.0", "ease-out", flagsQuiet);
+  cmdAddKeyframe(draft, filePath, seg.id, `${dur / 1_000_000}s`,     "scale_x", "1.5", "ease-out", flagsQuiet);
+
+  const [k0, k1] = seg.common_keyframes[0].keyframe_list;
+  // k0 retro-updated: right.y = round(0.94 × +0.5, 6) = 0.47, right.x = round(0.32 × dur)
+  deepStrictEqual(k0.right_control, { x: Math.round(0.32 * dur), y: 0.47 });
+  // k1 endLeft: x = round(-0.4 × dur), y = 0
+  deepStrictEqual(k1.left_control,  { x: Math.round(-0.4 * dur), y: 0 });
+  // k1 has no next: right = {0, 0}
+  deepStrictEqual(k1.right_control, { x: 0, y: 0 });
+});
+
+test("cmdAddKeyframe: ease-in produces different handle profile from ease-out (paired)", (t) => {
   const { filePath: f1 } = tmpDraft(CLEAN_FIXTURE, t);
   const { filePath: f2 } = tmpDraft(CLEAN_FIXTURE, t);
   const { draft: d1 } = loadDraft(f1);
   const { draft: d2 } = loadDraft(f2);
   const { seg: s1 } = firstVideoSegment(d1);
   const { seg: s2 } = firstVideoSegment(d2);
+  const dur = s1.target_timerange.duration;
 
-  cmdAddKeyframe(d1, f1, s1.id, "0", "scale_x", "1.0", "ease-in", flagsQuiet);
-  cmdAddKeyframe(d2, f2, s2.id, "0", "scale_x", "1.0", "ease-out", flagsQuiet);
+  // Pair with dv=+0.5 on both, but different curves.
+  cmdAddKeyframe(d1, f1, s1.id, "0",                     "scale_x", "1.0", "ease-in",  flagsQuiet);
+  cmdAddKeyframe(d1, f1, s1.id, `${dur / 1_000_000}s`,   "scale_x", "1.5", "ease-in",  flagsQuiet);
+  cmdAddKeyframe(d2, f2, s2.id, "0",                     "scale_x", "1.0", "ease-out", flagsQuiet);
+  cmdAddKeyframe(d2, f2, s2.id, `${dur / 1_000_000}s`,   "scale_x", "1.5", "ease-out", flagsQuiet);
 
-  const k1 = s1.common_keyframes[0].keyframe_list[0];
-  const k2 = s2.common_keyframes[0].keyframe_list[0];
-  notStrictEqual(k1.right_control.y, k2.right_control.y);
+  const k1_0 = s1.common_keyframes[0].keyframe_list[0]; // ease-in, prev kf
+  const k2_0 = s2.common_keyframes[0].keyframe_list[0]; // ease-out, prev kf
+
+  // ease-in: right.x = round(0.42 × dur), right.y = 0 (no Δ-scaling for ease-in)
+  // ease-out: right.x = round(0.32 × dur), right.y = 0.47 (Δ-scaled)
+  notStrictEqual(k1_0.right_control.x, k2_0.right_control.x, "x should differ between ease-in and ease-out");
+  notStrictEqual(k1_0.right_control.y, k2_0.right_control.y, "y should differ (ease-in: 0, ease-out: 0.47)");
+  strictEqual(k1_0.right_control.y, 0);
+  strictEqual(k2_0.right_control.y, 0.47);
 });
 
 // ---------------------------------------------------------------------------
