@@ -32,7 +32,7 @@ Minor release. Extends the CapCut "Cubic Out" Δ-scaling fix (shipped in v1.2.0 
 - CapCut ≥ 5.x desktop (Windows + macOS), JianYing 6+ unsupported — unchanged.
 - Node `>= 18` — unchanged.
 - Runtime dependencies: zero — unchanged.
-- New tests targeting `cmdAddKeyframe` oracle parity and behavioral coverage (207 tracked tests). All tracked tests pass.
+- New tests targeting `cmdAddKeyframe` oracle parity, behavioral coverage, and captured-CapCut-UI byte-identity (208 tracked tests). All tracked tests pass. The new byte-identity oracle (`test-fixtures/oracles/cubic-out-triplet-frame-aligned.json`) locks a formal contract vs CapCut UI: x byte-identical on frame-aligned intervals, ±1μs on non-aligned, ±1e-9 (~1 ULP) on y.
 - `draft_content.json` output for `add-keyframe --curve ease-out` is **not** byte-identical to 1.2.0 when `Δ ≠ -0.5` (intended correctness fix). `ken-burns` output is byte-identical to 1.2.0.
 
 ## [1.2.0] — 2026-05-19
