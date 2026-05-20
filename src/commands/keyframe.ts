@@ -36,6 +36,22 @@ export const PROPERTY_MAP: Record<string, string> = {
 //   - end.left_control.x   / interval = -293333 / 733333 ≈ -0.4
 // Other curves use CSS cubic-bezier(P1.x, P1.y, P2.x, P2.y) interior handles
 // remapped from a normalized [0,1] interval onto absolute microseconds.
+//
+// Byte-identity contract with CapCut UI (Cubic Out, scale_x):
+//   - On frame-aligned intervals (multiples of 1/fps × 1e6 μs — e.g.
+//     5_000_000 μs at 60fps), control.x values match CapCut byte-for-byte
+//     because -0.4 × interval and +0.32 × interval are exact integers.
+//   - On non-aligned intervals, CapCut's rounding is neither floor nor
+//     round consistently across captures (see fixture notes below); v1.3.0
+//     uses Math.round and may differ by ≤ 1 μs on control.x. This is below
+//     1/16 of a frame at 60fps — imperceptible.
+//   - control.y = round(0.94 × Δvalue, 6) on our side vs raw IEEE 754
+//     product on CapCut's side. For "clean" Δvalue (±0.5 → ±0.47) the two
+//     are bit-identical; for "ugly" Δvalue (±0.3 → ±0.282) they land on
+//     adjacent IEEE 754 doubles (1 ULP, ~5e-17 apart).
+// Captured oracle proving these bounds: test-fixtures/oracles/
+// cubic-out-triplet-frame-aligned.json (3 kf, frame-aligned 5M μs +
+// non-aligned 3.133M μs, both ease-out).
 interface CurveProfile {
   startRightXRatio: number;
   startRightY: number;

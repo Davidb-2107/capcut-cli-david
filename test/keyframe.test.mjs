@@ -5,7 +5,9 @@
 
 import { test } from "node:test";
 import { strictEqual, ok, match, notStrictEqual, deepStrictEqual } from "node:assert";
-import { statSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
 
 import { cmdAddKeyframe, cmdKenBurns, PROPERTY_MAP, VALID_CURVES } from "../dist/commands/keyframe.js";
 import { loadDraft } from "../dist/draft.js";
@@ -13,6 +15,9 @@ import { loadDraft } from "../dist/draft.js";
 import { FIXTURES, fixturePath, loadFixture } from "./helpers/load-fixture.mjs";
 import { tmpDraft } from "./helpers/tmp-draft.mjs";
 import { runCli } from "./helpers/spawn-cli.mjs";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ORACLES_DIR = resolve(__dirname, "..", "test-fixtures", "oracles");
 
 const flagsQuiet = { human: false, quiet: true };
 
@@ -344,6 +349,94 @@ test("cmdAddKeyframe: ease-in-out insertion retro-updates x of both neighbors, y
   strictEqual(kHalf.right_control.y, 0);
   strictEqual(kEnd.left_control.x, Math.round(-0.42 * (dur - half)));
   strictEqual(kEnd.left_control.y, 0);
+});
+
+// ---------------------------------------------------------------------------
+// add-keyframe: byte-identity oracle vs CapCut UI capture
+// ---------------------------------------------------------------------------
+// Oracle: test-fixtures/oracles/cubic-out-triplet-frame-aligned.json
+// Captured from CapCut UI (draft "Cubic-out-test", 60fps). The triplet mixes
+// one frame-aligned segment (5_000_000 μs) and one non-aligned segment
+// (3_133_333 μs) so the same test covers both branches of the contract
+// documented in src/commands/keyframe.ts:
+//   - x byte-identity on frame-aligned intervals
+//   - x ±1 μs tolerance on non-aligned intervals
+//   - y within 1e-9 (≈ 1 ULP for values < 1) across both
+
+test("byte-identity oracle: triplet ease-out (frame-aligned + non-aligned intervals vs CapCut)", (t) => {
+  const oraclePath = resolve(ORACLES_DIR, "cubic-out-triplet-frame-aligned.json");
+  const oracle = JSON.parse(readFileSync(oraclePath, "utf-8"));
+
+  // SUBTITLES fixture has a 60s clean (hasKF=0) first video segment, large
+  // enough to host the 8.133s triplet. ANIMATIONS (default CLEAN_FIXTURE) is
+  // only 5s and would reject t=8.133s as out-of-range.
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const { draft } = loadDraft(filePath);
+  const { seg } = firstVideoSegment(draft);
+
+  for (const input of oracle._meta.inputs_to_replay) {
+    cmdAddKeyframe(
+      draft,
+      filePath,
+      seg.id,
+      `${input.time_offset_us / 1_000_000}s`,
+      "scale_x",
+      String(input.value),
+      input.curve,
+      flagsQuiet,
+    );
+  }
+
+  const produced = seg.common_keyframes.find((c) => c.property_type === "KFTypeScaleX").keyframe_list;
+  strictEqual(produced.length, oracle.keyframes.length, "kf count must match oracle");
+
+  const xByteIntervals = new Set(oracle._meta.expectations.x_byte_identity_intervals);
+  const xTol = oracle._meta.expectations.x_tolerance_microseconds;
+  const yTol = oracle._meta.expectations.y_tolerance_absolute;
+
+  for (let i = 0; i < produced.length; i++) {
+    const p = produced[i];
+    const o = oracle.keyframes[i];
+
+    strictEqual(p.time_offset, o.time_offset, `kf[${i}].time_offset`);
+    deepStrictEqual(p.values, o.values, `kf[${i}].values`);
+
+    // left_control encodes the segment from prev kf into this kf (interval_in).
+    // right_control encodes the segment from this kf out to next kf (interval_out).
+    const intervalIn = i > 0 ? o.time_offset - oracle.keyframes[i - 1].time_offset : 0;
+    const intervalOut = i < produced.length - 1 ? oracle.keyframes[i + 1].time_offset - o.time_offset : 0;
+
+    // First kf has no incoming segment → left = {0,0}, strict.
+    // Last kf has no outgoing segment → right = {0,0}, strict.
+    const leftStrict = i === 0 || xByteIntervals.has(intervalIn);
+    const rightStrict = i === produced.length - 1 || xByteIntervals.has(intervalOut);
+
+    if (leftStrict) {
+      strictEqual(p.left_control.x, o.left_control.x, `kf[${i}].left_control.x byte-identity (interval ${intervalIn})`);
+    } else {
+      ok(
+        Math.abs(p.left_control.x - o.left_control.x) <= xTol,
+        `kf[${i}].left_control.x within ±${xTol}μs (got ${p.left_control.x}, oracle ${o.left_control.x}, interval ${intervalIn})`,
+      );
+    }
+    if (rightStrict) {
+      strictEqual(p.right_control.x, o.right_control.x, `kf[${i}].right_control.x byte-identity (interval ${intervalOut})`);
+    } else {
+      ok(
+        Math.abs(p.right_control.x - o.right_control.x) <= xTol,
+        `kf[${i}].right_control.x within ±${xTol}μs (got ${p.right_control.x}, oracle ${o.right_control.x}, interval ${intervalOut})`,
+      );
+    }
+
+    ok(
+      Math.abs(p.left_control.y - o.left_control.y) <= yTol,
+      `kf[${i}].left_control.y within ±${yTol} (got ${p.left_control.y}, oracle ${o.left_control.y})`,
+    );
+    ok(
+      Math.abs(p.right_control.y - o.right_control.y) <= yTol,
+      `kf[${i}].right_control.y within ±${yTol} (got ${p.right_control.y}, oracle ${o.right_control.y})`,
+    );
+  }
 });
 
 // ---------------------------------------------------------------------------
