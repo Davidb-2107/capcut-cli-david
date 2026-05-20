@@ -240,6 +240,7 @@ export function cmdAddKeyframe(
   const kfList = container.keyframe_list;
   const { newLeft, newRight, prevRetro, nextRetro } =
     computeKfHandlesAndRetroUpdates(curve, timeOffset, value, kfList);
+  // Apply retro-updates in-place on neighbor kfs (by reference through kfList).
   if (prevRetro) prevRetro.kf.right_control = prevRetro.right;
   if (nextRetro) nextRetro.kf.left_control = nextRetro.left;
   const kf = makeKeyframe(timeOffset, value, newLeft, newRight);
