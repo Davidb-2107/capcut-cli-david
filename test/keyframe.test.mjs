@@ -212,6 +212,140 @@ test("parity: cmdKenBurns ≡ 2× cmdAddKeyframe (ease-out, dv=+0.5, scale_x)", 
   }
 });
 
+test("parity: cmdKenBurns ≡ 2× cmdAddKeyframe (ease-out, dv=-0.5, canonical capture)", (t) => {
+  const { filePath: fA } = tmpDraft(CLEAN_FIXTURE, t);
+  const { draft: dA } = loadDraft(fA);
+  const { seg: sA } = firstVideoSegment(dA);
+  cmdKenBurns(dA, fA, sA.id, "1.5", "1.0", "ease-out", flagsQuiet);
+  const dur = sA.target_timerange.duration;
+
+  const { filePath: fB } = tmpDraft(CLEAN_FIXTURE, t);
+  const { draft: dB } = loadDraft(fB);
+  const { seg: sB } = firstVideoSegment(dB);
+  cmdAddKeyframe(dB, fB, sB.id, "0",                       "scale_x", "1.5", "ease-out", flagsQuiet);
+  cmdAddKeyframe(dB, fB, sB.id, `${dur / 1_000_000}s`,     "scale_x", "1.0", "ease-out", flagsQuiet);
+
+  const scaleXA = sA.common_keyframes.find((c) => c.property_type === "KFTypeScaleX").keyframe_list;
+  const scaleXB = sB.common_keyframes.find((c) => c.property_type === "KFTypeScaleX").keyframe_list;
+  for (let i = 0; i < scaleXA.length; i++) {
+    deepStrictEqual(scaleXB[i].left_control,  scaleXA[i].left_control);
+    deepStrictEqual(scaleXB[i].right_control, scaleXA[i].right_control);
+  }
+  // Explicit ground-truth value lock: right.y of first kf = -0.47.
+  strictEqual(scaleXB[0].right_control.y, -0.47);
+});
+
+test("parity: cmdKenBurns ≡ 2× cmdAddKeyframe (ease-out, dv=+0.12 fine zoom)", (t) => {
+  const { filePath: fA } = tmpDraft(CLEAN_FIXTURE, t);
+  const { draft: dA } = loadDraft(fA);
+  const { seg: sA } = firstVideoSegment(dA);
+  cmdKenBurns(dA, fA, sA.id, "1.0", "1.12", "ease-out", flagsQuiet);
+  const dur = sA.target_timerange.duration;
+
+  const { filePath: fB } = tmpDraft(CLEAN_FIXTURE, t);
+  const { draft: dB } = loadDraft(fB);
+  const { seg: sB } = firstVideoSegment(dB);
+  cmdAddKeyframe(dB, fB, sB.id, "0",                       "scale_x", "1.0",  "ease-out", flagsQuiet);
+  cmdAddKeyframe(dB, fB, sB.id, `${dur / 1_000_000}s`,     "scale_x", "1.12", "ease-out", flagsQuiet);
+
+  const scaleXA = sA.common_keyframes.find((c) => c.property_type === "KFTypeScaleX").keyframe_list;
+  const scaleXB = sB.common_keyframes.find((c) => c.property_type === "KFTypeScaleX").keyframe_list;
+  for (let i = 0; i < scaleXA.length; i++) {
+    deepStrictEqual(scaleXB[i].left_control,  scaleXA[i].left_control);
+    deepStrictEqual(scaleXB[i].right_control, scaleXA[i].right_control);
+  }
+  // Fine-zoom value lock: round(0.94 × 0.12, 6) = 0.1128.
+  strictEqual(scaleXB[0].right_control.y, 0.1128);
+});
+
+test("cmdAddKeyframe: insert between 2 kfs retro-updates prev.right and next.left (ease-out)", (t) => {
+  const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
+  const { draft } = loadDraft(filePath);
+  const { seg } = firstVideoSegment(draft);
+  const dur = seg.target_timerange.duration;
+  const half = Math.floor(dur / 2);
+
+  cmdAddKeyframe(draft, filePath, seg.id, "0",                       "scale_x", "1.0", "linear",   flagsQuiet);
+  cmdAddKeyframe(draft, filePath, seg.id, `${dur / 1_000_000}s`,     "scale_x", "1.0", "linear",   flagsQuiet);
+  cmdAddKeyframe(draft, filePath, seg.id, `${half / 1_000_000}s`,    "scale_x", "1.3", "ease-out", flagsQuiet);
+
+  const [k0, kHalf, kEnd] = seg.common_keyframes[0].keyframe_list;
+  // k0 retro-updated (segment 0→half, ease-out, dv = +0.3):
+  strictEqual(k0.right_control.x, Math.round(0.32 * half));
+  strictEqual(k0.right_control.y, Math.round(0.94 * 0.3 * 1e6) / 1e6); // = 0.282
+  // kHalf new kf:
+  strictEqual(kHalf.left_control.x,  Math.round(-0.4 * half));
+  strictEqual(kHalf.left_control.y,  0);
+  strictEqual(kHalf.right_control.x, Math.round(0.32 * (dur - half)));
+  strictEqual(kHalf.right_control.y, Math.round(0.94 * -0.3 * 1e6) / 1e6); // = -0.282
+  // kEnd retro-updated (segment half→dur, ease-out, dv = -0.3):
+  strictEqual(kEnd.left_control.x, Math.round(-0.4 * (dur - half)));
+  strictEqual(kEnd.left_control.y, 0);
+});
+
+test("cmdAddKeyframe: prepend before existing kf retro-updates next.left (ease-out)", (t) => {
+  const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
+  const { draft } = loadDraft(filePath);
+  const { seg } = firstVideoSegment(draft);
+  const dur = seg.target_timerange.duration;
+  const half = Math.floor(dur / 2);
+
+  // Add t=half first, then t=0 (reverse order).
+  cmdAddKeyframe(draft, filePath, seg.id, `${half / 1_000_000}s`, "scale_x", "1.5", "ease-out", flagsQuiet);
+  cmdAddKeyframe(draft, filePath, seg.id, "0",                    "scale_x", "1.0", "ease-out", flagsQuiet);
+
+  const [k0, kHalf] = seg.common_keyframes[0].keyframe_list;
+  // k0 (new prepend, no prev, has next):
+  deepStrictEqual(k0.left_control, { x: 0, y: 0 });
+  strictEqual(k0.right_control.x, Math.round(0.32 * half));
+  strictEqual(k0.right_control.y, 0.47); // 0.94 × +0.5
+  // kHalf retro-updated (its left now reflects segment 0→half, ease-out):
+  strictEqual(kHalf.left_control.x, Math.round(-0.4 * half));
+  strictEqual(kHalf.left_control.y, 0);
+});
+
+test("cmdAddKeyframe: replace at same time retro-updates neighbors with new dv", (t) => {
+  const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
+  const { draft } = loadDraft(filePath);
+  const { seg } = firstVideoSegment(draft);
+  const dur = seg.target_timerange.duration;
+
+  cmdAddKeyframe(draft, filePath, seg.id, "0",                       "scale_x", "1.0", "ease-out", flagsQuiet);
+  cmdAddKeyframe(draft, filePath, seg.id, `${dur / 1_000_000}s`,     "scale_x", "1.5", "ease-out", flagsQuiet);
+  // Replace t=dur: 1.5 → 1.2
+  cmdAddKeyframe(draft, filePath, seg.id, `${dur / 1_000_000}s`,     "scale_x", "1.2", "ease-out", flagsQuiet);
+
+  const [k0, kEnd] = seg.common_keyframes[0].keyframe_list;
+  // k0 retro-updated with new dv = +0.2: right.y = 0.94 × 0.2 = 0.188
+  strictEqual(k0.right_control.y, Math.round(0.94 * 0.2 * 1e6) / 1e6); // = 0.188
+  // kEnd: no next, right = {0,0}; values reflect the new value
+  deepStrictEqual(kEnd.right_control, { x: 0, y: 0 });
+  strictEqual(kEnd.values[0], 1.2);
+});
+
+test("cmdAddKeyframe: ease-in-out insertion retro-updates x of both neighbors, y stays 0", (t) => {
+  const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
+  const { draft } = loadDraft(filePath);
+  const { seg } = firstVideoSegment(draft);
+  const dur = seg.target_timerange.duration;
+  const half = Math.floor(dur / 2);
+
+  cmdAddKeyframe(draft, filePath, seg.id, "0",                       "scale_x", "1.0", "linear",      flagsQuiet);
+  cmdAddKeyframe(draft, filePath, seg.id, `${dur / 1_000_000}s`,     "scale_x", "1.0", "linear",      flagsQuiet);
+  cmdAddKeyframe(draft, filePath, seg.id, `${half / 1_000_000}s`,    "scale_x", "1.3", "ease-in-out", flagsQuiet);
+
+  const [k0, kHalf, kEnd] = seg.common_keyframes[0].keyframe_list;
+  // ease-in-out: startRightXRatio=0.42, endLeftXRatio=-0.42, all y = 0.
+  strictEqual(k0.right_control.x, Math.round(0.42 * half));
+  strictEqual(k0.right_control.y, 0);
+  strictEqual(kHalf.left_control.x, Math.round(-0.42 * half));
+  strictEqual(kHalf.left_control.y, 0);
+  strictEqual(kHalf.right_control.x, Math.round(0.42 * (dur - half)));
+  strictEqual(kHalf.right_control.y, 0);
+  strictEqual(kEnd.left_control.x, Math.round(-0.42 * (dur - half)));
+  strictEqual(kEnd.left_control.y, 0);
+});
+
 // ---------------------------------------------------------------------------
 // add-keyframe: error paths
 // ---------------------------------------------------------------------------
