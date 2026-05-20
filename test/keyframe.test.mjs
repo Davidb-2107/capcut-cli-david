@@ -153,6 +153,38 @@ test("cmdAddKeyframe: ease-in differs from ease-out (different handle profile)",
 });
 
 // ---------------------------------------------------------------------------
+// cmdAddKeyframe ⇄ cmdKenBurns parity (oracle of the v1.3.0 fix)
+// ---------------------------------------------------------------------------
+
+test("parity: cmdKenBurns ≡ 2× cmdAddKeyframe (ease-out, dv=+0.5, scale_x)", (t) => {
+  // Build A: cmdKenBurns
+  const { filePath: fA } = tmpDraft(CLEAN_FIXTURE, t);
+  const { draft: dA } = loadDraft(fA);
+  const { seg: sA } = firstVideoSegment(dA);
+  cmdKenBurns(dA, fA, sA.id, "1.0", "1.5", "ease-out", flagsQuiet);
+  const dur = sA.target_timerange.duration;
+
+  // Build B: two cmdAddKeyframe calls on scale_x
+  const { filePath: fB } = tmpDraft(CLEAN_FIXTURE, t);
+  const { draft: dB } = loadDraft(fB);
+  const { seg: sB } = firstVideoSegment(dB);
+  cmdAddKeyframe(dB, fB, sB.id, "0",                        "scale_x", "1.0", "ease-out", flagsQuiet);
+  cmdAddKeyframe(dB, fB, sB.id, `${dur / 1_000_000}s`,     "scale_x", "1.5", "ease-out", flagsQuiet);
+
+  // Extract scale_x kfs from both drafts
+  const scaleXA = sA.common_keyframes.find((c) => c.property_type === "KFTypeScaleX").keyframe_list;
+  const scaleXB = sB.common_keyframes.find((c) => c.property_type === "KFTypeScaleX").keyframe_list;
+
+  strictEqual(scaleXB.length, scaleXA.length, "kf count must match");
+  for (let i = 0; i < scaleXA.length; i++) {
+    deepStrictEqual(scaleXB[i].left_control,  scaleXA[i].left_control,  `kf[${i}].left_control mismatch`);
+    deepStrictEqual(scaleXB[i].right_control, scaleXA[i].right_control, `kf[${i}].right_control mismatch`);
+    deepStrictEqual(scaleXB[i].values,        scaleXA[i].values,        `kf[${i}].values mismatch`);
+    strictEqual(scaleXB[i].time_offset,       scaleXA[i].time_offset,   `kf[${i}].time_offset mismatch`);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // add-keyframe: error paths
 // ---------------------------------------------------------------------------
 
