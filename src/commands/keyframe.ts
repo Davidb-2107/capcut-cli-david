@@ -112,6 +112,32 @@ function makeKeyframe(timeOffset: number, value: number, leftCtrl: ControlPoint,
   };
 }
 
+// Compute the (right_control of left kf, left_control of right kf) pair for
+// a segment between two keyframes. Unified Cubic Out model shared with
+// cmdKenBurns: for ease-out, right.y = round(0.94 × Δvalue, 6); for other
+// curves, right.y = profile.startRightY (0 for linear / ease-in /
+// ease-in-out). x is always profile.{startRightXRatio,endLeftXRatio} × interval.
+function computeSegmentHandles(
+  curve: CurveName,
+  leftKfValue: number,
+  rightKfValue: number,
+  interval: number,
+): { leftKfRight: ControlPoint; rightKfLeft: ControlPoint } {
+  if (curve === "linear") {
+    return { leftKfRight: { x: 0, y: 0 }, rightKfLeft: { x: 0, y: 0 } };
+  }
+  const profile = CURVE_PROFILES[curve];
+  const dv = rightKfValue - leftKfValue;
+  const rightY =
+    curve === "ease-out"
+      ? Math.round(KEN_BURNS_CUBIC_OUT_RIGHT_Y_RATIO * dv * 1e6) / 1e6
+      : profile.startRightY;
+  return {
+    leftKfRight: { x: Math.round(profile.startRightXRatio * interval), y: rightY },
+    rightKfLeft: { x: Math.round(profile.endLeftXRatio * interval), y: profile.endLeftY },
+  };
+}
+
 function computeControlPoints(
   curve: CurveName,
   timeOffset: number,
