@@ -11,6 +11,30 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.3.0] — 2026-05-20
+
+Minor release. Extends the CapCut "Cubic Out" Δ-scaling fix (shipped in v1.2.0 for `cmdKenBurns`) to the incremental path `cmdAddKeyframe`. Both code paths now converge on a single shared segment model (`computeSegmentHandles`).
+
+### Fixed
+- `cmdAddKeyframe` ease-out wrote `start.right_control.y = -0.47` fixed regardless of Δvalue at the inserted kf — now `round(0.94 × Δvalue, 6)`, coherent with the CapCut "Cubic Out" preset and the `cmdKenBurns` fix shipped in v1.2.0.
+- `cmdAddKeyframe` did not retro-compute neighbor handles when inserting between two existing kfs — `prev.right_control` and `next.left_control` stayed pinned to obsolete intervals. Now both neighbors are retro-updated: `prev.right` (x AND y), `next.left` (x — y stays 0 for all supported curves).
+
+### Changed
+- `cmdAddKeyframe` output:
+  - sequence (`add t=0, val=A, ease-out` + `add t=T, val=B, ease-out`) now produces byte-identical output to `cmdKenBurns(A, B, ease-out)` on the `scale_x` container;
+  - insertion between 2 existing kfs now modifies the neighbors as well (cf. Fixed);
+  - solitary kf (neither prev nor next) — both `left_control` AND `right_control` are `{x: 0, y: 0}` (previously `right` carried a "phantom" handle without a destination: `{round(0.32 × segDuration), -0.47}`);
+  - replace of a kf at the same `timeOffset` now retro-updates neighbors using the new `value` (so the new Δ propagates).
+- The curve specified to `cmdAddKeyframe` now applies to **both adjacent segments** (`prev→new` and `new→next`) — i.e., it overwrites the handles of `prev.right` and `next.left` at insertion. Semantics aligned with CapCut UI where changing a kf's curve affects both surrounding segments.
+- `CURVE_PROFILES["ease-out"].startRightY`: `-0.47` → `0` (internal cleanup; this field is no longer consumed — the real value comes from the `curve === "ease-out"` gate via `KEN_BURNS_CUBIC_OUT_RIGHT_Y_RATIO`).
+
+### Compatibility
+- CapCut ≥ 5.x desktop (Windows + macOS), JianYing 6+ unsupported — unchanged.
+- Node `>= 18` — unchanged.
+- Runtime dependencies: zero — unchanged.
+- New tests targeting `cmdAddKeyframe` oracle parity and behavioral coverage (207 tracked tests). All tracked tests pass.
+- `draft_content.json` output for `add-keyframe --curve ease-out` is **not** byte-identical to 1.2.0 when `Δ ≠ -0.5` (intended correctness fix). `ken-burns` output is byte-identical to 1.2.0.
+
 ## [1.2.0] — 2026-05-19
 
 Minor release. Corrects a latent easing bug in `ken-burns`: the start keyframe's outgoing Bezier handle `y` was a fixed absolute (`-0.47`) regardless of the zoom range, so easing was wrong for every range except exactly `to − from = -0.5`. **Not** byte-identical for `Δ ≠ -0.5` (hence minor, not patch) — see **Changed**.
