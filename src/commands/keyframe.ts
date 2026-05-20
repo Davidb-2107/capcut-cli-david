@@ -150,9 +150,7 @@ function computeSegmentHandles(
   const profile = CURVE_PROFILES[curve];
   const dv = rightKfValue - leftKfValue;
   const rightY =
-    curve === "ease-out"
-      ? Math.round(KEN_BURNS_CUBIC_OUT_RIGHT_Y_RATIO * dv * 1e6) / 1e6
-      : profile.startRightY;
+    curve === "ease-out" ? Math.round(KEN_BURNS_CUBIC_OUT_RIGHT_Y_RATIO * dv * 1e6) / 1e6 : profile.startRightY;
   return {
     leftKfRight: { x: Math.round(profile.startRightXRatio * interval), y: rightY },
     rightKfLeft: { x: Math.round(profile.endLeftXRatio * interval), y: profile.endLeftY },
@@ -187,12 +185,8 @@ function computeKfHandlesAndRetroUpdates(
   const prev = kfList.filter((k) => k.time_offset < timeOffset).sort((a, b) => b.time_offset - a.time_offset)[0];
   const next = kfList.filter((k) => k.time_offset > timeOffset).sort((a, b) => a.time_offset - b.time_offset)[0];
 
-  const leftSegment = prev
-    ? computeSegmentHandles(curve, prev.values[0], value, timeOffset - prev.time_offset)
-    : null;
-  const rightSegment = next
-    ? computeSegmentHandles(curve, value, next.values[0], next.time_offset - timeOffset)
-    : null;
+  const leftSegment = prev ? computeSegmentHandles(curve, prev.values[0], value, timeOffset - prev.time_offset) : null;
+  const rightSegment = next ? computeSegmentHandles(curve, value, next.values[0], next.time_offset - timeOffset) : null;
 
   const newLeft: ControlPoint = leftSegment ? leftSegment.rightKfLeft : { x: 0, y: 0 };
   const newRight: ControlPoint = rightSegment ? rightSegment.leftKfRight : { x: 0, y: 0 };
@@ -254,8 +248,7 @@ export function cmdAddKeyframe(
 
   const container = getOrCreateContainer(seg, kfType);
   const kfList = container.keyframe_list;
-  const { newLeft, newRight, prevRetro, nextRetro } =
-    computeKfHandlesAndRetroUpdates(curve, timeOffset, value, kfList);
+  const { newLeft, newRight, prevRetro, nextRetro } = computeKfHandlesAndRetroUpdates(curve, timeOffset, value, kfList);
   // Apply retro-updates in-place on neighbor kfs (by reference through kfList).
   if (prevRetro) prevRetro.kf.right_control = prevRetro.right;
   if (nextRetro) nextRetro.kf.left_control = nextRetro.left;
