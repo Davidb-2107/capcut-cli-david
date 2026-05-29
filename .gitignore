@@ -3,3 +3,6 @@ dist/
 *.bak
 *.tsbuildinfo
 .DS_Store
+
+# CodeGraph local index (SQLite + tree-sitter cache)
+.codegraph/
