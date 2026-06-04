@@ -383,3 +383,105 @@ test("add-text --keyword-range (CLI): non-integer offset rejected (no silent tru
   ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
   match(r.errorJson.error, /two integers/);
 });
+
+// =============================================================
+// v1.5.0 — --clone-style: photocopy an existing caption's style (font-agnostic)
+// =============================================================
+
+const FAKE_STYLE = {
+  font: { path: "C:\Fonts\TotallyUnknownFont.ttf", id: "fake-font-id" },
+  strokes: [{ content: { solid: { color: [0, 0, 0] } }, width: 0.08 }],
+  shadows: [{ content: { solid: { color: [0, 0, 0] } }, alpha: 0.9 }],
+  size: 22,
+  bold: true,
+  range: [0, 5],
+  fill: { content: { render_type: "solid", solid: { color: [1, 1, 1] } } },
+};
+
+test("buildRichTextContent baseStyle: clones font/strokes/shadows/size onto every span, only range+fill change", () => {
+  const s = styles(buildRichTextContent("le PC", 15, WHITE, [{ range: [3, 5], color: hexToRgb("#FFD600") }], FAKE_STYLE));
+  strictEqual(s.length, 2);
+  deepStrictEqual(s.map((x) => x.range), [
+    [0, 3],
+    [3, 5],
+  ]);
+  for (const sp of s) {
+    deepStrictEqual(sp.font, FAKE_STYLE.font, "unknown font copied verbatim");
+    deepStrictEqual(sp.strokes, FAKE_STYLE.strokes, "stroke preserved on each span");
+    deepStrictEqual(sp.shadows, FAKE_STYLE.shadows, "shadow preserved on each span");
+    strictEqual(sp.size, 22, "cloned size wins over the fontSize param");
+    strictEqual(sp.bold, true);
+  }
+  // the keyword span gets the highlight color ON the cloned (unknown) font
+  deepStrictEqual(s[1].fill.content.solid.color, DEFAULT_YELLOW);
+  deepStrictEqual(s[0].fill.content.solid.color, WHITE);
+});
+
+test("buildRichTextContent baseStyle: spans are independent (no shared nested refs)", () => {
+  const s = styles(buildRichTextContent("ab cd", 15, WHITE, [{ range: [0, 2], color: hexToRgb("#FF0000") }], FAKE_STYLE));
+  s[0].strokes[0].width = 999; // mutate one span
+  strictEqual(s[1].strokes[0].width, 0.08, "other span's stroke must be unaffected");
+});
+
+test("buildRichTextContent: WITHOUT baseStyle the lean default span shape is unchanged (byte-identity guard)", () => {
+  const s = styles(buildRichTextContent("le PC", 15, WHITE, [{ range: [3, 5], color: hexToRgb("#FFD600") }]));
+  // lean shape: only fill/size/range, no font/strokes/shadows
+  deepStrictEqual(Object.keys(s[0]).sort(), ["fill", "range", "size"]);
+});
+
+test("importCaptions --clone-style: new captions inherit the existing caption's unknown font + stroke", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const { draft } = loadDraft(filePath);
+  // Plant a known style block (unknown font) on the target track's first caption.
+  const track = draft.tracks.find((tr) => tr.type === "text");
+  ok(track && track.segments[0], "fixture must have a text track with a caption");
+  const tplMat = draft.materials.texts.find((m) => m.id === track.segments[0].material_id);
+  tplMat.content = JSON.stringify({ text: "modèle", styles: [FAKE_STYLE] });
+
+  const res = importCaptions(draft, filePath, {
+    cards: [{ text: "le PC", start: 0, end: 500000, hl: [3, 5] }],
+    trackName: track.name,
+    cloneStyle: true,
+  });
+  const newTrack = draft.tracks.find((tr) => tr.id === res.trackId);
+  const mat = draft.materials.texts.find((m) => m.id === newTrack.segments[0].material_id);
+  strictEqual(mat.is_rich_text, true);
+  const s = styles(mat.content);
+  deepStrictEqual(s[1].font, FAKE_STYLE.font, "unknown font cloned onto the new caption");
+  ok(Array.isArray(s[1].strokes), "stroke cloned");
+  deepStrictEqual(s[1].fill.content.solid.color, DEFAULT_YELLOW, "highlight color sits on the cloned font");
+});
+
+test("importCaptions --clone-style: empty/absent track falls back to default style (no crash, no font)", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const { draft } = loadDraft(filePath);
+  // MINIMAL has no "subtitle" track → clone has nothing to copy → default style fallback.
+  const res = importCaptions(draft, filePath, {
+    cards: [{ text: "hello world", start: 0, end: 1000000, hl: [0, 5] }],
+    trackName: "subtitle",
+    cloneStyle: true,
+  });
+  const track = draft.tracks.find((tr) => tr.id === res.trackId);
+  const mat = draft.materials.texts.find((m) => m.id === track.segments[0].material_id);
+  const s = styles(mat.content);
+  strictEqual(s[0].font, undefined, "fallback default span has no cloned font");
+  deepStrictEqual(Object.keys(s[0]).sort(), ["fill", "range", "size"]);
+});
+
+test("import-captions --clone-style (CLI): runs and clones style end-to-end", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const { draft } = loadDraft(filePath);
+  const track = draft.tracks.find((tr) => tr.type === "text");
+  const tplMat = draft.materials.texts.find((m) => m.id === track.segments[0].material_id);
+  tplMat.content = JSON.stringify({ text: "modèle", styles: [FAKE_STYLE] });
+  saveDraft(filePath, draft);
+
+  const jsonPath = join(dirname(filePath), "clone-cards.json");
+  writeFileSync(jsonPath, JSON.stringify([{ text: "le PC", start: 0, end: 500000, hl: [3, 5] }]), "utf-8");
+  const r = runCli(["import-captions", filePath, jsonPath, "--track-name", track.name, "--clone-style"]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  const after = JSON.parse(readFileSync(filePath, "utf-8"));
+  const newTrack = after.tracks.find((tr) => tr.id === r.json.track_id);
+  const mat = after.materials.texts.find((m) => m.id === newTrack.segments[0].material_id);
+  deepStrictEqual(styles(mat.content)[1].font, FAKE_STYLE.font);
+});

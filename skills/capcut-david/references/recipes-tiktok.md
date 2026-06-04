@@ -46,6 +46,10 @@ Sequential captions with one colored keyword + bounce animation.
 > capcut-david import-captions "$DRAFT" captions-styled.json --highlight-color "#FFD600"
 > # captions-styled.json = [{ "text", "start", "end", "hl": [s,e], "color"? }]   (µs)
 > ```
+> **v1.5.0 — keep your caption look** (font/contour/ombre déjà posés dans le draft) :
+> add `--clone-style` (+ `--track-name <ta-track>` si la track n'est pas `text`). L'engine
+> photocopie le style du 1er caption existant de la track et pose la couleur dessus — police
+> inconnue comprise. C'est le remplaçant direct, à style identique, de `inject_word_captions.py`.
 >
 > ⚠️ The `--start/--end/--bold/--transform-y/--in-anim` flags shown in the legacy
 > examples below are **not yet in the engine** (planned). Only `--keyword`,

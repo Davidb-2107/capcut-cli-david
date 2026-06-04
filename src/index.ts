@@ -57,9 +57,10 @@ Add:
               [--x <n>] [--y <n>] [--track-name <s>]
               [--keyword <word> | --keyword-range <s,e>] [--keyword-color <hex>]
               Keyword highlight: color one word/range (default #FFD600).
-  import-captions <project> <captions.json> [--highlight-color <hex>] [--track-name <s>]
+  import-captions <project> <captions.json> [--highlight-color <hex>] [--track-name <s>] [--clone-style]
               Batch word/keyword captions from [{text,start,end,hl?,color?}];
               replaces the text track (start/end in microseconds).
+              --clone-style: keep the target track's existing caption font/stroke/shadow.
   add-effect <project> <resource-id> <name> <start> <duration>
               [--value <n>] [--bind <segment-id>]
               Apply a video effect (FX) via its catalogue resource ID.
@@ -164,6 +165,8 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.keywordColor = args[++i];
     } else if (a === "--highlight-color" && i + 1 < args.length) {
       flags.highlightColor = args[++i];
+    } else if (a === "--clone-style") {
+      flags.cloneStyle = true;
     } else {
       positional.push(a);
     }

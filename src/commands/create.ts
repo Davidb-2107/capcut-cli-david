@@ -94,6 +94,7 @@ export function buildRichTextContent(
   fontSize: number,
   baseColor: [number, number, number],
   highlights: TextHighlight[],
+  baseStyle?: Record<string, unknown>,
 ): string {
   const n = text.length; // JS string length == UTF-16 code units
   const f = Math.fround;
@@ -107,12 +108,17 @@ export function buildRichTextContent(
     if (s < prevEnd) die(`Overlapping highlight ranges near [${s}, ${e}]`);
     prevEnd = e;
   }
-  const span = (a: number, b: number, color: [number, number, number]) => ({
-    fill: { content: { render_type: "solid", solid: { color: [f(color[0]), f(color[1]), f(color[2])] } } },
-    size: fontSize,
-    range: [a, b],
+  const solidFill = (color: [number, number, number]) => ({
+    content: { render_type: "solid", solid: { color: [f(color[0]), f(color[1]), f(color[2])] } },
   });
-  const styles: Array<ReturnType<typeof span>> = [];
+  // baseStyle = a cloned style block from an existing caption (font/strokes/shadows/size/bold…):
+  // each span photocopies it and overrides only range + fill (CapCut keyword-highlight encoding).
+  // Without it, the lean default span shape (frozen for byte-identity tests) is used.
+  const span = (a: number, b: number, color: [number, number, number]): Record<string, unknown> =>
+    baseStyle
+      ? { ...JSON.parse(JSON.stringify(baseStyle)), range: [a, b], fill: solidFill(color) }
+      : { fill: solidFill(color), size: fontSize, range: [a, b] };
+  const styles: Array<Record<string, unknown>> = [];
   let cursor = 0;
   for (const h of sorted) {
     const [s, e] = h.range;
@@ -683,6 +689,8 @@ export interface ImportCaptionsOptions {
   fontSize?: number;
   color?: string;
   alignment?: number;
+  /** Clone the style (font/strokes/shadows/size) of the target track's first caption. */
+  cloneStyle?: boolean;
 }
 
 /**
@@ -718,6 +726,32 @@ export function importCaptions(
   }
 
   const texts = draft.materials.texts as unknown as Array<Record<string, unknown>>;
+
+  // --clone-style: photocopy the existing caption look (font/strokes/shadows/size) from
+  // the target track's first segment BEFORE it is replaced. Font-agnostic — we copy the
+  // style block verbatim and only swap range + fill color. Falls back to the default style
+  // (with a warning) if the track is empty or its content can't be parsed — never errors.
+  let cloneTpl: { styleBlock: Record<string, unknown>; material: Record<string, unknown> } | undefined;
+  if (opts.cloneStyle) {
+    const firstSeg = track.segments[0];
+    const tplMat = firstSeg ? texts.find((m) => m.id === firstSeg.material_id) : undefined;
+    if (tplMat && typeof tplMat.content === "string") {
+      try {
+        const parsed = JSON.parse(tplMat.content);
+        if (Array.isArray(parsed.styles) && parsed.styles[0]) {
+          cloneTpl = { styleBlock: parsed.styles[0] as Record<string, unknown>, material: tplMat };
+        }
+      } catch {
+        /* unparseable content → fall through to the warning + default style */
+      }
+    }
+    if (!cloneTpl) {
+      process.stderr.write(
+        `[import-captions] --clone-style: no styled caption found on track "${trackName}"; using default style\n`,
+      );
+    }
+  }
+
   const newSegs: Segment[] = [];
   opts.cards.forEach((card, i) => {
     if (typeof card.text !== "string") die(`captions[${i}]: missing string field "text"`);
@@ -734,7 +768,20 @@ export function importCaptions(
     const highlights: TextHighlight[] = hasHl
       ? [{ range: [hl[0], hl[1]], color: hexToRgb(card.color ?? defaultHl) }]
       : [];
-    texts.push(buildTextMaterial(matId, card.text, fontSize, baseRgb, baseHex, alignment, highlights));
+    if (cloneTpl) {
+      // Clone mode: deepcopy the template material (keeps font_size/text_color/border_*/shadow_*/
+      // line_spacing…), then rebuild content with the cloned per-span style block. Every card
+      // becomes rich-text (patcher parity) so the user's look survives on all spans.
+      const mat = JSON.parse(JSON.stringify(cloneTpl.material)) as Record<string, unknown>;
+      mat.id = matId;
+      mat.content = buildRichTextContent(card.text, fontSize, baseRgb, highlights, cloneTpl.styleBlock);
+      mat.base_content = card.text;
+      if ("recognize_text" in mat) mat.recognize_text = card.text;
+      mat.is_rich_text = true;
+      texts.push(mat);
+    } else {
+      texts.push(buildTextMaterial(matId, card.text, fontSize, baseRgb, baseHex, alignment, highlights));
+    }
     const companions = createCompanionMaterials("text");
     registerCompanions(draft, companions);
     const duration = Math.max(1, card.end - card.start);
@@ -771,6 +818,7 @@ export function cmdImportCaptions(draft: Draft, filePath: string, positional: st
     fontSize: flags.fontSize,
     color: flags.color,
     alignment: flags.align,
+    cloneStyle: flags.cloneStyle,
   });
   saveDraft(filePath, draft);
   out({ ok: true, track_id: result.trackId, captions: result.count }, flags);

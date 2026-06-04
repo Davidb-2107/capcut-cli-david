@@ -11,6 +11,24 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.5.0] — 2026-06-04
+
+Minor release. `import-captions --clone-style` preserves the existing caption look (font / strokes / shadows / size) from the target track when injecting keyword-highlight captions — font-agnostic, so any font the user set in CapCut (even one not in any preset library) survives, with the highlight color laid on top. This is the last piece needed to fully replace the standalone `inject_word_captions.py` patcher (which cloned the draft's caption style via template copy).
+
+### Added
+- `import-captions … --clone-style` — before replacing the target track, photocopy the style block (`font`, `strokes`, `shadows`, `size`, `bold`, …) of that track's first existing caption and apply it to every new caption, overriding only `range` + `fill` (solid highlight color). The template material is deep-cloned so material-level fields (`text_color`, `border_*`, `shadow_*`, `line_spacing`, …) are preserved too. In clone mode every card is rich-text (parity with the patcher). Opt-in — default behavior is unchanged from 1.4.0.
+- `buildRichTextContent(text, fontSize, baseColor, highlights, baseStyle?)` — optional `baseStyle` param; when provided each span is a deep copy of it with `range` + solid `fill` overridden. Without it, the lean default span shape is byte-for-byte unchanged (locked by test).
+
+### Changed
+- Nothing in the default (`--clone-style` absent) path: `add-text` and `import-captions` output is identical to 1.4.0.
+
+### Notes
+- `--clone-style` clones from the track named by `--track-name` (default `text`). If that track is empty / its content can't be parsed, it falls back to the default style with a stderr warning — never an error.
+
+### Compatibility
+- CapCut ≥ 5.x desktop (Windows + macOS) — unchanged. Node `>= 18` — unchanged. Runtime dependencies: zero — unchanged.
+- 241 tracked tests pass (235 prior + 6 clone-style). Clone output validated against a live CapCut render with a deliberately non-preset font.
+
 ## [1.4.0] — 2026-06-04
 
 Minor release. Makes keyword highlight (per-word caption color) a first-class engine feature, replacing the standalone Python `inject_word_captions.py` patcher. CapCut multi-span rich-text is now produced natively, with colors emitted as float32 (`Math.fround`) to match CapCut's internal encoding and `range` offsets in UTF-16 code units.
