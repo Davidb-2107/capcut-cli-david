@@ -165,6 +165,13 @@ export function registerDraft(opts: RegisterOptions): RegisterResult {
     return { draftId, draftName, rootMetaPath, added: false };
   }
 
+  // Stamp the modification time to "now" so the freshly registered draft sorts to
+  // the TOP of CapCut's grid. A cloned or engine-generated draft otherwise inherits
+  // a stale tm_draft_modified and is buried at the bottom of the list — present in
+  // the index but effectively invisible to the user.
+  meta.tm_draft_modified = nowUs();
+  writeFileSync(metaPath, JSON.stringify(meta), "utf-8");
+
   root.all_draft_store.push(buildEntry(draftDir, meta, projectsRoot));
   if (!root.draft_ids.includes(draftId)) root.draft_ids.push(draftId);
 

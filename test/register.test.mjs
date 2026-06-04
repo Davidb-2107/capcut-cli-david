@@ -64,6 +64,28 @@ test("register: appends entry to root_meta_info.json .all_draft_store", (t) => {
   ok(typeof entry.tm_draft_create === "number" && entry.tm_draft_create > 0);
 });
 
+test("register: stamps a fresh tm_draft_modified so the draft sorts to the TOP of CapCut's grid", (t) => {
+  // A cloned/generated draft carries a STALE modified time; CapCut sorts its grid
+  // by tm_draft_modified desc, so a stale value buries the draft at the bottom
+  // (invisible in practice). Registration must stamp "now".
+  const stale = 1_000_000_000_000; // ~year 2001 in microseconds
+  const { projectsRoot, draftDir } = makeFakeDraft(t, "stale-clone", {
+    tm_draft_create: stale,
+    tm_draft_modified: stale,
+  });
+  const before = Date.now() * 1000;
+  const result = registerDraft({ draftDir, projectsRoot });
+
+  const root = JSON.parse(readFileSync(result.rootMetaPath, "utf-8"));
+  const entry = root.all_draft_store[0];
+  ok(entry.tm_draft_modified > stale, "entry modified time must override the stale sidecar value");
+  ok(entry.tm_draft_modified >= before, "entry modified time must be stamped to ~now");
+
+  // Sidecar kept consistent so CapCut doesn't re-bury it on open.
+  const sidecar = JSON.parse(readFileSync(resolve(draftDir, "draft_meta_info.json"), "utf-8"));
+  ok(sidecar.tm_draft_modified >= before, "sidecar modified time must also be refreshed");
+});
+
 test("register: idempotent — second call does not duplicate the entry", (t) => {
   const { projectsRoot, draftDir, draftId } = makeFakeDraft(t, "psycho-idem");
   const first = registerDraft({ draftDir, projectsRoot });
