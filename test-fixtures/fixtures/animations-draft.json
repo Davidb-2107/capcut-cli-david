@@ -411,7 +411,7 @@
         "recognize_model": "",
         "punc_model": "",
         "type": "text",
-        "content": "{\"text\":\"LOREM LOREM LOREM LOREM LOREM\",\"styles\":[{\"fill\":{\"content\":{\"render_type\":\"solid\",\"solid\":{\"color\":[1,1,1]}}},\"font\":{\"path\":\"/fixtures/assets/en.ttf\",\"id\":\"\"},\"size\":15,\"range\":[0,13]},{\"fill\":{\"content\":{\"render_type\":\"solid\",\"solid\":{\"color\":[0.5490196347236633,0.42352941632270813,1]}}},\"font\":{\"path\":\"/fixtures/assets/en.ttf\",\"id\":\"\"},\"size\":15,\"useLetterColor\":true,\"range\":[13,21]},{\"fill\":{\"content\":{\"render_type\":\"solid\",\"solid\":{\"color\":[1,1,1]}}},\"font\":{\"path\":\"/fixtures/assets/en.ttf\",\"id\":\"\"},\"size\":15,\"range\":[21,25]}]}",
+        "content": "{\"text\":\"THE EYES ARE WATCHING ME.\",\"styles\":[{\"fill\":{\"content\":{\"render_type\":\"solid\",\"solid\":{\"color\":[1,1,1]}}},\"font\":{\"path\":\"/fixtures/assets/en.ttf\",\"id\":\"\"},\"size\":15,\"range\":[0,13]},{\"fill\":{\"content\":{\"render_type\":\"solid\",\"solid\":{\"color\":[0.5490196347236633,0.42352941632270813,1]}}},\"font\":{\"path\":\"/fixtures/assets/en.ttf\",\"id\":\"\"},\"size\":15,\"useLetterColor\":true,\"range\":[13,21]},{\"fill\":{\"content\":{\"render_type\":\"solid\",\"solid\":{\"color\":[1,1,1]}}},\"font\":{\"path\":\"/fixtures/assets/en.ttf\",\"id\":\"\"},\"size\":15,\"range\":[21,25]}]}",
         "base_content": "",
         "words": {
           "start_time": [],

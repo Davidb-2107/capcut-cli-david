@@ -192,6 +192,15 @@ mid-range purple style is the canonical encoding of **keyword highlight**
 (non-overlapping consecutive ranges, full styling block per range, NO partial
 inheritance). The `material_animations` entry holds `Fade In` (in, 500ms) +
 `Fade Out` (out, 500ms) as the canonical "text animations" reference.
+
+> **Exception to the LOREM policy.** This fixture keeps its real caption text
+> (`"THE EYES ARE WATCHING ME."`, public song lyric — not private data) on
+> purpose: it is the keyword-highlight **oracle**, and the style `range` offsets
+> are only meaningful against the actual text they slice. The generic LOREM
+> scrubber (`anonymize.py`) replaces text at *approximate* length and leaves
+> ranges untouched, which silently desyncs `range`↔text (sum of ranges ≠ text
+> length). Do **not** re-anonymize this fixture's caption text.
+
 Test cases:
 
 - `set-text` / `set-style` with a keyword color argument — must emit the
