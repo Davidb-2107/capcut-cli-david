@@ -26,6 +26,7 @@ export interface Flags {
   keywordColor?: string;
   highlightColor?: string;
   cloneStyle?: boolean;
+  preset?: string;
 }
 
 export class CliError extends Error {

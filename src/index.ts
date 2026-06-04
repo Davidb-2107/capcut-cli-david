@@ -17,6 +17,7 @@ import {
 import { cmdAddKeyframe, cmdKenBurns } from "./commands/keyframe.js";
 import { cmdPsychoBuild } from "./commands/pipeline.js";
 import { cmdRegister } from "./commands/register.js";
+import { cmdRestyle } from "./commands/restyle.js";
 import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template.js";
 import { loadDraft } from "./draft.js";
 import { CliError, die, type Flags, requireArgs } from "./utils/cli.js";
@@ -64,6 +65,12 @@ Add:
   add-effect <project> <resource-id> <name> <start> <duration>
               [--value <n>] [--bind <segment-id>]
               Apply a video effect (FX) via its catalogue resource ID.
+
+Style:
+  restyle    <project> --preset <preset.json> [--track-name <s>]
+              Apply a caption style preset (font/stroke/shadow/size) to every
+              caption. Span-aware: keyword-highlight colors + ranges survive.
+              Default targets all text tracks; --track-name scopes to one.
 
 Edit:
   set-text   <project> <id> <text>              Change text content
@@ -167,6 +174,8 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.highlightColor = args[++i];
     } else if (a === "--clone-style") {
       flags.cloneStyle = true;
+    } else if (a === "--preset" && i + 1 < args.length) {
+      flags.preset = args[++i];
     } else {
       positional.push(a);
     }
@@ -305,6 +314,10 @@ function main(): void {
         "capcut-david add-effect <project> <resource-id> <name> <start> <duration> [--value <n>] [--bind <segment-id>]",
       );
       cmdAddEffect(draft, filePath, positional, flags);
+      break;
+    case "restyle":
+      requireArgs(positional, 2, "capcut-david restyle <project> --preset <preset.json> [--track-name <name>]");
+      cmdRestyle(draft, filePath, positional, flags);
       break;
     default:
       die(`Unknown command: ${cmd}. Run 'capcut-david --help' for usage.`);
