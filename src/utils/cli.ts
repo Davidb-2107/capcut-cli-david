@@ -21,6 +21,10 @@ export interface Flags {
   bind?: string;
   register?: boolean;
   projectsRoot?: string;
+  keyword?: string;
+  keywordRange?: string;
+  keywordColor?: string;
+  highlightColor?: string;
 }
 
 export class CliError extends Error {

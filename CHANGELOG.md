@@ -11,6 +11,26 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.4.0] — 2026-06-04
+
+Minor release. Makes keyword highlight (per-word caption color) a first-class engine feature, replacing the standalone Python `inject_word_captions.py` patcher. CapCut multi-span rich-text is now produced natively, with colors emitted as float32 (`Math.fround`) to match CapCut's internal encoding and `range` offsets in UTF-16 code units.
+
+### Added
+- `add-text … --keyword <word> | --keyword-range <s,e> [--keyword-color <hex>]` — color one keyword inside a caption. `--keyword` matches the first substring occurrence (UTF-16 code-unit offsets via native `String.indexOf`/`.length`); `--keyword-range` takes explicit `start,end` offsets and takes precedence. Default color `#FFD600`. A keyword that is not found (or an out-of-bounds range) is a hard error — never a silent no-op.
+- `import-captions <project> <captions.json> [--highlight-color <hex>] [--track-name <name>]` — batch word/keyword captions from `[{text,start,end,hl?:[s,e],color?}]`. Replaces the named text track's segments 1:1 with the patcher, leaves prior text materials orphaned (unreferenced ⇒ invisible ⇒ zero deletion risk), supports per-card `color` (falls back to `--highlight-color`), and extends `draft.duration` to the last caption end.
+- `buildRichTextContent()` — shared core that emits N contiguous, non-overlapping CapCut style spans covering `[0, text.length]` in UTF-16 code units (gaps = base color, ranges = highlight color), `is_rich_text: true` on multi-span materials.
+
+### Changed
+- `add-text` / `import-captions` share `buildTextMaterial()`. The single-span `buildTextContent` path is **unchanged** — `add-text` without a keyword flag is byte-identical to v1.3.0 (single span, UTF-16 *byte* range, no `is_rich_text`). Locked by test.
+
+### Fixed
+- `set-text` and `apply-template` now **refuse** to mutate a multi-span (keyword-highlight) caption instead of silently corrupting it (they only re-ranged `styles[0]`, desyncing the remaining keyword spans). Clear error directs the user to rebuild via `add-text --keyword` / `import-captions`.
+- `test-fixtures/fixtures/animations-draft.json` keyword-highlight oracle: restored the real caption text `"THE EYES ARE WATCHING ME."` (the LOREM anonymizer had replaced it at approximate length while leaving the style ranges, desyncing range↔text). Documented the policy exception in the fixtures README.
+
+### Compatibility
+- CapCut ≥ 5.x desktop (Windows + macOS) — unchanged. Node `>= 18` — unchanged. Runtime dependencies: zero — unchanged.
+- 234 tracked tests pass (208 prior + 26 keyword-highlight). Highlight output validated against a live CapCut render.
+
 ## [1.3.0] — 2026-05-20
 
 Minor release. Extends the CapCut "Cubic Out" Δ-scaling fix (shipped in v1.2.0 for `cmdKenBurns`) to the incremental path `cmdAddKeyframe`. Both code paths now converge on a single shared segment model (`computeSegmentHandles`).

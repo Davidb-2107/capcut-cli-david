@@ -32,6 +32,26 @@ Trigger phrases : "style TikTok", "comme sur TikTok", "caption qui bounce",
 
 Sequential captions with one colored keyword + bounce animation.
 
+> **✅ v1.4.0 — keyword highlight is implemented.** Real runnable form (positional
+> `<start> <duration>`, microseconds):
+>
+> ```bash
+> capcut-david add-text "$DRAFT" 0 1500000 "Première phrase accrocheuse" \
+>   --keyword "accrocheuse" --keyword-color "#FFD600"
+> # or explicit offsets (UTF-16 code units): --keyword-range 17,28
+> ```
+>
+> **Batch** (replaces the patcher `inject_word_captions.py`) — one call for a whole episode:
+> ```bash
+> capcut-david import-captions "$DRAFT" captions-styled.json --highlight-color "#FFD600"
+> # captions-styled.json = [{ "text", "start", "end", "hl": [s,e], "color"? }]   (µs)
+> ```
+>
+> ⚠️ The `--start/--end/--bold/--transform-y/--in-anim` flags shown in the legacy
+> examples below are **not yet in the engine** (planned). Only `--keyword`,
+> `--keyword-range`, `--keyword-color`, `--font-size`, `--color`, `--align`,
+> `--x`, `--y`, `--track-name` exist on `add-text` today.
+
 ```bash
 # Caption 1 — 0–2s, yellow keyword
 capcut-david add-text "$DRAFT" --text "Première phrase accrocheuse" \

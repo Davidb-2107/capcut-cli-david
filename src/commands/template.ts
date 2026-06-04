@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { type Draft, findMaterialGlobal, type Segment, saveDraft, type Track } from "../draft.js";
-import { die, type Flags, out } from "../utils/cli.js";
+import { CliError, die, type Flags, out } from "../utils/cli.js";
 import { createCompanionMaterials, registerCompanions, uuid } from "../utils/companion.js";
 import { parseTimeInput } from "../utils/time.js";
 
@@ -84,6 +84,11 @@ export function applyTemplate(
     try {
       const parsed = JSON.parse(newMat.content as string);
       if (parsed.text !== undefined) {
+        if (Array.isArray(parsed.styles) && parsed.styles.length > 1) {
+          throw new CliError(
+            "Cannot apply a text override to a multi-span (keyword-highlight) template — its style ranges would be corrupted.",
+          );
+        }
         parsed.text = overrides.text;
         if (parsed.styles && parsed.styles.length > 0) {
           const encoded = Buffer.from(overrides.text, "utf16le");
@@ -91,8 +96,9 @@ export function applyTemplate(
         }
         newMat.content = JSON.stringify(parsed);
       }
-    } catch {
-      /* keep original content */
+    } catch (e) {
+      if (e instanceof CliError) throw e; // surface the multi-span guard
+      /* otherwise keep original content */
     }
   }
 

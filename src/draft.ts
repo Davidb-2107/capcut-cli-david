@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { CliError } from "./utils/cli.js";
 
 export interface Timerange {
   start: number;
@@ -148,6 +149,13 @@ export function updateTextContent(content: string, newText: string): string {
   try {
     const parsed = JSON.parse(content);
     if (parsed.text !== undefined) {
+      // Multi-span (keyword highlight) captions encode per-range offsets; naively
+      // re-ranging styles[0] would desync the keyword spans → refuse instead of corrupt.
+      if (Array.isArray(parsed.styles) && parsed.styles.length > 1) {
+        throw new CliError(
+          "Cannot set-text on a multi-span (keyword-highlight) caption — its style ranges would be corrupted. Rebuild it with `add-text --keyword` or `import-captions`.",
+        );
+      }
       parsed.text = newText;
       if (parsed.styles && parsed.styles.length > 0) {
         const encoded = Buffer.from(newText, "utf16le");
@@ -155,7 +163,8 @@ export function updateTextContent(content: string, newText: string): string {
       }
       return JSON.stringify(parsed);
     }
-  } catch {
+  } catch (e) {
+    if (e instanceof CliError) throw e; // never swallow the guard above
     const match = content.match(/^(.*\])?(.*?)(\[.*)?$/s);
     if (match) {
       return content.replace(/\[[^\]]*\]/, `[${newText}]`);

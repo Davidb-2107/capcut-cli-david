@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { cmdBatch } from "./commands/batch.js";
-import { cmdAddAudio, cmdAddEffect, cmdAddText, cmdAddVideo, cmdInit } from "./commands/create.js";
+import { cmdAddAudio, cmdAddEffect, cmdAddText, cmdAddVideo, cmdImportCaptions, cmdInit } from "./commands/create.js";
 import { cmdCut } from "./commands/cut.js";
 import { cmdOpacity, cmdSetText, cmdShift, cmdShiftAll, cmdSpeed, cmdTrim, cmdVolume } from "./commands/edit.js";
 import {
@@ -55,6 +55,11 @@ Add:
   add-text   <project> <start> <duration> <text>
               [--font-size <n>] [--color <hex>] [--align <0|1|2>]
               [--x <n>] [--y <n>] [--track-name <s>]
+              [--keyword <word> | --keyword-range <s,e>] [--keyword-color <hex>]
+              Keyword highlight: color one word/range (default #FFD600).
+  import-captions <project> <captions.json> [--highlight-color <hex>] [--track-name <s>]
+              Batch word/keyword captions from [{text,start,end,hl?,color?}];
+              replaces the text track (start/end in microseconds).
   add-effect <project> <resource-id> <name> <start> <duration>
               [--value <n>] [--bind <segment-id>]
               Apply a video effect (FX) via its catalogue resource ID.
@@ -151,6 +156,14 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.register = true;
     } else if (a === "--projects-root" && i + 1 < args.length) {
       flags.projectsRoot = args[++i];
+    } else if (a === "--keyword" && i + 1 < args.length) {
+      flags.keyword = args[++i];
+    } else if (a === "--keyword-range" && i + 1 < args.length) {
+      flags.keywordRange = args[++i];
+    } else if (a === "--keyword-color" && i + 1 < args.length) {
+      flags.keywordColor = args[++i];
+    } else if (a === "--highlight-color" && i + 1 < args.length) {
+      flags.highlightColor = args[++i];
     } else {
       positional.push(a);
     }
@@ -254,6 +267,10 @@ function main(): void {
     case "add-text":
       requireArgs(positional, 5, "capcut-david add-text <project> <start> <duration> <text>");
       cmdAddText(draft, filePath, positional, flags);
+      break;
+    case "import-captions":
+      requireArgs(positional, 3, "capcut-david import-captions <project> <captions.json>");
+      cmdImportCaptions(draft, filePath, positional, flags);
       break;
     case "cut":
       requireArgs(positional, 4, "capcut-david cut <project> <start> <end> --out <path>");

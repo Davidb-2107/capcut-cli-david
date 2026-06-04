@@ -359,6 +359,11 @@ Multiple style blocks with **non-overlapping, contiguous** `range` arrays produc
 
 cutcli's `keyword` / `keywordColor` params compile to **2 styles** (before-keyword + keyword) when the keyword sits at the start, or **3 styles** when the keyword is mid-text. The pattern auto-extends to N consecutive ranges if needed.
 
+**Implemented (v1.4.0).** `capcut-david add-text --keyword <word>|--keyword-range <s,e> [--keyword-color <hex>]` and `capcut-david import-captions <project> <captions.json>` produce this encoding via the shared `buildRichTextContent()` helper. Notes from reverse-engineering + a live CapCut render:
+- `range` offsets are **UTF-16 code units** (JS `String.length`/`indexOf`), matching this section — **not** the UTF-16 *byte* length the legacy single-span `buildTextContent` writes for non-highlighted text (that path is frozen for byte-identity).
+- Colors are emitted as **float32** (`Math.fround(n/255)`) to match CapCut's native floats (e.g. `#8C6CFF → [0.5490196347236633, …]`).
+- The engine writes a lean per-span block (`fill` + `size` + `range`) + `is_rich_text: true`; `useLetterColor` (seen on UI captures) is **UI state, not required for rendering** — confirmed by a live CapCut render of engine output.
+
 ### 4.4 · TypeScript
 
 ```ts

@@ -38,6 +38,13 @@ export function initDraft(opts: InitOptions): { draftPath: string; filePath: str
 
 // --- Text ---
 
+export interface TextHighlight {
+  /** [start, end) in UTF-16 code units over the caption text. */
+  range: [number, number];
+  /** RGB in 0..1; fround()ed to float32 internally to match CapCut. */
+  color: [number, number, number];
+}
+
 export interface AddTextOptions {
   text: string;
   start: number;
@@ -48,6 +55,8 @@ export interface AddTextOptions {
   x?: number;
   y?: number;
   trackName?: string;
+  /** Keyword-highlight spans. When present, emits CapCut rich-text (multi-span). */
+  highlights?: TextHighlight[];
 }
 
 function buildTextContent(text: string, fontSize: number, color: [number, number, number]): string {
@@ -71,6 +80,89 @@ function buildTextContent(text: string, fontSize: number, color: [number, number
     ],
     text,
   });
+}
+
+/**
+ * CapCut rich-text content: N contiguous, non-overlapping style spans covering
+ * [0, text.length] in UTF-16 code units. Gaps use `baseColor`; each highlight
+ * uses its own color. Colors are fround()ed to float32 to match CapCut's native
+ * encoding. Functional/patcher shape: solid fill, no `alpha`, no `useLetterColor`.
+ * (`buildTextContent` is left frozen for the single-span path → byte-identity.)
+ */
+export function buildRichTextContent(
+  text: string,
+  fontSize: number,
+  baseColor: [number, number, number],
+  highlights: TextHighlight[],
+): string {
+  const n = text.length; // JS string length == UTF-16 code units
+  const f = Math.fround;
+  const sorted = [...highlights].sort((a, b) => a.range[0] - b.range[0]);
+  let prevEnd = 0;
+  for (const h of sorted) {
+    const [s, e] = h.range;
+    if (!Number.isInteger(s) || !Number.isInteger(e) || s < 0 || e > n || s >= e) {
+      die(`Invalid highlight range [${s}, ${e}] for text of length ${n}`);
+    }
+    if (s < prevEnd) die(`Overlapping highlight ranges near [${s}, ${e}]`);
+    prevEnd = e;
+  }
+  const span = (a: number, b: number, color: [number, number, number]) => ({
+    fill: { content: { render_type: "solid", solid: { color: [f(color[0]), f(color[1]), f(color[2])] } } },
+    size: fontSize,
+    range: [a, b],
+  });
+  const styles: Array<ReturnType<typeof span>> = [];
+  let cursor = 0;
+  for (const h of sorted) {
+    const [s, e] = h.range;
+    if (s > cursor) styles.push(span(cursor, s, baseColor));
+    styles.push(span(s, e, h.color));
+    cursor = e;
+  }
+  if (cursor < n) styles.push(span(cursor, n, baseColor));
+  if (styles.length === 0) styles.push(span(0, n, baseColor));
+  return JSON.stringify({ text, styles });
+}
+
+/**
+ * Build a CapCut text material object. Shared by add-text and import-captions so
+ * both paths emit byte-identical fields. When `highlights` is empty the content
+ * is the frozen single-span `buildTextContent` (v1.3.0 byte-identity); otherwise
+ * it is multi-span rich-text + `is_rich_text`.
+ */
+function buildTextMaterial(
+  matId: string,
+  text: string,
+  fontSize: number,
+  baseRgb: [number, number, number],
+  colorHex: string,
+  alignment: number,
+  highlights: TextHighlight[],
+): Record<string, unknown> {
+  const content =
+    highlights.length > 0
+      ? buildRichTextContent(text, fontSize, baseRgb, highlights)
+      : buildTextContent(text, fontSize, baseRgb);
+  const mat: Record<string, unknown> = {
+    id: matId,
+    type: "text",
+    content,
+    alignment,
+    font_size: fontSize,
+    text_color: colorHex,
+    typesetting: 0,
+    letter_spacing: 0,
+    line_spacing: 0.02,
+    line_feed: 1,
+    line_max_width: 0.82,
+    force_apply_line_max_width: false,
+    check_flag: 7,
+    fixed_width: -1,
+    fixed_height: -1,
+  };
+  if (highlights.length > 0) mat.is_rich_text = true;
+  return mat;
 }
 
 export function addText(
@@ -103,23 +195,8 @@ export function addText(
   const companions = createCompanionMaterials("text");
   registerCompanions(draft, companions);
 
-  const textMaterial = {
-    id: matId,
-    type: "text",
-    content: buildTextContent(opts.text, fontSize, rgb),
-    alignment,
-    font_size: fontSize,
-    text_color: color,
-    typesetting: 0,
-    letter_spacing: 0,
-    line_spacing: 0.02,
-    line_feed: 1,
-    line_max_width: 0.82,
-    force_apply_line_max_width: false,
-    check_flag: 7,
-    fixed_width: -1,
-    fixed_height: -1,
-  };
+  const highlights = opts.highlights ?? [];
+  const textMaterial = buildTextMaterial(matId, opts.text, fontSize, rgb, color, alignment, highlights);
   (draft.materials.texts as unknown as Array<Record<string, unknown>>).push(textMaterial);
 
   const timerange: Timerange = { start: opts.start, duration: opts.duration };
@@ -526,6 +603,31 @@ export function cmdAddVideo(draft: Draft, filePath: string, positional: string[]
   );
 }
 
+/** Default keyword-highlight color (gold-yellow [1.0, 0.84, 0.0]). */
+export const DEFAULT_HIGHLIGHT_COLOR = "#FFD600";
+
+/**
+ * Resolve keyword-highlight flags into a TextHighlight[]. Precedence:
+ * --keyword-range (explicit code-unit offsets) > --keyword (first substring
+ * occurrence). Bounds are validated downstream by buildRichTextContent.
+ */
+function parseKeywordFlags(text: string, flags: Flags): TextHighlight[] {
+  const color = hexToRgb(flags.keywordColor ?? DEFAULT_HIGHLIGHT_COLOR);
+  if (flags.keywordRange !== undefined) {
+    const parts = flags.keywordRange.split(",").map((x) => Number.parseInt(x.trim(), 10));
+    if (parts.length !== 2 || parts.some((v) => !Number.isInteger(v))) {
+      die(`--keyword-range must be "start,end" in UTF-16 code units, got "${flags.keywordRange}"`);
+    }
+    return [{ range: [parts[0], parts[1]], color }];
+  }
+  if (flags.keyword !== undefined) {
+    const idx = text.indexOf(flags.keyword);
+    if (idx < 0) die(`--keyword "${flags.keyword}" not found in caption text`);
+    return [{ range: [idx, idx + flags.keyword.length], color }];
+  }
+  return [];
+}
+
 export function cmdAddText(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
   const startStr = positional[2];
   const durationStr = positional[3];
@@ -543,6 +645,7 @@ export function cmdAddText(draft: Draft, filePath: string, positional: string[],
     x: flags.x,
     y: flags.y,
     trackName: flags.trackName,
+    highlights: parseKeywordFlags(text, flags),
   };
   const result = addText(draft, filePath, opts);
   saveDraft(filePath, draft);
@@ -558,6 +661,115 @@ export function cmdAddText(draft: Draft, filePath: string, positional: string[],
     },
     flags,
   );
+}
+
+// --- Import captions (batch, replaces a text track) ---
+
+export interface CaptionCard {
+  text: string;
+  start: number; // microseconds
+  end: number; // microseconds
+  /** Optional keyword highlight range [start, end) in UTF-16 code units. */
+  hl?: [number, number];
+  /** Optional per-card highlight color (hex); falls back to opts.highlightColor. */
+  color?: string;
+}
+
+export interface ImportCaptionsOptions {
+  cards: CaptionCard[];
+  trackName?: string;
+  highlightColor?: string;
+  fontSize?: number;
+  color?: string;
+  alignment?: number;
+}
+
+/**
+ * Batch-build word/keyword captions and REPLACE the named text track's segments
+ * (1:1 with the inject_word_captions.py patcher). Old text materials are left
+ * orphaned (unreferenced => invisible => zero deletion risk). Per-card `hl`
+ * drives the highlight; `color` overrides the global highlight color.
+ */
+export function importCaptions(
+  draft: Draft,
+  _filePath: string,
+  opts: ImportCaptionsOptions,
+): { trackId: string; count: number } {
+  const trackName = opts.trackName ?? "text";
+  const fontSize = opts.fontSize ?? 15;
+  const baseHex = opts.color ?? "#FFFFFF";
+  const baseRgb = hexToRgb(baseHex);
+  const defaultHl = opts.highlightColor ?? DEFAULT_HIGHLIGHT_COLOR;
+  const alignment = opts.alignment ?? 1;
+
+  let track = draft.tracks.find((t) => t.type === "text" && t.name === trackName);
+  if (!track) {
+    track = {
+      id: uuid(),
+      type: "text",
+      name: trackName,
+      attribute: 0,
+      segments: [],
+      is_default_name: false,
+      flag: 0,
+    } as unknown as Track;
+    draft.tracks.push(track);
+  }
+
+  const texts = draft.materials.texts as unknown as Array<Record<string, unknown>>;
+  const newSegs: Segment[] = [];
+  opts.cards.forEach((card, i) => {
+    if (typeof card.text !== "string") die(`captions[${i}]: missing string field "text"`);
+    if (!Number.isFinite(card.start) || !Number.isFinite(card.end)) {
+      die(`captions[${i}]: "start" and "end" must be numbers (microseconds)`);
+    }
+    const matId = uuid();
+    const segId = uuid();
+    const hl = card.hl;
+    const hasHl = Array.isArray(hl) && hl.length === 2 && hl[1] > hl[0];
+    const highlights: TextHighlight[] = hasHl
+      ? [{ range: [hl[0], hl[1]], color: hexToRgb(card.color ?? defaultHl) }]
+      : [];
+    texts.push(buildTextMaterial(matId, card.text, fontSize, baseRgb, baseHex, alignment, highlights));
+    const companions = createCompanionMaterials("text");
+    registerCompanions(draft, companions);
+    const duration = Math.max(1, card.end - card.start);
+    newSegs.push(baseSegment(segId, matId, track.id, { start: card.start, duration }, companions.ids, 15000));
+  });
+
+  track.segments = newSegs;
+  // Captions define the timeline length when no other media does — extend duration.
+  const maxEnd = opts.cards.reduce((m, c) => Math.max(m, c.end), 0);
+  if (maxEnd > (draft.duration ?? 0)) draft.duration = maxEnd;
+  return { trackId: track.id, count: newSegs.length };
+}
+
+export function cmdImportCaptions(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
+  const jsonPath = positional[2];
+  if (!jsonPath) {
+    die(
+      "Missing <captions.json>. Usage: capcut-david import-captions <project> <captions.json> [--highlight-color <hex>] [--track-name <name>]",
+    );
+  }
+  if (!existsSync(jsonPath)) die(`Captions file not found: ${jsonPath}`);
+  let cards: CaptionCard[];
+  try {
+    cards = JSON.parse(readFileSync(jsonPath, "utf-8")) as CaptionCard[];
+  } catch (e) {
+    die(`Invalid JSON in ${jsonPath}: ${(e as Error).message}`);
+  }
+  if (!Array.isArray(cards)) die("Captions file must be a JSON array of {text,start,end,hl?,color?}");
+
+  const result = importCaptions(draft, filePath, {
+    cards,
+    trackName: flags.trackName,
+    highlightColor: flags.highlightColor ?? flags.keywordColor,
+    fontSize: flags.fontSize,
+    color: flags.color,
+    alignment: flags.align,
+  });
+  saveDraft(filePath, draft);
+  out({ ok: true, track_id: result.trackId, captions: result.count }, flags);
 }
 
 export function cmdAddEffect(draft: Draft, filePath: string, positional: string[], flags: Flags): void {

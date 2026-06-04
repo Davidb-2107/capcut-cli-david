@@ -1,0 +1,377 @@
+// Tests for keyword-highlight rich-text (src/commands/create.ts → dist).
+// Covers: buildRichTextContent core (code-unit ranges, float32 color, contiguity,
+// validation) + addText highlight wiring + byte-identity of the no-highlight path.
+import { test } from "node:test";
+import { strictEqual, deepStrictEqual, ok, throws, match } from "node:assert";
+import { readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+
+import { addText, buildRichTextContent, importCaptions } from "../dist/commands/create.js";
+import { hexToRgb } from "../dist/utils/companion.js";
+import { loadDraft, saveDraft } from "../dist/draft.js";
+
+import { FIXTURES, fixturePath } from "./helpers/load-fixture.mjs";
+import { tmpDraft } from "./helpers/tmp-draft.mjs";
+import { runCli } from "./helpers/spawn-cli.mjs";
+
+const WHITE = [1, 1, 1];
+// Restored oracle text + purple keyword captured from CapCut UI (animations-draft).
+const ORACLE_TEXT = "THE EYES ARE WATCHING ME."; // 25 UTF-16 code units
+const PURPLE_HEX = "#8C6CFF";
+const ORACLE_PURPLE = [0.5490196347236633, 0.42352941632270813, 1]; // float32
+
+function styles(content) {
+  return JSON.parse(content).styles;
+}
+
+// =============================================================
+// buildRichTextContent — core
+// =============================================================
+
+test("buildRichTextContent: mid-text highlight → 3 contiguous spans matching the CapCut oracle", () => {
+  const content = buildRichTextContent(ORACLE_TEXT, 15, WHITE, [
+    { range: [13, 21], color: hexToRgb(PURPLE_HEX) },
+  ]);
+  const parsed = JSON.parse(content);
+  strictEqual(parsed.text, ORACLE_TEXT);
+  const s = parsed.styles;
+  strictEqual(s.length, 3, "mid-text keyword → before/keyword/after");
+  deepStrictEqual(s.map((x) => x.range), [
+    [0, 13],
+    [13, 21],
+    [21, 25],
+  ]);
+  // colors: white / purple / white — purple must equal the real CapCut float32 capture
+  deepStrictEqual(s[0].fill.content.solid.color, WHITE);
+  deepStrictEqual(s[1].fill.content.solid.color, ORACLE_PURPLE);
+  deepStrictEqual(s[2].fill.content.solid.color, WHITE);
+  // functional/patcher shape: no alpha, no useLetterColor
+  strictEqual(s[1].useLetterColor, undefined);
+  strictEqual(s[1].fill.alpha, undefined);
+  strictEqual(s[1].fill.content.solid.alpha, undefined);
+  strictEqual(s[1].size, 15);
+});
+
+test("buildRichTextContent: oracle float32 purple is exactly fround(#8C6CFF)", () => {
+  const expected = hexToRgb(PURPLE_HEX).map((c) => Math.fround(c));
+  deepStrictEqual(expected, ORACLE_PURPLE);
+});
+
+test("buildRichTextContent: keyword at start → 2 spans (keyword + after)", () => {
+  const text = "WATCHING eyes";
+  const s = styles(buildRichTextContent(text, 15, WHITE, [{ range: [0, 8], color: hexToRgb(PURPLE_HEX) }]));
+  strictEqual(s.length, 2);
+  deepStrictEqual(s.map((x) => x.range), [
+    [0, 8],
+    [8, text.length],
+  ]);
+  deepStrictEqual(s[0].fill.content.solid.color, ORACLE_PURPLE);
+  deepStrictEqual(s[1].fill.content.solid.color, WHITE);
+});
+
+test("buildRichTextContent: keyword at end → 2 spans (before + keyword)", () => {
+  const text = "eyes WATCHING";
+  const s = styles(buildRichTextContent(text, 15, WHITE, [{ range: [5, 13], color: hexToRgb(PURPLE_HEX) }]));
+  strictEqual(s.length, 2);
+  deepStrictEqual(s.map((x) => x.range), [
+    [0, 5],
+    [5, 13],
+  ]);
+});
+
+test("buildRichTextContent: no highlights → single span over [0, len]", () => {
+  const text = "plain caption";
+  const s = styles(buildRichTextContent(text, 15, WHITE, []));
+  strictEqual(s.length, 1);
+  deepStrictEqual(s[0].range, [0, text.length]);
+  deepStrictEqual(s[0].fill.content.solid.color, WHITE);
+});
+
+test("buildRichTextContent: ranges are contiguous, non-overlapping, cover the whole text", () => {
+  const text = "alpha bravo charlie delta";
+  const s = styles(
+    buildRichTextContent(text, 15, WHITE, [
+      { range: [6, 11], color: hexToRgb("#FF0000") },
+      { range: [12, 19], color: hexToRgb("#00FF00") },
+    ]),
+  );
+  // sum of span lengths == text length, and each span starts where the previous ended
+  let cursor = 0;
+  let sum = 0;
+  for (const sp of s) {
+    strictEqual(sp.range[0], cursor, "span must start where previous ended");
+    cursor = sp.range[1];
+    sum += sp.range[1] - sp.range[0];
+  }
+  strictEqual(cursor, text.length, "spans must end at text length");
+  strictEqual(sum, text.length, "sum of ranges == text length");
+});
+
+test("buildRichTextContent: ranges count in UTF-16 code units (emoji surrogate pair = 2)", () => {
+  // "👁" is U+1F441, a surrogate pair → 2 code units. "EYES" therefore starts at
+  // code-unit index 3 (emoji=2 + space=1), which is what CapCut expects.
+  const text = "👁 EYES";
+  strictEqual(text.length, 7); // 2 (emoji) + 1 (space) + 4 (EYES)
+  const kw = "EYES";
+  const start = text.indexOf(kw); // 3 — JS indexOf is code-unit based
+  strictEqual(start, 3);
+  const s = styles(buildRichTextContent(text, 15, WHITE, [{ range: [start, start + kw.length], color: hexToRgb(PURPLE_HEX) }]));
+  deepStrictEqual(s.map((x) => x.range), [
+    [0, 3],
+    [3, 7],
+  ]);
+});
+
+test("buildRichTextContent: invalid range throws CliError", () => {
+  throws(() => buildRichTextContent("short", 15, WHITE, [{ range: [2, 99], color: WHITE }]), /Invalid highlight range/);
+  throws(() => buildRichTextContent("short", 15, WHITE, [{ range: [3, 1], color: WHITE }]), /Invalid highlight range/);
+});
+
+test("buildRichTextContent: overlapping ranges throw CliError", () => {
+  throws(
+    () =>
+      buildRichTextContent("hello world", 15, WHITE, [
+        { range: [0, 6], color: WHITE },
+        { range: [3, 9], color: WHITE },
+      ]),
+    /Overlapping highlight ranges/,
+  );
+});
+
+// =============================================================
+// addText — highlight wiring + byte-identity of the no-highlight path
+// =============================================================
+
+test("addText: with highlights writes is_rich_text + multi-span content", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const { draft } = loadDraft(filePath);
+  const result = addText(draft, filePath, {
+    text: ORACLE_TEXT,
+    start: 0,
+    duration: 2_000_000,
+    fontSize: 15,
+    highlights: [{ range: [13, 21], color: hexToRgb(PURPLE_HEX) }],
+  });
+  const mat = draft.materials.texts.find((m) => m.id === result.materialId);
+  ok(mat);
+  strictEqual(mat.is_rich_text, true, "highlight material must declare is_rich_text");
+  strictEqual(styles(mat.content).length, 3);
+});
+
+test("addText: WITHOUT highlights stays byte-identical to v1.3.0 (single octet span, no is_rich_text)", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const { draft } = loadDraft(filePath);
+  const text = "Test caption";
+  const result = addText(draft, filePath, { text, start: 0, duration: 2_000_000, fontSize: 24, color: "#FF0000" });
+  const mat = draft.materials.texts.find((m) => m.id === result.materialId);
+  ok(mat);
+  strictEqual("is_rich_text" in mat, false, "no-highlight path must NOT add is_rich_text");
+  const s = styles(mat.content);
+  strictEqual(s.length, 1);
+  // legacy single-span range is in UTF-16 BYTES (utf16le length) — frozen contract
+  strictEqual(s[0].range[1], Buffer.from(text, "utf16le").length);
+});
+
+// =============================================================
+// Surface A — add-text --keyword / --keyword-range / --keyword-color (CLI)
+// =============================================================
+
+const DEFAULT_YELLOW = [1, Math.fround(214 / 255), 0]; // #FFD600 fround float32
+
+function lastTextMaterial(filePath, id) {
+  const draft = JSON.parse(readFileSync(filePath, "utf-8"));
+  return draft.materials.texts.find((m) => m.id === id);
+}
+
+test("add-text --keyword (CLI): substring → 3 spans, default yellow, is_rich_text", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const r = runCli(["add-text", filePath, "0", "2s", "THE", "EYES", "ARE", "WATCHING", "ME.", "--keyword", "WATCHING"]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  const mat = lastTextMaterial(filePath, r.json.material_id);
+  strictEqual(mat.is_rich_text, true);
+  const s = styles(mat.content);
+  deepStrictEqual(s.map((x) => x.range), [
+    [0, 13],
+    [13, 21],
+    [21, 25],
+  ]);
+  deepStrictEqual(s[1].fill.content.solid.color, DEFAULT_YELLOW);
+});
+
+test("add-text --keyword-range (CLI): explicit code-unit offsets", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const r = runCli(["add-text", filePath, "0", "2s", "THE EYES ARE WATCHING ME.", "--keyword-range", "13,21"]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  const s = styles(lastTextMaterial(filePath, r.json.material_id).content);
+  deepStrictEqual(s.map((x) => x.range), [
+    [0, 13],
+    [13, 21],
+    [21, 25],
+  ]);
+});
+
+test("add-text --keyword-color (CLI): custom hex applied as float32", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const r = runCli(["add-text", filePath, "0", "2s", "danger zone", "--keyword", "danger", "--keyword-color", "#FF0000"]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  const s = styles(lastTextMaterial(filePath, r.json.material_id).content);
+  deepStrictEqual(s[0].fill.content.solid.color, [1, 0, 0]);
+  deepStrictEqual(s[0].range, [0, 6]);
+});
+
+test("add-text --keyword-range wins over --keyword (precedence)", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const r = runCli(["add-text", filePath, "0", "2s", "alpha bravo", "--keyword", "alpha", "--keyword-range", "6,11"]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  const s = styles(lastTextMaterial(filePath, r.json.material_id).content);
+  // range-based [6,11] → before [0,6] + keyword [6,11]; NOT the "alpha" [0,5]
+  deepStrictEqual(s.map((x) => x.range), [
+    [0, 6],
+    [6, 11],
+  ]);
+});
+
+test("add-text --keyword (CLI): substring not found → CliError status 1", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const r = runCli(["add-text", filePath, "0", "2s", "hello world", "--keyword", "zzz"]);
+  strictEqual(r.status, 1);
+  ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
+  match(r.errorJson.error, /--keyword "zzz" not found/);
+});
+
+test("add-text --keyword-range (CLI): out-of-bounds → CliError status 1", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const r = runCli(["add-text", filePath, "0", "2s", "short", "--keyword-range", "2,99"]);
+  strictEqual(r.status, 1);
+  ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
+  match(r.errorJson.error, /Invalid highlight range/);
+});
+
+// =============================================================
+// Surface B — import-captions (batch JSON → replaces a text track)
+// =============================================================
+
+const CARDS = [
+  { text: "le PC", start: 0, end: 500000, hl: [3, 5] }, // "PC" highlighted
+  { text: "est mort", start: 500000, end: 1200000 }, // no highlight
+  { text: "DANGER zone", start: 1200000, end: 2000000, hl: [0, 6], color: "#FF0000" },
+];
+
+test("importCaptions: replaces text track with N cards; hl→rich, no-hl→single span", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const { draft } = loadDraft(filePath);
+  const res = importCaptions(draft, filePath, { cards: CARDS, trackName: "subtitle" });
+  strictEqual(res.count, 3);
+  const track = draft.tracks.find((tr) => tr.id === res.trackId);
+  strictEqual(track.segments.length, 3, "track segments fully replaced");
+
+  const matOf = (i) => draft.materials.texts.find((m) => m.id === track.segments[i].material_id);
+  // card 0: "le PC" with hl [3,5] → 2 spans (before + keyword), rich
+  strictEqual(matOf(0).is_rich_text, true);
+  deepStrictEqual(styles(matOf(0).content).map((x) => x.range), [
+    [0, 3],
+    [3, 5],
+  ]);
+  // card 1: no hl → single span, NOT rich
+  strictEqual("is_rich_text" in matOf(1), false);
+  strictEqual(styles(matOf(1).content).length, 1);
+  // card 2: per-card color override (#FF0000)
+  deepStrictEqual(styles(matOf(2).content)[0].fill.content.solid.color, [1, 0, 0]);
+});
+
+test("importCaptions: duration = max(1, end-start); timing on segments", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const { draft } = loadDraft(filePath);
+  const res = importCaptions(draft, filePath, { cards: CARDS, trackName: "subtitle" });
+  const track = draft.tracks.find((tr) => tr.id === res.trackId);
+  strictEqual(track.segments[0].target_timerange.start, 0);
+  strictEqual(track.segments[0].target_timerange.duration, 500000);
+  strictEqual(track.segments[1].target_timerange.duration, 700000);
+});
+
+test("importCaptions: hl [0,0] (patcher sentinel) → no highlight, single span", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const { draft } = loadDraft(filePath);
+  const res = importCaptions(draft, filePath, {
+    cards: [{ text: "no keyword here", start: 0, end: 1000000, hl: [0, 0] }],
+    trackName: "subtitle",
+  });
+  const track = draft.tracks.find((tr) => tr.id === res.trackId);
+  const mat = draft.materials.texts.find((m) => m.id === track.segments[0].material_id);
+  strictEqual("is_rich_text" in mat, false);
+  strictEqual(styles(mat.content).length, 1);
+});
+
+test("import-captions (CLI happy): reads JSON, replaces track, returns count", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const jsonPath = join(dirname(filePath), "captions-styled.json");
+  writeFileSync(jsonPath, JSON.stringify(CARDS), "utf-8");
+  const r = runCli(["import-captions", filePath, jsonPath, "--track-name", "subtitle"]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  strictEqual(r.json.ok, true);
+  strictEqual(r.json.captions, 3);
+
+  const after = JSON.parse(readFileSync(filePath, "utf-8"));
+  const track = after.tracks.find((tr) => tr.id === r.json.track_id);
+  strictEqual(track.segments.length, 3);
+});
+
+test("import-captions (CLI): --highlight-color sets the global default", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const jsonPath = join(dirname(filePath), "cap2.json");
+  writeFileSync(jsonPath, JSON.stringify([{ text: "buy now", start: 0, end: 1000000, hl: [0, 3] }]), "utf-8");
+  const r = runCli(["import-captions", filePath, jsonPath, "--highlight-color", "#00FF00", "--track-name", "subtitle"]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  const after = JSON.parse(readFileSync(filePath, "utf-8"));
+  const track = after.tracks.find((tr) => tr.id === r.json.track_id);
+  const mat = after.materials.texts.find((m) => m.id === track.segments[0].material_id);
+  deepStrictEqual(styles(mat.content)[0].fill.content.solid.color, [0, 1, 0]);
+});
+
+test("import-captions (CLI): missing file → CliError status 1", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const r = runCli(["import-captions", filePath, join(dirname(filePath), "does-not-exist.json")]);
+  strictEqual(r.status, 1);
+  ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
+  match(r.errorJson.error, /Captions file not found/);
+});
+
+test("import-captions (CLI): bad range in a card → CliError status 1", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const jsonPath = join(dirname(filePath), "bad.json");
+  writeFileSync(jsonPath, JSON.stringify([{ text: "hi", start: 0, end: 1000000, hl: [0, 99] }]), "utf-8");
+  const r = runCli(["import-captions", filePath, jsonPath, "--track-name", "subtitle"]);
+  strictEqual(r.status, 1);
+  ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
+  match(r.errorJson.error, /Invalid highlight range/);
+});
+
+// =============================================================
+// Guard — set-text must refuse to corrupt a multi-span caption
+// =============================================================
+
+test("set-text (CLI): refuses a multi-span (keyword-highlight) caption", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const { draft, filePath: fp } = loadDraft(filePath);
+  const r = addText(draft, fp, {
+    text: "DANGER zone",
+    start: 0,
+    duration: 1_000_000,
+    highlights: [{ range: [0, 6], color: hexToRgb("#FF0000") }],
+  });
+  saveDraft(fp, draft);
+  const res = runCli(["set-text", filePath, r.segmentId, "new plain text"]);
+  strictEqual(res.status, 1);
+  ok(res.errorJson, `expected JSON on stderr, got: ${res.stderr}`);
+  match(res.errorJson.error, /multi-span/);
+});
+
+test("set-text (CLI): still works on a normal single-span caption", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const { draft, filePath: fp } = loadDraft(filePath);
+  const r = addText(draft, fp, { text: "hello", start: 0, duration: 1_000_000 });
+  saveDraft(fp, draft);
+  const res = runCli(["set-text", filePath, r.segmentId, "goodbye"]);
+  strictEqual(res.status, 0, `unexpected stderr: ${res.stderr}`);
+  strictEqual(res.json.new, "goodbye");
+});
