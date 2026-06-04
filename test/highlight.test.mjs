@@ -438,11 +438,12 @@ test("importCaptions --clone-style: new captions inherit the existing caption's 
   const tplMat = draft.materials.texts.find((m) => m.id === track.segments[0].material_id);
   tplMat.content = JSON.stringify({ text: "modèle", styles: [FAKE_STYLE] });
 
+  // No --track-name → defaults to the first text track (the one we just planted on).
   const res = importCaptions(draft, filePath, {
     cards: [{ text: "le PC", start: 0, end: 500000, hl: [3, 5] }],
-    trackName: track.name,
     cloneStyle: true,
   });
+  strictEqual(res.trackId, track.id, "should target the existing first text track, not create a new one");
   const newTrack = draft.tracks.find((tr) => tr.id === res.trackId);
   const mat = draft.materials.texts.find((m) => m.id === newTrack.segments[0].material_id);
   strictEqual(mat.is_rich_text, true);
@@ -478,10 +479,27 @@ test("import-captions --clone-style (CLI): runs and clones style end-to-end", (t
 
   const jsonPath = join(dirname(filePath), "clone-cards.json");
   writeFileSync(jsonPath, JSON.stringify([{ text: "le PC", start: 0, end: 500000, hl: [3, 5] }]), "utf-8");
-  const r = runCli(["import-captions", filePath, jsonPath, "--track-name", track.name, "--clone-style"]);
+  const r = runCli(["import-captions", filePath, jsonPath, "--clone-style"]);
   strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
   const after = JSON.parse(readFileSync(filePath, "utf-8"));
   const newTrack = after.tracks.find((tr) => tr.id === r.json.track_id);
   const mat = after.materials.texts.find((m) => m.id === newTrack.segments[0].material_id);
   deepStrictEqual(styles(mat.content)[1].font, FAKE_STYLE.font);
+});
+
+test("importCaptions: without --track-name targets the FIRST existing text track (no duplicate track)", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const { draft } = loadDraft(filePath);
+  const textTracksBefore = draft.tracks.filter((tr) => tr.type === "text");
+  const firstTextTrack = textTracksBefore[0];
+  const res = importCaptions(draft, filePath, {
+    cards: [{ text: "one", start: 0, end: 1000000 }],
+    // no trackName
+  });
+  strictEqual(res.trackId, firstTextTrack.id, "replaces the existing first text track");
+  strictEqual(
+    draft.tracks.filter((tr) => tr.type === "text").length,
+    textTracksBefore.length,
+    "must NOT create an extra text track",
+  );
 });

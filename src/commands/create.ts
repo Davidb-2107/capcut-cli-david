@@ -704,19 +704,24 @@ export function importCaptions(
   _filePath: string,
   opts: ImportCaptionsOptions,
 ): { trackId: string; count: number } {
-  const trackName = opts.trackName ?? "text";
   const fontSize = opts.fontSize ?? 15;
   const baseHex = opts.color ?? "#FFFFFF";
   const baseRgb = hexToRgb(baseHex);
   const defaultHl = opts.highlightColor ?? DEFAULT_HIGHLIGHT_COLOR;
   const alignment = opts.alignment ?? 1;
 
-  let track = draft.tracks.find((t) => t.type === "text" && t.name === trackName);
+  // Target track: an explicit --track-name matches by name; otherwise the FIRST text
+  // track (CapCut caption tracks are usually unnamed — patcher parity, no name to hunt).
+  const trackLabel = opts.trackName ?? "(first text track)";
+  let track =
+    opts.trackName !== undefined
+      ? draft.tracks.find((t) => t.type === "text" && t.name === opts.trackName)
+      : draft.tracks.find((t) => t.type === "text");
   if (!track) {
     track = {
       id: uuid(),
       type: "text",
-      name: trackName,
+      name: opts.trackName ?? "text",
       attribute: 0,
       segments: [],
       is_default_name: false,
@@ -747,7 +752,7 @@ export function importCaptions(
     }
     if (!cloneTpl) {
       process.stderr.write(
-        `[import-captions] --clone-style: no styled caption found on track "${trackName}"; using default style\n`,
+        `[import-captions] --clone-style: no styled caption found on ${trackLabel}; using default style\n`,
       );
     }
   }

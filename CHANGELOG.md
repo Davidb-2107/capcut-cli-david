@@ -20,10 +20,10 @@ Minor release. `import-captions --clone-style` preserves the existing caption lo
 - `buildRichTextContent(text, fontSize, baseColor, highlights, baseStyle?)` — optional `baseStyle` param; when provided each span is a deep copy of it with `range` + solid `fill` overridden. Without it, the lean default span shape is byte-for-byte unchanged (locked by test).
 
 ### Changed
-- Nothing in the default (`--clone-style` absent) path: `add-text` and `import-captions` output is identical to 1.4.0.
+- `import-captions` without `--track-name` now targets the **first existing text track** (was: a track literally named `text`). CapCut caption tracks are usually unnamed, so the old default created a stray second track and clone had nothing to read. `add-text` is unaffected; `add-text`/`import-captions` content output is otherwise identical to 1.4.0.
 
 ### Notes
-- `--clone-style` clones from the track named by `--track-name` (default `text`). If that track is empty / its content can't be parsed, it falls back to the default style with a stderr warning — never an error.
+- `--clone-style` clones from the target track (`--track-name` if given, else the first text track). If that track is empty / its content can't be parsed, it falls back to the default style with a stderr warning — never an error.
 
 ### Compatibility
 - CapCut ≥ 5.x desktop (Windows + macOS) — unchanged. Node `>= 18` — unchanged. Runtime dependencies: zero — unchanged.
