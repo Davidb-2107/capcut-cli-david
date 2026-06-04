@@ -614,11 +614,12 @@ export const DEFAULT_HIGHLIGHT_COLOR = "#FFD600";
 function parseKeywordFlags(text: string, flags: Flags): TextHighlight[] {
   const color = hexToRgb(flags.keywordColor ?? DEFAULT_HIGHLIGHT_COLOR);
   if (flags.keywordRange !== undefined) {
-    const parts = flags.keywordRange.split(",").map((x) => Number.parseInt(x.trim(), 10));
-    if (parts.length !== 2 || parts.some((v) => !Number.isInteger(v))) {
-      die(`--keyword-range must be "start,end" in UTF-16 code units, got "${flags.keywordRange}"`);
+    const parts = flags.keywordRange.split(",").map((x) => x.trim());
+    const nums = parts.map(Number); // Number() (not parseInt) so "1.5" is rejected, not truncated
+    if (parts.length !== 2 || parts.some((p) => p === "") || nums.some((v) => !Number.isInteger(v))) {
+      die(`--keyword-range must be two integers "start,end" in UTF-16 code units, got "${flags.keywordRange}"`);
     }
-    return [{ range: [parts[0], parts[1]], color }];
+    return [{ range: [nums[0], nums[1]], color }];
   }
   if (flags.keyword !== undefined) {
     const idx = text.indexOf(flags.keyword);
@@ -726,6 +727,9 @@ export function importCaptions(
     const matId = uuid();
     const segId = uuid();
     const hl = card.hl;
+    // Batch tolerance (1:1 with the patcher): a degenerate/sentinel range (e.g. [0,0]
+    // or any e <= s) means "no highlight on this card" — NOT an error, unlike the strict
+    // add-text --keyword-range path. Valid ranges are still bounds-checked in buildRichTextContent.
     const hasHl = Array.isArray(hl) && hl.length === 2 && hl[1] > hl[0];
     const highlights: TextHighlight[] = hasHl
       ? [{ range: [hl[0], hl[1]], color: hexToRgb(card.color ?? defaultHl) }]

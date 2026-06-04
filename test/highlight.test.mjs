@@ -375,3 +375,11 @@ test("set-text (CLI): still works on a normal single-span caption", (t) => {
   strictEqual(res.status, 0, `unexpected stderr: ${res.stderr}`);
   strictEqual(res.json.new, "goodbye");
 });
+
+test("add-text --keyword-range (CLI): non-integer offset rejected (no silent truncation)", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const r = runCli(["add-text", filePath, "0", "2s", "alpha bravo", "--keyword-range", "1.5,3"]);
+  strictEqual(r.status, 1);
+  ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
+  match(r.errorJson.error, /two integers/);
+});
