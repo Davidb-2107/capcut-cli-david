@@ -4,8 +4,10 @@
 // span-aware so multi-span keyword captions keep their per-span colors + ranges.
 
 import { existsSync, readFileSync } from "node:fs";
+import { dirname } from "node:path";
 import { type Draft, saveDraft } from "../draft.js";
 import { die, type Flags, out } from "../utils/cli.js";
+import { buildKeyValueEntry, type FontMirror, mirrorFont } from "../utils/mirror.js";
 
 /** A per-span style block (font/strokes/shadows/size/bold…) grafted onto each span. */
 export type SpanStyle = Record<string, unknown>;
@@ -79,6 +81,17 @@ export function spanStyleFromPreset(preset: CaptionStylePreset): SpanStyle {
   return JSON.parse(JSON.stringify(rest)) as SpanStyle;
 }
 
+/** Derive the sidecar-mirror font (path/id/resource_id) from a preset, or null if it carries no font. */
+export function fontFromPreset(preset: CaptionStylePreset): FontMirror | null {
+  const tm = (preset.text_material ?? {}) as Record<string, unknown>;
+  const path = typeof tm.font_path === "string" ? tm.font_path : "";
+  const resourceId = typeof tm.font_resource_id === "string" ? tm.font_resource_id : "";
+  const spanFont = (preset.content_template?.styles?.[0] as { font?: { id?: unknown } } | undefined)?.font;
+  const id = typeof spanFont?.id === "string" && spanFont.id ? spanFont.id : resourceId;
+  if (!path && !resourceId) return null;
+  return { path, id, resourceId };
+}
+
 export interface ApplyCaptionStyleOptions {
   preset: CaptionStylePreset;
   /** Restrict to one named text track; default = ALL text tracks (apply to every caption). */
@@ -94,7 +107,7 @@ export function applyCaptionStyle(
   draft: Draft,
   filePath: string,
   opts: ApplyCaptionStyleOptions,
-): { materialsPatched: number; segmentsPatched: number } {
+): { materialsPatched: number; segmentsPatched: number; mirrored: string[] } {
   const spanStyle = spanStyleFromPreset(opts.preset);
   const materialFields = opts.preset.text_material ?? {};
   const segmentFields = opts.preset.segment ?? {};
@@ -128,7 +141,17 @@ export function applyCaptionStyle(
   }
 
   saveDraft(filePath, draft);
-  return { materialsPatched, segmentsPatched };
+
+  // Mirror the font across CapCut's other read locations (template-2.tmp, Timeline
+  // journals, key_value registry). Skip-if-absent; only when the preset carries a font.
+  let mirrored: string[] = [];
+  const font = fontFromPreset(opts.preset);
+  if (font) {
+    const kvEntry = font.resourceId ? buildKeyValueEntry(font.resourceId) : undefined;
+    mirrored = mirrorFont(dirname(filePath), draft, font, kvEntry).written;
+  }
+
+  return { materialsPatched, segmentsPatched, mirrored };
 }
 
 // --- CLI wrapper ---
@@ -150,5 +173,13 @@ export function cmdRestyle(draft: Draft, filePath: string, _positional: string[]
     die("Preset must be an object with text_material + content_template (+ segment) — see preset_captions_style.json");
   }
   const res = applyCaptionStyle(draft, filePath, { preset, trackName: flags.trackName });
-  out({ ok: true, materials_patched: res.materialsPatched, segments_patched: res.segmentsPatched }, flags);
+  out(
+    {
+      ok: true,
+      materials_patched: res.materialsPatched,
+      segments_patched: res.segmentsPatched,
+      mirrored: res.mirrored,
+    },
+    flags,
+  );
 }

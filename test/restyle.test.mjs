@@ -3,7 +3,7 @@
 // multi-span keyword caption WITHOUT destroying each span's range or fill.color.
 import { test } from "node:test";
 import { strictEqual, deepStrictEqual, ok, match } from "node:assert";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { applyCaptionStyle, restyleContent, restyleMaterial, spanStyleFromPreset } from "../dist/commands/restyle.js";
@@ -233,6 +233,22 @@ test("applyCaptionStyle: grafts segment fields without clobbering identity/timin
     deepStrictEqual(s.target_timerange, before[i].tr, "timing preserved");
     strictEqual(s.render_index, 14000, "segment field from preset grafted");
   });
+});
+
+test("applyCaptionStyle: mirrors the font to sidecars sitting next to the draft", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const dir = dirname(filePath);
+  writeFileSync(join(dir, "key_value.json"), JSON.stringify({ existing: { a: 1 } }), "utf-8");
+  const { draft } = loadDraft(filePath);
+  importCaptions(draft, filePath, { cards: CARDS });
+
+  const out = applyCaptionStyle(draft, filePath, { preset: PRESET });
+  ok(out.mirrored.includes("template-2.tmp"), "template-2.tmp written");
+  ok(out.mirrored.includes("key_value.json"), "key_value injected");
+  ok(existsSync(join(dir, "template-2.tmp")));
+  const kv = JSON.parse(readFileSync(join(dir, "key_value.json"), "utf-8"));
+  ok(kv["7457793217560318481"], "registry entry injected under the preset resource id");
+  ok(kv.existing, "existing registry keys preserved");
 });
 
 // --- CLI: restyle <project> --preset <preset.json> ---
