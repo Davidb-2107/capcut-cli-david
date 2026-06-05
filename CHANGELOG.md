@@ -11,6 +11,24 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.9.0] — 2026-06-05
+
+Minor release. New `sync-timelines` command — the WRITE verb that repairs the stale-timeline-mirror corruption that v1.8.0's read-only `validate` detects (`timelines.divergence`). Once CapCut opens a draft it treats `<draft>/Timelines/<guid>/draft_content.json` as its own timeline source of truth; a later CLI re-patch of the root leaves that mirror stale and CapCut renders the old state (fonts/captions missing). This automates the documented manual recovery.
+
+### Added
+- **`sync-timelines <project>`** — copies the root `draft_content.json` (RAW bytes, never re-serialised) into every `Timelines/<guid>/draft_content.json` + `template-2.tmp`, so root and mirrors agree again. Direction is **always root → mirror**, never inferred from mtime. It is the fixer for `validate`'s `timelines.divergence` finding.
+  - **Data-loss safety (apply-by-default + nets):** in `WRITE_COMMANDS` → the "CapCut is open" guard refuses while CapCut runs (`--force` bypass); **timestamped, non-clobbering** per-file backups (`…synced-<epoch>.bak`) before every overwrite; **skip-when-byte-identical** (a converged draft writes zero bytes, mtime unchanged); a **stderr WARNING** on each divergent-mirror overwrite reminding you to confirm CapCut has been closed since the draft was *modified*. The dangerous "mirror is newer than root" case (edited in CapCut, closed, then synced) is recoverable from the timestamped backup.
+  - **Never touched:** the root `draft_content.json` itself (read-only source), the root `draft_content.json.bak` (`saveDraft`'s own rollback), the patch journals (`attachment/patch/mini_draft.json` / `patch.json`), `draft_meta_info.json` / `root_meta_info.json`, `key_value.json`, `Resources/`.
+  - **Robustness:** per-guid isolation — a locked/unwritable mirror degrades to an error (exit 1) without aborting the other guids, and a backup created for a write that then fails is cleaned up (no orphan). No `Timelines/` folder ⇒ no-op success (the dir is never fabricated).
+  - **Flags:** `--dry-run` (report without writing a byte), `-q`, `-H`, `--force`. **Exit codes:** `0` = synced or nothing to sync, `1` = tool failure. No exit 2.
+- Shared `listTimelineDirs()` util (`src/utils/timelines.ts`) — single source of the `Timelines/<guid>` walk, now used by `mirror.ts`, `validate.ts` and `sync-timelines.ts`. `validate.ts` exports `draftSignature`; its `timelines.divergence` `fix_hint` now names `sync-timelines`.
+
+### Notes
+- No existing command changes behavior. `sync-timelines` adds 31 tests (350 total); `sync-timelines.js` coverage is 98.6% lines / 100% functions. The `mirror.ts` / `validate.ts` refactor to the shared walk is behaviour-preserving (all prior tests green).
+
+### Compatibility
+- CapCut ≥ 5.x desktop (Windows + macOS) — unchanged. Node `>= 18` — unchanged. Runtime dependencies: zero — unchanged.
+
 ## [1.8.0] — 2026-06-05
 
 Minor release. New `validate` command — a strictly read-only linter that detects draft corruption and broken invariants **before** you open CapCut. It is the diagnostic backbone the future fix verbs (`--fix`, `gc`, `sync-timelines`, `relink`) will graft onto: every detector is a pure, exported `CHECKS` function emitting a stable finding schema (`id` / `severity` / `fixable` / `fix_hint`).
