@@ -19,6 +19,7 @@ import { cmdPsychoBuild } from "./commands/pipeline.js";
 import { cmdRegister } from "./commands/register.js";
 import { cmdRestyle } from "./commands/restyle.js";
 import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template.js";
+import { cmdValidate } from "./commands/validate.js";
 import { loadDraft } from "./draft.js";
 import { assertCapCutClosed, WRITE_COMMANDS } from "./utils/capcut-guard.js";
 import { CliError, die, type Flags, requireArgs } from "./utils/cli.js";
@@ -113,6 +114,15 @@ Register:
                Append a built draft to CapCut's root_meta_info.json so it
                shows up in the CapCut UI. Idempotent.
 
+Validate:
+  validate   <project> [-H] [-q] [--strict] [--id <id>] [--skip <id>]
+             [--check-assets] [--check-timelines] [--projects-root <dir>]
+             Read-only linter — detects dangling refs, orphans, duplicate ids,
+             zero/under/overrun durations, overlaps and canvas sanity BEFORE you
+             open CapCut. Never writes. Exit 0 = clean, 2 = problems found,
+             1 = tool failure. --strict promotes warnings to the failure code.
+             --check-assets/--check-timelines enable the opt-in disk checks.
+
 Project:
   cut        <project> <start> <end> --out <path>
 
@@ -180,6 +190,18 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.cloneStyle = true;
     } else if (a === "--force") {
       flags.force = true;
+    } else if (a === "--strict") {
+      flags.strict = true;
+    } else if (a === "--check-assets") {
+      flags.checkAssets = true;
+    } else if (a === "--check-timelines") {
+      flags.checkTimelines = true;
+    } else if (a === "--id" && i + 1 < args.length) {
+      if (!flags.ids) flags.ids = [];
+      flags.ids.push(args[++i]);
+    } else if (a === "--skip" && i + 1 < args.length) {
+      if (!flags.skip) flags.skip = [];
+      flags.skip.push(args[++i]);
     } else if (a === "--preset" && i + 1 < args.length) {
       flags.preset = args[++i];
     } else {
@@ -327,6 +349,9 @@ function main(): void {
     case "restyle":
       requireArgs(positional, 2, "capcut-david restyle <project> --preset <preset.json> [--track-name <name>]");
       cmdRestyle(draft, filePath, positional, flags);
+      break;
+    case "validate":
+      process.exit(cmdValidate(draft, filePath, projectPath, flags));
       break;
     default:
       die(`Unknown command: ${cmd}. Run 'capcut-david --help' for usage.`);

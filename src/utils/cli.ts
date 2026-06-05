@@ -28,6 +28,11 @@ export interface Flags {
   cloneStyle?: boolean;
   preset?: string;
   force?: boolean;
+  strict?: boolean;
+  checkAssets?: boolean;
+  checkTimelines?: boolean;
+  ids?: string[];
+  skip?: string[];
 }
 
 export class CliError extends Error {
