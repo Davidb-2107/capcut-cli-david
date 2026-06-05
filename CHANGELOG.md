@@ -11,6 +11,25 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.7.0] — 2026-06-05
+
+Minor release. Hardens the engine against the two most expensive CLI footguns documented in the CapCut skills: absolute source paths breaking on Windows, and writing a draft while CapCut is open (silent loss to CapCut's on-close overwrite).
+
+### Fixed
+- **Absolute source paths on Windows.** `add-audio` / `add-video` resolved paths with `path.startsWith("/")`, which on Windows misclassifies an absolute path (`C:\…` / `C:/…`) as relative and joins it onto the cwd → `ENOENT` (or the asset silently not copied into `assets/`). Now uses `path.resolve()` (correct on Windows + POSIX) for the source, and `path.basename()` (was `split("/").pop()`, which returns the whole string for a backslash path) for the asset filename. A relative input that already worked produces a **byte-identical** draft (locked by test); an absolute input that previously failed now copies the source into `<draft>/assets/<type>/` and references it there.
+
+### Added
+- **"CapCut is open" preflight guard.** Every draft-writing command (`add-*`, `set-text`, `shift`/`shift-all`, `speed`, `volume`, `trim`, `opacity`, `import-captions`, `restyle`, `add-keyframe`, `ken-burns`, `apply-template`, `batch`, `cut`, `psycho-build`, `register`) now refuses to run while CapCut is detected running, with a clear error (`CapCut is running — close it before writing (or pass --force)`). CapCut holds `draft_content.json` / `root_meta_info.json` in memory and rewrites them on close, silently discarding CLI edits — this is gotcha #1 in every CapCut skill and Iron Law #4 of the build pipeline. Detection: `tasklist` (Windows) / `pgrep` (macOS/Linux); **fail-open** — if the probe is absent or finds nothing (e.g. CI), the command proceeds. Read-only commands and `init` (creates a brand-new draft) are not guarded.
+- `--force` flag (and `CAPCUT_DAVID_FORCE` env var) to bypass the guard for automation.
+
+### Notes
+- The guard runs one process-list probe per write command (~tens of ms); library functions (`addText`, `importCaptions`, `applyCaptionStyle`, …) are never touched, so programmatic/batched use is unaffected.
+- `add-text` / `import-captions` / `restyle` output is unchanged — no new behavior on existing paths beyond the absolute-path fix.
+
+### Compatibility
+- CapCut ≥ 5.x desktop (Windows + macOS) — unchanged. Node `>= 18` — unchanged. Runtime dependencies: zero — unchanged.
+- 279 tracked tests pass (265 prior + 3 absolute-path + 11 guard). The absolute-path fix's Windows regression value is host-OS-specific (POSIX absolute paths already started with `/`); it was watched fail→pass on Windows.
+
 ## [1.6.0] — 2026-06-05
 
 Minor release. New `restyle` command ports the CapCut-CaptionStyling font-mirroring patchers (`restyle.py` + `fix_fonts_full.py` + `fix_content_styles_font.py` + `fix_key_value.py`) into the engine, so that skill becomes pure orchestration. It applies a caption style preset (font / stroke / shadow / size) to every caption, **span-aware**: multi-span keyword-highlight captions keep each span's color + range while the font / stroke / shadow change on all spans (the inverse of `--clone-style`).
