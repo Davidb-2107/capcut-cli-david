@@ -11,6 +11,24 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.11.0] — 2026-06-05
+
+Minor release. New `init-meta` command — generates the missing `draft_meta_info.json` sidecar that v1.8.0 `validate`'s `meta.missing` detects. Completes the validate→fixer family (`timelines.divergence`→`sync-timelines`, `orphan_*`→`gc`, `meta.missing`→`init-meta`).
+
+### Added
+- **`init-meta <project>`** — generates the canonical `draft_meta_info.json` next to a draft's `draft_content.json` when it is missing. Without that sidecar a draft is invisible in the CapCut UI and `register` fails.
+  - **Refuse-to-clobber (the INVERSE posture of `sync-timelines`/`gc`).** An existing `draft_meta_info.json` is presumed **authoritative** (it carries the real `draft_id`, `tm_draft_*` timestamps and cloud refs), and `meta.missing` only fires when the file is *absent* — so `init-meta` **refuses** (exit 1, zero bytes, sidecar untouched) when one already exists, unless `--force` (which writes a `.bak` of the original first and warns on stderr).
+  - **Writes ONLY `draft_meta_info.json`.** Never `draft_info.json` (a stale one could shadow `draft_content.json` in `findDraft`), never `root_meta_info.json` — except the opt-in `--register` substep, which chains `register` and is explicitly CapCut-open-guarded (`init-meta` itself is not in `WRITE_COMMANDS`). `draft_content.json` is never touched.
+  - **Field sourcing** matches `register`'s disk-identity rules: `draft_id` from the draft's `id` (or a fresh UUID + an stderr note that `register` will reconcile), `draft_name` = the dir basename, `draft_root_path` = the **parent** of the draft dir, `tm_*` in microseconds. The canonical ~40-field shape is built by `buildDraftMetaInfo`, **extracted verbatim from `psycho-build`** into `src/utils/draft-meta.ts` and shared, so both emit a byte-identical sidecar (locked by an exact key-set/order test).
+  - **Flags:** `--force`, `--register`, `--projects-root` (forwarded only to `register`), `--dry-run` (writes nothing), `-q`, `-H`. **Exit codes:** `0` = created (or dry-run / register OK), `1` = tool failure (not found, resolved file ≠ `draft_content.json`, sidecar already present without `--force`, write/register failure). No exit 2.
+- `validate`'s `meta.missing` `fix_hint` now names `capcut-david init-meta <project>`.
+
+### Notes
+- No existing command changes behavior. The `buildDraftMetaInfo` extraction is byte-identical (`psycho-build`'s 45 tests stay green). `init-meta` adds 13 tests (375 total); `init-meta.js` coverage is 97.8% lines / 100% functions.
+
+### Compatibility
+- CapCut ≥ 5.x desktop (Windows + macOS) — unchanged. Node `>= 18` — unchanged. Runtime dependencies: zero — unchanged.
+
 ## [1.10.0] — 2026-06-05
 
 Minor release. New `gc` command — the WRITE verb that removes the orphan materials v1.8.0's read-only `validate` reports (`materials.orphan_text` / `materials.orphan_media`). Completes the validate→fixer trio alongside v1.9.0 `sync-timelines`.
