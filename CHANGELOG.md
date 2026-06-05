@@ -11,6 +11,26 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.6.0] — 2026-06-05
+
+Minor release. New `restyle` command ports the CapCut-CaptionStyling font-mirroring patchers (`restyle.py` + `fix_fonts_full.py` + `fix_content_styles_font.py` + `fix_key_value.py`) into the engine, so that skill becomes pure orchestration. It applies a caption style preset (font / stroke / shadow / size) to every caption, **span-aware**: multi-span keyword-highlight captions keep each span's color + range while the font / stroke / shadow change on all spans (the inverse of `--clone-style`).
+
+### Added
+- `restyle <project> --preset <preset.json> [--track-name <name>]` — apply a caption style preset to every caption on the target text track(s) (default: **all** text tracks; `--track-name` scopes to one). Reuses the `preset_captions_style.json` schema (`text_material` + `content_template` + `segment`). Each span keeps its `fill` (keyword color) + `range`; `font` / `strokes` / `shadows` / `size` / `bold` come from the preset. Material-level font fields are grafted (`font_path`, `font_resource_id`, `fonts[]` with empty `request_id`, `has_shadow`, `shadow_*`, `border_*`); `recognize_task_id` is cleared (else CapCut Auto-Captions regenerate and wipe the style); `base_content` / `recognize_text` are preserved (not blanked from the preset).
+- Sidecar font-mirroring — writes the new draft to `template-2.tmp` + `draft_content.json.bak`, forces `content.styles[].font.{path,id}` inside `Timelines/*/mini_draft.json` + `patch.json`, and injects the `key_value.json` registry entry keyed by `resource_id`. All targets are skip-if-absent; `key_value.json` is never fabricated.
+
+### Changed
+- `register` now stamps a fresh `tm_draft_modified` on the add path, so a cloned or engine-generated draft surfaces at the **top** of CapCut's grid instead of inheriting a stale timestamp that buries it at the bottom (present in the index but effectively invisible).
+
+### Notes
+- Single-span lean captions (legacy `add-text` UTF-16 byte-length range) are promoted to code-unit ranges on restyle, matching CapCut's rich-text convention.
+- Restyle scopes to materials **reachable from text-track segments**, so orphaned text materials left by `import-captions` are never touched.
+- `restyle` is a new, separate code path — `add-text` / `import-captions` output stays byte-identical (locked by test). The font dropdown showing "System" for a correctly-rendered preset font is a pre-existing CapCut cosmetic quirk, not a regression.
+
+### Compatibility
+- CapCut ≥ 5.x desktop (Windows + macOS) — unchanged. Node `>= 18` — unchanged. Runtime dependencies: zero — unchanged.
+- 265 tracked tests pass (241 prior + restyle / mirror / register). Restyle output validated against a live CapCut render (CC-DerStil preset on a multi-span keyword caption — per-word colors survive the font change).
+
 ## [1.5.0] — 2026-06-04
 
 Minor release. `import-captions --clone-style` preserves the existing caption look (font / strokes / shadows / size) from the target track when injecting keyword-highlight captions — font-agnostic, so any font the user set in CapCut (even one not in any preset library) survives, with the highlight color laid on top. This is the last piece needed to fully replace the standalone `inject_word_captions.py` patcher (which cloned the draft's caption style via template copy).
