@@ -196,3 +196,14 @@ test("CLI gc: a draft with a duplicate material id → exit 1, no write", (t) =>
   ok(readFileSync(filePath).equals(before), "refused gc must not write");
   strictEqual(existsSync(resolve(dir, "draft_content.json.bak")), false);
 });
+
+test("CLI gc: a draft with a dangling segment ref → exit 1, no write (refuse before deleting)", (t) => {
+  const draft = makeDraft({ materials: { ...makeDraft().materials, texts: [txt("ORPH")] }, tracks: [textTrack([seg("s", "MISSING")])] });
+  const { dir, filePath } = writeDraftDir(t, draft);
+  const before = readFileSync(filePath);
+  const r = runCli(["gc", filePath]);
+  strictEqual(r.status, 1);
+  ok(r.errorJson?.error, `expected {error}, got ${r.stderr}`);
+  ok(readFileSync(filePath).equals(before), "refused gc must not write");
+  strictEqual(existsSync(resolve(dir, "draft_content.json.bak")), false);
+});
