@@ -5,6 +5,7 @@ import { cmdAddAudio, cmdAddEffect, cmdAddText, cmdAddVideo, cmdImportCaptions, 
 import { cmdCut } from "./commands/cut.js";
 import { cmdOpacity, cmdSetText, cmdShift, cmdShiftAll, cmdSpeed, cmdTrim, cmdVolume } from "./commands/edit.js";
 import { cmdGc } from "./commands/gc.js";
+import { cmdInitMeta } from "./commands/init-meta.js";
 import {
   cmdExportSrt,
   cmdInfo,
@@ -115,6 +116,11 @@ Register:
   register   <draft-dir> [--projects-root <dir>]
                Append a built draft to CapCut's root_meta_info.json so it
                shows up in the CapCut UI. Idempotent.
+  init-meta  <project> [--force] [--register] [--projects-root <dir>] [--dry-run]
+               Generate a MISSING draft_meta_info.json next to draft_content.json
+               (fixes validate's meta.missing). Refuses if one already exists
+               (--force to overwrite, writes a .bak first). --register chains
+               register. Writes only the sidecar; keep CapCut CLOSED.
 
 Validate:
   validate   <project> [-H] [-q] [--strict] [--id <id>] [--skip <id>]
@@ -255,6 +261,11 @@ function main(): void {
 
   if (cmd === "register") {
     cmdRegister(positional, flags);
+    process.exit(0);
+  }
+
+  if (cmd === "init-meta") {
+    cmdInitMeta(positional, flags);
     process.exit(0);
   }
 

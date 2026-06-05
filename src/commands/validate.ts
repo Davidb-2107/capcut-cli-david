@@ -394,7 +394,7 @@ function checkMetaMissing(ctx: ValidateCtx): Finding[] {
       message: `draft has no draft_meta_info.json — it will not appear in CapCut and register will fail`,
       location: { kind: "file", ref: join(ctx.draftDir, "draft_meta_info.json") },
       fixable: true,
-      fix_hint: "generate the sidecar (psycho-build) or init-meta",
+      fix_hint: "run `capcut-david init-meta <project>`",
     },
   ];
 }
