@@ -118,12 +118,61 @@ function orphansFromSlot(ctx: ValidateCtx, slot: "videos" | "audios" | "texts", 
         severity: "info",
         message: `${kind} material ${mid} is referenced by no segment`,
         location: { kind: "material", ref: mid },
-        fixable: false,
-        fix_hint: null,
+        fixable: true,
+        fix_hint: "run `capcut-david gc <project>`",
       });
     }
   }
   return findings;
+}
+
+/** The segment-orphan ids in the three media/text slots, grouped per slot — the
+ * shared definition of "orphan" that `gc` deletes against (so validate and gc
+ * never drift). Reuses the SAME reachability union (collectReferencedIds); a
+ * material absent from it is genuinely unreferenced (0 material->material edges,
+ * verified across all fixtures). Returns ids, not Findings — so gc can tell
+ * videos from audios, which the single `orphan_media` finding id cannot. */
+export function collectOrphans(draft: Draft): { texts: string[]; videos: string[]; audios: string[] } {
+  const referenced = collectReferencedIds(draft);
+  const fromSlot = (slot: "texts" | "videos" | "audios"): string[] => {
+    const arr = draft.materials[slot];
+    if (!Array.isArray(arr)) return [];
+    const out: string[] = [];
+    for (const m of arr) {
+      const mid = (m as { id?: unknown }).id;
+      if (typeof mid === "string" && mid !== "" && !referenced.has(mid)) out.push(mid);
+    }
+    return out;
+  };
+  return { texts: fromSlot("texts"), videos: fromSlot("videos"), audios: fromSlot("audios") };
+}
+
+/** True when the draft has an error-severity invariant break that makes a
+ * destructive gc unsafe: a dangling segment->material ref (already inconsistent)
+ * or a duplicate material id (which makes "the orphan with id X" ambiguous). gc
+ * refuses on either. Pure — does NOT run the full linter / FS checks. */
+export function hasBlockingErrors(draft: Draft): boolean {
+  const idSet = collectMaterialIds(draft);
+  if (Array.isArray(draft.tracks)) {
+    for (const track of draft.tracks) {
+      if (!track || !Array.isArray(track.segments)) continue;
+      for (const seg of track.segments) {
+        const mid = seg.material_id;
+        if (typeof mid === "string" && mid !== "" && !idSet.has(mid)) return true; // dangling_ref
+      }
+    }
+  }
+  const seen = new Set<string>();
+  for (const value of Object.values(draft.materials)) {
+    if (!Array.isArray(value)) continue;
+    for (const m of value) {
+      const mid = (m as { id?: unknown }).id;
+      if (typeof mid !== "string" || mid === "") continue;
+      if (seen.has(mid)) return true; // duplicate_id
+      seen.add(mid);
+    }
+  }
+  return false;
 }
 
 function checkOrphanText(ctx: ValidateCtx): Finding[] {

@@ -31,6 +31,7 @@ export const WRITE_COMMANDS = new Set([
   "psycho-build",
   "register",
   "sync-timelines",
+  "gc",
 ]);
 
 /**

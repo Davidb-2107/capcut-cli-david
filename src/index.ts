@@ -4,6 +4,7 @@ import { cmdBatch } from "./commands/batch.js";
 import { cmdAddAudio, cmdAddEffect, cmdAddText, cmdAddVideo, cmdImportCaptions, cmdInit } from "./commands/create.js";
 import { cmdCut } from "./commands/cut.js";
 import { cmdOpacity, cmdSetText, cmdShift, cmdShiftAll, cmdSpeed, cmdTrim, cmdVolume } from "./commands/edit.js";
+import { cmdGc } from "./commands/gc.js";
 import {
   cmdExportSrt,
   cmdInfo,
@@ -129,6 +130,14 @@ Validate:
              Fixes validate's timelines.divergence. Direction is always
              root → mirror; timestamped backups (…synced-<epoch>.bak) are kept.
              --dry-run reports without writing. Keep CapCut CLOSED (write guard).
+
+Garbage-collect:
+  gc         <project> [--dry-run] [-H] [-q] [--force]
+             Remove orphan text/video/audio materials (those validate reports as
+             orphan_text/orphan_media — e.g. import-captions leftovers). JSON-only:
+             never deletes a disk asset. Refuses on a dangling-ref/duplicate-id
+             draft. No-op writes nothing. --dry-run previews. Run sync-timelines
+             after (the root then diverges from any Timelines/ mirrors).
 
 Project:
   cut        <project> <start> <end> --out <path>
@@ -364,6 +373,9 @@ function main(): void {
       break;
     case "sync-timelines":
       cmdSyncTimelines(draft, filePath, positional, flags);
+      break;
+    case "gc":
+      cmdGc(draft, filePath, positional, flags);
       break;
     default:
       die(`Unknown command: ${cmd}. Run 'capcut-david --help' for usage.`);
