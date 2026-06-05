@@ -11,6 +11,26 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.10.0] — 2026-06-05
+
+Minor release. New `gc` command — the WRITE verb that removes the orphan materials v1.8.0's read-only `validate` reports (`materials.orphan_text` / `materials.orphan_media`). Completes the validate→fixer trio alongside v1.9.0 `sync-timelines`.
+
+### Added
+- **`gc <project>`** — deletes the **segment-orphan text/video/audio materials** that `validate` flags as info (e.g. the leftover text materials `import-captions`/`restyle` leave behind on every re-injection), by mutating `draft.materials` in place and re-serialising via `saveDraft`.
+  - **Scope is the data-safety guarantee.** gc removes **only** from `materials.texts` / `materials.videos` / `materials.audios` — never any other slot. For those three slots, segment-reachability is *total* reachability: a cross-material id scan over all 9 fixtures (1283 materials) found **zero material→material references**, so a segment-orphan there has no inbound edge. It is an *orphan media/text GC, not a full GC* (it leaves the now-doubly-orphan companion bundle of a deleted text — benign, and validate ignores those by design).
+  - **JSON-only.** gc **never** deletes a file under `Resources/` (a media `path` may be shared by another live material) and writes no file but `draft_content.json` (+ its `.bak` via `saveDraft`).
+  - **Refuses on a broken draft.** If `validate` would report an error (`materials.dangling_ref` or `materials.duplicate_id`), gc exits 1 and writes nothing — a dangling ref means the draft is already inconsistent; a duplicate id makes "the orphan with id X" ambiguous.
+  - **Defensive cross-ref skip.** A text whose `text_to_audio_ids` is non-empty (the one documented field that can name other-material ids; empty in every fixture) is **skipped** (reported under `skipped_cross_ref`), never deleted.
+  - **No-op never writes.** When nothing is orphaned, gc calls no `saveDraft` — the `.bak` and mtime are untouched (`wrote:false`), so it is idempotent and the previous edit's rollback is preserved. (After a real removal gc cannot promise byte-identity — the deletions are re-serialised — so the byte-identity guarantee is the no-op path only.)
+  - **Apply-by-default + `--dry-run`**; in `WRITE_COMMANDS` (the "CapCut is open" guard refuses while CapCut runs, `--force` bypass); a stderr WARNING on real removal names the `.bak` and reminds you to run `sync-timelines` afterwards (the root now diverges from any `Timelines/` mirrors). **Exit codes:** `0` = success incl. nothing-to-gc, `1` = tool failure. No exit 2.
+- `validate` now exports `collectOrphans` (the shared per-slot orphan definition gc deletes against) and `hasBlockingErrors`; its `materials.orphan_text` / `materials.orphan_media` findings' `fix_hint` now names `capcut-david gc <project>`.
+
+### Notes
+- No existing command changes behavior. `gc` adds 24 tests (363 total); `gc.js` coverage is 100% lines / 100% functions.
+
+### Compatibility
+- CapCut ≥ 5.x desktop (Windows + macOS) — unchanged. Node `>= 18` — unchanged. Runtime dependencies: zero — unchanged.
+
 ## [1.9.0] — 2026-06-05
 
 Minor release. New `sync-timelines` command — the WRITE verb that repairs the stale-timeline-mirror corruption that v1.8.0's read-only `validate` detects (`timelines.divergence`). Once CapCut opens a draft it treats `<draft>/Timelines/<guid>/draft_content.json` as its own timeline source of truth; a later CLI re-patch of the root leaves that mirror stale and CapCut renders the old state (fonts/captions missing). This automates the documented manual recovery.
