@@ -3,8 +3,9 @@
 // registry) + restyle.py's template-2.tmp/.bak mirror. All targets are
 // skip-if-absent; key_value.json is never fabricated (parity with the Python
 // preflight that requires it to pre-exist).
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { listTimelineDirs } from "./timelines.js";
 
 export interface FontMirror {
   /** Absolute path to the .ttf, as written into font_path + content.styles[].font.path. */
@@ -157,31 +158,26 @@ export function mirrorFont(
   }
 
   // Timeline journal mirrors — force the embedded content fonts (skip-if-absent).
-  const timelines = join(draftDir, "Timelines");
-  if (existsSync(timelines)) {
-    for (const uuid of readdirSync(timelines)) {
-      const tldir = join(timelines, uuid);
-      if (!statSync(tldir).isDirectory()) continue;
-      const targets = [
-        "draft_content.json",
-        "draft_content.json.bak",
-        "template-2.tmp",
-        join("attachment", "patch", "mini_draft.json"),
-        join("attachment", "patch", "patch.json"),
-      ];
-      for (const rel of targets) {
-        const p = join(tldir, rel);
-        if (!existsSync(p)) continue;
-        let data: unknown;
-        try {
-          data = JSON.parse(readFileSync(p, "utf-8"));
-        } catch {
-          continue;
-        }
-        if (walkPatch(data, font)) {
-          writeFileSync(p, JSON.stringify(data), "utf-8");
-          written.push(`Timelines/${uuid}/${rel.replace(/\\/g, "/")}`);
-        }
+  for (const { guid: uuid, dir: tldir } of listTimelineDirs(draftDir)) {
+    const targets = [
+      "draft_content.json",
+      "draft_content.json.bak",
+      "template-2.tmp",
+      join("attachment", "patch", "mini_draft.json"),
+      join("attachment", "patch", "patch.json"),
+    ];
+    for (const rel of targets) {
+      const p = join(tldir, rel);
+      if (!existsSync(p)) continue;
+      let data: unknown;
+      try {
+        data = JSON.parse(readFileSync(p, "utf-8"));
+      } catch {
+        continue;
+      }
+      if (walkPatch(data, font)) {
+        writeFileSync(p, JSON.stringify(data), "utf-8");
+        written.push(`Timelines/${uuid}/${rel.replace(/\\/g, "/")}`);
       }
     }
   }

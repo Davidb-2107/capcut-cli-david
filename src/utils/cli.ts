@@ -33,6 +33,7 @@ export interface Flags {
   checkTimelines?: boolean;
   ids?: string[];
   skip?: string[];
+  dryRun?: boolean;
 }
 
 export class CliError extends Error {

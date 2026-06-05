@@ -30,6 +30,7 @@ export const WRITE_COMMANDS = new Set([
   "cut",
   "psycho-build",
   "register",
+  "sync-timelines",
 ]);
 
 /**

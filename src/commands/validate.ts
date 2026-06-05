@@ -1,8 +1,9 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import type { Draft } from "../draft.js";
 import { defaultProjectsRoot } from "../utils/capcut-paths.js";
 import { type Flags, out } from "../utils/cli.js";
+import { listTimelineDirs } from "../utils/timelines.js";
 
 export type Severity = "error" | "warning" | "info";
 
@@ -423,7 +424,7 @@ function checkAssetsMissingFile(ctx: ValidateCtx): Finding[] {
 
 /** Cheap structural fingerprint — never a deep-equal (CapCut's mirror differs in
  * many benign fields). Only catastrophic drift (duration / segment count) trips. */
-function draftSignature(d: { duration?: unknown; tracks?: unknown }): string {
+export function draftSignature(d: { duration?: unknown; tracks?: unknown }): string {
   const duration = typeof d.duration === "number" ? d.duration : -1;
   let segs = 0;
   if (Array.isArray(d.tracks)) {
@@ -437,12 +438,10 @@ function draftSignature(d: { duration?: unknown; tracks?: unknown }): string {
 
 function checkTimelinesDivergence(ctx: ValidateCtx): Finding[] {
   if (!ctx.draftDir) return [];
-  const tlRoot = join(ctx.draftDir, "Timelines");
-  if (!existsSync(tlRoot)) return [];
   const rootSig = draftSignature(ctx.draft);
   const findings: Finding[] = [];
-  for (const entry of readdirSync(tlRoot)) {
-    const mirror = join(tlRoot, entry, "draft_content.json");
+  for (const { guid, dir } of listTimelineDirs(ctx.draftDir)) {
+    const mirror = join(dir, "draft_content.json");
     if (!existsSync(mirror)) continue;
     const parsed = JSON.parse(readFileSync(mirror, "utf-8")) as { duration?: unknown; tracks?: unknown };
     const mirrorSig = draftSignature(parsed);
@@ -450,10 +449,10 @@ function checkTimelinesDivergence(ctx: ValidateCtx): Finding[] {
       findings.push({
         id: "timelines.divergence",
         severity: "warning",
-        message: `Timelines/${entry} mirror diverges from root (sig ${mirrorSig} vs ${rootSig}) — re-patched after CapCut opened it`,
+        message: `Timelines/${guid} mirror diverges from root (sig ${mirrorSig} vs ${rootSig}) — re-patched after CapCut opened it`,
         location: { kind: "file", ref: mirror },
         fixable: true,
-        fix_hint: "copy root draft_content.json into the Timelines mirror, or keep CapCut closed through the CLI chain",
+        fix_hint: "run `capcut-david sync-timelines <project>` (or keep CapCut closed through the CLI chain)",
       });
     }
   }

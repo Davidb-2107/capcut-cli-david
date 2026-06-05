@@ -18,6 +18,7 @@ import { cmdAddKeyframe, cmdKenBurns } from "./commands/keyframe.js";
 import { cmdPsychoBuild } from "./commands/pipeline.js";
 import { cmdRegister } from "./commands/register.js";
 import { cmdRestyle } from "./commands/restyle.js";
+import { cmdSyncTimelines } from "./commands/sync-timelines.js";
 import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template.js";
 import { cmdValidate } from "./commands/validate.js";
 import { loadDraft } from "./draft.js";
@@ -122,6 +123,12 @@ Validate:
              open CapCut. Never writes. Exit 0 = clean, 2 = problems found,
              1 = tool failure. --strict promotes warnings to the failure code.
              --check-assets/--check-timelines enable the opt-in disk checks.
+  sync-timelines <project> [--dry-run] [-H] [-q] [--force]
+             Repair a stale CapCut timeline mirror: copy the root
+             draft_content.json into every Timelines/<guid>/ (+ template-2.tmp).
+             Fixes validate's timelines.divergence. Direction is always
+             root → mirror; timestamped backups (…synced-<epoch>.bak) are kept.
+             --dry-run reports without writing. Keep CapCut CLOSED (write guard).
 
 Project:
   cut        <project> <start> <end> --out <path>
@@ -196,6 +203,8 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.checkAssets = true;
     } else if (a === "--check-timelines") {
       flags.checkTimelines = true;
+    } else if (a === "--dry-run") {
+      flags.dryRun = true;
     } else if (a === "--id" && i + 1 < args.length) {
       if (!flags.ids) flags.ids = [];
       flags.ids.push(args[++i]);
@@ -352,6 +361,9 @@ function main(): void {
       break;
     case "validate":
       process.exit(cmdValidate(draft, filePath, projectPath, flags));
+      break;
+    case "sync-timelines":
+      cmdSyncTimelines(draft, filePath, positional, flags);
       break;
     default:
       die(`Unknown command: ${cmd}. Run 'capcut-david --help' for usage.`);
