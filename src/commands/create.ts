@@ -1,5 +1,5 @@
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
 import { type Draft, type Segment, saveDraft, type Timerange, type Track } from "../draft.js";
 import { defaultProjectsRoot, resolveTemplateDir } from "../utils/capcut-paths.js";
 import { die, type Flags, out } from "../utils/cli.js";
@@ -236,7 +236,7 @@ export function addAudio(
   const volume = opts.volume ?? 1.0;
 
   const draftDir = dirname(filePath);
-  const filename = opts.path.split("/").pop() || "audio.mp3";
+  const filename = basename(opts.path) || "audio.mp3";
   const assetsDir = resolve(draftDir, "assets", "audio");
   mkdirSync(assetsDir, { recursive: true });
   const destPath = resolve(assetsDir, filename);
@@ -329,7 +329,7 @@ export function addVideo(
   const materialType = opts.type ?? (["jpg", "jpeg", "png", "webp", "bmp", "tiff"].includes(ext) ? "photo" : "video");
 
   const draftDir = dirname(filePath);
-  const filename = opts.path.split("/").pop() || "media";
+  const filename = basename(opts.path) || "media";
   const assetsDir = resolve(draftDir, "assets", "video");
   mkdirSync(assetsDir, { recursive: true });
   const destPath = resolve(assetsDir, filename);
@@ -551,7 +551,9 @@ export function cmdAddAudio(draft: Draft, filePath: string, positional: string[]
   if (!audioPath || !startStr || !durationStr) {
     die("Usage: capcut-david add-audio <project> <file> <start> <duration>");
   }
-  const absPath = audioPath.startsWith("/") ? audioPath : `${process.cwd()}/${audioPath}`;
+  // resolve() returns a normalized absolute path: kept as-is when already absolute
+  // (incl. Windows `C:\…`), otherwise joined onto cwd — correct on Win + POSIX.
+  const absPath = resolve(audioPath);
   const start = parseTimeInput(startStr);
   const duration = parseTimeInput(durationStr);
   const opts: AddAudioOptions = {
@@ -584,7 +586,9 @@ export function cmdAddVideo(draft: Draft, filePath: string, positional: string[]
   if (!videoPath || !startStr || !durationStr) {
     die("Usage: capcut-david add-video <project> <file> <start> <duration>");
   }
-  const absPath = videoPath.startsWith("/") ? videoPath : `${process.cwd()}/${videoPath}`;
+  // resolve() returns a normalized absolute path: kept as-is when already absolute
+  // (incl. Windows `C:\…`), otherwise joined onto cwd — correct on Win + POSIX.
+  const absPath = resolve(videoPath);
   const start = parseTimeInput(startStr);
   const duration = parseTimeInput(durationStr);
   const opts: AddVideoOptions = {
