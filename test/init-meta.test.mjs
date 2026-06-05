@@ -155,3 +155,13 @@ test("--register chains register: the draft lands in root_meta_info.json", (t) =
   const rootMeta = JSON.parse(readFileSync(join(root, "root_meta_info.json"), "utf-8"));
   ok(rootMeta.all_draft_store.some((e) => e.draft_fold_path === resolve(dir)), "draft registered in the root index");
 });
+
+test("guard: a dir whose only draft is draft_info.json (no draft_content.json) is rejected", (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "capcut-initmeta-info-"));
+  writeFileSync(join(dir, "draft_info.json"), CONTENT(), "utf-8");
+  if (t.after) t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const r = runCli(["init-meta", dir]);
+  strictEqual(r.status, 1);
+  ok(r.errorJson?.error && /draft_content\.json/.test(r.errorJson.error));
+  strictEqual(existsSync(join(dir, "draft_meta_info.json")), false, "no sidecar written for a non-content draft");
+});
