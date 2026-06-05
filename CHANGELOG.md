@@ -11,6 +11,24 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.8.0] — 2026-06-05
+
+Minor release. New `validate` command — a strictly read-only linter that detects draft corruption and broken invariants **before** you open CapCut. It is the diagnostic backbone the future fix verbs (`--fix`, `gc`, `sync-timelines`, `relink`) will graft onto: every detector is a pure, exported `CHECKS` function emitting a stable finding schema (`id` / `severity` / `fixable` / `fix_hint`).
+
+### Added
+- **`validate <project>`** — runs a battery of checks over `draft_content.json` and prints a versioned JSON report (`schema: "capcut-david/validate@1"`) or, with `-H`, a human table grouped by severity. **Never writes a byte** (no `saveDraft`, no `.bak`, no `mkdir` — locked by a byte-identity test) and is deliberately **not** in `WRITE_COMMANDS`, so it runs fine while CapCut is open. Each detector is wrapped so a throw degrades into a diagnostic rather than crashing the run; an unparseable draft is a single clean `{"error":…}` (exit 1).
+  - **Exit codes:** `0` = ran clean (or only info/warnings without `--strict`), `2` = `error` findings present (or warnings under `--strict`), `1` = tool failure (bad args / project not found / unreadable JSON). So *finding problems* never collapses to a tool error.
+  - **Checks (always-on, CI-safe — pure graph):** `materials.dangling_ref` (error; resolves `segment.material_id` against an **exact** id Set, never the prefix-matching `findMaterialGlobal`), `materials.duplicate_id` (error; global across all ~54 material slots), `companions.missing` (warning; each *present* `extra_material_refs` entry must resolve — the slot bundle is polymorphic/positional), `segments.zero_duration` (error on video/audio/text tracks, warning elsewhere), `duration.underrun` (warning) / `duration.overrun` (info) with a µs epsilon, `segments.overlap` (warning; video/audio only — text/effect/overlay stack legitimately), `materials.orphan_text` / `materials.orphan_media` (info; scoped to the typed slots so per-segment companions never cry wolf — and the leftovers `import-captions`/`restyle` create by design stay info), `canvas.config_sanity` (warning; `fps` is read at the draft root).
+  - **Checks (filesystem):** `meta.missing` (error), `meta.unregistered` (warning), `meta.duplicate_draft_id` (warning) run automatically when a **directory** is passed (a bare `draft_content.json` file → these report *skipped*, never error); they read `root_meta_info.json` from `--projects-root` or `defaultProjectsRoot()` and degrade quietly if it is absent. `assets.missing_file` (`--check-assets`) and `timelines.divergence` (`--check-timelines`, a cheap duration/segment-count signal — never a deep-equal) are **opt-in**.
+  - **Flags:** `-H/--human`, `-q/--quiet` (exit code only — CI gate), `--strict`, `--id <id>` / `--skip <id>` (repeatable), `--check-assets`, `--check-timelines`, `--projects-root <dir>`.
+
+### Notes
+- `effect.bind_dangling` is intentionally **not** in the MVP: video FX bind via `material_id` on an `effect` track while a filter material's `bind_segment_id` is legitimately empty (`""` = track-wide); shipping it without handling both routing modes would cry wolf. It returns to a later minor once the fix verbs need it.
+- No existing command changes behavior. `validate` adds 52 tests (331 total); `validate.js` coverage is 97.6% lines / 100% functions.
+
+### Compatibility
+- CapCut ≥ 5.x desktop (Windows + macOS) — unchanged. Node `>= 18` — unchanged. Runtime dependencies: zero — unchanged.
+
 ## [1.7.0] — 2026-06-05
 
 Minor release. Hardens the engine against the two most expensive CLI footguns documented in the CapCut skills: absolute source paths breaking on Windows, and writing a draft while CapCut is open (silent loss to CapCut's on-close overwrite).
