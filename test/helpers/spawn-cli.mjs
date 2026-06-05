@@ -19,7 +19,10 @@ export function runCli(args, opts = {}) {
   const r = spawnSync(process.execPath, [BIN, ...args], {
     encoding: "utf-8",
     input: opts.input,
-    env: { ...process.env, ...(opts.env ?? {}) },
+    // Default-bypass the "CapCut is open" guard so local test runs don't break
+    // when the dev has CapCut open. Tests that exercise the real detector pass
+    // `env: { CAPCUT_DAVID_FORCE: "" }` to override this.
+    env: { ...process.env, CAPCUT_DAVID_FORCE: "1", ...(opts.env ?? {}) },
     cwd: opts.cwd,
   });
   let json;

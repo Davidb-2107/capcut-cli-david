@@ -20,6 +20,7 @@ import { cmdRegister } from "./commands/register.js";
 import { cmdRestyle } from "./commands/restyle.js";
 import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template.js";
 import { loadDraft } from "./draft.js";
+import { assertCapCutClosed, WRITE_COMMANDS } from "./utils/capcut-guard.js";
 import { CliError, die, type Flags, requireArgs } from "./utils/cli.js";
 
 const HELP = `capcut-david — CapCut/JianYing draft CLI (fork of capcut-cli)
@@ -31,6 +32,9 @@ Usage: capcut-david <command> <project> [options]
 Global flags:
   -H, --human     Human-readable table output (default: JSON)
   -q, --quiet     No output on success, exit code only (write commands)
+      --force     Write even if CapCut is running (skips the open-CapCut guard;
+                  CapCut overwrites the draft on close — use only for automation).
+                  Env equivalent: CAPCUT_DAVID_FORCE=1
 
 Overview (start here):
   info       <project>                          Project overview + material summary
@@ -174,6 +178,8 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.highlightColor = args[++i];
     } else if (a === "--clone-style") {
       flags.cloneStyle = true;
+    } else if (a === "--force") {
+      flags.force = true;
     } else if (a === "--preset" && i + 1 < args.length) {
       flags.preset = args[++i];
     } else {
@@ -193,6 +199,9 @@ function main(): void {
   const { positional, flags } = parseFlags(raw);
   const cmd = positional[0];
   const projectPath = positional[1];
+
+  // Preflight: refuse to write while CapCut is open (silent-overwrite footgun).
+  if (WRITE_COMMANDS.has(cmd)) assertCapCutClosed(flags);
 
   if (cmd === "init") {
     cmdInit(positional, flags);
