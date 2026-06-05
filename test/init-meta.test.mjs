@@ -36,6 +36,25 @@ test("buildDraftMetaInfo: canonical shape — sources opts, stamps tm_* together
   }
 });
 
+test("buildDraftMetaInfo: EXACT canonical key set + order (verbatim-extraction guard — JSON byte order)", () => {
+  // Locks the sidecar shape psycho-build emits: a dropped or reordered key
+  // changes the bytes CapCut reads. (tm_draft_cloud_user_id was once dropped.)
+  const meta = buildDraftMetaInfo({ draftId: "a", draftName: "b", draftFoldPath: "c", draftRootPath: "d", totalDurationUs: 1 });
+  deepStrictEqual(Object.keys(meta), [
+    "cloud_draft_cover", "cloud_draft_sync", "cloud_package_completed_time", "draft_cloud_capcut_purchase_info",
+    "draft_cloud_last_action_download", "draft_cloud_package_type", "draft_cloud_purchase_info", "draft_cloud_template_id",
+    "draft_cloud_tutorial_info", "draft_cloud_videocut_purchase_info", "draft_cover", "draft_deeplink_url",
+    "draft_enterprise_info", "draft_fold_path", "draft_id", "draft_is_ae_produce", "draft_is_ai_packaging_used",
+    "draft_is_ai_shorts", "draft_is_ai_translate", "draft_is_article_video_draft", "draft_is_cloud_temp_draft",
+    "draft_is_from_deeplink", "draft_is_invisible", "draft_is_web_article_video", "draft_materials",
+    "draft_materials_copied_info", "draft_name", "draft_need_rename_folder", "draft_new_version",
+    "draft_removable_storage_device", "draft_root_path", "draft_segment_extra_info", "draft_timeline_materials_size_",
+    "draft_type", "draft_web_article_video_enter_from", "tm_draft_cloud_completed", "tm_draft_cloud_entry_id",
+    "tm_draft_cloud_modified", "tm_draft_cloud_parent_entry_id", "tm_draft_cloud_space_id", "tm_draft_cloud_user_id",
+    "tm_draft_create", "tm_draft_modified", "tm_draft_removed", "tm_duration",
+  ]);
+});
+
 import { runCli } from "./helpers/spawn-cli.mjs";
 
 const CONTENT = (over = {}) => JSON.stringify({ id: "CID", name: "ignored", duration: 5_000_000, fps: 30, canvas_config: { width: 1080, height: 1920 }, tracks: [], materials: {}, ...over });

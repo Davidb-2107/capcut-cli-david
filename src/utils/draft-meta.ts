@@ -67,6 +67,7 @@ export function buildDraftMetaInfo(opts: {
     tm_draft_cloud_modified: 0,
     tm_draft_cloud_parent_entry_id: -1,
     tm_draft_cloud_space_id: -1,
+    tm_draft_cloud_user_id: -1,
     tm_draft_create: now,
     tm_draft_modified: now,
     tm_draft_removed: 0,
