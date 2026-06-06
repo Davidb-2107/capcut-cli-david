@@ -11,6 +11,30 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.12.0] — 2026-06-06
+
+Minor release. New `validate --fix` — the umbrella auto-fixer that completes the validate→fixer family: it maps each fixable finding to its command-backed fixer and runs them in dependency order. **Dry-run by default**; `--apply` required to write.
+
+### Added
+- **`validate <project> --fix [--apply]`** — aggregate auto-fixer. Runs `validate`, maps each fixable finding to its fixer, and either **previews** the plan (default, zero writes) or **applies** the fixers in dependency order, then re-validates and reports the residual.
+  - **Finding → fixer mapping:** `materials.orphan_text`/`materials.orphan_media` → `gc` (destructive), `meta.missing` → `init-meta`, `meta.unregistered` → `register`, `timelines.divergence` → `sync-timelines`.
+  - **Fixed run order** `gc → init-meta → register → sync-timelines`. Forced by two dependencies: `register` needs the sidecar `init-meta` writes (so init-meta runs first), and `sync-timelines` copies the **root** `draft_content.json` into the `Timelines/` mirror — so it must run **strictly last**, after `gc` has mutated and saved the root.
+  - **Dry-run by default (D1).** `--fix` alone previews the aggregated plan and writes zero bytes; `--apply` is required to mutate. This intentionally inverts `gc`/`sync-timelines` (apply-by-default), because the umbrella aggregates a destructive `gc` removal across many findings in one pass. `--fix --apply --dry-run` is rejected (mutually exclusive).
+  - **Reuses `--id`/`--skip` (D3)** for selective fixing — a fixer runs iff at least one of its owning finding-ids survives the filter (`gc` owns two, so skipping one alone doesn't drop it). **Re-validates from fresh disk state after applying (D4)** and exits on the residual. **`duration.under/overrun` are reported but excluded** (fixable but no dedicated command, D2).
+  - **Blocking-error refusal.** On a `dangling_ref`/`duplicate_id` draft, `--fix --apply` refuses the whole run (exit 2, zero writes) — `gc`'s id-filter is only sound once duplicates are excluded. Dry-run still shows the plan, flagged `blocked`.
+  - **Conditional CapCut guard.** `validate` stays OUT of `WRITE_COMMANDS` (read-only `validate` and dry-run `--fix` run with CapCut open); `assertCapCutClosed` fires only inside the `--apply` write path. `--force`/`CAPCUT_DAVID_FORCE` bypass.
+  - **Exit codes:** dry-run → always `0`; `--apply` → `reportExitCode(residual)` (`0`/`2`); blocking-error refusal → `2`; `sync-timelines` failure or any tool error → `1`. *Note:* orphan findings are `info`-severity, so the exit code is **not** the success signal for `gc` — `fix.results[].wrote` is.
+  - **Envelope** extends `capcut-david/validate@1` with an additive `fix` key (present only with `--fix`); a plain `validate` envelope is unchanged. No `next` field.
+
+### Changed
+- **`init-meta`:** the sidecar write is extracted into an exported `applyInitMeta(plan, metaPath)` (the bak-first branch + the compact `writeFileSync`) so `validate --fix` can write the sidecar without re-parsing or re-emitting an envelope. `cmdInitMeta`'s behavior and full envelope are byte-identical (regression-locked).
+
+### Notes
+- No existing command changes behavior (the `applyInitMeta` extraction is byte-identical — `init-meta`'s tests stay green). `validate --fix` adds 24 tests (399 total). Typecheck clean; `validate-fix.ts` lint-clean.
+
+### Compatibility
+- CapCut ≥ 5.x desktop (Windows + macOS) — unchanged. Node `>= 18` — unchanged. Runtime dependencies: zero — unchanged.
+
 ## [1.11.0] — 2026-06-05
 
 Minor release. New `init-meta` command — generates the missing `draft_meta_info.json` sidecar that v1.8.0 `validate`'s `meta.missing` detects. Completes the validate→fixer family (`timelines.divergence`→`sync-timelines`, `orphan_*`→`gc`, `meta.missing`→`init-meta`).
