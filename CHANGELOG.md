@@ -11,6 +11,18 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.13.0] — 2026-06-06
+
+Minor release. New read-only `query` — a catalogue lookup that searches the CapCut drafts library for effects, filters, transitions and fonts by name and returns their `resource_id`. No writes; complements the validate→fixer family.
+
+### Added
+- **`query <term> [--kind effect|filter|transition|font] [--drafts <dir>]`** — read-only catalogue search. Scans every draft under the projects root (default `defaultProjectsRoot()`, override `--drafts`), indexes 4 kinds and matches `<term>` as a **case-insensitive substring on the item name**, returning each item's `resource_id`/`effect_id`.
+  - **Kinds:** effects (`materials.effects` where `type != "filter"` + `materials.video_effects`), filters (`materials.effects` where `type == "filter"`), transitions (`materials.transitions`), fonts (`materials.texts[].fonts[].title`, or `deriveFontName(font_path)` for local `.ttf` with no resource_id → `resource_id: null`).
+  - **Dedupe:** by `resource_id` (local fonts by `name`+`font_path`); each result lists `from_drafts[]`.
+  - **Envelope:** `capcut-david/query@1` (flat `{type, results[]}`, no `next`). `-H/--human` renders a table.
+  - **Exit codes:** `0` for any valid query incl. zero matches and an empty library; `2` if the drafts root is missing or every draft is unreadable; `1` for usage errors (missing `<term>`, invalid `--kind`).
+- **433 tests** (+34). Typecheck clean; `query.ts` lint-clean.
+
 ## [1.12.0] — 2026-06-06
 
 Minor release. New `validate --fix` — the umbrella auto-fixer that completes the validate→fixer family: it maps each fixable finding to its command-backed fixer and runs them in dependency order. **Dry-run by default**; `--apply` required to write.
