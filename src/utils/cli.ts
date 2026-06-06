@@ -34,6 +34,8 @@ export interface Flags {
   ids?: string[];
   skip?: string[];
   dryRun?: boolean;
+  fix?: boolean;
+  apply?: boolean;
 }
 
 export class CliError extends Error {

@@ -23,6 +23,7 @@ import { cmdRestyle } from "./commands/restyle.js";
 import { cmdSyncTimelines } from "./commands/sync-timelines.js";
 import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template.js";
 import { cmdValidate } from "./commands/validate.js";
+import { cmdValidateFix } from "./commands/validate-fix.js";
 import { loadDraft } from "./draft.js";
 import { assertCapCutClosed, WRITE_COMMANDS } from "./utils/capcut-guard.js";
 import { CliError, die, type Flags, requireArgs } from "./utils/cli.js";
@@ -130,6 +131,14 @@ Validate:
              open CapCut. Never writes. Exit 0 = clean, 2 = problems found,
              1 = tool failure. --strict promotes warnings to the failure code.
              --check-assets/--check-timelines enable the opt-in disk checks.
+  validate   <project> --fix [--apply] [--id <id>] [--skip <id>] [--strict]
+             Aggregate auto-fixer. DRY-RUN BY DEFAULT: --fix alone previews the
+             plan (zero writes); add --apply to write. Maps each fixable finding
+             to its fixer and runs them in dependency order: gc (DESTRUCTIVE:
+             removes orphan materials) → init-meta → register → sync-timelines
+             (always last). Re-validates after applying; exit reflects the
+             residual. Refuses on dangling-ref/duplicate-id drafts. --apply
+             requires CapCut CLOSED. --id/--skip select which findings to fix.
   sync-timelines <project> [--dry-run] [-H] [-q] [--force]
              Repair a stale CapCut timeline mirror: copy the root
              draft_content.json into every Timelines/<guid>/ (+ template-2.tmp).
@@ -220,6 +229,10 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.checkTimelines = true;
     } else if (a === "--dry-run") {
       flags.dryRun = true;
+    } else if (a === "--fix") {
+      flags.fix = true;
+    } else if (a === "--apply") {
+      flags.apply = true;
     } else if (a === "--id" && i + 1 < args.length) {
       if (!flags.ids) flags.ids = [];
       flags.ids.push(args[++i]);
@@ -380,6 +393,7 @@ function main(): void {
       cmdRestyle(draft, filePath, positional, flags);
       break;
     case "validate":
+      if (flags.fix) process.exit(cmdValidateFix(draft, filePath, projectPath, flags));
       process.exit(cmdValidate(draft, filePath, projectPath, flags));
       break;
     case "sync-timelines":

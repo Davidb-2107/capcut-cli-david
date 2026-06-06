@@ -43,6 +43,19 @@ export function planInitMeta(draft: Draft, draftDir: string): InitMetaPlan {
   return { meta, draftId, draftName, generatedId: !hasId };
 }
 
+/** Write the sidecar to disk. If one already exists, back it up FIRST (bak-first,
+ * like saveDraft) so a forced overwrite stays recoverable. CREATE path = exactly
+ * one trailing write (a read-only dir throws here with nothing half-written).
+ * Extracted from cmdInitMeta so the `validate --fix` umbrella can apply init-meta
+ * without re-parsing or re-emitting an envelope. */
+export function applyInitMeta(plan: InitMetaPlan, metaPath: string): void {
+  if (existsSync(metaPath)) {
+    copyFileSync(metaPath, `${metaPath}.bak`);
+    process.stderr.write(`WARNING init-meta overwrote an existing draft_meta_info.json (backup: ${metaPath}.bak).\n`);
+  }
+  writeFileSync(metaPath, JSON.stringify(plan.meta, null, 0), "utf-8");
+}
+
 export function cmdInitMeta(positional: string[], flags: Flags): void {
   const input = positional[1];
   if (!input) die("Usage: capcut-david init-meta <project> [--force] [--register] [--dry-run]");
@@ -75,17 +88,7 @@ export function cmdInitMeta(positional: string[], flags: Flags): void {
   const plan = planInitMeta(draft, draftDir);
   const dryRun = flags.dryRun === true;
 
-  if (!dryRun) {
-    // --force overwrite: back the existing bytes up FIRST (bak-first, like
-    // saveDraft) so a forced overwrite stays recoverable.
-    if (exists) {
-      copyFileSync(metaPath, `${metaPath}.bak`);
-      process.stderr.write(`WARNING init-meta overwrote an existing draft_meta_info.json (backup: ${metaPath}.bak).\n`);
-    }
-    // CREATE path: exactly one trailing write — a read-only dir throws here with
-    // nothing half-written.
-    writeFileSync(metaPath, JSON.stringify(plan.meta, null, 0), "utf-8");
-  }
+  if (!dryRun) applyInitMeta(plan, metaPath);
 
   if (plan.generatedId && !dryRun) {
     process.stderr.write(
