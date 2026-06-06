@@ -18,6 +18,7 @@ import {
 } from "./commands/inspect.js";
 import { cmdAddKeyframe, cmdKenBurns } from "./commands/keyframe.js";
 import { cmdPsychoBuild } from "./commands/pipeline.js";
+import { cmdQuery } from "./commands/query.js";
 import { cmdRegister } from "./commands/register.js";
 import { cmdRestyle } from "./commands/restyle.js";
 import { cmdSyncTimelines } from "./commands/sync-timelines.js";
@@ -154,6 +155,15 @@ Garbage-collect:
              draft. No-op writes nothing. --dry-run previews. Run sync-timelines
              after (the root then diverges from any Timelines/ mirrors).
 
+Catalogue:
+  query      <term> [--kind effect|filter|transition|font] [--drafts <dir>]
+             Search the CapCut drafts library (every draft under the projects
+             root) for effects, filters, transitions and fonts. <term> =
+             case-insensitive substring on the item name. Read-only. Results
+             dedupe by resource_id (local fonts by name+path) and list
+             from_drafts[]. JSON (or -H table). Exit 0 even on zero matches;
+             2 if the drafts root is missing or all drafts are unreadable.
+
 Project:
   cut        <project> <start> <end> --out <path>
 
@@ -191,6 +201,8 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.template = args[++i];
     } else if (a === "--drafts" && i + 1 < args.length) {
       flags.drafts = args[++i];
+    } else if (a === "--kind" && i + 1 < args.length) {
+      flags.kind = args[++i];
     } else if (a === "--property" && i + 1 < args.length) {
       flags.property = args[++i];
     } else if (a === "--value" && i + 1 < args.length) {
@@ -280,6 +292,10 @@ function main(): void {
   if (cmd === "init-meta") {
     cmdInitMeta(positional, flags);
     process.exit(0);
+  }
+
+  if (cmd === "query") {
+    process.exit(cmdQuery(positional, flags));
   }
 
   if (!projectPath) die("Missing project path. Run 'capcut-david --help' for usage.");

@@ -12,6 +12,7 @@ export interface Flags {
   volume?: number;
   template?: string;
   drafts?: string;
+  kind?: string;
   property?: string;
   value?: string;
   curve?: string;
