@@ -11,6 +11,21 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.14.0] — 2026-06-07
+
+Minor release. New read-only `make-preset` — the generation cousin of `query`. Given a font name, it scans the CapCut drafts library and emits a ready-to-use **bare-font** `restyle` preset (font identity only), so you never hand-craft a preset JSON again.
+
+### Added
+- **`make-preset --font <name|resource_id> [--out <file>] [--drafts <dir>] [--human]`** — read-only preset generator. Scans every draft under the projects root (default `defaultProjectsRoot()`, override `--drafts`), finds the font, and emits a preset that feeds straight into `restyle --preset`.
+  - **Match:** `--font` is a **case-insensitive substring** on the catalogue title; if the value is **purely numeric** it is matched as an **exact `resource_id`** instead.
+  - **Source = drafts library (zero new deps).** The complete font block (`font_path`, `font_resource_id`, `fonts[]` incl. `title`, `source_platform`) already lives in any draft that uses the font — no SQLite / CapCut-cache reading. (A catalogue font is, by definition, one you've applied at least once, which writes it into a draft.)
+  - **Dedupe + tie-break:** by `resource_id`; on collision prefers the **catalogue-grade** entry (`source_platform == 1`, non-empty `title`, `.ttf` under `/effect/<rid>/`) over a bare local fallback, so the same font seen as both local and catalogue collapses to the catalogue truth.
+  - **Bare-font preset:** carries ONLY the font identity — `text_material.{font_path,font_resource_id,font_title,font_source_platform,fonts[]}` + `content_template.styles[0].font {path,id}` + `segment {}`. No stroke/shadow/size decoration. The `fonts[]` entry is copied **verbatim from the draft** (path normalized, `request_id` cleared) so the CapCut dropdown resolves the name (the S1649 #8 correctness detail).
+  - **`--out <file>`** writes the bare preset (ready for `restyle --preset`); without it the preset rides in the JSON envelope. `-H/--human` prints a one-line summary / candidate list.
+  - **Envelope:** `capcut-david/make-preset@1` (`{type, ok, font, ambiguous, candidates[], written, preset}`).
+  - **Exit codes:** `0` for success, no-match (`ok:false`), and ambiguous (lists candidates, no silent pick); `2` if the drafts root is missing, every draft is unreadable, or the matched font is **local-only** (no `resource_id` → can't build a catalogue preset); `1` for usage errors (missing `--font`).
+- **458 tests** (+25). Typecheck clean; `make-preset.ts` lint-clean.
+
 ## [1.13.0] — 2026-06-06
 
 Minor release. New read-only `query` — a catalogue lookup that searches the CapCut drafts library for effects, filters, transitions and fonts by name and returns their `resource_id`. No writes; complements the validate→fixer family.
