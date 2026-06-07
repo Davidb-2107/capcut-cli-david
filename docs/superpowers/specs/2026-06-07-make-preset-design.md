@@ -82,8 +82,8 @@ and is NOT in `WRITE_COMMANDS` (no CapCut-open guard).
 ### Envelope (stdout, default)
 ```jsonc
 {
-  "schema": "capcut-david/make-preset@1",
-  "ok": true,
+  "type": "capcut-david/make-preset@1",
+  "ok": true,            // success/ambiguous: true · no-match: false (mirrors query)
   "font": { "title": "SpeedLines", "resource_id": "7605981975781887248",
             "font_path": "C:/.../effect/7605981975781887248/.../font.ttf",
             "source_platform": 1, "from_drafts": ["niche_pc_…"] },
