@@ -37,6 +37,7 @@ export interface Flags {
   dryRun?: boolean;
   fix?: boolean;
   apply?: boolean;
+  font?: string;
 }
 
 export class CliError extends Error {
