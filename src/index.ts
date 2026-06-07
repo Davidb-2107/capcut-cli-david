@@ -18,6 +18,7 @@ import {
 } from "./commands/inspect.js";
 import { cmdAddKeyframe, cmdKenBurns } from "./commands/keyframe.js";
 import { cmdPsychoBuild } from "./commands/pipeline.js";
+import { cmdMakePreset } from "./commands/make-preset.js";
 import { cmdQuery } from "./commands/query.js";
 import { cmdRegister } from "./commands/register.js";
 import { cmdRestyle } from "./commands/restyle.js";
@@ -164,6 +165,15 @@ Catalogue:
              from_drafts[]. JSON (or -H table). Exit 0 even on zero matches;
              2 if the drafts root is missing or all drafts are unreadable.
 
+  make-preset --font <name|resource_id> [--out <file>] [--drafts <dir>]
+             Generate a BARE-FONT restyle preset for a font already used in your
+             drafts library (the generation cousin of query). Reads the font's
+             resource_id / .ttf path / catalogue title from a draft that uses it
+             and emits a preset ready for \`restyle --preset\`. --out writes the
+             preset file; otherwise it's in the JSON envelope. Read-only. Exit 0
+             (incl. no-match / ambiguous), 2 if the drafts root is missing or the
+             matched font is local-only (no resource_id), 1 on usage error.
+
 Project:
   cut        <project> <start> <end> --out <path>
 
@@ -201,6 +211,8 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.template = args[++i];
     } else if (a === "--drafts" && i + 1 < args.length) {
       flags.drafts = args[++i];
+    } else if (a === "--font" && i + 1 < args.length) {
+      flags.font = args[++i];
     } else if (a === "--kind" && i + 1 < args.length) {
       flags.kind = args[++i];
     } else if (a === "--property" && i + 1 < args.length) {
@@ -296,6 +308,10 @@ function main(): void {
 
   if (cmd === "query") {
     process.exit(cmdQuery(positional, flags));
+  }
+
+  if (cmd === "make-preset") {
+    process.exit(cmdMakePreset(flags));
   }
 
   if (!projectPath) die("Missing project path. Run 'capcut-david --help' for usage.");

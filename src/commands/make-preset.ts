@@ -48,7 +48,12 @@ function extractFonts(draft: unknown): RawFont[] {
     for (const f of arr(t.fonts)) {
       const title = str(f.title);
       if (!title) continue;
-      const sp = typeof f.source_platform === "number" ? f.source_platform : typeof t.font_source_platform === "number" ? t.font_source_platform : 0;
+      const sp =
+        typeof f.source_platform === "number"
+          ? f.source_platform
+          : typeof t.font_source_platform === "number"
+            ? t.font_source_platform
+            : 0;
       fonts.push({
         resource_id: str(f.resource_id),
         title,
@@ -68,7 +73,9 @@ function dedupeKey(f: RawFont): string {
 
 // Is this entry "catalogue-grade" (a real downloaded font, preferred on tie)?
 function catalogueGrade(f: RawFont): boolean {
-  return !!f.resource_id && f.source_platform === 1 && !!f.font_path && f.font_path.includes(`/effect/${f.resource_id}/`);
+  return (
+    !!f.resource_id && f.source_platform === 1 && !!f.font_path && f.font_path.includes(`/effect/${f.resource_id}/`)
+  );
 }
 
 // Pure: extract → dedupe (prefer catalogue-grade) → match → classify.
@@ -92,7 +99,7 @@ export function planMakePreset(drafts: Array<{ name: string; draft: unknown }>, 
 
   const isNumeric = /^\d+$/.test(font);
   const needle = font.toLowerCase();
-  let matches = [...index.values()].filter((c) =>
+  const matches = [...index.values()].filter((c) =>
     isNumeric ? c.resource_id === font : c.title.toLowerCase().includes(needle),
   );
   for (const c of matches) c.from_drafts.sort();
@@ -100,7 +107,8 @@ export function planMakePreset(drafts: Array<{ name: string; draft: unknown }>, 
 
   // Distinct by dedupe key (a single font matched in many drafts is one match).
   const distinct = new Map<string, FontCandidate>();
-  for (const c of matches) distinct.set(c.resource_id ? `rid:${c.resource_id}` : `local:${c.title}|${c.font_path ?? ""}`, c);
+  for (const c of matches)
+    distinct.set(c.resource_id ? `rid:${c.resource_id}` : `local:${c.title}|${c.font_path ?? ""}`, c);
 
   // Title-level dedup: if a catalogue-grade and local entry share the same title,
   // the catalogue-grade entry wins (local is a fallback, not a distinct font).
@@ -147,7 +155,10 @@ export function buildPreset(font: FontCandidate): Record<string, unknown> {
 // Usage errors (missing --font) throw via die() → exit 1 in the top-level catch.
 export function cmdMakePreset(flags: Flags): number {
   const font = flags.font;
-  if (!font) die("Missing --font <name|resource_id>. Usage: capcut-david make-preset --font <name|rid> [--out <file>] [--drafts <dir>]");
+  if (!font)
+    die(
+      "Missing --font <name|resource_id>. Usage: capcut-david make-preset --font <name|rid> [--out <file>] [--drafts <dir>]",
+    );
 
   const root = flags.drafts ?? defaultProjectsRoot();
   if (!existsSync(root) || !statSync(root).isDirectory()) {
@@ -171,7 +182,18 @@ export function cmdMakePreset(flags: Flags): number {
   const plan = planMakePreset(drafts, font);
 
   if (plan.status === "none") {
-    out({ type: "capcut-david/make-preset@1", ok: true, font: null, ambiguous: false, candidates: [], written: null, preset: null }, flags);
+    out(
+      {
+        type: "capcut-david/make-preset@1",
+        ok: false,
+        font: null,
+        ambiguous: false,
+        candidates: [],
+        written: null,
+        preset: null,
+      },
+      flags,
+    );
     return 0;
   }
   if (plan.status === "ambiguous") {
@@ -181,7 +203,11 @@ export function cmdMakePreset(flags: Flags): number {
         ok: true,
         font: null,
         ambiguous: true,
-        candidates: plan.candidates.map((c) => ({ title: c.title, resource_id: c.resource_id, from_drafts: c.from_drafts })),
+        candidates: plan.candidates.map((c) => ({
+          title: c.title,
+          resource_id: c.resource_id,
+          from_drafts: c.from_drafts,
+        })),
         written: null,
         preset: null,
       },
@@ -192,7 +218,9 @@ export function cmdMakePreset(flags: Flags): number {
 
   const f = plan.font;
   if (!f.resource_id) {
-    process.stderr.write(`${JSON.stringify({ error: `Font '${f.title}' is a local font (no resource_id); cannot build a catalogue preset. Apply a catalogue font in CapCut instead.` })}\n`);
+    process.stderr.write(
+      `${JSON.stringify({ error: `Font '${f.title}' is a local font (no resource_id); cannot build a catalogue preset. Apply a catalogue font in CapCut instead.` })}\n`,
+    );
     return 2;
   }
 
@@ -206,7 +234,13 @@ export function cmdMakePreset(flags: Flags): number {
     {
       type: "capcut-david/make-preset@1",
       ok: true,
-      font: { title: f.title, resource_id: f.resource_id, font_path: f.font_path, source_platform: f.source_platform, from_drafts: f.from_drafts },
+      font: {
+        title: f.title,
+        resource_id: f.resource_id,
+        font_path: f.font_path,
+        source_platform: f.source_platform,
+        from_drafts: f.from_drafts,
+      },
       ambiguous: false,
       candidates: [],
       written,
