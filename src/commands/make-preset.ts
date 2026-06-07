@@ -90,6 +90,8 @@ export function planMakePreset(drafts: Array<{ name: string; draft: unknown }>, 
       } else {
         if (!existing.from_drafts.includes(name)) existing.from_drafts.push(name);
         // Upgrade to a catalogue-grade representative if a better one appears.
+        // existing.from_drafts is reused intentionally — not an aliasing bug:
+        // the array was already created above and is the live accumulator.
         if (!catalogueGrade(existing) && catalogueGrade(raw)) {
           index.set(key, { ...raw, from_drafts: existing.from_drafts });
         }
@@ -105,15 +107,12 @@ export function planMakePreset(drafts: Array<{ name: string; draft: unknown }>, 
   for (const c of matches) c.from_drafts.sort();
   matches.sort((a, b) => a.title.localeCompare(b.title));
 
-  // Distinct by dedupe key (a single font matched in many drafts is one match).
-  const distinct = new Map<string, FontCandidate>();
-  for (const c of matches)
-    distinct.set(c.resource_id ? `rid:${c.resource_id}` : `local:${c.title}|${c.font_path ?? ""}`, c);
-
   // Title-level dedup: if a catalogue-grade and local entry share the same title,
   // the catalogue-grade entry wins (local is a fallback, not a distinct font).
+  // index already deduped by dedupeKey, so every entry in matches is unique —
+  // no need to rebuild a distinct Map here.
   const byTitle = new Map<string, FontCandidate>();
-  for (const c of distinct.values()) {
+  for (const c of matches) {
     const tk = c.title.toLowerCase();
     const existing = byTitle.get(tk);
     if (!existing || (!catalogueGrade(existing) && catalogueGrade(c))) {
@@ -151,6 +150,23 @@ export function buildPreset(font: FontCandidate): Record<string, unknown> {
   };
 }
 
+function renderHuman(plan: PlanResult, font: string, written: string | null, flags: Flags): void {
+  if (flags.quiet) return;
+  if (plan.status === "none") {
+    console.log(`No font matching '${font}'. Apply it once in CapCut, then retry.`);
+    return;
+  }
+  if (plan.status === "ambiguous") {
+    console.log(`Ambiguous — ${plan.candidates.length} fonts match '${font}':`);
+    for (const c of plan.candidates) console.log(`  ${c.title}  ${c.resource_id ?? "(no rid)"}`);
+    return;
+  }
+  const f = plan.font;
+  console.log(`${f.title}  ${f.resource_id ?? "(no rid)"}  ${f.font_path ?? ""}`);
+  if (written) console.log(`Preset written to ${written}`);
+  else console.log("Preset is in the JSON envelope (use --out <file> to write it).");
+}
+
 // Returns the process exit code (0 success incl. zero/ambiguous; 2 operational).
 // Usage errors (missing --font) throw via die() → exit 1 in the top-level catch.
 export function cmdMakePreset(flags: Flags): number {
@@ -166,53 +182,88 @@ export function cmdMakePreset(flags: Flags): number {
     return 2;
   }
 
-  const drafts: Array<{ name: string; draft: unknown }> = [];
+  // Phase 1: collect folders containing draft_content.json.
+  const draftFolders: Array<{ name: string; file: string }> = [];
   for (const entry of readdirSync(root, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
     const file = join(root, entry.name, "draft_content.json");
-    if (!existsSync(file)) continue;
+    if (existsSync(file)) draftFolders.push({ name: entry.name, file });
+  }
+  if (draftFolders.length === 0) {
+    if (flags.human) renderHuman({ status: "none" }, font, null, flags);
+    else
+      out(
+        {
+          type: "capcut-david/make-preset@1",
+          ok: false,
+          font: null,
+          ambiguous: false,
+          candidates: [],
+          written: null,
+          preset: null,
+        },
+        flags,
+      );
+    return 0;
+  }
+
+  // Phase 2: parse each; skip malformed.
+  const drafts: Array<{ name: string; draft: unknown }> = [];
+  for (const { name, file } of draftFolders) {
+    let draft: unknown;
     try {
-      const draft = JSON.parse(readFileSync(file, "utf8"));
-      if (rec(draft)) drafts.push({ name: entry.name, draft });
+      draft = JSON.parse(readFileSync(file, "utf8"));
     } catch {
-      // skip unreadable/malformed, keep scanning
+      continue; // skip unreadable/malformed, keep scanning
     }
+    if (!rec(draft)) continue;
+    drafts.push({ name, draft });
+  }
+  if (drafts.length === 0) {
+    process.stderr.write(
+      `${JSON.stringify({ error: "No readable drafts found (all draft_content.json failed to parse)." })}\n`,
+    );
+    return 2;
   }
 
   const plan = planMakePreset(drafts, font);
 
   if (plan.status === "none") {
-    out(
-      {
-        type: "capcut-david/make-preset@1",
-        ok: false,
-        font: null,
-        ambiguous: false,
-        candidates: [],
-        written: null,
-        preset: null,
-      },
-      flags,
-    );
+    if (flags.human) renderHuman(plan, font, null, flags);
+    else
+      out(
+        {
+          type: "capcut-david/make-preset@1",
+          ok: false,
+          font: null,
+          ambiguous: false,
+          candidates: [],
+          written: null,
+          preset: null,
+        },
+        flags,
+      );
     return 0;
   }
   if (plan.status === "ambiguous") {
-    out(
-      {
-        type: "capcut-david/make-preset@1",
-        ok: true,
-        font: null,
-        ambiguous: true,
-        candidates: plan.candidates.map((c) => ({
-          title: c.title,
-          resource_id: c.resource_id,
-          from_drafts: c.from_drafts,
-        })),
-        written: null,
-        preset: null,
-      },
-      flags,
-    );
+    if (flags.human) renderHuman(plan, font, null, flags);
+    else
+      out(
+        {
+          type: "capcut-david/make-preset@1",
+          ok: true,
+          font: null,
+          ambiguous: true,
+          candidates: plan.candidates.map((c) => ({
+            title: c.title,
+            resource_id: c.resource_id,
+            from_drafts: c.from_drafts,
+          })),
+          written: null,
+          preset: null,
+        },
+        flags,
+      );
     return 0;
   }
 
@@ -230,6 +281,12 @@ export function cmdMakePreset(flags: Flags): number {
     writeFileSync(flags.out, `${JSON.stringify(preset, null, 2)}\n`, "utf8");
     written = flags.out;
   }
+
+  if (flags.human) {
+    renderHuman(plan, font, written, flags);
+    return 0;
+  }
+
   out(
     {
       type: "capcut-david/make-preset@1",

@@ -225,3 +225,31 @@ test("CLI: real ken-burns fixture (CC-DerStil) → valid preset", (t) => {
   strictEqual(r.json.font.title, "CC-DerStil");
   ok(r.json.preset.text_material.fonts[0].title === "CC-DerStil");
 });
+
+// FIX 1 — two-phase drafts-root guards
+test("CLI: empty library (root exists, no draft subdirs) → exit 0, font null", (t) => {
+  const root = mkdtempSync(join(tmpdir(), "capcut-mp-empty-"));
+  t.after(() => { try { rmSync(root, { recursive: true, force: true }); } catch {} });
+  const r = runCli(["make-preset", "--font", "speed", "--drafts", root]);
+  strictEqual(r.status, 0, r.stderr);
+  strictEqual(r.json.type, "capcut-david/make-preset@1");
+  strictEqual(r.json.ok, false);
+  strictEqual(r.json.font, null);
+});
+
+test("CLI: all drafts malformed → exit 2", (t) => {
+  const root = makeLib(t, { dA: "{ not json" });
+  const r = runCli(["make-preset", "--font", "speed", "--drafts", root]);
+  strictEqual(r.status, 2, r.stdout);
+  ok(/No readable drafts|parse/.test(r.errorJson?.error ?? r.stderr));
+});
+
+// FIX 3 — --human renderer
+test("CLI: --human match → stdout contains title + resource_id, no JSON envelope", (t) => {
+  const root = makeLib(t, { dA: libDraft({ texts: [libFont("SpeedLines", "7605981975781887248")] }) });
+  const r = runCli(["make-preset", "--font", "speed", "--drafts", root, "--human"]);
+  strictEqual(r.status, 0, r.stderr);
+  strictEqual(r.json, undefined);
+  ok(r.stdout.includes("SpeedLines"), `expected SpeedLines in: ${r.stdout}`);
+  ok(r.stdout.includes("7605981975781887248"), `expected rid in: ${r.stdout}`);
+});
