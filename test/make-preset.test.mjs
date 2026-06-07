@@ -83,3 +83,145 @@ test("plan: entries without a title are skipped; missing texts tolerated", () =>
   strictEqual(planMakePreset(named("dA", d), "").status, "none");
   strictEqual(planMakePreset(named("dB", draftWith({})), "x").status, "none");
 });
+
+// --- buildPreset ------------------------------------------------------------
+
+const candidate = (over = {}) => ({
+  resource_id: "7605",
+  title: "SpeedLines",
+  font_path: "C:/cache/effect/7605/h/SpeedLines.ttf",
+  source_platform: 1,
+  fonts_entry: { id: "G", resource_id: "7605", category_id: "preset", category_name: "Presets", source_platform: 1, path: "C:/old/path.ttf", effect_id: "7605", title: "SpeedLines", request_id: "REQ-NATIVE" },
+  from_drafts: ["dA"],
+  ...over,
+});
+
+test("buildPreset: emits text_material font identity (title/rid/source_platform/path)", () => {
+  const p = buildPreset(candidate());
+  strictEqual(p.text_material.font_title, "SpeedLines");
+  strictEqual(p.text_material.font_resource_id, "7605");
+  strictEqual(p.text_material.font_source_platform, 1);
+  strictEqual(p.text_material.font_path, "C:/cache/effect/7605/h/SpeedLines.ttf");
+});
+
+test("buildPreset: fonts[] is the draft entry verbatim, path normalized, request_id cleared", () => {
+  const p = buildPreset(candidate());
+  strictEqual(p.text_material.fonts.length, 1);
+  const f = p.text_material.fonts[0];
+  strictEqual(f.title, "SpeedLines");
+  strictEqual(f.path, "C:/cache/effect/7605/h/SpeedLines.ttf"); // normalized to font_path
+  strictEqual(f.request_id, ""); // cleared (CapCut wipes non-empty engine request_ids)
+});
+
+test("buildPreset: content_template.styles[0] is font-only (no decoration leaks)", () => {
+  const p = buildPreset(candidate());
+  deepStrictEqual(p.content_template.styles[0], { font: { path: "C:/cache/effect/7605/h/SpeedLines.ttf", id: "7605" } });
+});
+
+test("buildPreset: BARE FONT — segment empty, no shadow/border/name keys", () => {
+  const p = buildPreset(candidate());
+  deepStrictEqual(p.segment, {});
+  strictEqual("has_shadow" in p.text_material, false);
+  strictEqual("border_color" in p.text_material, false);
+  strictEqual("base_content" in p.text_material, false);
+});
+
+test("buildPreset: output round-trips through restyle (the preset is accepted)", () => {
+  // Structural contract: restyle reads text_material + content_template + segment.
+  const p = buildPreset(candidate());
+  ok(p.text_material && p.content_template && p.segment);
+  ok(Array.isArray(p.content_template.styles) && p.content_template.styles.length === 1);
+});
+
+// --- CLI (envelope / exit codes / --out) ------------------------------------
+
+// Temp drafts-library: root/<name>/draft_content.json. value = draft object.
+function makeLib(t, drafts) {
+  const root = mkdtempSync(join(tmpdir(), "capcut-makepreset-test-"));
+  for (const [name, val] of Object.entries(drafts)) {
+    const sub = join(root, name);
+    mkdirSync(sub, { recursive: true });
+    writeFileSync(join(sub, "draft_content.json"), typeof val === "string" ? val : JSON.stringify(val));
+  }
+  if (t && typeof t.after === "function") t.after(() => { try { rmSync(root, { recursive: true, force: true }); } catch {} });
+  return root;
+}
+const libDraft = (mats) => ({ id: "D", name: "n", duration: 1, fps: 30, canvas_config: { width: 1, height: 1, ratio: "9:16" }, tracks: [], materials: mats });
+const libFont = (title, rid) => ({ type: "text", font_title: title, font_resource_id: rid, font_source_platform: 1, font_path: `C:/cache/effect/${rid}/h/${title}.ttf`, fonts: [{ id: rid, resource_id: rid, category_id: "preset", category_name: "Presets", source_platform: 1, path: `C:/cache/effect/${rid}/h/${title}.ttf`, effect_id: rid, title, request_id: "REQ" }] });
+
+test("CLI: --font name → status 0, make-preset@1 envelope with font + preset", (t) => {
+  const root = makeLib(t, { dA: libDraft({ texts: [libFont("SpeedLines", "7605")] }) });
+  const r = runCli(["make-preset", "--font", "speed", "--drafts", root]);
+  strictEqual(r.status, 0, r.stderr);
+  strictEqual(r.json.type, "capcut-david/make-preset@1");
+  strictEqual(r.json.ok, true);
+  strictEqual(r.json.font.title, "SpeedLines");
+  strictEqual(r.json.preset.text_material.font_resource_id, "7605");
+});
+
+test("CLI: numeric --font → exact resource_id match", (t) => {
+  const root = makeLib(t, { dA: libDraft({ texts: [libFont("SpeedLines", "7605"), libFont("Disco", "76050")] }) });
+  const r = runCli(["make-preset", "--font", "7605", "--drafts", root]);
+  strictEqual(r.status, 0);
+  strictEqual(r.json.font.resource_id, "7605");
+});
+
+test("CLI: --out writes the bare preset file (accepted by restyle's shape)", (t) => {
+  const root = makeLib(t, { dA: libDraft({ texts: [libFont("SpeedLines", "7605")] }) });
+  const outPath = join(root, "speedlines-preset.json");
+  const r = runCli(["make-preset", "--font", "speed", "--drafts", root, "--out", outPath]);
+  strictEqual(r.status, 0);
+  strictEqual(r.json.written, outPath);
+  const preset = JSON.parse(readFileSync(outPath, "utf8"));
+  ok(preset.text_material && preset.content_template && preset.segment);
+  strictEqual(preset.text_material.font_title, "SpeedLines");
+});
+
+test("CLI: missing --font → exit 1, error mentions font", (t) => {
+  const root = makeLib(t, { dA: libDraft({ texts: [libFont("SpeedLines", "7605")] }) });
+  const r = runCli(["make-preset", "--drafts", root]);
+  strictEqual(r.status, 1);
+  ok(/font/i.test(r.errorJson?.error ?? r.stderr));
+});
+
+test("CLI: --drafts missing dir → exit 2", () => {
+  const r = runCli(["make-preset", "--font", "x", "--drafts", join(tmpdir(), "capcut-mp-no-such-dir-xyz")]);
+  strictEqual(r.status, 2);
+});
+
+test("CLI: no-match → exit 0, ok false, candidates empty", (t) => {
+  const root = makeLib(t, { dA: libDraft({ texts: [libFont("SpeedLines", "7605")] }) });
+  const r = runCli(["make-preset", "--font", "nope", "--drafts", root]);
+  strictEqual(r.status, 0);
+  strictEqual(r.json.ok, false);
+  strictEqual(r.json.ambiguous, false);
+  ok(Array.isArray(r.json.candidates));
+});
+
+test("CLI: ambiguous → exit 0, ambiguous true, candidates listed", (t) => {
+  const root = makeLib(t, { dA: libDraft({ texts: [libFont("LineArt", "1"), libFont("Lineback", "2")] }) });
+  const r = runCli(["make-preset", "--font", "line", "--drafts", root]);
+  strictEqual(r.status, 0);
+  strictEqual(r.json.ambiguous, true);
+  strictEqual(r.json.candidates.length, 2);
+});
+
+test("CLI: local-only font (no resource_id) → exit 2, refuses", (t) => {
+  const local = libDraft({ texts: [{ type: "text", font_title: "MyLocal", font_resource_id: "", font_source_platform: 0, font_path: "C:/win/fonts/mylocal.ttf", fonts: [{ title: "MyLocal", resource_id: "", source_platform: 0, path: "C:/win/fonts/mylocal.ttf" }] }] });
+  const root = makeLib(t, { dA: local });
+  const r = runCli(["make-preset", "--font", "mylocal", "--drafts", root]);
+  strictEqual(r.status, 2);
+  ok(/resource_id|local/i.test(r.errorJson?.error ?? r.stderr));
+});
+
+test("CLI: real ken-burns fixture (CC-DerStil) → valid preset", (t) => {
+  const root = mkdtempSync(join(tmpdir(), "capcut-mp-fix-"));
+  t.after(() => { try { rmSync(root, { recursive: true, force: true }); } catch {} });
+  const sub = join(root, "ken-burns-draft");
+  mkdirSync(sub, { recursive: true });
+  writeFileSync(join(sub, "draft_content.json"), readFileSync(join("test-fixtures", "fixtures", "ken-burns-draft.json"), "utf8"));
+  const r = runCli(["make-preset", "--font", "derstil", "--drafts", root]);
+  strictEqual(r.status, 0, r.stderr);
+  strictEqual(r.json.font.title, "CC-DerStil");
+  ok(r.json.preset.text_material.fonts[0].title === "CC-DerStil");
+});
