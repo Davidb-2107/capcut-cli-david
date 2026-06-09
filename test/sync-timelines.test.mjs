@@ -48,15 +48,18 @@ import { syncTimelines } from "../dist/commands/sync-timelines.js";
 const ROOT = JSON.stringify({ id: "D1", duration: 5000000, fps: 30, canvas_config: { width: 1080, height: 1920 }, tracks: [], materials: {} }, null, 2);
 
 // Build a draft dir: root draft_content.json + optional Timelines/<guid> mirrors.
-// mirrors: { [guid]: { draft?: string|null(absent), tmp?: string|null, journals?: bool } }
-function setup(t, { root = ROOT, mirrors = {} } = {}) {
+// mirrors: { [guid]: { draft?: string|null(absent), info?: string|null, tmp?: string|null, journals?: bool } }
+// rootInfo: optional root-level draft_info.json (the legacy sibling cutcli writes).
+function setup(t, { root = ROOT, rootInfo, mirrors = {} } = {}) {
   const dir = tmp(t);
   const filePath = join(dir, "draft_content.json");
   writeFileSync(filePath, root, "utf-8");
+  if (rootInfo !== undefined && rootInfo !== null) writeFileSync(join(dir, "draft_info.json"), rootInfo, "utf-8");
   for (const [guid, m] of Object.entries(mirrors)) {
     const g = join(dir, "Timelines", guid);
     mkdirSync(g, { recursive: true });
     if (m.draft !== undefined && m.draft !== null) writeFileSync(join(g, "draft_content.json"), m.draft, "utf-8");
+    if (m.info !== undefined && m.info !== null) writeFileSync(join(g, "draft_info.json"), m.info, "utf-8");
     if (m.tmp !== undefined && m.tmp !== null) writeFileSync(join(g, "template-2.tmp"), m.tmp, "utf-8");
     if (m.journals) {
       mkdirSync(join(g, "attachment", "patch"), { recursive: true });
@@ -261,4 +264,75 @@ test("CLI sync-timelines: a guid write failure → exit 1 with {error}", (t) => 
   } finally {
     chmodSync(badMirror, 0o644);
   }
+});
+
+// ===========================================================================
+// draft_info.json — the CapCut PRE-OPEN mirror. A CLI-built, never-opened draft
+// has Timelines/<guid>/draft_info.json (video-only, written by cutcli) but NO
+// draft_content.json (CapCut only materialises that on first open). saveDraft
+// writes only the ROOT draft_content.json, so audio+captions never reach the
+// guid's draft_info.json — the file CapCut actually reads on first open — and
+// are lost. Filesystem repro proved priming the guid's draft_info.json to the
+// full root content makes CapCut open with audio+text intact. sync-timelines
+// must reconcile it. The ROOT draft_info.json is an inert legacy sibling and
+// must stay untouched.
+// ===========================================================================
+
+// Root content carries audio+text; the stale mirror is video-only. Byte-distinct from ROOT.
+const VIDEO_ONLY = JSON.stringify({ id: "D1", duration: 5000000, fps: 30, canvas_config: { width: 1080, height: 1920 }, tracks: [{ id: "vt", segments: [{}] }], materials: { videos: [{}] } }, null, 2);
+
+test("sync: pre-open guid (draft_info.json only, no draft_content.json) → draft_info.json reconciled to root bytes", (t) => {
+  const { dir, filePath } = setup(t, { rootInfo: VIDEO_ONLY, mirrors: { "G1": { info: VIDEO_ONLY } } });
+  const mirrorInfo = join(dir, "Timelines", "G1", "draft_info.json");
+  // pre-condition: guid has NO draft_content.json (pre-CapCut-open state)
+  strictEqual(existsSync(join(dir, "Timelines", "G1", "draft_content.json")), false);
+
+  const rep = syncTimelines(filePath, { nowMs: NOW });
+
+  strictEqual(readFileSync(mirrorInfo, "utf-8"), ROOT, "guid draft_info.json must equal raw root bytes after sync");
+  const bak = join(dir, "Timelines", "G1", `draft_info.json.synced-${NOW}.bak`);
+  strictEqual(existsSync(bak), true, "timestamped backup must exist");
+  strictEqual(readFileSync(bak, "utf-8"), VIDEO_ONLY, "backup must hold the PRE-overwrite (video-only) bytes");
+  const g = rep.synced.find((s) => s.guid === "G1");
+  ok(g, "G1 must be reported as synced");
+  ok(g.files_written.includes("Timelines/G1/draft_info.json"), `draft_info.json must be listed in files_written, got: ${JSON.stringify(g.files_written)}`);
+});
+
+test("sync: the ROOT draft_info.json is NEVER modified — only the guid's is reconciled", (t) => {
+  const { dir, filePath } = setup(t, { rootInfo: VIDEO_ONLY, mirrors: { "G1": { info: VIDEO_ONLY } } });
+  const rootInfoPath = join(dir, "draft_info.json");
+  const before = readFileSync(rootInfoPath, "utf-8");
+  syncTimelines(filePath, { nowMs: NOW });
+  strictEqual(readFileSync(rootInfoPath, "utf-8"), before, "root draft_info.json must stay untouched — CapCut does not read it as authority");
+});
+
+test("sync: post-open guid (draft_info.json AND draft_content.json) → both reconciled to root, no throw", (t) => {
+  const { dir, filePath } = setup(t, { mirrors: { "G1": { draft: VIDEO_ONLY, info: VIDEO_ONLY } } });
+  syncTimelines(filePath, { nowMs: NOW });
+  strictEqual(readFileSync(join(dir, "Timelines", "G1", "draft_content.json"), "utf-8"), ROOT);
+  strictEqual(readFileSync(join(dir, "Timelines", "G1", "draft_info.json"), "utf-8"), ROOT);
+});
+
+test("sync: draft_info.json reconciliation is idempotent — 2nd run is a byte-identical no-op", (t) => {
+  const { dir, filePath } = setup(t, { mirrors: { "G1": { info: VIDEO_ONLY } } });
+  syncTimelines(filePath, { nowMs: 1000 });
+  const info = join(dir, "Timelines", "G1", "draft_info.json");
+  strictEqual(readFileSync(info, "utf-8"), ROOT);
+  const mtimeAfter1 = statSync(info).mtimeMs;
+  syncTimelines(filePath, { nowMs: 2000 });
+  strictEqual(statSync(info).mtimeMs, mtimeAfter1, "2nd run must not rewrite a byte-identical draft_info.json");
+  strictEqual(existsSync(join(dir, "Timelines", "G1", "draft_info.json.synced-2000.bak")), false, "no backup on an idempotent run");
+});
+
+test("sync: skip-if-absent — a guid without draft_info.json is never given one", (t) => {
+  const { dir, filePath } = setup(t, { mirrors: { "G1": { draft: VIDEO_ONLY } } });
+  syncTimelines(filePath, { nowMs: NOW });
+  strictEqual(existsSync(join(dir, "Timelines", "G1", "draft_info.json")), false, "draft_info.json must not be fabricated");
+});
+
+test("CLI sync-timelines: a guid where only draft_info.json diverged emits a stderr WARNING", (t) => {
+  const { dir } = setup(t, { mirrors: { "G1": { info: VIDEO_ONLY } } });
+  const r = runCli(["sync-timelines", dir]);
+  strictEqual(r.status, 0, `stderr: ${r.stderr}`);
+  ok(/WARNING\s+G1/.test(r.stderr), `expected a divergent-overwrite warning for draft_info.json, got: ${r.stderr}`);
 });

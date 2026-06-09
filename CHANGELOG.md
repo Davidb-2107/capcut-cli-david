@@ -11,6 +11,17 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.14.1] — 2026-06-09
+
+Patch release. Bugfix for `sync-timelines`: it now reconciles the guid's `draft_info.json` — the mirror CapCut reads on the **first open** of a CLI-built draft — so audio and captions added after the build are no longer silently dropped.
+
+### Fixed
+- **`sync-timelines` now reconciles `Timelines/<guid>/draft_info.json`.** A draft built in the CLI and never opened in CapCut keeps its timeline mirror in the guid's `draft_info.json`; CapCut only materialises `Timelines/<guid>/draft_content.json` on first open. Because `saveDraft` writes **only** the root `draft_content.json`, audio/captions added post-build never reached the file CapCut reads first → they were lost on open (CapCut then rewrote the root video-only on close). `draft_info.json` was an **oversight** in `MIRROR_FILES`, not a deliberate exclusion (only `.bak` + the patch journals `mini_draft.json`/`patch.json` are excluded). Root cause confirmed by filesystem repro.
+  - **Scope = the guid's `draft_info.json` only.** `MIRROR_FILES` feeds the per-guid loop, so the **root** `draft_info.json` (an inert legacy sibling — CapCut does not read it as authority) is **never** touched. The root-siblings pass (root `template-2.tmp` only) is unchanged.
+  - **Data-loss transparency extended:** the stderr `WARNING` for a divergent overwrite now also fires when the guid's `draft_info.json` is overwritten (previously only `draft_content.json`).
+  - Unchanged safety net: timestamped `.synced-<epoch>.bak` before overwrite, skip-if-absent, skip-when-byte-identical, per-guid isolation, root draft read-only.
+- **464 tests** (+6). Typecheck clean; changed files lint-clean.
+
 ## [1.14.0] — 2026-06-07
 
 Minor release. New read-only `make-preset` — the generation cousin of `query`. Given a font name, it scans the CapCut drafts library and emits a ready-to-use **bare-font** `restyle` preset (font identity only), so you never hand-craft a preset JSON again.

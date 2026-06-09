@@ -23,7 +23,7 @@ export interface SyncOptions {
 
 export interface SyncGuidResult {
   guid: string;
-  /** true when this guid's draft_content.json mirror existed, differed, and was overwritten. */
+  /** true when a CapCut-read mirror (draft_content.json or draft_info.json) existed, differed, and was overwritten — drives the data-loss WARNING. */
   diverged: boolean;
   files_written: string[];
   backups: string[];
@@ -42,10 +42,12 @@ export interface SyncReport {
   summary: { guids_total: number; guids_synced: number; files_written: number; files_skipped: number };
 }
 
-// Per-guid mirror files reconciled from the root. The root .bak and the patch
-// journals (mini_draft.json / patch.json) are deliberately EXCLUDED — see the
-// kickoff grounding traps.
-const MIRROR_FILES = ["draft_content.json", "template-2.tmp"] as const;
+// Per-guid mirror files reconciled from the root. draft_info.json is the mirror
+// CapCut reads on FIRST open of a CLI-built draft (draft_content.json only
+// appears after CapCut has opened it once), so it must be reconciled too. The
+// root .bak and the patch journals (mini_draft.json / patch.json) are
+// deliberately EXCLUDED — see the kickoff grounding traps.
+const MIRROR_FILES = ["draft_content.json", "draft_info.json", "template-2.tmp"] as const;
 
 interface FileOutcome {
   written: boolean;
@@ -104,7 +106,7 @@ export function syncTimelines(filePath: string, opts: SyncOptions = {}): SyncRep
         if (outcome.written) {
           res.files_written.push(`Timelines/${guid}/${rel}`);
           if (outcome.backup) res.backups.push(`Timelines/${guid}/${rel}.synced-${epoch}.bak`);
-          if (rel === "draft_content.json") res.diverged = true;
+          if (rel === "draft_content.json" || rel === "draft_info.json") res.diverged = true;
           filesWritten++;
         } else {
           filesSkipped++;
