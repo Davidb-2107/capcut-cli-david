@@ -6,3 +6,6 @@ dist/
 
 # CodeGraph local index (SQLite + tree-sitter cache)
 .codegraph/
+
+# claude-mem session-memory dump — auto-regenerated each session, not source
+AGENTS.md
