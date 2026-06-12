@@ -487,6 +487,177 @@ test("import-captions --clone-style (CLI): runs and clones style end-to-end", (t
   deepStrictEqual(styles(mat.content)[1].font, FAKE_STYLE.font);
 });
 
+// =============================================================
+// v1.15.0 — per-word highlight SIZE (TextHighlight.size / hlSize / --keyword-size / --highlight-size)
+// =============================================================
+
+// Byte-identity oracles: exact output of v1.14.1 dist for a size-LESS highlight,
+// captured before the size feature landed. These strings must never change.
+const ORACLE_LEAN_NO_SIZE =
+  '{"text":"le PC","styles":[{"fill":{"content":{"render_type":"solid","solid":{"color":[1,1,1]}}},"size":15,"range":[0,3]},{"fill":{"content":{"render_type":"solid","solid":{"color":[1,0.8392156958580017,0]}}},"size":15,"range":[3,5]}]}';
+const ORACLE_CLONE_NO_SIZE =
+  '{"text":"le PC","styles":[{"font":{"path":"C:FontsTotallyUnknownFont.ttf","id":"fake-font-id"},"strokes":[{"content":{"solid":{"color":[0,0,0]}},"width":0.08}],"shadows":[{"content":{"solid":{"color":[0,0,0]}},"alpha":0.9}],"size":22,"bold":true,"range":[0,3],"fill":{"content":{"render_type":"solid","solid":{"color":[1,1,1]}}}},{"font":{"path":"C:FontsTotallyUnknownFont.ttf","id":"fake-font-id"},"strokes":[{"content":{"solid":{"color":[0,0,0]}},"width":0.08}],"shadows":[{"content":{"solid":{"color":[0,0,0]}},"alpha":0.9}],"size":22,"bold":true,"range":[3,5],"fill":{"content":{"render_type":"solid","solid":{"color":[1,0.8392156958580017,0]}}}}]}';
+
+test("byte-identity: highlight WITHOUT size → lean output byte-identical to v1.14.1", () => {
+  const content = buildRichTextContent("le PC", 15, WHITE, [{ range: [3, 5], color: hexToRgb("#FFD600") }]);
+  strictEqual(content, ORACLE_LEAN_NO_SIZE);
+});
+
+test("byte-identity: highlight WITHOUT size → clone (baseStyle) output byte-identical to v1.14.1", () => {
+  const content = buildRichTextContent(
+    "le PC",
+    15,
+    WHITE,
+    [{ range: [3, 5], color: hexToRgb("#FFD600") }],
+    FAKE_STYLE,
+  );
+  strictEqual(content, ORACLE_CLONE_NO_SIZE);
+});
+
+test("buildRichTextContent: highlight WITH size → emphasis span gets size, base/gap spans keep fontSize (lean)", () => {
+  const s = styles(
+    buildRichTextContent("le PC", 15, WHITE, [{ range: [3, 5], color: hexToRgb("#FFD600"), size: 28 }]),
+  );
+  strictEqual(s.length, 2);
+  strictEqual(s[0].size, 15, "base span keeps the base fontSize");
+  strictEqual(s[1].size, 28, "emphasis span carries the highlight size");
+  deepStrictEqual(Object.keys(s[1]).sort(), ["fill", "range", "size"], "lean span shape unchanged");
+});
+
+test("buildRichTextContent: highlight WITH size overrides the cloned size on the emphasis span only (clone)", () => {
+  const s = styles(
+    buildRichTextContent("le PC", 15, WHITE, [{ range: [3, 5], color: hexToRgb("#FFD600"), size: 28 }], FAKE_STYLE),
+  );
+  strictEqual(s[0].size, 22, "non-emphasis span keeps the cloned size");
+  strictEqual(s[1].size, 28, "emphasis span size overrides the clone");
+  deepStrictEqual(s[1].font, FAKE_STYLE.font, "clone keys survive next to the size override");
+  deepStrictEqual(s[1].strokes, FAKE_STYLE.strokes);
+});
+
+test("importCaptions: per-card hlSize wins over global highlightSize; global is the fallback", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const { draft } = loadDraft(filePath);
+  const res = importCaptions(draft, filePath, {
+    cards: [
+      { text: "le PC", start: 0, end: 500000, hl: [3, 5], hlSize: 30 },
+      { text: "est mort", start: 500000, end: 1200000, hl: [4, 8] },
+    ],
+    trackName: "subtitle",
+    highlightSize: 24,
+  });
+  const track = draft.tracks.find((tr) => tr.id === res.trackId);
+  const matOf = (i) => draft.materials.texts.find((m) => m.id === track.segments[i].material_id);
+  strictEqual(styles(matOf(0).content)[1].size, 30, "per-card hlSize wins");
+  strictEqual(styles(matOf(1).content)[1].size, 24, "global highlightSize is the fallback");
+});
+
+test("add-text --keyword-size (CLI): emphasis span carries the size, base span keeps --font-size", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const r = runCli([
+    "add-text", filePath, "0", "2s", "DANGER zone",
+    "--keyword", "DANGER", "--keyword-size", "28", "--font-size", "15",
+  ]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  const s = styles(lastTextMaterial(filePath, r.json.material_id).content);
+  strictEqual(s[0].size, 28, "keyword span (DANGER at [0,6]) gets --keyword-size");
+  strictEqual(s[1].size, 15, "rest of the caption keeps --font-size");
+});
+
+test("import-captions --highlight-size (CLI): global size applied; per-card hlSize still wins", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const jsonPath = join(dirname(filePath), "size-cards.json");
+  writeFileSync(
+    jsonPath,
+    JSON.stringify([
+      { text: "le PC", start: 0, end: 500000, hl: [3, 5], hlSize: 30 },
+      { text: "est mort", start: 500000, end: 1200000, hl: [4, 8] },
+    ]),
+    "utf-8",
+  );
+  const r = runCli(["import-captions", filePath, jsonPath, "--highlight-size", "28", "--track-name", "subtitle"]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  const after = JSON.parse(readFileSync(filePath, "utf-8"));
+  const track = after.tracks.find((tr) => tr.id === r.json.track_id);
+  const matOf = (i) => after.materials.texts.find((m) => m.id === track.segments[i].material_id);
+  strictEqual(styles(matOf(0).content)[1].size, 30, "per-card hlSize beats the global flag");
+  strictEqual(styles(matOf(1).content)[1].size, 28, "--highlight-size is the global default");
+});
+
+test("--keyword-size / --highlight-size (CLI): NaN or <= 0 rejected", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const r1 = runCli(["add-text", filePath, "0", "2s", "DANGER zone", "--keyword", "DANGER", "--keyword-size", "0"]);
+  strictEqual(r1.status, 1);
+  ok(r1.errorJson, `expected JSON on stderr, got: ${r1.stderr}`);
+  match(r1.errorJson.error, /--keyword-size/);
+  const r2 = runCli(["import-captions", filePath, "whatever.json", "--highlight-size", "abc"]);
+  strictEqual(r2.status, 1);
+  ok(r2.errorJson, `expected JSON on stderr, got: ${r2.stderr}`);
+  match(r2.errorJson.error, /--highlight-size/);
+});
+
+test("import-captions (CLI): invalid per-card hlSize rejected (string / zero) — no silent draft corruption", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const jsonPath = join(dirname(filePath), "bad-size.json");
+  writeFileSync(
+    jsonPath,
+    JSON.stringify([{ text: "le PC", start: 0, end: 500000, hl: [3, 5], hlSize: "big" }]),
+    "utf-8",
+  );
+  const r1 = runCli(["import-captions", filePath, jsonPath, "--track-name", "subtitle"]);
+  strictEqual(r1.status, 1);
+  ok(r1.errorJson, `expected JSON on stderr, got: ${r1.stderr}`);
+  match(r1.errorJson.error, /captions\[0\].*hlSize/);
+  writeFileSync(jsonPath, JSON.stringify([{ text: "le PC", start: 0, end: 500000, hl: [3, 5], hlSize: 0 }]), "utf-8");
+  const r2 = runCli(["import-captions", filePath, jsonPath, "--track-name", "subtitle"]);
+  strictEqual(r2.status, 1);
+  ok(r2.errorJson, `expected JSON on stderr, got: ${r2.stderr}`);
+  match(r2.errorJson.error, /captions\[0\].*hlSize/);
+});
+
+test("add-text --keyword-range + --keyword-size (CLI): explicit range span carries the size", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const r = runCli(["add-text", filePath, "0", "2s", "alpha bravo", "--keyword-range", "6,11", "--keyword-size", "28"]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  const s = styles(lastTextMaterial(filePath, r.json.material_id).content);
+  deepStrictEqual(s.map((x) => x.range), [
+    [0, 6],
+    [6, 11],
+  ]);
+  strictEqual(s[0].size, 15, "base span keeps the default fontSize");
+  strictEqual(s[1].size, 28, "range-selected span carries --keyword-size");
+});
+
+test("importCaptions --clone-style + hlSize: size override rides ON the cloned style block", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const { draft } = loadDraft(filePath);
+  const track = draft.tracks.find((tr) => tr.type === "text");
+  const tplMat = draft.materials.texts.find((m) => m.id === track.segments[0].material_id);
+  tplMat.content = JSON.stringify({ text: "modèle", styles: [FAKE_STYLE] });
+  const res = importCaptions(draft, filePath, {
+    cards: [{ text: "le PC", start: 0, end: 500000, hl: [3, 5], hlSize: 34 }],
+    cloneStyle: true,
+  });
+  const newTrack = draft.tracks.find((tr) => tr.id === res.trackId);
+  const mat = draft.materials.texts.find((m) => m.id === newTrack.segments[0].material_id);
+  const s = styles(mat.content);
+  strictEqual(s[0].size, 22, "base span keeps the cloned size");
+  strictEqual(s[1].size, 34, "emphasis span: hlSize overrides the cloned size");
+  deepStrictEqual(s[1].font, FAKE_STYLE.font, "cloned font survives next to the size override");
+});
+
+test("importCaptions: hlSize without hl is silently ignored (single span, not rich)", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const { draft } = loadDraft(filePath);
+  const res = importCaptions(draft, filePath, {
+    cards: [{ text: "no keyword", start: 0, end: 1000000, hlSize: 34 }],
+    trackName: "subtitle",
+  });
+  const track = draft.tracks.find((tr) => tr.id === res.trackId);
+  const mat = draft.materials.texts.find((m) => m.id === track.segments[0].material_id);
+  strictEqual("is_rich_text" in mat, false, "no hl → no rich text, hlSize alone changes nothing");
+  strictEqual(styles(mat.content).length, 1);
+});
+
 test("importCaptions: without --track-name targets the FIRST existing text track (no duplicate track)", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
   const { draft } = loadDraft(filePath);

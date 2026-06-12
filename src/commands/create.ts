@@ -43,6 +43,8 @@ export interface TextHighlight {
   range: [number, number];
   /** RGB in 0..1; fround()ed to float32 internally to match CapCut. */
   color: [number, number, number];
+  /** Optional font size (points) for this span; overrides the base/cloned size. */
+  size?: number;
 }
 
 export interface AddTextOptions {
@@ -112,18 +114,24 @@ export function buildRichTextContent(
     content: { render_type: "solid", solid: { color: [f(color[0]), f(color[1]), f(color[2])] } },
   });
   // baseStyle = a cloned style block from an existing caption (font/strokes/shadows/size/bold…):
-  // each span photocopies it and overrides only range + fill (CapCut keyword-highlight encoding).
-  // Without it, the lean default span shape (frozen for byte-identity tests) is used.
-  const span = (a: number, b: number, color: [number, number, number]): Record<string, unknown> =>
+  // each span photocopies it and overrides only range + fill (CapCut keyword-highlight encoding)
+  // — plus size, but ONLY when the highlight explicitly carries one (byte-identity otherwise).
+  // Without baseStyle, the lean default span shape (frozen for byte-identity tests) is used.
+  const span = (a: number, b: number, color: [number, number, number], size?: number): Record<string, unknown> =>
     baseStyle
-      ? { ...JSON.parse(JSON.stringify(baseStyle)), range: [a, b], fill: solidFill(color) }
-      : { fill: solidFill(color), size: fontSize, range: [a, b] };
+      ? {
+          ...JSON.parse(JSON.stringify(baseStyle)),
+          range: [a, b],
+          fill: solidFill(color),
+          ...(size !== undefined ? { size } : {}),
+        }
+      : { fill: solidFill(color), size: size ?? fontSize, range: [a, b] };
   const styles: Array<Record<string, unknown>> = [];
   let cursor = 0;
   for (const h of sorted) {
     const [s, e] = h.range;
     if (s > cursor) styles.push(span(cursor, s, baseColor));
-    styles.push(span(s, e, h.color));
+    styles.push(span(s, e, h.color, h.size));
     cursor = e;
   }
   if (cursor < n) styles.push(span(cursor, n, baseColor));
@@ -623,18 +631,19 @@ export const DEFAULT_HIGHLIGHT_COLOR = "#FFD600";
  */
 function parseKeywordFlags(text: string, flags: Flags): TextHighlight[] {
   const color = hexToRgb(flags.keywordColor ?? DEFAULT_HIGHLIGHT_COLOR);
+  const size = flags.keywordSize;
   if (flags.keywordRange !== undefined) {
     const parts = flags.keywordRange.split(",").map((x) => x.trim());
     const nums = parts.map(Number); // Number() (not parseInt) so "1.5" is rejected, not truncated
     if (parts.length !== 2 || parts.some((p) => p === "") || nums.some((v) => !Number.isInteger(v))) {
       die(`--keyword-range must be two integers "start,end" in UTF-16 code units, got "${flags.keywordRange}"`);
     }
-    return [{ range: [nums[0], nums[1]], color }];
+    return [{ range: [nums[0], nums[1]], color, size }];
   }
   if (flags.keyword !== undefined) {
     const idx = text.indexOf(flags.keyword);
     if (idx < 0) die(`--keyword "${flags.keyword}" not found in caption text`);
-    return [{ range: [idx, idx + flags.keyword.length], color }];
+    return [{ range: [idx, idx + flags.keyword.length], color, size }];
   }
   return [];
 }
@@ -684,12 +693,16 @@ export interface CaptionCard {
   hl?: [number, number];
   /** Optional per-card highlight color (hex); falls back to opts.highlightColor. */
   color?: string;
+  /** Optional per-card highlight font size (points); falls back to opts.highlightSize. */
+  hlSize?: number;
 }
 
 export interface ImportCaptionsOptions {
   cards: CaptionCard[];
   trackName?: string;
   highlightColor?: string;
+  /** Default highlight font size (points) for cards without hlSize. */
+  highlightSize?: number;
   fontSize?: number;
   color?: string;
   alignment?: number;
@@ -767,6 +780,11 @@ export function importCaptions(
     if (!Number.isFinite(card.start) || !Number.isFinite(card.end)) {
       die(`captions[${i}]: "start" and "end" must be numbers (microseconds)`);
     }
+    // Same contract as the --keyword-size/--highlight-size flags: a present hlSize must be a
+    // finite number > 0 (a typo here would otherwise be written verbatim into the draft).
+    if (card.hlSize !== undefined && (!Number.isFinite(card.hlSize) || card.hlSize <= 0)) {
+      die(`captions[${i}]: "hlSize" must be a positive number (font size in points), got ${JSON.stringify(card.hlSize)}`);
+    }
     const matId = uuid();
     const segId = uuid();
     const hl = card.hl;
@@ -775,7 +793,7 @@ export function importCaptions(
     // add-text --keyword-range path. Valid ranges are still bounds-checked in buildRichTextContent.
     const hasHl = Array.isArray(hl) && hl.length === 2 && hl[1] > hl[0];
     const highlights: TextHighlight[] = hasHl
-      ? [{ range: [hl[0], hl[1]], color: hexToRgb(card.color ?? defaultHl) }]
+      ? [{ range: [hl[0], hl[1]], color: hexToRgb(card.color ?? defaultHl), size: card.hlSize ?? opts.highlightSize }]
       : [];
     if (cloneTpl) {
       // Clone mode: deepcopy the template material (keeps font_size/text_color/border_*/shadow_*/
@@ -808,7 +826,7 @@ export function cmdImportCaptions(draft: Draft, filePath: string, positional: st
   const jsonPath = positional[2];
   if (!jsonPath) {
     die(
-      "Missing <captions.json>. Usage: capcut-david import-captions <project> <captions.json> [--highlight-color <hex>] [--track-name <name>]",
+      "Missing <captions.json>. Usage: capcut-david import-captions <project> <captions.json> [--highlight-color <hex>] [--highlight-size <n>] [--track-name <name>]",
     );
   }
   if (!existsSync(jsonPath)) die(`Captions file not found: ${jsonPath}`);
@@ -818,12 +836,13 @@ export function cmdImportCaptions(draft: Draft, filePath: string, positional: st
   } catch (e) {
     die(`Invalid JSON in ${jsonPath}: ${(e as Error).message}`);
   }
-  if (!Array.isArray(cards)) die("Captions file must be a JSON array of {text,start,end,hl?,color?}");
+  if (!Array.isArray(cards)) die("Captions file must be a JSON array of {text,start,end,hl?,color?,hlSize?}");
 
   const result = importCaptions(draft, filePath, {
     cards,
     trackName: flags.trackName,
     highlightColor: flags.highlightColor ?? flags.keywordColor,
+    highlightSize: flags.highlightSize,
     fontSize: flags.fontSize,
     color: flags.color,
     alignment: flags.align,

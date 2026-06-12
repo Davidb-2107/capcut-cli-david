@@ -11,6 +11,21 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.15.0] — 2026-06-12
+
+Minor release. Per-word highlight **size**: the keyword-highlight system can now enlarge the emphasized word(s), not just recolor them — the native equivalent of Niche_PC's custom `apply_keyword_highlight.py` size pass. Output is **byte-identical** when no size option is used.
+
+### Added
+- **`TextHighlight.size`** (API) — optional per-span font size in points. Only the emphasis span carries it: base/gap spans keep the base `fontSize` (lean path) or the cloned style's size (`--clone-style` path) exactly as before.
+- **`add-text --keyword-size <n>`** — font size for the highlighted word/range; combines freely with `--keyword`/`--keyword-range`/`--keyword-color`.
+- **`import-captions --highlight-size <n>`** — global default highlight size; new per-card JSON field **`hlSize`** wins over the flag. Cards with neither are emitted byte-for-byte as in 1.14.1.
+- Validation: `--keyword-size`/`--highlight-size` flags AND the per-card `hlSize` field must be a finite number > 0 when present (CliError otherwise — a typo'd `hlSize` is refused instead of being written verbatim into the draft).
+
+### Compatibility
+- **Byte-identity preserved.** Two new oracle regression tests lock the size-less lean and clone span outputs to the exact 1.14.1 byte strings (independently differential-tested against the published 1.14.1 npm dist). Test suite: 464 → **476** passing.
+- A pre-existing `hlSize` key in old card JSONs **becomes active** (it was an unknown, silently-ignored field in ≤ 1.14.1).
+- `restyle` grafts the preset's style (including its `size`) onto every span, preserving only `fill` + `range` — a per-span size override does **not** survive a later `restyle`; re-apply sizes after restyling.
+
 ## [1.14.1] — 2026-06-09
 
 Patch release. Bugfix for `sync-timelines`: it now reconciles the guid's `draft_info.json` — the mirror CapCut reads on the **first open** of a CLI-built draft — so audio and captions added after the build are no longer silently dropped.

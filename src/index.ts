@@ -68,10 +68,14 @@ Add:
               [--font-size <n>] [--color <hex>] [--align <0|1|2>]
               [--x <n>] [--y <n>] [--track-name <s>]
               [--keyword <word> | --keyword-range <s,e>] [--keyword-color <hex>]
-              Keyword highlight: color one word/range (default #FFD600).
-  import-captions <project> <captions.json> [--highlight-color <hex>] [--track-name <s>] [--clone-style]
-              Batch word/keyword captions from [{text,start,end,hl?,color?}];
+              [--keyword-size <n>]
+              Keyword highlight: color one word/range (default #FFD600);
+              --keyword-size sets the highlighted word's font size (points).
+  import-captions <project> <captions.json> [--highlight-color <hex>] [--highlight-size <n>]
+              [--track-name <s>] [--clone-style]
+              Batch word/keyword captions from [{text,start,end,hl?,color?,hlSize?}];
               replaces the text track (start/end in microseconds).
+              --highlight-size: default font size for hl spans (per-card hlSize wins).
               --clone-style: keep the target track's existing caption font/stroke/shadow.
   add-effect <project> <resource-id> <name> <start> <duration>
               [--value <n>] [--bind <segment-id>]
@@ -182,6 +186,13 @@ Navigation: info → tracks/materials → segments → segment <id>
 Time formats: 1.5s, 500ms, 1:30, +0.5s, -200ms
 IDs: first 6+ chars of segment/material ID (prefix match)`;
 
+/** Font-size flag value: a finite number > 0 (NaN/Infinity/zero/negative → die). */
+function parseSizeFlag(flag: string, raw: string): number {
+  const v = Number(raw);
+  if (!Number.isFinite(v) || v <= 0) die(`${flag} must be a positive number (font size in points), got "${raw}"`);
+  return v;
+}
+
 function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
   const positional: string[] = [];
   const flags: Flags = { human: false, quiet: false };
@@ -239,8 +250,12 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.keywordRange = args[++i];
     } else if (a === "--keyword-color" && i + 1 < args.length) {
       flags.keywordColor = args[++i];
+    } else if (a === "--keyword-size" && i + 1 < args.length) {
+      flags.keywordSize = parseSizeFlag(a, args[++i]);
     } else if (a === "--highlight-color" && i + 1 < args.length) {
       flags.highlightColor = args[++i];
+    } else if (a === "--highlight-size" && i + 1 < args.length) {
+      flags.highlightSize = parseSizeFlag(a, args[++i]);
     } else if (a === "--clone-style") {
       flags.cloneStyle = true;
     } else if (a === "--force") {

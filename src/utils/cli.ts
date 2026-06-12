@@ -25,7 +25,9 @@ export interface Flags {
   keyword?: string;
   keywordRange?: string;
   keywordColor?: string;
+  keywordSize?: number;
   highlightColor?: string;
+  highlightSize?: number;
   cloneStyle?: boolean;
   preset?: string;
   force?: boolean;
