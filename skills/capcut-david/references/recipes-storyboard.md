@@ -73,7 +73,7 @@ capcut-david add-video "$DRAFT" --url "$HERE/data/img1.jpg" \
 capcut-david add-text "$DRAFT" --text "Première phrase" \
   --start 0 --end 3000000 \
   --keyword "Première" --keyword-color "#FFD600" \
-  --font-size 9 --bold --transform-y -0.55 \
+  --font-size 9 --bold --y -0.55 \
   --in-anim "弹入跳动" --in-anim-duration 350000
 
 # --- Audio ---

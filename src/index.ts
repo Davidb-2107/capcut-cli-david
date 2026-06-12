@@ -71,11 +71,13 @@ Add:
               [--keyword-size <n>]
               Keyword highlight: color one word/range (default #FFD600);
               --keyword-size sets the highlighted word's font size (points).
-  import-captions <project> <captions.json> [--highlight-color <hex>] [--highlight-size <n>]
-              [--track-name <s>] [--clone-style]
+  import-captions <project> <captions.json> [--color <hex>] [--highlight-color <hex>]
+              [--highlight-size <n>] [--transform-y <n>] [--track-name <s>] [--clone-style]
               Batch word/keyword captions from [{text,start,end,hl?,color?,hlSize?}];
               replaces the text track (start/end in microseconds).
               --highlight-size: default font size for hl spans (per-card hlSize wins).
+              --transform-y: clip.transform.y for every rebuilt caption segment
+              (vertical position; negatives allowed, e.g. -0.4 = mi-bas).
               --clone-style: keep the target track's existing caption font/stroke/shadow.
   add-effect <project> <resource-id> <name> <start> <duration>
               [--value <n>] [--bind <segment-id>]
@@ -193,6 +195,14 @@ function parseSizeFlag(flag: string, raw: string): number {
   return v;
 }
 
+/** Transform flag value: any finite number — negatives and zero allowed (≠ parseSizeFlag).
+    Empty string is rejected explicitly (Number("") === 0 would silently pass). */
+function parseFiniteFlag(flag: string, raw: string): number {
+  const v = raw.trim() === "" ? Number.NaN : Number(raw);
+  if (!Number.isFinite(v)) die(`${flag} must be a finite number, got "${raw}"`);
+  return v;
+}
+
 function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
   const positional: string[] = [];
   const flags: Flags = { human: false, quiet: false };
@@ -256,6 +266,13 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.highlightColor = args[++i];
     } else if (a === "--highlight-size" && i + 1 < args.length) {
       flags.highlightSize = parseSizeFlag(a, args[++i]);
+    } else if (a === "--transform-y" || a.startsWith("--transform-y=")) {
+      // Position correctness is the whole point of this flag — refuse the two malformed
+      // forms that would otherwise fall through to ignored positionals and silently
+      // recenter every caption at y=0 with exit 0.
+      if (a !== "--transform-y") die(`--transform-y takes a space-separated value (use --transform-y <n>), got "${a}"`);
+      if (i + 1 >= args.length) die("--transform-y requires a value (e.g. --transform-y -0.4)");
+      flags.transformY = parseFiniteFlag(a, args[++i]);
     } else if (a === "--clone-style") {
       flags.cloneStyle = true;
     } else if (a === "--force") {

@@ -3,7 +3,7 @@ name: capcut-david
 version: "0.5.0"
 status: published
 created: 2026-05-11
-updated: 2026-05-12
+updated: 2026-06-12
 description: >-
   Create, edit, inspect, and assemble CapCut draft_content.json projects via the
   capcut-david CLI. Single binary that combines cutcli's creation power (keyframes,
@@ -87,7 +87,7 @@ capcut-david", "build a CapCut project".
 
 ---
 
-## Core CLI surface (v0.5.0)
+## Core CLI surface
 
 ```bash
 # Create
@@ -102,7 +102,15 @@ capcut-david add-audio <draftPath> --url <u> --duration <µs> \
 
 capcut-david add-text  <draftPath> --text <s> --start <µs> --end <µs> \
   [--keyword <s> --keyword-color <hex> --keyword-size N] [--font-size N] [--bold] \
-  [--transform-y -0.55] [--in-anim <name>] [--out-anim <name>]
+  [--y -0.55] [--in-anim <name>] [--out-anim <name>]
+  # NB: vertical position on add-text = --y; --transform-y is import-captions-only
+
+capcut-david import-captions <draftPath> <captions.json> \
+  [--color <hex>] [--highlight-color <hex>] [--highlight-size N] [--transform-y <n>] \
+  [--track-name <s>] [--clone-style]
+  # batch [{text,start,end,hl?,color?,hlSize?}] (µs) — REPLACES the text track;
+  # --transform-y (v1.16.0) = clip.transform.y of every rebuilt caption
+  # (negatives OK: -0.4 mi-bas, -0.6 lower third) — no post-import re-pin needed
 
 # Animate
 capcut-david add-keyframe <draftPath> --segment-id <id> --property <p> \
@@ -158,11 +166,11 @@ cubic-out easing. Emits the dual-container shape documented in
 capcut-david add-text $DRAFT --text "Phrase accrocheuse" \
   --start 0 --end 2000000 \
   --keyword "accrocheuse" --keyword-color "#FFD600" \
-  --font-size 9 --bold --transform-y -0.55 \
+  --font-size 9 --bold --y -0.55 \
   --in-anim "弹入跳动" --in-anim-duration 350000
 ```
 
-Rules: 2s per caption, one keyword max, `--transform-y` between `-0.4` and `-0.7`
+Rules: 2s per caption, one keyword max, `--y` between `-0.4` and `-0.7`
 to stay above the TikTok UI band, animation duration < 50% of caption length.
 
 ### Audio ducking (narration + BGM)

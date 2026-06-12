@@ -11,6 +11,21 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [1.16.0] — 2026-06-12
+
+Minor release. **`import-captions --transform-y <n>`**: vertical caption position is now engine-native — every rebuilt caption segment gets `clip.transform.y`, retiring the orchestrator-side post-import re-pin (Niche_PC's step 3b). Output is **byte-identical** when the flag is absent.
+
+### Added
+- **`import-captions --transform-y <n>`** — sets `clip.transform.y` on every rebuilt caption segment (previously hardcoded to `{x:0, y:0}` by `baseSegment`). Global flag only — no per-card field. Works identically on the lean and `--clone-style` paths (the segment build is shared). `transform.x` is never touched.
+- Validation via the new `parseFiniteFlag`: any **finite** number is accepted — **negatives and zero allowed** (e.g. `-0.4` = mi-bas, `-0.6` = lower third), unlike the strictly-positive size flags. Non-numeric, empty AND whitespace-only values die with a CliError (the `Number("") === 0` coercion trap is guarded explicitly). The two malformed forms that would otherwise fall through to ignored positionals and silently recenter the captions at y=0 are refused too: the equals spelling (`--transform-y=-0.4`) and a value-less trailing `--transform-y` both die instead of exiting 0.
+- `--help` advertises `--transform-y` — orchestrators can probe the help text as a **version gate** before relying on the flag (a ≤ 1.15.x engine would silently swallow it as an ignored positional, importing captions recentered at y=0).
+
+### Compatibility
+- **Byte-identity preserved.** A new oracle regression test freezes the exact v1.15.0 segment bytes (ids normalized) for the flag-absent path. Test suite: 478 → **494** passing.
+- `restyle` after an `import-captions --transform-y` grafts the keys present in the preset's `segment` block onto every caption segment — a position-bearing preset (one whose `segment.clip` carries a transform, like the vault gabarits) then **wins over the imported y**. A preset without `segment.clip` (e.g. every `make-preset` output, which emits `segment: {}`) leaves the imported position intact. Order your chain accordingly.
+- **One deliberate side effect on other commands:** `--transform-y` is parsed in the global flag loop, so commands that join positionals into text (`add-text`, `set-text`) no longer swallow a literal `--transform-y <n>` into the rendered text — the pair is now consumed and ignored (and a non-numeric next token dies). On ≤ 1.15.x the same invocation visibly garbled the caption text; on add-text the vertical-position flag remains `--y`.
+- No other schema, dependency or behavior change; read commands untouched.
+
 ## [1.15.0] — 2026-06-12
 
 Minor release. Per-word highlight **size**: the keyword-highlight system can now enlarge the emphasized word(s), not just recolor them — the native equivalent of Niche_PC's custom `apply_keyword_highlight.py` size pass. Output is **byte-identical** when no size option is used.

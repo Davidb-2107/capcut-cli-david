@@ -1,6 +1,6 @@
 # Tout le moteur `capcut-david` expliqué comme si tu avais 5 ans
 
-> Un récap tout simple de **tout ce qu'on a construit** (versions 1.7 → 1.15).
+> Un récap tout simple de **tout ce qu'on a construit** (versions 1.7 → 1.16).
 > Pour le détail technique : voir le [`CHANGELOG`](../CHANGELOG.md) et les
 > [`release-notes/`](../release-notes/). Pour trois commandes en détail :
 > [`validate-fix-explained.md`](./validate-fix-explained.md),
@@ -105,6 +105,18 @@ contre la version 1.14.1 publiée sur internet : zéro différence). Et si tu é
 une taille impossible (« zéro », « grand »…), le robot **refuse poliment** au lieu
 d'écrire n'importe quoi dans ta boîte.
 
+### 📍 1.16.0 — les sous-titres savent **où se placer** (position verticale)
+Quand le robot des fournées (`import-captions`) reconstruisait les sous-titres, il
+les posait toujours **au centre de l'écran** — et si tu les voulais plus bas, il
+fallait qu'un script repasse derrière pour les re-épingler un par un. Maintenant tu
+lui dis directement « pose-les à -0.4 » (`--transform-y` ; les nombres négatifs
+veulent dire « plus bas ») et **chaque** sous-titre reconstruit atterrit au bon
+endroit du premier coup. Même promesse que d'habitude : sans le flag, le fichier
+produit est **identique au bit près** à la 1.15.0 (un test-gendarme a figé les
+octets du segment), et une valeur impossible (« abc », vide…) est **refusée
+poliment**. Cerise : le flag apparaît dans `--help`, donc un script prudent peut
+vérifier que ton moteur est assez récent **avant** de s'en servir.
+
 ---
 
 ## L'idée géniale : détecteur + réparateurs 🧩
@@ -130,7 +142,7 @@ Pour **chaque** robot, on a fait pareil :
    trouver les pièges **avant** de livrer. (Une fois, il a trouvé un vrai bug : un
    bout d'étiquette qui avait disparu sans qu'on le voie !)
 3. ✅ On a écrit les **tests d'abord** (on vérifie que ça rate, puis on le fait
-   marcher). À la fin : **478 vérifications** qui passent.
+   marcher). À la fin : **494 vérifications** qui passent.
 4. 🚀 On a livré pour de vrai (sur internet), à chaque fois avec ta permission.
 
 ---
@@ -139,5 +151,6 @@ Pour **chaque** robot, on a fait pareil :
 construit **toute une équipe de robots réparateurs** + un **chef** qui les
 coordonne + un **bibliothécaire** qui cherche + un **fabricant de modèles**. On a
 rendu le **photocopieur** assez malin pour ne plus jamais perdre ta musique ni tes
-sous-titres, et appris au **surligneur** à écrire les mots importants en plus gros.
+sous-titres, appris au **surligneur** à écrire les mots importants en plus gros,
+et aux **fournées de sous-titres** à se placer toutes seules au bon endroit.
 Tout ça pour que ta boîte de LEGO soit toujours nickel **avant** d'ouvrir CapCut. 🎬✨

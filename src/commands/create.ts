@@ -706,6 +706,8 @@ export interface ImportCaptionsOptions {
   fontSize?: number;
   color?: string;
   alignment?: number;
+  /** clip.transform.y for every rebuilt segment (global; negatives allowed). */
+  transformY?: number;
   /** Clone the style (font/strokes/shadows/size) of the target track's first caption. */
   cloneStyle?: boolean;
 }
@@ -812,7 +814,9 @@ export function importCaptions(
     const companions = createCompanionMaterials("text");
     registerCompanions(draft, companions);
     const duration = Math.max(1, card.end - card.start);
-    newSegs.push(baseSegment(segId, matId, track.id, { start: card.start, duration }, companions.ids, 15000));
+    const seg = baseSegment(segId, matId, track.id, { start: card.start, duration }, companions.ids, 15000);
+    if (opts.transformY !== undefined && seg.clip) seg.clip.transform.y = opts.transformY;
+    newSegs.push(seg);
   });
 
   track.segments = newSegs;
@@ -826,7 +830,7 @@ export function cmdImportCaptions(draft: Draft, filePath: string, positional: st
   const jsonPath = positional[2];
   if (!jsonPath) {
     die(
-      "Missing <captions.json>. Usage: capcut-david import-captions <project> <captions.json> [--highlight-color <hex>] [--highlight-size <n>] [--track-name <name>]",
+      "Missing <captions.json>. Usage: capcut-david import-captions <project> <captions.json> [--color <hex>] [--highlight-color <hex>] [--highlight-size <n>] [--transform-y <n>] [--track-name <name>]",
     );
   }
   if (!existsSync(jsonPath)) die(`Captions file not found: ${jsonPath}`);
@@ -846,6 +850,7 @@ export function cmdImportCaptions(draft: Draft, filePath: string, positional: st
     fontSize: flags.fontSize,
     color: flags.color,
     alignment: flags.align,
+    transformY: flags.transformY,
     cloneStyle: flags.cloneStyle,
   });
   saveDraft(filePath, draft);

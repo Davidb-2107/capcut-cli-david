@@ -48,6 +48,9 @@ Sequential captions with one colored keyword + bounce animation.
 > # captions-styled.json = [{ "text", "start", "end", "hl": [s,e], "color"?, "hlSize"? }]   (µs)
 > # --highlight-size (v1.15.0) = taille globale des mots hl ; "hlSize" par carte gagne sur le flag
 > #   (remplace la passe taille d'apply_keyword_highlight.py — plus besoin de post-patcher)
+> # --transform-y (v1.16.0) = position verticale de CHAQUE caption reconstruite
+> #   (clip.transform.y ; négatifs OK : -0.4 mi-bas, -0.6 tiers inférieur) — sans lui
+> #   l'import recentre tout à y=0 et il faut re-épingler après coup
 > ```
 > **v1.5.0 — keep your caption look** (font/contour/ombre déjà posés dans le draft) :
 > add `--clone-style` (+ `--track-name <ta-track>` si la track n'est pas `text`). L'engine
@@ -55,9 +58,11 @@ Sequential captions with one colored keyword + bounce animation.
 > inconnue comprise. C'est le remplaçant direct, à style identique, de `inject_word_captions.py`.
 >
 > ⚠️ The `--start/--end/--bold/--transform-y/--in-anim` flags shown in the legacy
-> examples below are **not yet in the engine** (planned). Only `--keyword`,
-> `--keyword-range`, `--keyword-color`, `--keyword-size`, `--font-size`, `--color`,
-> `--align`, `--x`, `--y`, `--track-name` exist on `add-text` today.
+> examples below are **not yet in the engine** (planned) **on `add-text`**. Only
+> `--keyword`, `--keyword-range`, `--keyword-color`, `--keyword-size`, `--font-size`,
+> `--color`, `--align`, `--x`, `--y`, `--track-name` exist on `add-text` today.
+> (`--transform-y` DOES exist on `import-captions` since v1.16.0 — see the batch
+> block above; on `add-text` the equivalent is `--y`.)
 
 ```bash
 # Caption 1 — 0–2s, yellow keyword
