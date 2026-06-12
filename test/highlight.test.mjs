@@ -583,6 +583,33 @@ test("import-captions --highlight-size (CLI): global size applied; per-card hlSi
   strictEqual(styles(matOf(1).content)[1].size, 28, "--highlight-size is the global default");
 });
 
+test("import-captions --keyword-size (CLI): accepted as alias for --highlight-size", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const jsonPath = join(dirname(filePath), "alias-cards.json");
+  writeFileSync(jsonPath, JSON.stringify([{ text: "le PC", start: 0, end: 500000, hl: [3, 5] }]), "utf-8");
+  const r = runCli(["import-captions", filePath, jsonPath, "--keyword-size", "28", "--track-name", "subtitle"]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  const after = JSON.parse(readFileSync(filePath, "utf-8"));
+  const track = after.tracks.find((tr) => tr.id === r.json.track_id);
+  const mat = after.materials.texts.find((m) => m.id === track.segments[0].material_id);
+  strictEqual(styles(mat.content)[1].size, 28, "--keyword-size acts as the global highlight size");
+});
+
+test("import-captions: --highlight-size wins over --keyword-size (same precedence as the color alias)", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
+  const jsonPath = join(dirname(filePath), "alias-prec-cards.json");
+  writeFileSync(jsonPath, JSON.stringify([{ text: "le PC", start: 0, end: 500000, hl: [3, 5] }]), "utf-8");
+  const r = runCli([
+    "import-captions", filePath, jsonPath,
+    "--keyword-size", "20", "--highlight-size", "28", "--track-name", "subtitle",
+  ]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  const after = JSON.parse(readFileSync(filePath, "utf-8"));
+  const track = after.tracks.find((tr) => tr.id === r.json.track_id);
+  const mat = after.materials.texts.find((m) => m.id === track.segments[0].material_id);
+  strictEqual(styles(mat.content)[1].size, 28, "--highlight-size beats the --keyword-size alias");
+});
+
 test("--keyword-size / --highlight-size (CLI): NaN or <= 0 rejected", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
   const r1 = runCli(["add-text", filePath, "0", "2s", "DANGER zone", "--keyword", "DANGER", "--keyword-size", "0"]);

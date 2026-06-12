@@ -842,7 +842,7 @@ export function cmdImportCaptions(draft: Draft, filePath: string, positional: st
     cards,
     trackName: flags.trackName,
     highlightColor: flags.highlightColor ?? flags.keywordColor,
-    highlightSize: flags.highlightSize,
+    highlightSize: flags.highlightSize ?? flags.keywordSize,
     fontSize: flags.fontSize,
     color: flags.color,
     alignment: flags.align,

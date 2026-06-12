@@ -1,6 +1,6 @@
 # Tout le moteur `capcut-david` expliqué comme si tu avais 5 ans
 
-> Un récap tout simple de **tout ce qu'on a construit** (versions 1.7 → 1.14).
+> Un récap tout simple de **tout ce qu'on a construit** (versions 1.7 → 1.15).
 > Pour le détail technique : voir le [`CHANGELOG`](../CHANGELOG.md) et les
 > [`release-notes/`](../release-notes/). Pour trois commandes en détail :
 > [`validate-fix-explained.md`](./validate-fix-explained.md),
@@ -91,6 +91,20 @@ vrai sur une boîte cassée, puis réparé : maintenant le robot recopie **aussi
 première photocopie, donc tout est bien là dès la première ouverture. (La photocopie
 qu'il lit en premier reçoit enfin la musique et les sous-titres.)
 
+### 🔠 1.15.0 — le **surligneur** apprend la taille (mots plus GROS)
+Depuis la 1.4.0, le robot des sous-titres sait **colorier** le mot important d'une
+phrase (le mot-clé en jaune ou violet). Mais sur TikTok le mot important est aussi
+écrit **plus GROS** — et ça, il fallait un script bricolé à côté qui repassait
+derrière le robot. Maintenant le robot le fait lui-même : tu lui dis « ce mot-là,
+taille 28 » (`--keyword-size` pour un texte, `--highlight-size` ou `hlSize` carte
+par carte pour les fournées de sous-titres), et **seul le mot important grossit** —
+le reste de la phrase ne bouge pas d'un poil. Promesse tenue au millimètre : si tu
+ne demandes **pas** de taille, le fichier produit est **identique au bit près** à
+avant (des tests-gendarmes comparent les octets un par un, et on a même vérifié
+contre la version 1.14.1 publiée sur internet : zéro différence). Et si tu écris
+une taille impossible (« zéro », « grand »…), le robot **refuse poliment** au lieu
+d'écrire n'importe quoi dans ta boîte.
+
 ---
 
 ## L'idée géniale : détecteur + réparateurs 🧩
@@ -116,14 +130,14 @@ Pour **chaque** robot, on a fait pareil :
    trouver les pièges **avant** de livrer. (Une fois, il a trouvé un vrai bug : un
    bout d'étiquette qui avait disparu sans qu'on le voie !)
 3. ✅ On a écrit les **tests d'abord** (on vérifie que ça rate, puis on le fait
-   marcher). À la fin : **464 vérifications** qui passent.
+   marcher). À la fin : **478 vérifications** qui passent.
 4. 🚀 On a livré pour de vrai (sur internet), à chaque fois avec ta permission.
 
 ---
 
 **En résumé :** on est parti d'un robot qui **regarde** (`validate`), et on lui a
 construit **toute une équipe de robots réparateurs** + un **chef** qui les
-coordonne + un **bibliothécaire** qui cherche + un **fabricant de modèles**. Et on a
+coordonne + un **bibliothécaire** qui cherche + un **fabricant de modèles**. On a
 rendu le **photocopieur** assez malin pour ne plus jamais perdre ta musique ni tes
-sous-titres. Tout ça pour que ta boîte de LEGO soit toujours nickel **avant**
-d'ouvrir CapCut. 🎬✨
+sous-titres, et appris au **surligneur** à écrire les mots importants en plus gros.
+Tout ça pour que ta boîte de LEGO soit toujours nickel **avant** d'ouvrir CapCut. 🎬✨
