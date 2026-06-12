@@ -101,7 +101,7 @@ capcut-david add-audio <draftPath> --url <u> --duration <µs> \
   --start <µs> --end <µs> [--volume 0..1]
 
 capcut-david add-text  <draftPath> --text <s> --start <µs> --end <µs> \
-  [--keyword <s> --keyword-color <hex>] [--font-size N] [--bold] \
+  [--keyword <s> --keyword-color <hex> --keyword-size N] [--font-size N] [--bold] \
   [--transform-y -0.55] [--in-anim <name>] [--out-anim <name>]
 
 # Animate
