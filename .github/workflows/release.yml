@@ -1,0 +1,107 @@
+name: Release
+
+# Publish to npm via Trusted Publishing (OIDC) — NO token required.
+# Trigger: push a version tag (e.g. `git push origin v1.16.0`).
+# The tag must match package.json's version or the run fails before publishing.
+#
+# One-time setup on npmjs.com (per package): Package > Settings > Trusted Publisher
+#   Publisher: GitHub Actions
+#   Org/user:  Davidb-2107
+#   Repository: capcut-cli-david
+#   Workflow:   release.yml
+#   Environment: (leave blank)
+# Once linked, no NPM_TOKEN secret is needed and ~/.npmrc is irrelevant to CI.
+
+on:
+  push:
+    tags:
+      - "v*"
+  # Manual re-run for a tag that already exists (e.g. CI hiccup on first attempt).
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to publish (e.g. v1.16.0)"
+        required: true
+
+permissions:
+  contents: write   # create the GitHub Release
+  id-token: write   # mint the OIDC token npm Trusted Publishing verifies
+
+env:
+  FORCE_COLOR: "1"
+  npm_config_fund: "false"
+  npm_config_audit: "false"
+
+jobs:
+  release:
+    name: Build, verify, publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "ref=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.tag.outputs.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+
+      # Trusted Publishing (OIDC) requires npm >= 11.5.1; the runner's bundled
+      # npm is older, so upgrade before publishing.
+      - name: Upgrade npm (Trusted Publishing support)
+        run: npm install -g npm@latest
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Guard: the tag drives the published version. Refuse a mismatch so a
+      # stray tag can never publish the wrong number (npm versions are immutable).
+      - name: Verify tag matches package.json version
+        run: |
+          TAG_VERSION="${{ steps.tag.outputs.ref }}"
+          TAG_VERSION="${TAG_VERSION#v}"
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          echo "tag=$TAG_VERSION  package.json=$PKG_VERSION"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Tag $TAG_VERSION does not match package.json $PKG_VERSION"
+            exit 1
+          fi
+
+      # Defense in depth: never publish a tag that doesn't build/test green,
+      # even though master CI already gates merges.
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      # Provenance is generated automatically under Trusted Publishing.
+      - name: Publish to npm
+        run: npm publish
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ steps.tag.outputs.ref }}"
+          VERSION="${VERSION#v}"
+          NOTES="release-notes/${VERSION}.md"
+          if [ -f "$NOTES" ]; then
+            gh release create "${{ steps.tag.outputs.ref }}" \
+              --title "v${VERSION}" --notes-file "$NOTES" --latest
+          else
+            gh release create "${{ steps.tag.outputs.ref }}" \
+              --title "v${VERSION}" --generate-notes --latest
+          fi
