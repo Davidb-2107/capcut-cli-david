@@ -1,9 +1,9 @@
 # `query` expliqué comme si tu avais 5 ans
 
-> Un explainer tout simple de ce que fera `query` (v1.13.0, en cours) : une
+> Un explainer tout simple de ce que fait `query` (**livré en v1.13.0**) : une
 > baguette de recherche pour retrouver le **numéro magique** d'une pièce de
-> montage par son **nom**. Spec technique complète : voir `QUERY-kickoff.md`
-> (racine du repo) — et plus tard le `CHANGELOG` + `release-notes/1.13.0.md`.
+> montage par son **nom**. Détail technique : `CHANGELOG` +
+> `release-notes/1.13.0.md`.
 
 Imagine que tu as une **énorme boîte de LEGO** pour faire des petites vidéos
 (c'est CapCut). Dedans il y a plein de pièces spéciales :
@@ -23,7 +23,7 @@ galère. 😣
 
 ## La solution : une baguette de recherche 🪄
 
-On fabrique une commande qui s'appelle **`query`** (= « cherche »).
+On a fabriqué une commande qui s'appelle **`query`** (= « cherche »).
 
 Tu lui dis un mot :
 
@@ -54,9 +54,9 @@ Comme un **moteur de recherche** dans ta propre boîte de LEGO. 🔍
 ## Pourquoi tout ce travail avant de coder
 
 Avant de construire la baguette, on a envoyé plein de petits robots 🤖 vérifier
-que le plan colle à la **vraie** boîte de LEGO — parce qu'une baguette qui donne
+que le plan collait à la **vraie** boîte de LEGO — parce qu'une baguette qui donne
 le **mauvais numéro** serait pire que pas de baguette du tout. Une fois le plan
-**vérifié et solide**, on la construit.
+**vérifié et solide**, on l'a construite. ✅
 
 **En une phrase :** `query` ajoute un bouton « cherche une pièce par son nom et
 récupère son numéro magique » pour que tu arrêtes de deviner. 🪄✨
