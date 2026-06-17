@@ -71,7 +71,7 @@ export function cmdSpeed(
   const result = findSegment(draft, segId);
   if (!result) die(`Segment not found: ${segId}`);
   const speed = parseFloat(multiplier);
-  if (isNaN(speed) || speed <= 0) die("Speed must be a positive number");
+  if (Number.isNaN(speed) || speed <= 0) die("Speed must be a positive number");
   const seg = result.segment;
   const oldSpeed = seg.speed;
   seg.speed = speed;
@@ -95,7 +95,7 @@ export function cmdVolume(
   const result = findSegment(draft, segId);
   if (!result) die(`Segment not found: ${segId}`);
   const level = parseFloat(levelStr);
-  if (isNaN(level) || level < 0) die("Volume must be >= 0");
+  if (Number.isNaN(level) || level < 0) die("Volume must be >= 0");
   const old = result.segment.volume;
   result.segment.volume = level;
   if (save) saveDraft(filePath, draft);
@@ -143,7 +143,7 @@ export function cmdOpacity(
   const result = findSegment(draft, segId);
   if (!result) die(`Segment not found: ${segId}`);
   const alpha = parseFloat(alphaStr);
-  if (isNaN(alpha) || alpha < 0 || alpha > 1) die("Opacity must be 0.0-1.0");
+  if (Number.isNaN(alpha) || alpha < 0 || alpha > 1) die("Opacity must be 0.0-1.0");
   if (!result.segment.clip) die(`Segment ${segId} has no clip (audio segment?)`);
   const old = result.segment.clip.alpha;
   result.segment.clip.alpha = alpha;

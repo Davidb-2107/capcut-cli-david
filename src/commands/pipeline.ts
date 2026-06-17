@@ -1,6 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, isAbsolute, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { loadDraft, saveDraft } from "../draft.js";
 import { resolveTemplateDir as resolveSharedTemplateDir } from "../utils/capcut-paths.js";
 import { die, type Flags, out } from "../utils/cli.js";

@@ -7,7 +7,14 @@ import { applyGc, planGc } from "./gc.js";
 import { applyInitMeta, planInitMeta } from "./init-meta.js";
 import { registerDraft } from "./register.js";
 import { syncTimelines } from "./sync-timelines.js";
-import { type Finding, hasBlockingErrors, type Report, reportExitCode, runValidate, type ValidateOpts } from "./validate.js";
+import {
+  type Finding,
+  hasBlockingErrors,
+  type Report,
+  reportExitCode,
+  runValidate,
+  type ValidateOpts,
+} from "./validate.js";
 
 // validate --fix — the umbrella auto-fixer. Runs `validate`, maps each fixable
 // finding to its command-backed fixer, and either PREVIEWS the aggregated plan
@@ -67,12 +74,30 @@ function buildPlanEntry(fixer: FixerName, findings: Finding[], draft: Draft, blo
     return { fixer, finding_ids, action, destructive: true, blocked };
   }
   if (fixer === "init-meta") {
-    return { fixer, finding_ids, action: "create the missing draft_meta_info.json sidecar", destructive: false, blocked: false };
+    return {
+      fixer,
+      finding_ids,
+      action: "create the missing draft_meta_info.json sidecar",
+      destructive: false,
+      blocked: false,
+    };
   }
   if (fixer === "register") {
-    return { fixer, finding_ids, action: "register the draft in root_meta_info.json", destructive: false, blocked: false };
+    return {
+      fixer,
+      finding_ids,
+      action: "register the draft in root_meta_info.json",
+      destructive: false,
+      blocked: false,
+    };
   }
-  return { fixer, finding_ids, action: `refresh ${findings.length} Timelines/ mirror(s) from root`, destructive: false, blocked: false };
+  return {
+    fixer,
+    finding_ids,
+    action: `refresh ${findings.length} Timelines/ mirror(s) from root`,
+    destructive: false,
+    blocked: false,
+  };
 }
 
 /** Pure: the aggregated fix plan derived from a validate report + the in-memory
