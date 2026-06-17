@@ -785,7 +785,9 @@ export function importCaptions(
     // Same contract as the --keyword-size/--highlight-size flags: a present hlSize must be a
     // finite number > 0 (a typo here would otherwise be written verbatim into the draft).
     if (card.hlSize !== undefined && (!Number.isFinite(card.hlSize) || card.hlSize <= 0)) {
-      die(`captions[${i}]: "hlSize" must be a positive number (font size in points), got ${JSON.stringify(card.hlSize)}`);
+      die(
+        `captions[${i}]: "hlSize" must be a positive number (font size in points), got ${JSON.stringify(card.hlSize)}`,
+      );
     }
     const matId = uuid();
     const segId = uuid();

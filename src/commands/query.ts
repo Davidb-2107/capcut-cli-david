@@ -87,19 +87,40 @@ function extractItems(draft: unknown): RawItem[] {
     const name = str(e.name);
     if (!name) continue;
     const kind: QueryKind = e.type === "filter" ? "filter" : "effect";
-    items.push({ kind, name, resource_id: str(e.resource_id), effect_id: str(e.effect_id), category_name: str(e.category_name), font_path: null });
+    items.push({
+      kind,
+      name,
+      resource_id: str(e.resource_id),
+      effect_id: str(e.effect_id),
+      category_name: str(e.category_name),
+      font_path: null,
+    });
   }
   // video_effects are all effects.
   for (const e of arr(m.video_effects)) {
     const name = str(e.name);
     if (!name) continue;
-    items.push({ kind: "effect", name, resource_id: str(e.resource_id), effect_id: str(e.effect_id), category_name: str(e.category_name), font_path: null });
+    items.push({
+      kind: "effect",
+      name,
+      resource_id: str(e.resource_id),
+      effect_id: str(e.effect_id),
+      category_name: str(e.category_name),
+      font_path: null,
+    });
   }
   // transitions
   for (const e of arr(m.transitions)) {
     const name = str(e.name);
     if (!name) continue;
-    items.push({ kind: "transition", name, resource_id: str(e.resource_id), effect_id: str(e.effect_id), category_name: str(e.category_name), font_path: null });
+    items.push({
+      kind: "transition",
+      name,
+      resource_id: str(e.resource_id),
+      effect_id: str(e.effect_id),
+      category_name: str(e.category_name),
+      font_path: null,
+    });
   }
   // fonts: primary = texts[].fonts[].title; fallback = texts[].font_path (local).
   for (const t of arr(m.texts)) {
@@ -108,11 +129,26 @@ function extractItems(draft: unknown): RawItem[] {
       for (const f of fonts) {
         const name = str(f.title);
         if (!name) continue;
-        items.push({ kind: "font", name, resource_id: str(f.resource_id), effect_id: str(f.effect_id), category_name: str(f.category_name), font_path: str(f.path) ?? str(t.font_path) });
+        items.push({
+          kind: "font",
+          name,
+          resource_id: str(f.resource_id),
+          effect_id: str(f.effect_id),
+          category_name: str(f.category_name),
+          font_path: str(f.path) ?? str(t.font_path),
+        });
       }
     } else {
       const fp = str(t.font_path);
-      if (fp) items.push({ kind: "font", name: deriveFontName(fp), resource_id: str(t.font_resource_id), effect_id: null, category_name: null, font_path: fp });
+      if (fp)
+        items.push({
+          kind: "font",
+          name: deriveFontName(fp),
+          resource_id: str(t.font_resource_id),
+          effect_id: null,
+          category_name: null,
+          font_path: fp,
+        });
     }
   }
   return items;
@@ -126,7 +162,11 @@ function dedupeKey(it: RawItem): string {
 
 // Pure: extract → dedupe across drafts → substring match → optional kind filter
 // → stable sort. `kind` is pre-validated by the caller.
-export function planQuery(drafts: Array<{ name: string; draft: unknown }>, term: string, kind?: string): QueryResultItem[] {
+export function planQuery(
+  drafts: Array<{ name: string; draft: unknown }>,
+  term: string,
+  kind?: string,
+): QueryResultItem[] {
   const index = new Map<string, QueryResultItem>();
   for (const { name, draft } of drafts) {
     for (const raw of extractItems(draft)) {
@@ -173,7 +213,10 @@ function renderHuman(results: QueryResultItem[], flags: Flags): void {
 // Usage / invalid-flag errors throw via die() → exit 1 in the top-level catch.
 export function cmdQuery(positional: string[], flags: Flags): number {
   const term = positional[1];
-  if (!term) die("Missing search term. Usage: capcut-david query <term> [--kind effect|filter|transition|font] [--drafts <dir>]");
+  if (!term)
+    die(
+      "Missing search term. Usage: capcut-david query <term> [--kind effect|filter|transition|font] [--drafts <dir>]",
+    );
   if (flags.kind && !KINDS.includes(flags.kind as QueryKind)) {
     die(`Invalid --kind '${flags.kind}'. Expected one of: effect, filter, transition, font.`);
   }
@@ -207,7 +250,9 @@ export function cmdQuery(positional: string[], flags: Flags): number {
     drafts.push({ name, draft });
   }
   if (drafts.length === 0) {
-    process.stderr.write(`${JSON.stringify({ error: "No readable drafts found (all draft_content.json failed to parse)." })}\n`);
+    process.stderr.write(
+      `${JSON.stringify({ error: "No readable drafts found (all draft_content.json failed to parse)." })}\n`,
+    );
     return 2;
   }
 

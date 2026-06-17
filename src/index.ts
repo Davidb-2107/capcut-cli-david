@@ -17,8 +17,8 @@ import {
   cmdTracks,
 } from "./commands/inspect.js";
 import { cmdAddKeyframe, cmdKenBurns } from "./commands/keyframe.js";
-import { cmdPsychoBuild } from "./commands/pipeline.js";
 import { cmdMakePreset } from "./commands/make-preset.js";
+import { cmdPsychoBuild } from "./commands/pipeline.js";
 import { cmdQuery } from "./commands/query.js";
 import { cmdRegister } from "./commands/register.js";
 import { cmdRestyle } from "./commands/restyle.js";
@@ -219,7 +219,7 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
     } else if (a === "--color" && i + 1 < args.length) {
       flags.color = args[++i];
     } else if (a === "--align" && i + 1 < args.length) {
-      flags.align = parseInt(args[++i]);
+      flags.align = parseInt(args[++i], 10);
     } else if (a === "--x" && i + 1 < args.length) {
       flags.x = parseFloat(args[++i]);
     } else if (a === "--y" && i + 1 < args.length) {

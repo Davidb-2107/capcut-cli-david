@@ -70,8 +70,12 @@ export function applyTemplate(
 
   const idMap = new Map<string, string>();
   function remapId(oldId: string): string {
-    if (!idMap.has(oldId)) idMap.set(oldId, uuid());
-    return idMap.get(oldId)!;
+    let mapped = idMap.get(oldId);
+    if (mapped === undefined) {
+      mapped = uuid();
+      idMap.set(oldId, mapped);
+    }
+    return mapped;
   }
 
   const newSegId = uuid();
