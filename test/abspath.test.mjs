@@ -1,22 +1,26 @@
-// Tests for engine-hardening #1 — absolute-path resolution in add-audio / add-video.
+// Tests for add-audio / add-video portable-path contract (v2.0.0).
 //
-// Footgun: cmdAddAudio/cmdAddVideo resolved paths with `audioPath.startsWith("/")`,
-// which on Windows misses absolute paths (`C:\…` / `C:/…`) → the absolute path was
-// concatenated onto cwd → copyFileSync ENOENT. The fix uses path.resolve() (correct
-// on Win + POSIX) AND basename() for the filename (split("/").pop() returns the whole
-// string when the path uses backslashes, breaking the asset copy on Windows).
+// History: engine-hardening #1 fixed absolute-path resolution on Windows
+// (`startsWith("/")` missed `C:\…`). v2.0.0 then replaced the whole
+// copy-into-assets/-and-write-absolute-path scheme: an absolute material.path
+// containing the draft folder name dies when CapCut duplicates/renames the
+// draft (`v_slug` → `v_slug(1)`) → "Link media, couldn't find …" dialog.
 //
-// Contract: an absolute source must be copied into <draft>/assets/<type>/<filename>
-// and the material must reference that assets path — on every platform.
+// Contract now: the source is copied into <draft>/Resources/<matId><ext> and
+// material.path is the portable token
+//   ##_draftpath_placeholder_<UUID>_##\Resources\<matId><ext>
+// which CapCut re-resolves relative to the draft's own folder — rename-safe.
 import { test } from "node:test";
-import { strictEqual, ok } from "node:assert";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { strictEqual, ok, match } from "node:assert";
+import { existsSync, mkdtempSync, rmSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, dirname, join, resolve, sep } from "node:path";
+import { basename, join, resolve } from "node:path";
 
 import { FIXTURES } from "./helpers/load-fixture.mjs";
 import { tmpDraft } from "./helpers/tmp-draft.mjs";
 import { runCli } from "./helpers/spawn-cli.mjs";
+
+const TOKEN_PATH_RE = /^##_draftpath_placeholder_[0-9A-Fa-f-]+_##\\Resources\\[0-9A-Fa-f-]+\.[A-Za-z0-9]+$/;
 
 function scratchDir(t) {
   const dir = mkdtempSync(join(tmpdir(), "capcut-cli-david-abspath-"));
@@ -32,24 +36,25 @@ function scratchDir(t) {
   return dir;
 }
 
-// =============================================================
-// #1 — absolute source path (the footgun)
-//
-// NOTE: the regression VALUE of the absolute-path tests is host-OS-specific.
-// On POSIX an absolute path starts with "/", which the pre-fix `startsWith("/")`
-// code already handled — so on Linux/macOS CI these pass with or without the fix.
-// The actual bug (Windows `C:\…` not starting with "/") is exercised only when
-// the suite runs on Windows, which is where the fix was watched fail→pass.
-// =============================================================
+/** Assert the v2.0.0 material.path contract; returns the on-disk copy path. */
+function assertTokenPath(mat, draftDir, matId, ext) {
+  match(mat.path, TOKEN_PATH_RE, "material.path must be a portable placeholder token into Resources/");
+  ok(mat.path.endsWith(`\\Resources\\${matId}${ext}`), `token must end with \\Resources\\${matId}${ext}: ${mat.path}`);
+  // Anti-regression (the original bug): the stored path must NEVER contain the
+  // draft folder name — that is exactly what broke on duplication/rename.
+  ok(!mat.path.includes(basename(draftDir)), `material.path must not embed the draft folder name: ${mat.path}`);
+  const onDisk = resolve(draftDir, "Resources", `${matId}${ext}`);
+  ok(existsSync(onDisk), `copied asset should exist at ${onDisk}`);
+  ok(!existsSync(resolve(draftDir, "assets")), "legacy assets/ dir must not be created");
+  return onDisk;
+}
 
-test("add-video (CLI): an ABSOLUTE source path is copied into assets/video and referenced there", (t) => {
+test("add-video (CLI): an ABSOLUTE source path is copied into Resources/ and referenced by token", (t) => {
   const { filePath, dir: draftDir } = tmpDraft(FIXTURES.MINIMAL, t);
   const srcDir = scratchDir(t);
-  // A genuinely absolute path on the host OS (drive-letter on Windows, /tmp on POSIX).
   const absSrc = resolve(srcDir, "clip.mp4");
   writeFileSync(absSrc, "fake-mp4-bytes");
 
-  // No cwd trick — pass the absolute path directly (the case that ENOENT'd on Windows).
   const r = runCli(["add-video", filePath, absSrc, "0", "1s"]);
   strictEqual(r.status, 0, `expected success, stderr: ${r.stderr}`);
   ok(r.json?.ok, `expected ok JSON, got: ${r.stdout}`);
@@ -57,14 +62,11 @@ test("add-video (CLI): an ABSOLUTE source path is copied into assets/video and r
   const after = JSON.parse(readFileSync(filePath, "utf-8"));
   const mat = after.materials.videos.find((m) => m.id === r.json.material_id);
   ok(mat, "video material should be persisted");
-  // Material must reference the copied asset under <draftDir>/assets/video/, NOT the source.
-  const expected = resolve(draftDir, "assets", "video", "clip.mp4");
-  strictEqual(mat.path, expected, "material.path must point into the draft's assets/video dir");
-  ok(existsSync(mat.path), `copied asset should exist at ${mat.path}`);
-  strictEqual(basename(mat.path), "clip.mp4");
+  assertTokenPath(mat, draftDir, r.json.material_id, ".mp4");
+  strictEqual(mat.material_name, "clip.mp4", "UI name stays the human-readable source filename");
 });
 
-test("add-audio (CLI): an ABSOLUTE source path is copied into assets/audio and referenced there", (t) => {
+test("add-audio (CLI): an ABSOLUTE source path is copied into Resources/ and referenced by token", (t) => {
   const { filePath, dir: draftDir } = tmpDraft(FIXTURES.MINIMAL, t);
   const srcDir = scratchDir(t);
   const absSrc = resolve(srcDir, "voice.mp3");
@@ -77,29 +79,21 @@ test("add-audio (CLI): an ABSOLUTE source path is copied into assets/audio and r
   const after = JSON.parse(readFileSync(filePath, "utf-8"));
   const mat = after.materials.audios.find((m) => m.id === r.json.material_id);
   ok(mat, "audio material should be persisted");
-  const expected = resolve(draftDir, "assets", "audio", "voice.mp3");
-  strictEqual(mat.path, expected, "material.path must point into the draft's assets/audio dir");
-  ok(existsSync(mat.path), `copied asset should exist at ${mat.path}`);
+  assertTokenPath(mat, draftDir, r.json.material_id, ".mp3");
+  strictEqual(mat.name, "voice.mp3", "UI name stays the human-readable source filename");
 });
 
-// =============================================================
-// #1 — relative input stays byte-identical (regression lock)
-// =============================================================
-
-test("add-video (CLI): a RELATIVE source path still lands under assets/video (byte-identity)", (t) => {
+test("add-video (CLI): a RELATIVE source path also lands in Resources/ with a token path", (t) => {
   const { filePath, dir: draftDir } = tmpDraft(FIXTURES.MINIMAL, t);
   const srcDir = scratchDir(t);
   writeFileSync(resolve(srcDir, "rel.mp4"), "fake-mp4-bytes");
 
-  // Relative path resolved against cwd — the pre-fix happy path.
+  // Relative path resolved against cwd.
   const r = runCli(["add-video", filePath, "rel.mp4", "0", "1s"], { cwd: srcDir });
   strictEqual(r.status, 0, `expected success, stderr: ${r.stderr}`);
 
   const after = JSON.parse(readFileSync(filePath, "utf-8"));
   const mat = after.materials.videos.find((m) => m.id === r.json.material_id);
   ok(mat);
-  // The stored material.path is destPath = resolve(assetsDir, filename) — unchanged by the fix.
-  strictEqual(mat.path, resolve(draftDir, "assets", "video", "rel.mp4"));
-  // Sanity: the material.path uses the platform separator and is inside the draft dir.
-  ok(mat.path.startsWith(draftDir + sep) || dirname(mat.path).includes("assets"));
+  assertTokenPath(mat, draftDir, r.json.material_id, ".mp4");
 });

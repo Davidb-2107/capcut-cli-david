@@ -8,6 +8,18 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 
 ## [Unreleased]
 
+## [2.0.0] — pending publish
+
+Major release. **`add-audio` / `add-video` write a portable draft-path token** instead of an absolute path — media now survives CapCut duplicating/renaming the draft folder (`v_slug` → `v_slug(1)`). Fixes the "Link media, couldn't find narration.mp3" dialog on drafts built by `capcut-david` (repro 2026-07-06, `refuser-les-compliments`). Aligns the engine with what `cutcli` already does.
+
+### Fixed
+- **Audio/video unlinked after draft duplication/rename.** `addAudio`/`addVideo` used to copy the source into `<draft>/assets/<type>/<name>` and write an **absolute** `material.path` containing the draft folder name — dead as soon as CapCut (or the user) renames the folder. They now copy into `<draft>/Resources/<matId><ext>` and write `##_draftpath_placeholder_<UUID>_##\Resources\<matId><ext>`, which CapCut re-resolves relative to the draft's own folder. All three consumers are repaired at once (Stickman `assemble_draft.py`, Repost_Amélioré phase 5, `pipeline.ts` self-contained builds).
+- The placeholder UUID is a per-install constant absent from `draft_meta_info.json`/`root_meta_info.json`, so it is **discovered** by scanning a token already present in `draft_content.json` (new `draftPlaceholderToken` helper; `cutcli videos add` writes one before any `add-audio`). Fallback for token-less drafts: the draft's own GUID.
+
+### Changed (BREAKING)
+- **`material.path` form** for `add-audio`/`add-video`: `Resources/` + placeholder token instead of `assets/<type>/` + absolute path; the copied file is named `<matId><ext>` instead of the source basename (`material.name`/`material_name` keeps the human-readable source filename). Byte-identity with 1.x output is intentionally broken — bug fix that changes output = honest major.
+- `validate --check-assets` needs **no change**: placeholder tokens were already skipped.
+
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 

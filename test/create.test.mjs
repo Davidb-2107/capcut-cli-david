@@ -151,12 +151,10 @@ test("add-video: addVideo registers material, track, segment and copies asset", 
   strictEqual(basename(mat.material_name), "test-video.mp4");
   strictEqual(mat.type, "video"); // .mp4 is not in the image-ext list
 
-  // Material.path should point to an existing file. (Note: on Windows the
-  // upstream `opts.path.split("/").pop()` doesn't split backslashes, so the
-  // asset isn't actually relocated into <draftDir>/assets/video/ — it stays
-  // at the original source path. We test the invariant that survives both
-  // platforms: the stored path resolves to a real file.)
-  ok(existsSync(mat.path), `material.path should refer to an existing file: ${mat.path}`);
+  // v2.0.0: material.path is a portable placeholder token into Resources/
+  // (rename-safe); the copied file lives at <draftDir>/Resources/<matId>.mp4.
+  ok(mat.path.startsWith("##_draftpath_placeholder_"), `material.path should be a token: ${mat.path}`);
+  ok(existsSync(resolve(dirname(filePath), "Resources", `${result.materialId}.mp4`)), "copied asset should exist in Resources/");
 
   // draft.duration extension branch
   strictEqual(draft.duration, 1_000_000, "duration should extend to segEnd");
@@ -222,9 +220,9 @@ test("add-audio: addAudio registers material, track, segment with custom volume"
   strictEqual(basename(mat.name), "test-audio.mp3");
   strictEqual(mat.duration, 2_000_000);
 
-  // material.path should refer to an existing file (cross-platform invariant
-  // — see note above re: upstream Windows path-split bug).
-  ok(existsSync(mat.path), `material.path should refer to an existing file: ${mat.path}`);
+  // v2.0.0: material.path is a portable placeholder token into Resources/.
+  ok(mat.path.startsWith("##_draftpath_placeholder_"), `material.path should be a token: ${mat.path}`);
+  ok(existsSync(resolve(dirname(filePath), "Resources", `${result.materialId}.mp3`)), "copied asset should exist in Resources/");
 
   // Persistence
   saveDraft(filePath, draft);

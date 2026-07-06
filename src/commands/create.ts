@@ -1,9 +1,10 @@
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { basename, dirname, resolve } from "node:path";
+import { basename, dirname, extname, resolve } from "node:path";
 import { type Draft, type Segment, saveDraft, type Timerange, type Track } from "../draft.js";
 import { defaultProjectsRoot, resolveTemplateDir } from "../utils/capcut-paths.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { baseSegment, createCompanionMaterials, hexToRgb, registerCompanions, uuid } from "../utils/companion.js";
+import { draftPlaceholderToken } from "../utils/draft-token.js";
 import { parseTimeInput } from "../utils/time.js";
 
 // --- Init (create new empty draft) ---
@@ -245,13 +246,18 @@ export function addAudio(
 
   const draftDir = dirname(filePath);
   const filename = basename(opts.path) || "audio.mp3";
-  const assetsDir = resolve(draftDir, "assets", "audio");
-  mkdirSync(assetsDir, { recursive: true });
-  const destPath = resolve(assetsDir, filename);
+  // Copy into <draft>/Resources/<matId>.<ext> and reference it through the
+  // portable placeholder token — the cutcli-proven form that survives CapCut
+  // duplicating/renaming the draft folder (an absolute path containing the
+  // draft name dies on rename → "Link media" dialog).
+  const ext = extname(opts.path) || ".mp3";
+  const resDir = resolve(draftDir, "Resources");
+  mkdirSync(resDir, { recursive: true });
+  const destPath = resolve(resDir, `${matId}${ext}`);
   if (!existsSync(destPath)) {
-    copyFileSync(opts.path, destPath);
+    copyFileSync(resolve(opts.path), destPath);
   }
-  const localPath = destPath;
+  const localPath = `${draftPlaceholderToken(draft)}\\Resources\\${matId}${ext}`;
 
   let track = draft.tracks.find((t) => t.type === "audio" && t.name === trackName);
   if (!track) {
@@ -338,13 +344,15 @@ export function addVideo(
 
   const draftDir = dirname(filePath);
   const filename = basename(opts.path) || "media";
-  const assetsDir = resolve(draftDir, "assets", "video");
-  mkdirSync(assetsDir, { recursive: true });
-  const destPath = resolve(assetsDir, filename);
+  // Same portable-token form as addAudio — rename-safe (see comment there).
+  const fileExt = extname(opts.path);
+  const resDir = resolve(draftDir, "Resources");
+  mkdirSync(resDir, { recursive: true });
+  const destPath = resolve(resDir, `${matId}${fileExt}`);
   if (!existsSync(destPath)) {
-    copyFileSync(opts.path, destPath);
+    copyFileSync(resolve(opts.path), destPath);
   }
-  const localPath = destPath;
+  const localPath = `${draftPlaceholderToken(draft)}\\Resources\\${matId}${fileExt}`;
 
   let track = draft.tracks.find((t) => t.type === "video" && t.name === trackName);
   if (!track) {
