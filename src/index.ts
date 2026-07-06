@@ -64,6 +64,8 @@ Create:
 Add:
   add-audio  <project> <file> <start> <duration> [--volume <n>] [--track-name <s>]
   add-video  <project> <file> <start> <duration> [--track-name <s>]
+             Media is copied into <draft>/Resources/ and referenced by a portable
+             draftpath token (rename/duplication-safe — orchestrator version gate).
   add-text   <project> <start> <duration> <text>
               [--font-size <n>] [--color <hex>] [--align <0|1|2>]
               [--x <n>] [--y <n>] [--track-name <s>]
