@@ -1,6 +1,6 @@
 # Plan — `add-audio` : audio introuvable après duplication/renommage du draft CapCut
 
-**Date :** 2026-07-06 · **Statut :** PLAN OBJECTIF (hypothèse critique VÉRIFIÉE sur disque), en attente de décision David · **Méthode :** workflow 6 agents (3 compréhension → plan → 2 relecteurs adverses, verdict RISQUÉ sur la 1re version) + vérification factuelle de la faisabilité du jeton audio.
+**Date :** 2026-07-06 · **Statut :** ✅ CLOS — shippé **v2.0.0** (npm `latest`, 2026-07-06) ; E2E confirmé par David le jour même (`v_refuser-les-compliments` régénéré, dossier renommé sur disque, audio chargé sans dialogue « Link media »). Gate vault `require_portable_media_path` en place. · **Méthode :** workflow 6 agents (3 compréhension → plan → 2 relecteurs adverses, verdict RISQUÉ sur la 1re version) + vérification factuelle de la faisabilité du jeton audio.
 
 ---
 
