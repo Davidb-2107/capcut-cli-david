@@ -8,7 +8,10 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 
 ## [Unreleased]
 
-## [2.0.0] — pending publish
+### Planned
+- `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
+
+## [2.0.0] — 2026-07-06
 
 Major release. **`add-audio` / `add-video` write a portable draft-path token** instead of an absolute path — media now survives CapCut duplicating/renaming the draft folder (`v_slug` → `v_slug(1)`). Fixes the "Link media, couldn't find narration.mp3" dialog on drafts built by `capcut-david` (repro 2026-07-06, `refuser-les-compliments`). Aligns the engine with what `cutcli` already does.
 
@@ -20,8 +23,9 @@ Major release. **`add-audio` / `add-video` write a portable draft-path token** i
 - **`material.path` form** for `add-audio`/`add-video`: `Resources/` + placeholder token instead of `assets/<type>/` + absolute path; the copied file is named `<matId><ext>` instead of the source basename (`material.name`/`material_name` keeps the human-readable source filename). Byte-identity with 1.x output is intentionally broken — bug fix that changes output = honest major.
 - `validate --check-assets` needs **no change**: placeholder tokens were already skipped.
 
-### Planned
-- `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
+### Compatibility
+- The `--help` text for `add-audio`/`add-video` now advertises the portable "draftpath token" — orchestrators use this line as the ≥ 2.0.0 version-gate marker (same probe pattern as `--transform-y`).
+- Drafts written by 1.x keep their absolute paths and remain openable as long as the draft folder is never renamed; regenerate them with 2.0.0 to make them rename-safe (no data migration — episodes are regenerable).
 
 ## [1.16.0] — 2026-06-12
 
@@ -617,7 +621,8 @@ First release of the fork. Baseline = upstream `capcut-cli@0.2.2` (commit `c9223
 - Node ≥ 18; CI matrix covers Node 18, 20, 22.
 - JianYing 6+ remains unsupported (encrypted `draft_content.json` — see `COMPATIBILITY.md` §5).
 
-[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.16.0...v2.0.0
 [1.2.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.0.0...v1.1.0
