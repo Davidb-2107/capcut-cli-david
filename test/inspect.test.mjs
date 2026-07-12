@@ -10,8 +10,10 @@
 
 import { test } from "node:test";
 import { strictEqual, ok, match, deepStrictEqual } from "node:assert";
+import { readFileSync, writeFileSync } from "node:fs";
 import { FIXTURES, fixturePath, loadFixture } from "./helpers/load-fixture.mjs";
 import { runCli } from "./helpers/spawn-cli.mjs";
+import { tmpDraft } from "./helpers/tmp-draft.mjs";
 
 // ----- info -----------------------------------------------------------------
 
@@ -72,6 +74,24 @@ test("tracks: KEN_BURNS returns array with expected shape per track", () => {
     ok(typeof t.hidden === "boolean");
     ok(typeof t.locked === "boolean");
   }
+});
+
+test("tracks: track without a name field renders in -H without throwing", (t) => {
+  // Regression: cutcli-created tracks omit `name` — `tracks -H` crashed with
+  // "Cannot read properties of undefined (reading 'padEnd')".
+  const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
+  const draft = JSON.parse(readFileSync(filePath, "utf-8"));
+  ok(draft.tracks.length > 0, "fixture must have at least one track");
+  delete draft.tracks[0].name;
+  writeFileSync(filePath, JSON.stringify(draft));
+
+  const rH = runCli(["tracks", filePath, "-H"]);
+  strictEqual(rH.status, 0, `expected exit 0, stderr: ${rH.stderr}`);
+  ok(!rH.stderr.includes("padEnd"), `padEnd crash resurfaced: ${rH.stderr}`);
+
+  const rJson = runCli(["tracks", filePath]);
+  strictEqual(rJson.status, 0);
+  strictEqual(rJson.json[0].name, "", "unnamed track should normalize to empty string");
 });
 
 test("tracks: MINIMAL returns empty array", () => {

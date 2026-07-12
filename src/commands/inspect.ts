@@ -61,7 +61,7 @@ export function cmdTracks(draft: Draft, flags: Flags): void {
       index: i,
       id: t.id,
       type: t.type,
-      name: t.name,
+      name: t.name ?? "",
       segments: t.segments.length,
       duration_us: end,
       muted: !!(t.attribute & 1),

@@ -29,7 +29,8 @@ export interface Segment {
 export interface Track {
   id: string;
   type: string;
-  name: string;
+  /** Optional on disk — tracks created by other tools (e.g. cutcli) omit it. */
+  name?: string;
   attribute: number;
   segments: Segment[];
 }
