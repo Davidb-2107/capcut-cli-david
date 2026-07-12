@@ -11,6 +11,16 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [2.0.1] — 2026-07-12
+
+Patch release. One bugfix, no API changes, no new verbs.
+
+### Fixed
+- **`tracks -H` crashed on tracks without a `name`** (`Cannot read properties of undefined (reading 'padEnd')`). `track.name` is optional on disk — tracks created by other tools (`cutcli audios add` / `cutcli videos add`) omit it, but the `Track` type declared it required, letting the unguarded `padEnd` pass the compiler. `Track.name` is now `name?: string` and `cmdTracks` normalizes to `""` — one guard covers both the `-H` table and the JSON output (which previously dropped the key silently). Found on a real Stickman A/B draft carrying a cutcli-created SFX track (repro 2026-07-12, `rire-de-tout_AB-A`).
+
+### Compatibility
+- Read-only inspection path; no draft output changes — the byte-identity contract (v1.3.0) is untouched.
+
 ## [2.0.0] — 2026-07-06
 
 Major release. **`add-audio` / `add-video` write a portable draft-path token** instead of an absolute path — media now survives CapCut duplicating/renaming the draft folder (`v_slug` → `v_slug(1)`). Fixes the "Link media, couldn't find narration.mp3" dialog on drafts built by `capcut-david` (repro 2026-07-06, `refuser-les-compliments`). Aligns the engine with what `cutcli` already does.
@@ -621,7 +631,8 @@ First release of the fork. Baseline = upstream `capcut-cli@0.2.2` (commit `c9223
 - Node ≥ 18; CI matrix covers Node 18, 20, 22.
 - JianYing 6+ remains unsupported (encrypted `draft_content.json` — see `COMPATIBILITY.md` §5).
 
-[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.16.0...v2.0.0
 [1.2.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.1.0...v1.1.1
