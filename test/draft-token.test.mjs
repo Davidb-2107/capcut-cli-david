@@ -1,9 +1,9 @@
 // Unit tests for draftPlaceholderToken — the portable-path token used by
-// addAudio/addVideo (v2.0.0). The placeholder UUID is a per-install constant
-// absent from draft_meta/root_meta, so it must be DISCOVERED by scanning a
-// token already present in the draft (1), then in sibling drafts under the
-// same projects root (2), falling back to the observed CapCut/JianYing
-// per-install constant (3) — never the draft's own GUID (unresolvable).
+// addAudio/addVideo (v2.0.0). Discovery is two-step: (1) reuse a token already
+// present in the current draft's materials; (2) fall back to the observed
+// CapCut/JianYing per-install constant — NEVER the draft's own GUID
+// (unresolvable), and NEVER a sibling draft's token (could be a stale broken
+// draft.id token written by pre-fix code).
 import { test } from "node:test";
 import { strictEqual, ok } from "node:assert";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
@@ -43,37 +43,27 @@ test("draftPlaceholderToken: ignores non-token absolute paths", () => {
   ok(!token.includes("v_slug"));
 });
 
-test("draftPlaceholderToken: token-less draft, no filePath, falls back to the CapCut constant (not the draft GUID)", () => {
+test("draftPlaceholderToken: token-less draft falls back to the CapCut constant (not the draft GUID)", () => {
   const draft = loadFixture(FIXTURES.MINIMAL); // no materials at all
   const token = draftPlaceholderToken(draft);
   strictEqual(token, INSTALL_TOKEN);
   strictEqual(token.includes(draft.id), false);
 });
 
-test("draftPlaceholderToken: token-less draft with a tokened sibling under the same projects root returns the sibling's token", (t) => {
+test("draftPlaceholderToken: NEVER adopts a sibling draft's token (could be a stale broken one)", (t) => {
+  // A sibling built by pre-fix code carries a broken draft.id-derived token.
   const projectsRoot = scratch(t);
-  const siblingDir = join(projectsRoot, "v_other-draft");
+  const brokenToken = "##_draftpath_placeholder_a1b2c3d4-e5f6-7890-abcd-ef0123456789_##";
+  const siblingDir = join(projectsRoot, "v_old-broken-draft");
   mkdirSync(siblingDir, { recursive: true });
   writeFileSync(
     join(siblingDir, "draft_content.json"),
-    JSON.stringify({ materials: { videos: [{ id: "v", path: `${INSTALL_TOKEN}\\Resources\\x.mp4` }] } }),
+    JSON.stringify({ materials: { videos: [{ id: "v", path: `${brokenToken}\\Resources\\x.mp4` }] } }),
   );
   const ownDir = join(projectsRoot, "v_new-draft");
   mkdirSync(ownDir, { recursive: true });
-  const filePath = join(ownDir, "draft_content.json");
 
   const draft = loadFixture(FIXTURES.MINIMAL); // token-less
-  strictEqual(draftPlaceholderToken(draft, filePath), INSTALL_TOKEN);
-});
-
-test("draftPlaceholderToken: token-less draft, no siblings, with filePath falls back to the CapCut constant", (t) => {
-  const projectsRoot = scratch(t);
-  const ownDir = join(projectsRoot, "v_new-draft");
-  mkdirSync(ownDir, { recursive: true });
-  const filePath = join(ownDir, "draft_content.json");
-
-  const draft = loadFixture(FIXTURES.MINIMAL); // token-less
-  const token = draftPlaceholderToken(draft, filePath);
-  strictEqual(token, INSTALL_TOKEN);
-  strictEqual(token.includes(draft.id), false);
+  const token = draftPlaceholderToken(draft, join(ownDir, "draft_content.json"));
+  strictEqual(token, INSTALL_TOKEN); // the constant — not the sibling's broken token
 });

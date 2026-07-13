@@ -262,7 +262,7 @@ export function addAudio(
   if (!existsSync(destPath)) {
     copyFileSync(resolve(opts.path), destPath);
   }
-  const localPath = `${draftPlaceholderToken(draft, filePath)}\\Resources\\${matId}${ext}`;
+  const localPath = `${draftPlaceholderToken(draft)}\\Resources\\${matId}${ext}`;
 
   let track = draft.tracks.find((t) => t.type === "audio" && t.name === trackName);
   if (!track) {
@@ -358,7 +358,7 @@ export function addVideo(
   if (!existsSync(destPath)) {
     copyFileSync(resolve(opts.path), destPath);
   }
-  const localPath = `${draftPlaceholderToken(draft, filePath)}\\Resources\\${matId}${fileExt}`;
+  const localPath = `${draftPlaceholderToken(draft)}\\Resources\\${matId}${fileExt}`;
 
   let track = draft.tracks.find((t) => t.type === "video" && t.name === trackName);
   if (!track) {
