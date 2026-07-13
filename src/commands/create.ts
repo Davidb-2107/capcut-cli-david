@@ -564,6 +564,12 @@ export function cmdInit(positional: string[], flags: Flags): void {
   if (!existsSync(draftsDir)) mkdirSync(draftsDir, { recursive: true });
   const oneSided = (flags.width === undefined) !== (flags.height === undefined);
   if (oneSided) die("--width and --height must be given together");
+  if (
+    (flags.width !== undefined && (Number.isNaN(flags.width) || flags.width <= 0)) ||
+    (flags.height !== undefined && (Number.isNaN(flags.height) || flags.height <= 0))
+  ) {
+    die("--width and --height must be positive integers");
+  }
   const result = initDraft({ name, templateDir, draftsDir, width: flags.width, height: flags.height });
   out({ ok: true, name, draft_path: result.draftPath, file_path: result.filePath }, flags);
   if (!flags.quiet) process.stderr.write(`Created: ${result.draftPath}\n`);

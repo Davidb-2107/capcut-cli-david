@@ -577,3 +577,19 @@ test("CLI: init dies on one-sided --width", (t) => {
   strictEqual(r.status, 1);
   match(r.stderr, /--width and --height must be given together/);
 });
+
+test("CLI: init dies on NaN --width", (t) => {
+  const templateDir = makeTemplateDir(t);
+  const draftsDir = makeScratchDir(t);
+  const r = runCli(["init", "bad", "--template", templateDir, "--drafts", draftsDir, "--width", "abc", "--height", "1920"]);
+  strictEqual(r.status, 1);
+  match(r.stderr, /positive integers/);
+});
+
+test("CLI: init dies on non-positive --height", (t) => {
+  const templateDir = makeTemplateDir(t);
+  const draftsDir = makeScratchDir(t);
+  const r = runCli(["init", "neg", "--template", templateDir, "--drafts", draftsDir, "--width", "1080", "--height", "0"]);
+  strictEqual(r.status, 1);
+  match(r.stderr, /positive integers/);
+});
