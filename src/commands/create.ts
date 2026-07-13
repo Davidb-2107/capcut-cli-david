@@ -331,6 +331,7 @@ export interface AddVideoOptions {
   width?: number;
   height?: number;
   trackName?: string;
+  volume?: number;
 }
 
 export function addVideo(
@@ -432,6 +433,7 @@ export function addVideo(
 
   const timerange: Timerange = { start: opts.start, duration: opts.duration };
   const seg = baseSegment(segId, matId, track.id, timerange, companions.ids, 14000);
+  seg.volume = opts.volume ?? 1.0;
   track.segments.push(seg);
 
   const segEnd = opts.start + opts.duration;
@@ -634,6 +636,71 @@ export function cmdAddVideo(draft: Draft, filePath: string, positional: string[]
     },
     flags,
   );
+}
+
+interface MediaBatchItem {
+  path: string;
+  start: number | string;
+  duration: number | string;
+  width?: number;
+  height?: number;
+  volume?: number;
+  trackName?: string;
+}
+
+/** Resolve `@file` (or bare path), parse JSON, require a non-empty array. */
+export function readBatchItems(spec: string, verb: string): MediaBatchItem[] {
+  const p = resolve(spec.startsWith("@") ? spec.slice(1) : spec);
+  if (!existsSync(p)) die(`--batch file not found: ${p}`);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readFileSync(p, "utf-8"));
+  } catch (e) {
+    die(`--batch file is not valid JSON (${p}): ${e instanceof Error ? e.message : String(e)}`);
+  }
+  if (!Array.isArray(parsed)) die(`--batch expects a JSON array of items (${verb})`);
+  if (parsed.length === 0) die(`--batch array is empty (${verb})`);
+  return parsed as MediaBatchItem[];
+}
+
+/** Validate one media item; returns normalized {path, start, duration, ...}. 1-based index in errors. */
+function normalizeMediaItem(raw: MediaBatchItem, idx: number, verb: string) {
+  const label = `${verb} --batch item ${idx}`;
+  if (typeof raw.path !== "string" || raw.path === "") die(`${label}: "path" (string) is required`);
+  const abs = resolve(raw.path);
+  if (!existsSync(abs)) die(`${label}: file not found: ${abs}`);
+  const t = (v: number | string, field: string): number => {
+    if (typeof v === "number") return v;
+    if (typeof v === "string") return parseTimeInput(v);
+    die(`${label}: "${field}" must be a number (µs) or time string`);
+  };
+  if (raw.start === undefined || raw.duration === undefined) die(`${label}: "start" and "duration" are required`);
+  return { ...raw, path: abs, start: t(raw.start, "start"), duration: t(raw.duration, "duration") };
+}
+
+export function cmdAddVideoBatch(draft: Draft, filePath: string, flags: Flags): void {
+  const raw = readBatchItems(flags.batch as string, "add-video");
+  // all-or-nothing: validate EVERY item before the first mutation
+  const items = raw.map((it, i) => normalizeMediaItem(it, i + 1, "add-video"));
+  const segment_ids: string[] = [];
+  const material_ids: string[] = [];
+  const track_ids: string[] = [];
+  for (const it of items) {
+    const r = addVideo(draft, filePath, {
+      path: it.path,
+      start: it.start,
+      duration: it.duration,
+      width: it.width,
+      height: it.height,
+      volume: it.volume,
+      trackName: it.trackName,
+    });
+    segment_ids.push(r.segmentId);
+    material_ids.push(r.materialId);
+    track_ids.push(r.trackId);
+  }
+  saveDraft(filePath, draft); // ONE save
+  out({ ok: true, count: items.length, segment_ids, material_ids, track_ids }, flags);
 }
 
 /** Default keyword-highlight color (gold-yellow [1.0, 0.84, 0.0]). */

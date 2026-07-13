@@ -1,7 +1,15 @@
 #!/usr/bin/env node
 
 import { cmdBatch } from "./commands/batch.js";
-import { cmdAddAudio, cmdAddEffect, cmdAddText, cmdAddVideo, cmdImportCaptions, cmdInit } from "./commands/create.js";
+import {
+  cmdAddAudio,
+  cmdAddEffect,
+  cmdAddText,
+  cmdAddVideo,
+  cmdAddVideoBatch,
+  cmdImportCaptions,
+  cmdInit,
+} from "./commands/create.js";
 import { cmdCut } from "./commands/cut.js";
 import { cmdOpacity, cmdSetText, cmdShift, cmdShiftAll, cmdSpeed, cmdTrim, cmdVolume } from "./commands/edit.js";
 import { cmdGc } from "./commands/gc.js";
@@ -66,6 +74,9 @@ Add:
   add-video  <project> <file> <start> <duration> [--track-name <s>]
              Media is copied into <draft>/Resources/ and referenced by a portable
              draftpath token (rename/duplication-safe — orchestrator version gate).
+  add-video  <project> --batch @items.json
+             batch: [{path,start,duration,width?,height?,volume?,trackName?}]
+             — ordered segment_ids out; all-or-nothing, one save.
   add-text   <project> <start> <duration> <text>
               [--font-size <n>] [--color <hex>] [--align <0|1|2>]
               [--x <n>] [--y <n>] [--track-name <s>]
@@ -303,6 +314,8 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.skip.push(args[++i]);
     } else if (a === "--preset" && i + 1 < args.length) {
       flags.preset = args[++i];
+    } else if (a === "--batch" && i + 1 < args.length) {
+      flags.batch = args[++i];
     } else {
       positional.push(a);
     }
@@ -416,8 +429,13 @@ function main(): void {
       cmdAddAudio(draft, filePath, positional, flags);
       break;
     case "add-video":
-      requireArgs(positional, 5, "capcut-david add-video <project> <file> <start> <duration>");
-      cmdAddVideo(draft, filePath, positional, flags);
+      if (flags.batch !== undefined) {
+        if (positional.length > 2) die("--batch cannot be combined with a positional file");
+        cmdAddVideoBatch(draft, filePath, flags);
+      } else {
+        requireArgs(positional, 5, "capcut-david add-video <project> <file> <start> <duration>");
+        cmdAddVideo(draft, filePath, positional, flags);
+      }
       break;
     case "add-text":
       requireArgs(positional, 5, "capcut-david add-text <project> <start> <duration> <text>");

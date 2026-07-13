@@ -43,6 +43,7 @@ export interface Flags {
   font?: string;
   width?: number;
   height?: number;
+  batch?: string;
 }
 
 export class CliError extends Error {
