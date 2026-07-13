@@ -72,6 +72,9 @@ Create:
 
 Add:
   add-audio  <project> <file> <start> <duration> [--volume <n>] [--track-name <s>]
+  add-audio  <project> --batch @items.json
+             batch: [{path,start,duration,volume?,trackName?}]
+             — ordered segment_ids out; all-or-nothing, one save.
   add-video  <project> <file> <start> <duration> [--track-name <s>]
              Media is copied into <draft>/Resources/ and referenced by a portable
              draftpath token (rename/duplication-safe — orchestrator version gate).
