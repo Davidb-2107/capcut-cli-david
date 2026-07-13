@@ -17,8 +17,8 @@ Minor release. **Capabilities UI** — read-only `ui` verb and a self-contained 
 
 ### Added
 - **`ui` verb** — read-only discovery and inspection. `--print-path` outputs the path to the embedded capabilities HTML page (headless orchestrator gate).
-- **Typed capability registry** — all 37 verbs introspected via `src/capabilities.ts` and baked into a schema: name, category (read/write), description, example, first release, and key flags. Anti-drift testing ensures the registry stays in sync with actual command definitions.
-- **Embedded HTML page** — `dist/ui/index.html`, generated at build time by `scripts/build-ui.mjs`. Self-contained (zero external resources, all assets inlined), version-baked into the JSON payload, and testable for integrity (zero network access, link integrity check).
+- **Typed capability registry** — all 37 verbs catalogued in `src/capabilities.ts`: verb, category, summary, signature, flags, example, read-only/CapCut-closed badges, first release. An anti-drift test asserts a strict 1:1 mapping between registry cards and the verbs actually dispatched by `src/index.ts`.
+- **Embedded HTML page** — `dist/ui/index.html`, generated at build time by `scripts/build-ui.mjs` (registry + version injected as inline JSON). Self-contained: zero external resources, works over `file://` — asserted by test.
 
 ### Compatibility
 - `ui` is read-only and has no side effects on drafts.
