@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>capcut-david — carte des capacités</title>
+<style>
+  :root { --bg:#111418; --card:#1b2026; --tx:#e8eaed; --dim:#9aa0a6; --acc:#4dabf7;
+          --ro:#37b24d; --wr:#f59f00; --warn:#e03131; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 system-ui,Segoe UI,sans-serif; background:var(--bg); color:var(--tx); }
+  header { padding:20px 28px; border-bottom:1px solid #2a3038; display:flex; gap:16px; align-items:baseline; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:20px; } header .v { color:var(--acc); font-weight:600; }
+  header .d { color:var(--dim); font-size:13px; }
+  #bar { padding:14px 28px; display:flex; gap:10px; flex-wrap:wrap; position:sticky; top:0; background:var(--bg); border-bottom:1px solid #2a3038; }
+  #q { flex:1; min-width:220px; padding:8px 12px; border-radius:8px; border:1px solid #2a3038; background:var(--card); color:var(--tx); }
+  .cat-btn { padding:6px 12px; border-radius:16px; border:1px solid #2a3038; background:var(--card); color:var(--tx); cursor:pointer; }
+  .cat-btn.on { background:var(--acc); color:#08121e; border-color:var(--acc); }
+  main { padding:20px 28px; max-width:1100px; margin:0 auto; }
+  h2.cat { margin:28px 0 10px; font-size:16px; color:var(--acc); text-transform:uppercase; letter-spacing:.06em; }
+  .card { background:var(--card); border:1px solid #2a3038; border-radius:10px; padding:14px 16px; margin:10px 0; }
+  .card h3 { margin:0 0 4px; font-size:16px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .badge { font-size:11px; padding:2px 8px; border-radius:10px; border:1px solid; }
+  .b-ro { color:var(--ro); border-color:var(--ro); } .b-wr { color:var(--wr); border-color:var(--wr); }
+  .b-cc { color:var(--warn); border-color:var(--warn); } .b-v { color:var(--dim); border-color:var(--dim); }
+  .sig { font-family:Consolas,monospace; font-size:13px; color:var(--dim); margin:4px 0 8px; }
+  table.flags { width:100%; border-collapse:collapse; font-size:13px; margin:8px 0; }
+  table.flags td { padding:3px 8px 3px 0; vertical-align:top; }
+  table.flags td:first-child { font-family:Consolas,monospace; white-space:nowrap; color:var(--acc); }
+  .ex { display:flex; gap:8px; align-items:center; background:#0d1117; border-radius:6px; padding:8px 10px; font-family:Consolas,monospace; font-size:13px; overflow-x:auto; }
+  .ex button { margin-left:auto; flex:none; cursor:pointer; border:1px solid #2a3038; background:var(--card); color:var(--tx); border-radius:6px; padding:3px 10px; }
+  #chains .step { margin:4px 0 4px 16px; } #chains .step code { color:var(--acc); cursor:pointer; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>capcut-david — carte des capacités</h1>
+  <span class="v" id="ver"></span><span class="d" id="built"></span>
+</header>
+<div id="bar">
+  <input id="q" type="search" placeholder="Rechercher un verbe, un flag, un usage… (ex : batch, zoom, police)">
+  <!-- boutons catégories injectés par JS -->
+</div>
+<main>
+  <section id="verbs"></section>
+  <section id="chains"><h2 class="cat">Chaînes types</h2></section>
+</main>
+<script>
+/*__DATA__*/
+const LABELS = { creer:"Créer", peupler:"Peupler", captions:"Captions & Styles", editer:"Éditer",
+                 animer:"Animer", reparer:"Réparer & Valider", decouvrir:"Découvrir" };
+const ORDER = ["creer","peupler","captions","editer","animer","reparer","decouvrir"];
+document.getElementById("ver").textContent = "v" + DATA.version;
+document.getElementById("built").textContent = "généré le " + DATA.builtAt;
+
+const bar = document.getElementById("bar");
+const active = new Set();
+for (const c of ORDER) {
+  const b = document.createElement("button");
+  b.className = "cat-btn"; b.textContent = LABELS[c]; b.dataset.cat = c;
+  b.onclick = () => { b.classList.toggle("on"); b.classList.contains("on") ? active.add(c) : active.delete(c); render(); };
+  bar.appendChild(b);
+}
+
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function card(c){
+  const badges = [
+    c.readOnly ? '<span class="badge b-ro">🔍 lecture seule</span>' : '<span class="badge b-wr">✏️ écrit</span>',
+    c.capcutClosed ? '<span class="badge b-cc">⚠️ CapCut fermé</span>' : "",
+    `<span class="badge b-v">depuis ${c.since}</span>`,
+  ].join(" ");
+  const flags = c.flags.map(f =>
+    `<tr><td>${esc(f.flag)}</td><td>${esc(f.desc)}${f.since ? ` <span class="badge b-v">${f.since}</span>` : ""}</td></tr>`).join("");
+  return `<div class="card" id="verb-${c.verb}" data-cat="${c.category}"
+    data-hay="${esc((c.verb+" "+c.summary+" "+c.signature+" "+c.flags.map(f=>f.flag+" "+f.desc).join(" ")).toLowerCase())}">
+    <h3><code>${c.verb}</code> ${badges}</h3>
+    <div class="sig">capcut-david ${esc(c.signature)}</div>
+    <div>${esc(c.summary)}</div>
+    ${flags ? `<table class="flags">${flags}</table>` : ""}
+    <div class="ex"><span>${esc(c.example)}</span><button onclick="navigator.clipboard.writeText(${JSON.stringify(c.example).replace(/"/g,"&quot;")})">copier</button></div>
+  </div>`;
+}
+function render(){
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  let html = "";
+  for (const cat of ORDER) {
+    const cs = DATA.capabilities.filter(c => c.category === cat)
+      .filter(c => !active.size || active.has(c.category))
+      .filter(c => !q || (c.verb+" "+c.summary+" "+c.signature+" "+c.flags.map(f=>f.flag+" "+f.desc).join(" ")).toLowerCase().includes(q));
+    if (cs.length) html += `<h2 class="cat">${LABELS[cat]}</h2>` + cs.map(card).join("");
+  }
+  document.getElementById("verbs").innerHTML = html || "<p>Aucun verbe ne correspond.</p>";
+}
+document.getElementById("q").oninput = render;
+render();
+
+const chains = document.getElementById("chains");
+for (const ch of DATA.chains) {
+  const div = document.createElement("div"); div.className = "card";
+  div.innerHTML = `<h3>${esc(ch.name)}</h3>` + ch.steps.map((s,i) =>
+    `<div class="step">${i+1}. <code onclick="document.getElementById('q').value='';active.clear();document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('on'));render();document.getElementById('verb-${s.verb}').scrollIntoView({behavior:'smooth'})">${s.verb}</code> — ${esc(s.note)}</div>`).join("");
+  chains.appendChild(div);
+}
+</script>
+</body>
+</html>
