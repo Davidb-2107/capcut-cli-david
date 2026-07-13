@@ -35,7 +35,7 @@ capcut-david ui          résout le chemin dans le paquet installé et l'ouvre
 
 ```ts
 export type CapabilityCategory =
-  | "creer" | "peupler" | "captions" | "animer" | "reparer" | "decouvrir";
+  | "creer" | "peupler" | "captions" | "editer" | "animer" | "reparer" | "decouvrir";
 
 export interface CapabilityFlag {
   flag: string;          // "--batch @items.json"
@@ -64,11 +64,13 @@ export interface Chain {           // section éditoriale « chaînes types »
 export const CHAINS: Chain[];      // Stickman, Repost phase 5, psycho-build (pipeline)
 ```
 
-Catégories (ordre d'affichage) : Créer (init, init-meta, register, pipeline) ·
-Peupler (add-video, add-audio, add-text, import-captions, import-srt…) ·
-Captions/Styles (restyle, make-preset, gabarits → pointe vers query) ·
-Animer (ken-burns, add-keyframe, animations) · Réparer/Valider (validate,
-validate --fix, sync-timelines, gc) · Découvrir (query, tracks, info, ui lui-même).
+Catégories (ordre d'affichage) : Créer (init, init-meta, register, psycho-build,
+save/apply-template) · Peupler (add-video, add-audio, add-text, import-captions) ·
+Captions/Styles (restyle, make-preset, set-text, texts, export-srt) ·
+Éditer (shift, shift-all, speed, volume, trim, opacity, cut, batch) ·
+Animer (ken-burns, add-keyframe, add-effect) · Réparer/Valider (validate,
+sync-timelines, gc) · Découvrir (query, info, tracks, segments, materials,
+segment, material, ui).
 La liste exacte des verbes vient du dispatch réel de `index.ts` au moment de
 l'implémentation — le test anti-dérive (ci-dessous) fait foi, pas cette prose.
 
