@@ -29,7 +29,6 @@
   .ex { display:flex; gap:8px; align-items:center; background:#0d1117; border-radius:6px; padding:8px 10px; font-family:Consolas,monospace; font-size:13px; overflow-x:auto; }
   .ex button { margin-left:auto; flex:none; cursor:pointer; border:1px solid #2a3038; background:var(--card); color:var(--tx); border-radius:6px; padding:3px 10px; }
   #chains .step { margin:4px 0 4px 16px; } #chains .step code { color:var(--acc); cursor:pointer; }
-  .hidden { display:none; }
 </style>
 </head>
 <body>
@@ -47,9 +46,8 @@
 </main>
 <script>
 /*__DATA__*/
-const LABELS = { creer:"Créer", peupler:"Peupler", captions:"Captions & Styles", editer:"Éditer",
-                 animer:"Animer", reparer:"Réparer & Valider", decouvrir:"Découvrir" };
-const ORDER = ["creer","peupler","captions","editer","animer","reparer","decouvrir"];
+const LABELS = DATA.categoryLabels;
+const ORDER = Object.keys(LABELS);
 document.getElementById("ver").textContent = "v" + DATA.version;
 document.getElementById("built").textContent = "généré le " + DATA.builtAt;
 
@@ -71,8 +69,7 @@ function card(c){
   ].join(" ");
   const flags = c.flags.map(f =>
     `<tr><td>${esc(f.flag)}</td><td>${esc(f.desc)}${f.since ? ` <span class="badge b-v">${f.since}</span>` : ""}</td></tr>`).join("");
-  return `<div class="card" id="verb-${c.verb}" data-cat="${c.category}"
-    data-hay="${esc((c.verb+" "+c.summary+" "+c.signature+" "+c.flags.map(f=>f.flag+" "+f.desc).join(" ")).toLowerCase())}">
+  return `<div class="card" id="verb-${c.verb}">
     <h3><code>${c.verb}</code> ${badges}</h3>
     <div class="sig">capcut-david ${esc(c.signature)}</div>
     <div>${esc(c.summary)}</div>

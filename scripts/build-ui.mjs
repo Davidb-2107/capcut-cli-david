@@ -5,7 +5,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const { CAPABILITIES, CHAINS } = await import(new URL("../dist/capabilities.js", import.meta.url));
+const { CAPABILITIES, CHAINS, CATEGORY_LABELS } = await import(new URL("../dist/capabilities.js", import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf-8"));
 
 const data = {
@@ -13,6 +13,7 @@ const data = {
   builtAt: new Date().toISOString().slice(0, 10),
   capabilities: CAPABILITIES,
   chains: CHAINS,
+  categoryLabels: CATEGORY_LABELS,
 };
 const template = readFileSync(resolve(ROOT, "src/ui/template.html"), "utf-8");
 const marker = "/*__DATA__*/";
