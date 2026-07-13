@@ -6,7 +6,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, copyFileSy
 import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
 
-import { initDraft, addVideo } from "../dist/commands/create.js";
+import { initDraft, addVideo, addAudio } from "../dist/commands/create.js";
 import { loadDraft, saveDraft } from "../dist/draft.js";
 import { FIXTURES, fixturePath } from "./helpers/load-fixture.mjs";
 import { runCli } from "./helpers/spawn-cli.mjs";
@@ -116,4 +116,39 @@ test("oracle: batch of 2 ≡ 2 unitary addVideo calls (modulo uuids)", (t) => {
       .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, "UUID")
       .replace(/capcut-batch-[^"\\/]+/g, "TMP");
   strictEqual(canon(a.filePath), canon(b.filePath));
+});
+
+// ---------- add-audio --batch ----------
+
+test("add-audio --batch: ordered ids + volume per item", (t) => {
+  const { filePath, base } = makeDraft(t);
+  const sfx1 = resolve(base, "a.mp3");
+  writeFileSync(sfx1, "x");
+  const sfx2 = resolve(base, "b.mp3");
+  writeFileSync(sfx2, "y");
+  const items = writeItems(base, "audios.json", [
+    { path: sfx1, start: 0, duration: 500_000, volume: 0.8 },
+    { path: sfx2, start: 500_000, duration: 500_000, volume: 0.3 },
+  ]);
+  const r = runCli(["add-audio", filePath, "--batch", `@${items}`]);
+  strictEqual(r.status, 0, r.stderr);
+  const outJson = JSON.parse(r.stdout);
+  strictEqual(outJson.ok, true);
+  strictEqual(outJson.count, 2);
+  const { draft } = loadDraft(filePath);
+  const track = draft.tracks.find((tr) => tr.type === "audio");
+  deepStrictEqual(track.segments.map((s) => s.id), outJson.segment_ids);
+  strictEqual(track.segments[0].volume, 0.8);
+  strictEqual(track.segments[1].volume, 0.3);
+});
+
+test("add-audio --batch: all-or-nothing on missing file", (t) => {
+  const { filePath, base } = makeDraft(t);
+  const before = readFileSync(filePath, "utf-8");
+  const items = writeItems(base, "badaudio.json", [
+    { path: resolve(base, "nope.mp3"), start: 0, duration: 100_000 },
+  ]);
+  const r = runCli(["add-audio", filePath, "--batch", `@${items}`]);
+  strictEqual(r.status, 1);
+  strictEqual(readFileSync(filePath, "utf-8"), before);
 });

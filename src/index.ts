@@ -3,6 +3,7 @@
 import { cmdBatch } from "./commands/batch.js";
 import {
   cmdAddAudio,
+  cmdAddAudioBatch,
   cmdAddEffect,
   cmdAddText,
   cmdAddVideo,
@@ -425,8 +426,13 @@ function main(): void {
       cmdMaterialDetail(draft, positional[2], flags);
       break;
     case "add-audio":
-      requireArgs(positional, 5, "capcut-david add-audio <project> <file> <start> <duration>");
-      cmdAddAudio(draft, filePath, positional, flags);
+      if (flags.batch !== undefined) {
+        if (positional.length > 2) die("--batch cannot be combined with a positional file");
+        cmdAddAudioBatch(draft, filePath, flags);
+      } else {
+        requireArgs(positional, 5, "capcut-david add-audio <project> <file> <start> <duration>");
+        cmdAddAudio(draft, filePath, positional, flags);
+      }
       break;
     case "add-video":
       if (flags.batch !== undefined) {

@@ -703,6 +703,29 @@ export function cmdAddVideoBatch(draft: Draft, filePath: string, flags: Flags): 
   out({ ok: true, count: items.length, segment_ids, material_ids, track_ids }, flags);
 }
 
+export function cmdAddAudioBatch(draft: Draft, filePath: string, flags: Flags): void {
+  const raw = readBatchItems(flags.batch as string, "add-audio");
+  // all-or-nothing: validate EVERY item before the first mutation
+  const items = raw.map((it, i) => normalizeMediaItem(it, i + 1, "add-audio"));
+  const segment_ids: string[] = [];
+  const material_ids: string[] = [];
+  const track_ids: string[] = [];
+  for (const it of items) {
+    const r = addAudio(draft, filePath, {
+      path: it.path,
+      start: it.start,
+      duration: it.duration,
+      volume: it.volume,
+      trackName: it.trackName,
+    });
+    segment_ids.push(r.segmentId);
+    material_ids.push(r.materialId);
+    track_ids.push(r.trackId);
+  }
+  saveDraft(filePath, draft); // ONE save
+  out({ ok: true, count: items.length, segment_ids, material_ids, track_ids }, flags);
+}
+
 /** Default keyword-highlight color (gold-yellow [1.0, 0.84, 0.0]). */
 export const DEFAULT_HIGHLIGHT_COLOR = "#FFD600";
 
