@@ -152,3 +152,46 @@ test("add-audio --batch: all-or-nothing on missing file", (t) => {
   strictEqual(r.status, 1);
   strictEqual(readFileSync(filePath, "utf-8"), before);
 });
+
+// ---------- add-keyframe --batch ----------
+
+test("add-keyframe --batch: Ken Burns pair on two segments, one save", (t) => {
+  const { filePath, clip, still, base } = makeDraft(t);
+  const vids = writeItems(base, "kv.json", [
+    { path: clip, start: 0, duration: 2_000_000 },
+    { path: still, start: 2_000_000, duration: 2_000_000 },
+  ]);
+  const rv = runCli(["add-video", filePath, "--batch", `@${vids}`]);
+  const ids = JSON.parse(rv.stdout).segment_ids;
+  const entries = writeItems(base, "kf.json", ids.flatMap((id) => [
+    { segment_id: id, property: "scale_x", keyframes: [
+      { time: 0, value: 1.0, curve: "ease-out" },
+      { time: 2_000_000, value: 1.08, curve: "ease-out" },
+    ]},
+    { segment_id: id, property: "scale_y", keyframes: [
+      { time: 0, value: 1.0, curve: "ease-out" },
+      { time: 2_000_000, value: 1.08, curve: "ease-out" },
+    ]},
+  ]));
+  const r = runCli(["add-keyframe", filePath, "--batch", `@${entries}`]);
+  strictEqual(r.status, 0, r.stderr);
+  strictEqual(JSON.parse(r.stdout).count, 8);
+  const { draft } = loadDraft(filePath);
+  const seg = draft.tracks.find((tr) => tr.type === "video").segments[0];
+  strictEqual(seg.common_keyframes.length >= 2, true, "keyframe lists missing on segment 1");
+});
+
+test("add-keyframe --batch: unknown segment_id dies without saving", (t) => {
+  const { filePath, clip, base } = makeDraft(t);
+  const vids = writeItems(base, "kv2.json", [{ path: clip, start: 0, duration: 1_000_000 }]);
+  runCli(["add-video", filePath, "--batch", `@${vids}`]);
+  const before = readFileSync(filePath, "utf-8");
+  const entries = writeItems(base, "badkf.json", [
+    { segment_id: "00000000-0000-0000-0000-000000000000", property: "scale_x",
+      keyframes: [{ time: 0, value: 1.0 }] },
+  ]);
+  const r = runCli(["add-keyframe", filePath, "--batch", `@${entries}`]);
+  strictEqual(r.status, 1);
+  match(r.stderr, /Segment not found/);
+  strictEqual(readFileSync(filePath, "utf-8"), before);
+});

@@ -25,7 +25,7 @@ import {
   cmdTexts,
   cmdTracks,
 } from "./commands/inspect.js";
-import { cmdAddKeyframe, cmdKenBurns } from "./commands/keyframe.js";
+import { cmdAddKeyframe, cmdAddKeyframeBatch, cmdKenBurns } from "./commands/keyframe.js";
 import { cmdMakePreset } from "./commands/make-preset.js";
 import { cmdPsychoBuild } from "./commands/pipeline.js";
 import { cmdQuery } from "./commands/query.js";
@@ -122,6 +122,10 @@ Keyframes:
                Insert/update a keyframe at <time> on <id>.
                Properties: scale_x, scale_y, position_x, position_y, rotation, alpha
                Curves:     linear (default), ease-in, ease-out, ease-in-out
+  add-keyframe <project> --batch @entries.json
+               batch: [{segment_id,property,keyframes:[{time,value,curve?}]}]
+               — one call per {segment_id,property,time,value,curve}; all-or-nothing
+               (segment existence checked before any write), one save.
   ken-burns    <project> <id> --from <scale> --to <scale> [--curve <c>]
                Apply a Ken Burns zoom — paired scale_x/scale_y keyframes
                from t=0 to t=segment.duration. Default curve: ease-out.
@@ -470,8 +474,12 @@ function main(): void {
       cmdBatch(draft, filePath, flags);
       break;
     case "add-keyframe":
-      requireArgs(positional, 4, "capcut-david add-keyframe <project> <id> <time> --property <p> --value <v>");
-      cmdAddKeyframe(draft, filePath, positional[2], positional[3], flags.property, flags.value, flags.curve, flags);
+      if (flags.batch !== undefined) {
+        cmdAddKeyframeBatch(draft, filePath, flags);
+      } else {
+        requireArgs(positional, 4, "capcut-david add-keyframe <project> <id> <time> --property <p> --value <v>");
+        cmdAddKeyframe(draft, filePath, positional[2], positional[3], flags.property, flags.value, flags.curve, flags);
+      }
       break;
     case "ken-burns":
       requireArgs(positional, 3, "capcut-david ken-burns <project> <id> --from <scale> --to <scale>");
