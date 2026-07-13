@@ -74,7 +74,7 @@ function card(c){
     <div class="sig">capcut-david ${esc(c.signature)}</div>
     <div>${esc(c.summary)}</div>
     ${flags ? `<table class="flags">${flags}</table>` : ""}
-    <div class="ex"><span>${esc(c.example)}</span><button onclick="navigator.clipboard.writeText(${JSON.stringify(c.example).replace(/"/g,"&quot;")})">copier</button></div>
+    <div class="ex"><span>${esc(c.example)}</span><button onclick="navigator.clipboard.writeText(${JSON.stringify(c.example).replace(/"/g,"&quot;")}).then(()=>{this.textContent='copié ✓';setTimeout(()=>{this.textContent='copier'},1200)})">copier</button></div>
   </div>`;
 }
 function render(){
