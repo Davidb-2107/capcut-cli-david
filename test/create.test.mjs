@@ -547,3 +547,33 @@ test("add-effect (CLI): --value out of range returns error", () => {
   ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
   match(r.errorJson.error, /--value must be a number in range/i);
 });
+
+// =============================================================
+// init --width/--height (v2.1.0)
+// =============================================================
+
+test("initDraft rewrites canvas_config when width+height given", (t) => {
+  const templateDir = makeTemplateDir(t);
+  const draftsDir = makeScratchDir(t);
+  const { filePath } = initDraft({ name: "portrait", templateDir, draftsDir, width: 1080, height: 1920 });
+  const content = JSON.parse(readFileSync(filePath, "utf-8"));
+  strictEqual(content.canvas_config.width, 1080);
+  strictEqual(content.canvas_config.height, 1920);
+});
+
+test("initDraft keeps template canvas when width/height omitted", (t) => {
+  const templateDir = makeTemplateDir(t);
+  const draftsDir = makeScratchDir(t);
+  const { filePath } = initDraft({ name: "landscape", templateDir, draftsDir });
+  const content = JSON.parse(readFileSync(filePath, "utf-8"));
+  strictEqual(content.canvas_config.width, 1920);
+  strictEqual(content.canvas_config.height, 1080);
+});
+
+test("CLI: init dies on one-sided --width", (t) => {
+  const templateDir = makeTemplateDir(t);
+  const draftsDir = makeScratchDir(t);
+  const r = runCli(["init", "onesided", "--template", templateDir, "--drafts", draftsDir, "--width", "1080"]);
+  strictEqual(r.status, 1);
+  match(r.stderr, /--width and --height must be given together/);
+});

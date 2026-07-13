@@ -13,6 +13,8 @@ export interface InitOptions {
   name: string;
   templateDir: string;
   draftsDir: string;
+  width?: number;
+  height?: number;
 }
 
 export function initDraft(opts: InitOptions): { draftPath: string; filePath: string } {
@@ -30,6 +32,9 @@ export function initDraft(opts: InitOptions): { draftPath: string; filePath: str
       const draft = JSON.parse(raw) as Draft;
       draft.name = opts.name;
       draft.id = uuid();
+      if (opts.width !== undefined && opts.height !== undefined) {
+        draft.canvas_config = { ...draft.canvas_config, width: opts.width, height: opts.height };
+      }
       writeFileSync(fp, JSON.stringify(draft, null, 0), "utf-8");
       return { draftPath, filePath: fp };
     }
@@ -555,7 +560,9 @@ export function cmdInit(positional: string[], flags: Flags): void {
   }
   const draftsDir = flags.drafts ?? defaultProjectsRoot();
   if (!existsSync(draftsDir)) mkdirSync(draftsDir, { recursive: true });
-  const result = initDraft({ name, templateDir, draftsDir });
+  const oneSided = (flags.width === undefined) !== (flags.height === undefined);
+  if (oneSided) die("--width and --height must be given together");
+  const result = initDraft({ name, templateDir, draftsDir, width: flags.width, height: flags.height });
   out({ ok: true, name, draft_path: result.draftPath, file_path: result.filePath }, flags);
   if (!flags.quiet) process.stderr.write(`Created: ${result.draftPath}\n`);
 }

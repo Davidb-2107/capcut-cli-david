@@ -58,7 +58,7 @@ Detail (drill into one item):
   material   <project> <id>                     Full detail for one material
 
 Create:
-  init       <name> [--template <dir>] [--drafts <dir>]
+  init       <name> [--template <dir>] [--drafts <dir>] [--width <n> --height <n>]
              Create a new empty draft from template.
 
 Add:
@@ -226,6 +226,10 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.x = parseFloat(args[++i]);
     } else if (a === "--y" && i + 1 < args.length) {
       flags.y = parseFloat(args[++i]);
+    } else if (a === "--width" && i + 1 < args.length) {
+      flags.width = parseInt(args[++i], 10);
+    } else if (a === "--height" && i + 1 < args.length) {
+      flags.height = parseInt(args[++i], 10);
     } else if (a === "--track-name" && i + 1 < args.length) {
       flags.trackName = args[++i];
     } else if (a === "--volume" && i + 1 < args.length) {

@@ -41,6 +41,8 @@ export interface Flags {
   fix?: boolean;
   apply?: boolean;
   font?: string;
+  width?: number;
+  height?: number;
 }
 
 export class CliError extends Error {
