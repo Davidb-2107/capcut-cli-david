@@ -1,6 +1,6 @@
 {
   "name": "capcut-cli-david",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Fork of capcut-cli — CapCut/JianYing draft CLI extended with creation primitives (keyframes, Ken Burns) and the psycho-build pipeline for the TikTok paranoia niche.",
   "type": "module",
   "bin": {

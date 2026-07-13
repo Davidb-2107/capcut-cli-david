@@ -11,6 +11,21 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [2.1.0] — 2026-07-13
+
+Minor release. **Batch media verbs** — `init --width/--height`, and `add-video`/`add-audio`/`add-keyframe --batch @file` for building a mono-engine montage pipeline without shelling out per-clip.
+
+### Added
+- **`init --width/--height`** — canvas override at draft creation, for portrait (9:16) drafts without needing `cutcli` as a first step.
+- **`add-video --batch @items.json`** — add many video segments in one call: `[{path,start,duration,width?,height?,volume?,trackName?}]`. All-or-nothing (any item failing validation aborts before any write), **one `saveDraft` call** for the whole batch, and returns ordered `segment_ids`/`material_ids`/`track_ids` plus a `count`.
+- **`add-audio --batch @items.json`** — same contract for audio (SFX/multi-track narration in one save): `[{path,start,duration,volume?,trackName?}]`.
+- **`add-keyframe --batch @entries.json`** — Ken Burns / keyframe batches in one save: `[{segment_id,property,keyframes:[{time,value,curve?}]}]`. Reuses `cmdAddKeyframe` internally with `save=false` per entry and a single `saveDraft` at the end (the existing `if (save)` guard on `cmdAddKeyframe` is what makes this safe — unitary `add-keyframe` calls are unaffected).
+- `--help` now advertises all three `--batch` forms — orchestrators can grep `--help` for `--batch` as the ≥ 2.1.0 version-gate marker (same probe pattern as prior releases).
+
+### Compatibility
+- Unitary (non-`--batch`) `add-video`/`add-audio`/`add-keyframe` and `init` (no `--width`/`--height`) are byte-identical to 2.0.1 — the batch paths are additive, opt-in flags.
+- `--batch` cannot be combined with a positional file argument (`die("--batch cannot be combined with a positional file")`).
+
 ## [2.0.1] — 2026-07-12
 
 Patch release. One bugfix, no API changes, no new verbs.
