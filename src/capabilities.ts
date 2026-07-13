@@ -565,6 +565,18 @@ export const CAPABILITIES: Capability[] = [
     capcutClosed: false,
     since: "0.1.0",
   },
+  {
+    verb: "ui",
+    category: "decouvrir",
+    summary:
+      "Ouvre cette carte des capacités dans le navigateur (page embarquée dans le paquet — toujours synchro avec la version installée).",
+    signature: "ui [--print-path]",
+    flags: [{ flag: "--print-path", desc: "affiche le chemin de la page sans l'ouvrir" }],
+    example: "capcut-david ui",
+    readOnly: true,
+    capcutClosed: false,
+    since: "2.2.0",
+  },
 ];
 
 export const CHAINS: Chain[] = [

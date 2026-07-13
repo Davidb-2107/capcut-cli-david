@@ -33,6 +33,7 @@ import { cmdRegister } from "./commands/register.js";
 import { cmdRestyle } from "./commands/restyle.js";
 import { cmdSyncTimelines } from "./commands/sync-timelines.js";
 import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template.js";
+import { cmdUi } from "./commands/ui.js";
 import { cmdValidate } from "./commands/validate.js";
 import { cmdValidateFix } from "./commands/validate-fix.js";
 import { loadDraft } from "./draft.js";
@@ -200,6 +201,10 @@ Catalogue:
              preset file; otherwise it's in the JSON envelope. Read-only. Exit 0
              (incl. no-match / ambiguous), 2 if the drafts root is missing or the
              matched font is local-only (no resource_id), 1 on usage error.
+
+  ui         [--print-path]                     Ouvre la carte des capacités du moteur dans le navigateur
+             (page embarquée dans le paquet). --print-path affiche le chemin
+             absolu de la page sans l'ouvrir (headless/tests).
 
 Project:
   cut        <project> <start> <end> --out <path>
@@ -371,6 +376,11 @@ function main(): void {
 
   if (cmd === "make-preset") {
     process.exit(cmdMakePreset(flags));
+  }
+
+  if (cmd === "ui") {
+    cmdUi(positional.includes("--print-path"));
+    process.exit(0);
   }
 
   if (!projectPath) die("Missing project path. Run 'capcut-david --help' for usage.");
