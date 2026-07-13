@@ -11,6 +11,18 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [2.2.0] — 2026-07-13
+
+Minor release. **Capabilities UI** — read-only `ui` verb and a self-contained embedded HTML page cataloguing all 37 verbs (registry, anti-drift tested), with native discovery (no external resources).
+
+### Added
+- **`ui` verb** — read-only discovery and inspection. `--print-path` outputs the path to the embedded capabilities HTML page (headless orchestrator gate).
+- **Typed capability registry** — all 37 verbs introspected via `src/capabilities.ts` and baked into a schema: name, category (read/write), description, example, first release, and key flags. Anti-drift testing ensures the registry stays in sync with actual command definitions.
+- **Embedded HTML page** — `dist/ui/index.html`, generated at build time by `scripts/build-ui.mjs`. Self-contained (zero external resources, all assets inlined), version-baked into the JSON payload, and testable for integrity (zero network access, link integrity check).
+
+### Compatibility
+- `ui` is read-only and has no side effects on drafts.
+
 ## [2.1.0] — 2026-07-13
 
 Minor release. **Batch media verbs** — `init --width/--height`, and `add-video`/`add-audio`/`add-keyframe --batch @file` for building a mono-engine montage pipeline without shelling out per-clip.
