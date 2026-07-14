@@ -89,10 +89,12 @@ Add:
               [--keyword-size <n>]
               Keyword highlight: color one word/range (default #FFD600);
               --keyword-size sets the highlighted word's font size (points).
-  import-captions <project> <captions.json> [--color <hex>] [--highlight-color <hex>]
-              [--highlight-size <n>] [--transform-y <n>] [--track-name <s>] [--clone-style]
+  import-captions <project> <captions.json> [--color <hex>] [--color-cycle <hex,hex,...>]
+              [--highlight-color <hex>] [--highlight-size <n>] [--transform-y <n>]
+              [--track-name <s>] [--clone-style]
               Batch word/keyword captions from [{text,start,end,hl?,color?,hlSize?}];
               replaces the text track (start/end in microseconds).
+              --color-cycle: per-card base color, card i uses cycle[i % n] (overrides --color).
               --highlight-size: default font size for hl spans (per-card hlSize wins).
               --transform-y: clip.transform.y for every rebuilt caption segment
               (vertical position; negatives allowed, e.g. -0.4 = mi-bas).
@@ -244,6 +246,12 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.fontSize = parseFloat(args[++i]);
     } else if (a === "--color" && i + 1 < args.length) {
       flags.color = args[++i];
+    } else if (a === "--color-cycle" && i + 1 < args.length) {
+      flags.colorCycle = args[++i]
+        .split(",")
+        .map((h) => h.trim())
+        .filter((h) => h.length > 0);
+      if (flags.colorCycle.length === 0) die("--color-cycle requires at least one hex color (e.g. #FF00FF,#00FFFF)");
     } else if (a === "--align" && i + 1 < args.length) {
       flags.align = parseInt(args[++i], 10);
     } else if (a === "--x" && i + 1 < args.length) {

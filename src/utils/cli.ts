@@ -5,6 +5,7 @@ export interface Flags {
   out?: string;
   fontSize?: number;
   color?: string;
+  colorCycle?: string[];
   align?: number;
   x?: number;
   y?: number;

@@ -816,6 +816,8 @@ export interface ImportCaptionsOptions {
   highlightSize?: number;
   fontSize?: number;
   color?: string;
+  /** Per-card base color cycle: card i uses colorCycle[i % colorCycle.length], overriding `color`. */
+  colorCycle?: string[];
   alignment?: number;
   /** clip.transform.y for every rebuilt segment (global; negatives allowed). */
   transformY?: number;
@@ -902,6 +904,8 @@ export function importCaptions(
     }
     const matId = uuid();
     const segId = uuid();
+    const cardHex = opts.colorCycle && opts.colorCycle.length > 0 ? opts.colorCycle[i % opts.colorCycle.length] : baseHex;
+    const cardRgb = cardHex === baseHex ? baseRgb : hexToRgb(cardHex);
     const hl = card.hl;
     // Batch tolerance (1:1 with the patcher): a degenerate/sentinel range (e.g. [0,0]
     // or any e <= s) means "no highlight on this card" — NOT an error, unlike the strict
@@ -916,13 +920,13 @@ export function importCaptions(
       // becomes rich-text (patcher parity) so the user's look survives on all spans.
       const mat = JSON.parse(JSON.stringify(cloneTpl.material)) as Record<string, unknown>;
       mat.id = matId;
-      mat.content = buildRichTextContent(card.text, fontSize, baseRgb, highlights, cloneTpl.styleBlock);
+      mat.content = buildRichTextContent(card.text, fontSize, cardRgb, highlights, cloneTpl.styleBlock);
       mat.base_content = card.text;
       if ("recognize_text" in mat) mat.recognize_text = card.text;
       mat.is_rich_text = true;
       texts.push(mat);
     } else {
-      texts.push(buildTextMaterial(matId, card.text, fontSize, baseRgb, baseHex, alignment, highlights));
+      texts.push(buildTextMaterial(matId, card.text, fontSize, cardRgb, cardHex, alignment, highlights));
     }
     const companions = createCompanionMaterials("text");
     registerCompanions(draft, companions);
@@ -943,7 +947,7 @@ export function cmdImportCaptions(draft: Draft, filePath: string, positional: st
   const jsonPath = positional[2];
   if (!jsonPath) {
     die(
-      "Missing <captions.json>. Usage: capcut-david import-captions <project> <captions.json> [--color <hex>] [--highlight-color <hex>] [--highlight-size <n>] [--transform-y <n>] [--track-name <name>]",
+      "Missing <captions.json>. Usage: capcut-david import-captions <project> <captions.json> [--color <hex>] [--color-cycle <hex,hex,...>] [--highlight-color <hex>] [--highlight-size <n>] [--transform-y <n>] [--track-name <name>]",
     );
   }
   if (!existsSync(jsonPath)) die(`Captions file not found: ${jsonPath}`);
@@ -962,6 +966,7 @@ export function cmdImportCaptions(draft: Draft, filePath: string, positional: st
     highlightSize: flags.highlightSize ?? flags.keywordSize,
     fontSize: flags.fontSize,
     color: flags.color,
+    colorCycle: flags.colorCycle,
     alignment: flags.align,
     transformY: flags.transformY,
     cloneStyle: flags.cloneStyle,

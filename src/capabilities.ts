@@ -202,9 +202,14 @@ export const CAPABILITIES: Capability[] = [
     summary:
       "Injecte un lot de captions mot-par-mot depuis un JSON (remplace toute la piste texte). Surlignage par carte, clonage de style CapCut existant, et positionnement vertical natif.",
     signature:
-      "import-captions <project> <captions.json> [--color <hex>] [--highlight-color <hex>] [--highlight-size <n>] [--transform-y <n>] [--track-name <s>] [--clone-style]",
+      "import-captions <project> <captions.json> [--color <hex>] [--color-cycle <hex,hex,...>] [--highlight-color <hex>] [--highlight-size <n>] [--transform-y <n>] [--track-name <s>] [--clone-style]",
     flags: [
       { flag: "--color <hex>", desc: "couleur de base des captions" },
+      {
+        flag: "--color-cycle <hex,hex,...>",
+        desc: "couleur de base par carte, carte i = cycle[i % n] (remplace --color)",
+        since: "2.3.0",
+      },
       { flag: "--highlight-color <hex>", desc: "couleur de surlignage par défaut" },
       {
         flag: "--highlight-size <n>",
