@@ -11,6 +11,16 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [2.3.0] — 2026-07-14
+
+Minor release. **Per-card caption color cycling** — alternate a caption's base color across a repeating palette, card by card (the "1 word / alternating color" karaoke look).
+
+### Added
+- **`import-captions --color-cycle "#hex,#hex,..."`** — card `i`'s base text color becomes `cycle[i % n]`, overriding the uniform `--color`/default `#FFFFFF`. Applies to both the lean and `--clone-style` paths. Verified against a real CapCut draft: `restyle` (font/stroke/shadow preset swap) preserves the cycled colors unchanged.
+
+### Compatibility
+- `import-captions` without `--color-cycle` is byte-identical to 2.2.0 — the cycle is an additive, opt-in override.
+
 ## [2.2.0] — 2026-07-13
 
 Minor release. **Capabilities UI** — read-only `ui` verb and a self-contained embedded HTML page cataloguing all 37 verbs (registry, anti-drift tested), with native discovery (no external resources).
@@ -658,7 +668,8 @@ First release of the fork. Baseline = upstream `capcut-cli@0.2.2` (commit `c9223
 - Node ≥ 18; CI matrix covers Node 18, 20, 22.
 - JianYing 6+ remains unsupported (encrypted `draft_content.json` — see `COMPATIBILITY.md` §5).
 
-[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.0.1...HEAD
+[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.2.0...v2.3.0
 [2.0.1]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.16.0...v2.0.0
 [1.2.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.1.1...v1.2.0
