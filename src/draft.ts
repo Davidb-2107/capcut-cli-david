@@ -108,7 +108,10 @@ let rawOriginal: string | null = null;
 
 export function loadDraft(path: string): { draft: Draft; filePath: string } {
   const filePath = findDraft(path);
+  // Tolerate a UTF-8 BOM: external Windows tools (PowerShell Set-Content) add
+  // one and JSON.parse rejects it. saveDraft re-serializes, so it never persists.
   rawOriginal = readFileSync(filePath, "utf-8");
+  if (rawOriginal.charCodeAt(0) === 0xfeff) rawOriginal = rawOriginal.slice(1);
   const draft = JSON.parse(rawOriginal) as Draft;
   return { draft, filePath };
 }
