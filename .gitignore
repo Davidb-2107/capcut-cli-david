@@ -9,3 +9,6 @@ dist/
 
 # claude-mem session-memory dump — auto-regenerated each session, not source
 AGENTS.md
+
+# throwaway scratch/debug scripts
+temp/
