@@ -438,6 +438,18 @@ export const CAPABILITIES: Capability[] = [
     capcutClosed: true,
     since: "1.1.0",
   },
+  {
+    verb: "add-filter",
+    category: "animer",
+    summary:
+      "Applique un filtre (famille Filters, distincte des effets vidéo) via son resource_id de catalogue, sur une plage temporelle donnée.",
+    signature: "add-filter <project> <resource-id> <name> <start> <duration> [--value <n>]",
+    flags: [{ flag: "--value <n>", desc: "intensité du filtre [0,1]" }],
+    example: 'capcut-david add-filter "<draft-dir>" 7083809725615247874 "Western" 0s 60s',
+    readOnly: false,
+    capcutClosed: true,
+    since: "2.4.0",
+  },
 
   // ---- reparer ----------------------------------------------------------
   {

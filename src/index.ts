@@ -5,6 +5,7 @@ import {
   cmdAddAudio,
   cmdAddAudioBatch,
   cmdAddEffect,
+  cmdAddFilter,
   cmdAddText,
   cmdAddVideo,
   cmdAddVideoBatch,
@@ -102,6 +103,9 @@ Add:
   add-effect <project> <resource-id> <name> <start> <duration>
               [--value <n>] [--bind <segment-id>]
               Apply a video effect (FX) via its catalogue resource ID.
+  add-filter <project> <resource-id> <name> <start> <duration> [--value <n>]
+              Apply a filter (Filters family, distinct from FX) via its
+              catalogue resource ID.
 
 Style:
   restyle    <project> --preset <preset.json> [--track-name <s>]
@@ -510,6 +514,14 @@ function main(): void {
         "capcut-david add-effect <project> <resource-id> <name> <start> <duration> [--value <n>] [--bind <segment-id>]",
       );
       cmdAddEffect(draft, filePath, positional, flags);
+      break;
+    case "add-filter":
+      requireArgs(
+        positional,
+        6,
+        "capcut-david add-filter <project> <resource-id> <name> <start> <duration> [--value <n>]",
+      );
+      cmdAddFilter(draft, filePath, positional, flags);
       break;
     case "restyle":
       requireArgs(positional, 2, "capcut-david restyle <project> --preset <preset.json> [--track-name <name>]");

@@ -11,6 +11,22 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+## [2.4.0] — 2026-07-17
+
+Minor release. **`add-filter`** — applique un filtre CapCut natif via son `resource_id` de catalogue.
+
+### Added
+- **`add-filter <project> <resource-id> <name> <start> <duration> [--value <n>]`** —
+  applique un filtre (famille **Filters**, distincte des effets vidéo `add-effect`)
+  sur une plage temporelle. Material `type:"filter"` dans `materials.effects` +
+  piste `filter` dédiée (`render_index` 10000, `apply_target_type` 0) — forme
+  miroir de ce que CapCut écrit lui-même quand un filtre est posé dans l'UI.
+  38ᵉ verbe au registre ; garde CapCut-ouvert appliquée.
+
+### Fixed
+- `loadDraft` tolère un BOM UTF-8 en tête des JSON de draft (PowerShell
+  `Set-Content -Encoding utf8` en écrit un).
+
 ## [2.3.0] — 2026-07-14
 
 Minor release. **Per-card caption color cycling** — alternate a caption's base color across a repeating palette, card by card (the "1 word / alternating color" karaoke look).

@@ -549,6 +549,123 @@ export function addEffect(
   return { segmentId: segId, materialId: matId, trackId: track.id };
 }
 
+export interface AddFilterOptions {
+  resourceId: string;
+  name: string;
+  start: number;
+  duration: number;
+  value?: number;
+}
+
+// Filters are a different CapCut family than video effects: the material lives
+// in materials.effects with type "filter" (shared with query's catalogue scan)
+// and the segment sits on a dedicated "filter" track at render_index 10000.
+// Shape mirrors what CapCut itself writes when a filter is applied in the UI.
+export function addFilter(
+  draft: Draft,
+  _filePath: string,
+  opts: AddFilterOptions,
+): { segmentId: string; materialId: string; trackId: string } {
+  const segId = uuid();
+  const matId = uuid();
+  const value = opts.value ?? 1.0;
+
+  let track = draft.tracks.find((t) => t.type === "filter");
+  if (!track) {
+    track = {
+      id: uuid(),
+      type: "filter",
+      name: "",
+      attribute: 0,
+      segments: [],
+      is_default_name: false,
+      flag: 0,
+    } as unknown as Track;
+    draft.tracks.push(track);
+  }
+
+  const filterMat: Record<string, unknown> = {
+    id: matId,
+    effect_id: opts.resourceId,
+    resource_id: opts.resourceId,
+    third_resource_id: opts.resourceId,
+    name: opts.name,
+    report_name: "",
+    type: "filter",
+    sub_type: "none",
+    path: "",
+    value,
+    visible: true,
+    item_effect_type: 0,
+    category_id: "123456",
+    category_name: "Filters",
+    category_key: "",
+    sub_category_id: "",
+    sub_category_name: "",
+    platform: "all",
+    apply_target_type: 0,
+    source_platform: 1,
+    version: "",
+    adjust_params: [],
+    time_range: null,
+    formula_id: "",
+    enable_skin_tone_correction: false,
+    algorithm_artifact_path: "",
+    intensity_key: "",
+    face_adjust_params: [],
+    exclusion_group: [],
+    panel_id: "",
+    bloom_params: null,
+    request_id: "",
+    color_match_info: {
+      target_feature_path: "",
+      source_feature_path: "",
+      target_image_path: "",
+    },
+    multi_language_current: "",
+    lumi_hub_path: "",
+    covering_relation_change: 0,
+    smart_color_mode: 0,
+    is_from_intelligent_quality: false,
+  };
+  const mats = draft.materials as unknown as Record<string, unknown>;
+  if (!Array.isArray(mats.effects)) mats.effects = [];
+  (mats.effects as Array<Record<string, unknown>>).push(filterMat);
+
+  const timerange: Timerange = { start: opts.start, duration: opts.duration };
+  const seg = {
+    id: segId,
+    material_id: matId,
+    source_timerange: null,
+    target_timerange: timerange,
+    render_timerange: { start: 0, duration: 0 },
+    desc: "",
+    state: 0,
+    speed: 1,
+    volume: 1,
+    last_nonzero_volume: 1,
+    is_loop: false,
+    is_tone_modify: false,
+    reverse: false,
+    intensifies_audio: false,
+    cartoon: false,
+    clip: null,
+    uniform_scale: null,
+    extra_material_refs: [],
+    render_index: 10000,
+    track_render_index: 0,
+    keyframe_refs: [],
+    enable_lut: false,
+    enable_adjust: false,
+    enable_hsl: false,
+    visible: true,
+    group_id: "",
+  } as unknown as Segment;
+  track.segments.push(seg);
+
+  return { segmentId: segId, materialId: matId, trackId: track.id };
+}
+
 // --- CLI wrappers ---
 
 export function cmdInit(positional: string[], flags: Flags): void {
@@ -1013,6 +1130,48 @@ export function cmdAddEffect(draft: Draft, filePath: string, positional: string[
       value: effectValue ?? 1.0,
       apply_target_type: opts.bindSegmentId ? 0 : 2,
       bind_segment_id: opts.bindSegmentId ?? "",
+      start_us: start,
+      duration_us: duration,
+    },
+    flags,
+  );
+}
+
+export function cmdAddFilter(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
+  const resourceId = positional[2];
+  const filterName = positional[3];
+  const startStr = positional[4];
+  const durationStr = positional[5];
+  if (!resourceId || !filterName || !startStr || !durationStr) {
+    die("Usage: capcut-david add-filter <project> <resource-id> <name> <start> <duration>");
+  }
+  const start = parseTimeInput(startStr);
+  const duration = parseTimeInput(durationStr);
+  let filterValue: number | undefined;
+  if (flags.value !== undefined) {
+    filterValue = parseFloat(flags.value);
+    if (Number.isNaN(filterValue) || filterValue < 0 || filterValue > 1) {
+      die("--value must be a number in range [0, 1]");
+    }
+  }
+  const result = addFilter(draft, filePath, {
+    resourceId,
+    name: filterName,
+    start,
+    duration,
+    value: filterValue,
+  });
+  saveDraft(filePath, draft);
+  out(
+    {
+      ok: true,
+      segment_id: result.segmentId,
+      material_id: result.materialId,
+      track_id: result.trackId,
+      resource_id: resourceId,
+      name: filterName,
+      value: filterValue ?? 1.0,
+      apply_target_type: 0,
       start_us: start,
       duration_us: duration,
     },

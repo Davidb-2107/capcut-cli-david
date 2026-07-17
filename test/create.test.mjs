@@ -6,7 +6,7 @@ import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { basename, dirname, resolve, join } from "node:path";
 
-import { addAudio, addEffect, addText, addVideo, initDraft } from "../dist/commands/create.js";
+import { addAudio, addEffect, addFilter, addText, addVideo, initDraft } from "../dist/commands/create.js";
 import { loadDraft, saveDraft } from "../dist/draft.js";
 
 import { FIXTURES, fixturePath } from "./helpers/load-fixture.mjs";
@@ -543,6 +543,153 @@ test("add-effect (CLI): missing args returns error", () => {
 test("add-effect (CLI): --value out of range returns error", () => {
   const fixture = fixturePath(FIXTURES.MINIMAL);
   const r = runCli(["add-effect", fixture, VHS_HORROR_ID, "Test", "0", "3s", "--value", "2.5"]);
+  strictEqual(r.status, 1);
+  ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
+  match(r.errorJson.error, /--value must be a number in range/i);
+});
+
+// =============================================================
+// add-filter / addFilter
+// =============================================================
+
+const WESTERN_ID = "7083809725615247874";
+
+test("add-filter: registers filter material in materials.effects + filter track + segment", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const { draft } = loadDraft(filePath);
+
+  const effectsBefore = draft.materials.effects?.length ?? 0;
+  const tracksBefore = draft.tracks.length;
+
+  const result = addFilter(draft, filePath, {
+    resourceId: WESTERN_ID,
+    name: "Western",
+    start: 0,
+    duration: 5_000_000,
+  });
+
+  match(result.segmentId, UUID_RE);
+  match(result.materialId, UUID_RE);
+  match(result.trackId, UUID_RE);
+
+  strictEqual(draft.tracks.length, tracksBefore + 1, "should add one filter track");
+  const filterTrack = draft.tracks.find((tr) => tr.id === result.trackId);
+  ok(filterTrack, "filter track should be findable by id");
+  strictEqual(filterTrack.type, "filter");
+  strictEqual(filterTrack.segments.length, 1);
+  strictEqual(filterTrack.segments[0].id, result.segmentId);
+
+  const seg = filterTrack.segments[0];
+  strictEqual(seg.material_id, result.materialId);
+  strictEqual(seg.target_timerange.start, 0);
+  strictEqual(seg.target_timerange.duration, 5_000_000);
+  strictEqual(seg.render_index, 10000, "filter segments use render_index 10000");
+
+  strictEqual(
+    (draft.materials.effects ?? []).length,
+    effectsBefore + 1,
+    "should add one filter material to materials.effects",
+  );
+  const mat = (draft.materials.effects ?? []).find((m) => m.id === result.materialId);
+  ok(mat, "filter material should be present in materials.effects");
+  strictEqual(mat.name, "Western");
+  strictEqual(mat.resource_id, WESTERN_ID);
+  strictEqual(mat.effect_id, WESTERN_ID);
+  strictEqual(mat.type, "filter", "material type must be filter, not video_effect");
+  strictEqual(mat.sub_type, "none");
+  strictEqual(mat.value, 1.0);
+  strictEqual(mat.apply_target_type, 0, "CapCut writes apply_target_type=0 for filters");
+  strictEqual(mat.category_name, "Filters");
+
+  // Persistence
+  saveDraft(filePath, draft);
+  const { draft: reloaded } = loadDraft(filePath);
+  ok(
+    reloaded.materials.effects?.some((m) => m.id === result.materialId),
+    "filter material should persist through save+load",
+  );
+  ok(
+    reloaded.tracks.some((tr) => tr.id === result.trackId),
+    "filter track should persist through save+load",
+  );
+});
+
+test("add-filter: custom --value is written to material", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const { draft } = loadDraft(filePath);
+
+  const result = addFilter(draft, filePath, {
+    resourceId: WESTERN_ID,
+    name: "Western",
+    start: 0,
+    duration: 3_000_000,
+    value: 0.5,
+  });
+
+  const mat = (draft.materials.effects ?? []).find((m) => m.id === result.materialId);
+  ok(mat);
+  strictEqual(mat.value, 0.5, "value should be 0.5");
+});
+
+test("add-filter: reuses an existing filter track", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const { draft } = loadDraft(filePath);
+
+  const first = addFilter(draft, filePath, {
+    resourceId: WESTERN_ID,
+    name: "Western",
+    start: 0,
+    duration: 1_000_000,
+  });
+  const second = addFilter(draft, filePath, {
+    resourceId: WESTERN_ID,
+    name: "Western",
+    start: 1_000_000,
+    duration: 1_000_000,
+  });
+
+  strictEqual(first.trackId, second.trackId, "second filter should land on the same track");
+  const track = draft.tracks.find((tr) => tr.id === first.trackId);
+  strictEqual(track.segments.length, 2);
+});
+
+test("add-filter (CLI happy): spawns, writes JSON, persists to disk", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const r = runCli(["add-filter", filePath, WESTERN_ID, "Western", "0", "5s"]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  ok(r.json, `expected JSON on stdout, got: ${r.stdout}`);
+  strictEqual(r.json.ok, true);
+  match(r.json.segment_id, UUID_RE);
+  match(r.json.material_id, UUID_RE);
+  match(r.json.track_id, UUID_RE);
+  strictEqual(r.json.resource_id, WESTERN_ID);
+  strictEqual(r.json.name, "Western");
+  strictEqual(r.json.value, 1.0);
+  strictEqual(r.json.start_us, 0);
+  strictEqual(r.json.duration_us, 5_000_000);
+
+  const after = JSON.parse(readFileSync(filePath, "utf-8"));
+  ok(
+    after.materials.effects?.some((m) => m.id === r.json.material_id),
+    "filter material should be persisted",
+  );
+  ok(
+    after.tracks.some((tr) => tr.id === r.json.track_id && tr.type === "filter"),
+    "filter track should be persisted",
+  );
+});
+
+test("add-filter (CLI): missing args returns error", () => {
+  const fixture = fixturePath(FIXTURES.MINIMAL);
+  const r = runCli(["add-filter", fixture]);
+  strictEqual(r.status, 1);
+  ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
+  match(r.errorJson.error, /Usage: capcut-david add-filter/i);
+});
+
+test("add-filter (CLI): --value out of range returns error", () => {
+  const fixture = fixturePath(FIXTURES.MINIMAL);
+  const r = runCli(["add-filter", fixture, WESTERN_ID, "Test", "0", "3s", "--value", "2.5"]);
   strictEqual(r.status, 1);
   ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
   match(r.errorJson.error, /--value must be a number in range/i);
