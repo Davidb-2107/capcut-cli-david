@@ -104,6 +104,7 @@ test("WRITE_COMMANDS: covers every command that writes a draft/index in place", 
     "register",
     "sync-timelines",
     "gc",
+    "remove-segment",
   ];
   for (const c of mustGuard) {
     ok(WRITE_COMMANDS.has(c), `WRITE_COMMANDS must include "${c}"`);

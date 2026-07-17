@@ -364,6 +364,18 @@ export const CAPABILITIES: Capability[] = [
     since: "0.1.0",
   },
   {
+    verb: "remove-segment",
+    category: "editer",
+    summary:
+      "Retire un segment de sa piste (piste supprimée si vidée), puis balaye les matériaux texte/vidéo/audio orphelins via le plan gc — un matériau encore référencé par un autre segment n'est jamais supprimé.",
+    signature: "remove-segment <project> <segment-id>",
+    flags: [],
+    example: 'capcut-david remove-segment "<draft-dir>" <segment-id>',
+    readOnly: false,
+    capcutClosed: true,
+    since: "2.5.0",
+  },
+  {
     verb: "cut",
     category: "editer",
     summary: "Découpe un projet long-format en un extrait court, écrit dans un nouveau chemin.",
