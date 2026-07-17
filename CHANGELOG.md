@@ -8,6 +8,13 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 
 ## [Unreleased]
 
+### Planned
+- `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
+
+## [2.5.0] — 2026-07-17
+
+Minor release. **Lot catalogue/timeline** : `add-transition`, `--full`, `remove-segment` — le CLI passe à 40 verbes.
+
 ### Added
 - **`add-transition <project> <segment-id> <resource-id> <name> [--duration <t>]`** —
   attache une transition de catalogue au segment vidéo donné (référencée depuis
@@ -21,9 +28,6 @@ per [`RELEASE.md`](./RELEASE.md) §4.
   piste supprimée si vidée, puis sweep des materials orphelins en réutilisant
   la logique `gc` (un material encore référencé par un autre segment n'est
   jamais supprimé). 39ᵉ verbe ; garde CapCut-ouvert appliquée.
-
-### Planned
-- `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
 ## [2.4.0] — 2026-07-17
 
