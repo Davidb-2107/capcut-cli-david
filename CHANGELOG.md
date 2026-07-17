@@ -9,6 +9,11 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ## [Unreleased]
 
 ### Added
+- **`add-transition <project> <segment-id> <resource-id> <name> [--duration <t>]`** —
+  attache une transition de catalogue au segment vidéo donné (référencée depuis
+  les `extra_material_refs` du segment AVANT la transition, pas de piste dédiée —
+  forme miroir du témoin CapCut). Défaut `--duration` 0.4s (défaut CapCut).
+  40ᵉ verbe ; garde CapCut-ouvert appliquée.
 - **`--full`** sur `add-effect` et `add-filter` — applique sur toute la timeline
   (start=0, duration=`draft.duration`) sans passer `<start> <duration>` ;
   erreur propre si le draft n'a pas de durée.
