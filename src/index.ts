@@ -7,6 +7,7 @@ import {
   cmdAddEffect,
   cmdAddFilter,
   cmdAddText,
+  cmdAddTransition,
   cmdAddVideo,
   cmdAddVideoBatch,
   cmdImportCaptions,
@@ -108,6 +109,9 @@ Add:
   add-filter <project> <resource-id> <name> (<start> <duration> | --full) [--value <n>]
               Apply a filter (Filters family, distinct from FX) via its
               catalogue resource ID. --full: whole timeline.
+  add-transition <project> <segment-id> <resource-id> <name> [--duration <t>]
+              Attach a transition (to the next segment) on a video segment
+              via its catalogue resource ID. Default duration: 0.4s.
 
 Style:
   restyle    <project> --preset <preset.json> [--track-name <s>]
@@ -288,6 +292,8 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.property = args[++i];
     } else if (a === "--value" && i + 1 < args.length) {
       flags.value = args[++i];
+    } else if (a === "--duration" && i + 1 < args.length) {
+      flags.duration = args[++i];
     } else if (a === "--curve" && i + 1 < args.length) {
       flags.curve = args[++i];
     } else if (a === "--from" && i + 1 < args.length) {
@@ -530,6 +536,14 @@ function main(): void {
         "capcut-david add-filter <project> <resource-id> <name> (<start> <duration> | --full) [--value <n>]",
       );
       cmdAddFilter(draft, filePath, positional, flags);
+      break;
+    case "add-transition":
+      requireArgs(
+        positional,
+        5,
+        "capcut-david add-transition <project> <segment-id> <resource-id> <name> [--duration <t>]",
+      );
+      cmdAddTransition(draft, filePath, positional, flags);
       break;
     case "restyle":
       requireArgs(positional, 2, "capcut-david restyle <project> --preset <preset.json> [--track-name <name>]");

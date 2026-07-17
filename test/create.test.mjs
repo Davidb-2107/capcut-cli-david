@@ -6,7 +6,7 @@ import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { basename, dirname, resolve, join } from "node:path";
 
-import { addAudio, addEffect, addFilter, addText, addVideo, initDraft } from "../dist/commands/create.js";
+import { addAudio, addEffect, addFilter, addText, addTransition, addVideo, initDraft } from "../dist/commands/create.js";
 import { loadDraft, saveDraft } from "../dist/draft.js";
 
 import { FIXTURES, fixturePath } from "./helpers/load-fixture.mjs";
@@ -693,6 +693,159 @@ test("add-filter (CLI): --value out of range returns error", () => {
   strictEqual(r.status, 1);
   ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
   match(r.errorJson.error, /--value must be a number in range/i);
+});
+
+// =============================================================
+// add-transition / addTransition
+// =============================================================
+
+// Black Fade — witness draft psycho_lavoixdapres_v1_schemav1 (2026-07-17).
+const BLACK_FADE_ID = "6724239388189921806";
+
+test("add-transition: registers material in materials.transitions + ref on the outgoing segment", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
+  const { draft } = loadDraft(filePath);
+
+  const videoTrack = draft.tracks.find((tr) => tr.type === "video");
+  const seg = videoTrack.segments[0];
+  const refsBefore = seg.extra_material_refs.length;
+  const transitionsBefore = draft.materials.transitions?.length ?? 0;
+
+  const result = addTransition(draft, filePath, {
+    segmentId: seg.id,
+    resourceId: BLACK_FADE_ID,
+    name: "Black Fade",
+  });
+
+  match(result.materialId, UUID_RE);
+  strictEqual(result.segmentId, seg.id);
+
+  strictEqual(
+    (draft.materials.transitions ?? []).length,
+    transitionsBefore + 1,
+    "should add one transition material",
+  );
+  const mat = (draft.materials.transitions ?? []).find((m) => m.id === result.materialId);
+  ok(mat, "transition material should be present in materials.transitions");
+  // Field-for-field mirror of the witness (machine-specific path/request_id blanked).
+  strictEqual(mat.type, "transition");
+  strictEqual(mat.name, "Black Fade");
+  strictEqual(mat.effect_id, BLACK_FADE_ID);
+  strictEqual(mat.resource_id, BLACK_FADE_ID);
+  strictEqual(mat.third_resource_id, BLACK_FADE_ID);
+  strictEqual(mat.duration, 400_000, "default duration is CapCut's 0.4s");
+  strictEqual(mat.is_overlap, false);
+  strictEqual(mat.source_platform, 1);
+  strictEqual(mat.platform, "all");
+  strictEqual(mat.category_id, "123456");
+  strictEqual(mat.category_name, "Transitions");
+  strictEqual(mat.is_ai_transition, false);
+  strictEqual(mat.path, "");
+  strictEqual(mat.request_id, "");
+  strictEqual(mat.video_path, "");
+  strictEqual(mat.task_id, "");
+
+  // Witness rule: the segment BEFORE the transition carries the ref.
+  strictEqual(seg.extra_material_refs.length, refsBefore + 1);
+  ok(
+    seg.extra_material_refs.includes(result.materialId),
+    "outgoing segment's extra_material_refs should include the transition material id",
+  );
+
+  // Persistence
+  saveDraft(filePath, draft);
+  const { draft: reloaded } = loadDraft(filePath);
+  ok(
+    reloaded.materials.transitions?.some((m) => m.id === result.materialId),
+    "transition material should persist through save+load",
+  );
+});
+
+test("add-transition: custom duration is written to material", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
+  const { draft } = loadDraft(filePath);
+  const seg = draft.tracks.find((tr) => tr.type === "video").segments[0];
+
+  const result = addTransition(draft, filePath, {
+    segmentId: seg.id,
+    resourceId: BLACK_FADE_ID,
+    name: "Black Fade",
+    duration: 200_000,
+  });
+
+  const mat = (draft.materials.transitions ?? []).find((m) => m.id === result.materialId);
+  ok(mat);
+  strictEqual(mat.duration, 200_000);
+});
+
+test("add-transition (CLI happy): spawns, writes JSON, persists to disk", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
+  const before = JSON.parse(readFileSync(filePath, "utf-8"));
+  const segId = before.tracks.find((tr) => tr.type === "video").segments[0].id;
+
+  const r = runCli(["add-transition", filePath, segId, BLACK_FADE_ID, "Black Fade"]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  ok(r.json, `expected JSON on stdout, got: ${r.stdout}`);
+  strictEqual(r.json.ok, true);
+  match(r.json.material_id, UUID_RE);
+  strictEqual(r.json.segment_id, segId);
+  strictEqual(r.json.resource_id, BLACK_FADE_ID);
+  strictEqual(r.json.name, "Black Fade");
+  strictEqual(r.json.duration_us, 400_000);
+
+  const after = JSON.parse(readFileSync(filePath, "utf-8"));
+  ok(
+    after.materials.transitions?.some((m) => m.id === r.json.material_id),
+    "transition material should be persisted",
+  );
+  const afterSeg = after.tracks
+    .find((tr) => tr.type === "video")
+    .segments.find((s) => s.id === segId);
+  ok(
+    afterSeg.extra_material_refs.includes(r.json.material_id),
+    "segment ref should be persisted",
+  );
+});
+
+test("add-transition (CLI): --duration 0.2s writes 200000 us", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
+  const before = JSON.parse(readFileSync(filePath, "utf-8"));
+  const segId = before.tracks.find((tr) => tr.type === "video").segments[0].id;
+
+  const r = runCli(["add-transition", filePath, segId, BLACK_FADE_ID, "Black Fade", "--duration", "0.2s"]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  strictEqual(r.json.duration_us, 200_000);
+
+  const after = JSON.parse(readFileSync(filePath, "utf-8"));
+  const mat = after.materials.transitions.find((m) => m.id === r.json.material_id);
+  strictEqual(mat.duration, 200_000);
+});
+
+test("add-transition (CLI): unknown segment id returns error", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
+  const r = runCli(["add-transition", filePath, "deadbeef-0000-0000-0000-000000000000", BLACK_FADE_ID, "Black Fade"]);
+  strictEqual(r.status, 1);
+  ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
+  match(r.errorJson.error, /Segment not found/i);
+});
+
+test("add-transition (CLI): non-video segment returns error", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
+  const before = JSON.parse(readFileSync(filePath, "utf-8"));
+  const textSegId = before.tracks.find((tr) => tr.type === "text").segments[0].id;
+
+  const r = runCli(["add-transition", filePath, textSegId, BLACK_FADE_ID, "Black Fade"]);
+  strictEqual(r.status, 1);
+  ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
+  match(r.errorJson.error, /video segment/i);
+});
+
+test("add-transition (CLI): missing args returns usage error", () => {
+  const fixture = fixturePath(FIXTURES.KEN_BURNS);
+  const r = runCli(["add-transition", fixture]);
+  strictEqual(r.status, 1);
+  ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
+  match(r.errorJson.error, /Usage: capcut-david add-transition/i);
 });
 
 // --full (v2.5.0)

@@ -1,6 +1,6 @@
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, resolve } from "node:path";
-import { type Draft, type Segment, saveDraft, type Timerange, type Track } from "../draft.js";
+import { type Draft, findSegment, type Segment, saveDraft, type Timerange, type Track } from "../draft.js";
 import { defaultProjectsRoot, resolveTemplateDir } from "../utils/capcut-paths.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { baseSegment, createCompanionMaterials, hexToRgb, registerCompanions, uuid } from "../utils/companion.js";
@@ -666,6 +666,60 @@ export function addFilter(
   return { segmentId: segId, materialId: matId, trackId: track.id };
 }
 
+export interface AddTransitionOptions {
+  segmentId: string;
+  resourceId: string;
+  name: string;
+  duration?: number; // µs — CapCut default 0.4s
+}
+
+// Transitions have no dedicated track: the material lives in
+// materials.transitions and its id is appended to the extra_material_refs of
+// the segment BEFORE the transition (transition to the next segment). Shape
+// mirrors what CapCut writes when a transition is applied in the UI (witness:
+// "Black Fade" in psycho_lavoixdapres_v1_schemav1, machine-specific
+// path/request_id blanked like add-filter does).
+export function addTransition(
+  draft: Draft,
+  _filePath: string,
+  opts: AddTransitionOptions,
+): { segmentId: string; materialId: string; trackId: string } {
+  const hit = findSegment(draft, opts.segmentId);
+  if (!hit) die(`Segment not found: ${opts.segmentId}`);
+  const { track, segment } = hit;
+  if (track.type !== "video") {
+    die(`add-transition requires a video segment; "${segment.id}" is on a "${track.type}" track`);
+  }
+
+  const matId = uuid();
+  const transitionMat: Record<string, unknown> = {
+    id: matId,
+    type: "transition",
+    name: opts.name,
+    effect_id: opts.resourceId,
+    resource_id: opts.resourceId,
+    third_resource_id: opts.resourceId,
+    source_platform: 1,
+    path: "",
+    duration: opts.duration ?? 400_000,
+    is_overlap: false,
+    platform: "all",
+    category_id: "123456",
+    category_name: "Transitions",
+    request_id: "",
+    is_ai_transition: false,
+    video_path: "",
+    task_id: "",
+  };
+  const mats = draft.materials as unknown as Record<string, unknown>;
+  if (!Array.isArray(mats.transitions)) mats.transitions = [];
+  (mats.transitions as Array<Record<string, unknown>>).push(transitionMat);
+
+  segment.extra_material_refs.push(matId);
+
+  return { segmentId: segment.id, materialId: matId, trackId: track.id };
+}
+
 // --- CLI wrappers ---
 
 export function cmdInit(positional: string[], flags: Flags): void {
@@ -1190,6 +1244,39 @@ export function cmdAddFilter(draft: Draft, filePath: string, positional: string[
       apply_target_type: 0,
       start_us: start,
       duration_us: duration,
+    },
+    flags,
+  );
+}
+
+export function cmdAddTransition(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
+  const segmentId = positional[2];
+  const resourceId = positional[3];
+  const transitionName = positional[4];
+  if (!segmentId || !resourceId || !transitionName) {
+    die("Usage: capcut-david add-transition <project> <segment-id> <resource-id> <name> [--duration <t>]");
+  }
+  let duration: number | undefined;
+  if (flags.duration !== undefined) {
+    duration = parseTimeInput(flags.duration);
+    if (Number.isNaN(duration) || duration <= 0) die("--duration must be a positive time (e.g. 0.2s)");
+  }
+  const result = addTransition(draft, filePath, {
+    segmentId,
+    resourceId,
+    name: transitionName,
+    duration,
+  });
+  saveDraft(filePath, draft);
+  out(
+    {
+      ok: true,
+      segment_id: result.segmentId,
+      material_id: result.materialId,
+      track_id: result.trackId,
+      resource_id: resourceId,
+      name: transitionName,
+      duration_us: duration ?? 400_000,
     },
     flags,
   );

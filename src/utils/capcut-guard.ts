@@ -15,6 +15,7 @@ export const WRITE_COMMANDS = new Set([
   "add-video",
   "add-effect",
   "add-filter",
+  "add-transition",
   "import-captions",
   "restyle",
   "set-text",

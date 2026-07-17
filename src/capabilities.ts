@@ -466,6 +466,18 @@ export const CAPABILITIES: Capability[] = [
     capcutClosed: true,
     since: "2.4.0",
   },
+  {
+    verb: "add-transition",
+    category: "animer",
+    summary:
+      "Attache une transition CapCut (vers le segment suivant) sur un segment vidéo via son resource_id de catalogue.",
+    signature: "add-transition <project> <segment-id> <resource-id> <name> [--duration <t>]",
+    flags: [{ flag: "--duration <t>", desc: "durée de la transition (défaut 0.4s, ex. 0.2s)" }],
+    example: 'capcut-david add-transition "<draft-dir>" <segment-id> 6724239388189921806 "Black Fade" --duration 0.2s',
+    readOnly: false,
+    capcutClosed: true,
+    since: "2.5.0",
+  },
 
   // ---- reparer ----------------------------------------------------------
   {

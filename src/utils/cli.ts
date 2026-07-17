@@ -16,6 +16,7 @@ export interface Flags {
   kind?: string;
   property?: string;
   value?: string;
+  duration?: string;
   curve?: string;
   from?: string;
   to?: string;
