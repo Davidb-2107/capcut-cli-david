@@ -33,6 +33,7 @@ export const WRITE_COMMANDS = new Set([
   "register",
   "sync-timelines",
   "gc",
+  "remove-segment",
 ]);
 
 /**

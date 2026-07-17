@@ -31,6 +31,7 @@ import { cmdMakePreset } from "./commands/make-preset.js";
 import { cmdPsychoBuild } from "./commands/pipeline.js";
 import { cmdQuery } from "./commands/query.js";
 import { cmdRegister } from "./commands/register.js";
+import { cmdRemoveSegment } from "./commands/remove-segment.js";
 import { cmdRestyle } from "./commands/restyle.js";
 import { cmdSyncTimelines } from "./commands/sync-timelines.js";
 import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template.js";
@@ -122,6 +123,10 @@ Edit:
   volume     <project> <id> <level>             Set volume (0.0-1.0)
   trim       <project> <id> <start> <duration>  Trim segment (times in seconds)
   opacity    <project> <id> <alpha>             Set opacity (0.0-1.0)
+  remove-segment <project> <segment-id>         Remove a segment from its track
+              (track dropped when emptied), then sweep the text/video/audio
+              materials the removal orphaned (gc's plan — a material still
+              referenced by another segment is never deleted).
   export-srt <project>                          Export subtitles to SRT
   batch      <project>                          Run multiple edits from stdin (JSONL)
 
@@ -539,6 +544,10 @@ function main(): void {
       break;
     case "gc":
       cmdGc(draft, filePath, positional, flags);
+      break;
+    case "remove-segment":
+      requireArgs(positional, 3, "capcut-david remove-segment <project> <segment-id>");
+      cmdRemoveSegment(draft, filePath, positional, flags);
       break;
     default:
       die(`Unknown command: ${cmd}. Run 'capcut-david --help' for usage.`);
