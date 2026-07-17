@@ -1092,16 +1092,30 @@ export function cmdImportCaptions(draft: Draft, filePath: string, positional: st
   out({ ok: true, track_id: result.trackId, captions: result.count }, flags);
 }
 
+/** Resolve <start>/<duration> from positionals, or the whole timeline when --full. */
+function resolveRange(draft: Draft, positional: string[], flags: Flags, usage: string): { start: number; duration: number } {
+  if (flags.full) {
+    if (typeof draft.duration !== "number" || draft.duration <= 0) die("--full: draft has no duration");
+    return { start: 0, duration: draft.duration };
+  }
+  const startStr = positional[4];
+  const durationStr = positional[5];
+  if (!startStr || !durationStr) die(usage);
+  return { start: parseTimeInput(startStr), duration: parseTimeInput(durationStr) };
+}
+
 export function cmdAddEffect(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
   const resourceId = positional[2];
   const effectName = positional[3];
-  const startStr = positional[4];
-  const durationStr = positional[5];
-  if (!resourceId || !effectName || !startStr || !durationStr) {
-    die("Usage: capcut-david add-effect <project> <resource-id> <name> <start> <duration>");
+  if (!resourceId || !effectName) {
+    die("Usage: capcut-david add-effect <project> <resource-id> <name> (<start> <duration> | --full)");
   }
-  const start = parseTimeInput(startStr);
-  const duration = parseTimeInput(durationStr);
+  const { start, duration } = resolveRange(
+    draft,
+    positional,
+    flags,
+    "Usage: capcut-david add-effect <project> <resource-id> <name> (<start> <duration> | --full)",
+  );
   let effectValue: number | undefined;
   if (flags.value !== undefined) {
     effectValue = parseFloat(flags.value);
@@ -1140,13 +1154,15 @@ export function cmdAddEffect(draft: Draft, filePath: string, positional: string[
 export function cmdAddFilter(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
   const resourceId = positional[2];
   const filterName = positional[3];
-  const startStr = positional[4];
-  const durationStr = positional[5];
-  if (!resourceId || !filterName || !startStr || !durationStr) {
-    die("Usage: capcut-david add-filter <project> <resource-id> <name> <start> <duration>");
+  if (!resourceId || !filterName) {
+    die("Usage: capcut-david add-filter <project> <resource-id> <name> (<start> <duration> | --full)");
   }
-  const start = parseTimeInput(startStr);
-  const duration = parseTimeInput(durationStr);
+  const { start, duration } = resolveRange(
+    draft,
+    positional,
+    flags,
+    "Usage: capcut-david add-filter <project> <resource-id> <name> (<start> <duration> | --full)",
+  );
   let filterValue: number | undefined;
   if (flags.value !== undefined) {
     filterValue = parseFloat(flags.value);

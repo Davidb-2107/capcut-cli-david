@@ -100,12 +100,13 @@ Add:
               --transform-y: clip.transform.y for every rebuilt caption segment
               (vertical position; negatives allowed, e.g. -0.4 = mi-bas).
               --clone-style: keep the target track's existing caption font/stroke/shadow.
-  add-effect <project> <resource-id> <name> <start> <duration>
+  add-effect <project> <resource-id> <name> (<start> <duration> | --full)
               [--value <n>] [--bind <segment-id>]
               Apply a video effect (FX) via its catalogue resource ID.
-  add-filter <project> <resource-id> <name> <start> <duration> [--value <n>]
+              --full: whole timeline (start=0, duration=draft.duration).
+  add-filter <project> <resource-id> <name> (<start> <duration> | --full) [--value <n>]
               Apply a filter (Filters family, distinct from FX) via its
-              catalogue resource ID.
+              catalogue resource ID. --full: whole timeline.
 
 Style:
   restyle    <project> --preset <preset.json> [--track-name <s>]
@@ -331,6 +332,8 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.fix = true;
     } else if (a === "--apply") {
       flags.apply = true;
+    } else if (a === "--full") {
+      flags.full = true;
     } else if (a === "--id" && i + 1 < args.length) {
       if (!flags.ids) flags.ids = [];
       flags.ids.push(args[++i]);
@@ -510,16 +513,16 @@ function main(): void {
     case "add-effect":
       requireArgs(
         positional,
-        6,
-        "capcut-david add-effect <project> <resource-id> <name> <start> <duration> [--value <n>] [--bind <segment-id>]",
+        flags.full ? 4 : 6,
+        "capcut-david add-effect <project> <resource-id> <name> (<start> <duration> | --full) [--value <n>] [--bind <segment-id>]",
       );
       cmdAddEffect(draft, filePath, positional, flags);
       break;
     case "add-filter":
       requireArgs(
         positional,
-        6,
-        "capcut-david add-filter <project> <resource-id> <name> <start> <duration> [--value <n>]",
+        flags.full ? 4 : 6,
+        "capcut-david add-filter <project> <resource-id> <name> (<start> <duration> | --full) [--value <n>]",
       );
       cmdAddFilter(draft, filePath, positional, flags);
       break;

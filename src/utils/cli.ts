@@ -41,6 +41,7 @@ export interface Flags {
   dryRun?: boolean;
   fix?: boolean;
   apply?: boolean;
+  full?: boolean;
   font?: string;
   width?: number;
   height?: number;

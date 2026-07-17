@@ -428,10 +428,11 @@ export const CAPABILITIES: Capability[] = [
     verb: "add-effect",
     category: "animer",
     summary: "Applique un effet vidéo (FX) via son resource_id de catalogue, sur une plage temporelle donnée.",
-    signature: "add-effect <project> <resource-id> <name> <start> <duration> [--value <n>] [--bind <segment-id>]",
+    signature: "add-effect <project> <resource-id> <name> (<start> <duration> | --full) [--value <n>] [--bind <segment-id>]",
     flags: [
       { flag: "--value <n>", desc: "intensité/paramètre de l'effet" },
       { flag: "--bind <segment-id>", desc: "segment auquel lier l'effet" },
+      { flag: "--full", desc: "applique sur toute la timeline (remplace <start> <duration>)", since: "2.5.0" },
     ],
     example: 'capcut-david add-effect "<draft-dir>" 123456 "Glitch" 0s 2s',
     readOnly: false,
@@ -443,8 +444,11 @@ export const CAPABILITIES: Capability[] = [
     category: "animer",
     summary:
       "Applique un filtre (famille Filters, distincte des effets vidéo) via son resource_id de catalogue, sur une plage temporelle donnée.",
-    signature: "add-filter <project> <resource-id> <name> <start> <duration> [--value <n>]",
-    flags: [{ flag: "--value <n>", desc: "intensité du filtre [0,1]" }],
+    signature: "add-filter <project> <resource-id> <name> (<start> <duration> | --full) [--value <n>]",
+    flags: [
+      { flag: "--value <n>", desc: "intensité du filtre [0,1]" },
+      { flag: "--full", desc: "applique sur toute la timeline (remplace <start> <duration>)", since: "2.5.0" },
+    ],
     example: 'capcut-david add-filter "<draft-dir>" 7083809725615247874 "Western" 0s 60s',
     readOnly: false,
     capcutClosed: true,

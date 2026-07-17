@@ -695,6 +695,62 @@ test("add-filter (CLI): --value out of range returns error", () => {
   match(r.errorJson.error, /--value must be a number in range/i);
 });
 
+// --full (v2.5.0)
+// =============================================================
+
+// MINIMAL has duration: 0 — patch the tmp copy to a known timeline duration.
+function tmpDraftWithDuration(t, durationUs) {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const draft = JSON.parse(readFileSync(filePath, "utf-8"));
+  draft.duration = durationUs;
+  writeFileSync(filePath, JSON.stringify(draft));
+  return { filePath };
+}
+
+test("add-filter (CLI): --full applies to the whole timeline", (t) => {
+  const { filePath } = tmpDraftWithDuration(t, 7_000_000);
+  const r = runCli(["add-filter", filePath, WESTERN_ID, "Western", "--full"]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  ok(r.json, `expected JSON on stdout, got: ${r.stdout}`);
+  strictEqual(r.json.ok, true);
+  strictEqual(r.json.start_us, 0);
+  strictEqual(r.json.duration_us, 7_000_000);
+});
+
+test("add-effect (CLI): --full applies to the whole timeline", (t) => {
+  const { filePath } = tmpDraftWithDuration(t, 7_000_000);
+  const r = runCli(["add-effect", filePath, VHS_HORROR_ID, "VHS Horror", "--full"]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  ok(r.json, `expected JSON on stdout, got: ${r.stdout}`);
+  strictEqual(r.json.ok, true);
+  strictEqual(r.json.start_us, 0);
+  strictEqual(r.json.duration_us, 7_000_000);
+});
+
+test("add-filter (CLI): --full wins over explicit start/duration", (t) => {
+  const { filePath } = tmpDraftWithDuration(t, 7_000_000);
+  const r = runCli(["add-filter", filePath, WESTERN_ID, "Western", "1s", "2s", "--full"]);
+  strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
+  strictEqual(r.json.start_us, 0);
+  strictEqual(r.json.duration_us, 7_000_000);
+});
+
+test("add-filter (CLI): no start/duration and no --full returns usage error", () => {
+  const fixture = fixturePath(FIXTURES.MINIMAL);
+  const r = runCli(["add-filter", fixture, WESTERN_ID, "Western"]);
+  strictEqual(r.status, 1);
+  ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
+  match(r.errorJson.error, /Usage: capcut-david add-filter/i);
+});
+
+test("add-filter (CLI): --full on a draft without duration returns error", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t); // duration: 0
+  const r = runCli(["add-filter", filePath, WESTERN_ID, "Western", "--full"]);
+  strictEqual(r.status, 1);
+  ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
+  match(r.errorJson.error, /--full: draft has no duration/i);
+});
+
 // =============================================================
 // init --width/--height (v2.1.0)
 // =============================================================
