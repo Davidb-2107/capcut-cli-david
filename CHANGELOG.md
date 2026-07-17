@@ -8,6 +8,15 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 
 ## [Unreleased]
 
+### Added
+- **`--full`** sur `add-effect` et `add-filter` — applique sur toute la timeline
+  (start=0, duration=`draft.duration`) sans passer `<start> <duration>` ;
+  erreur propre si le draft n'a pas de durée.
+- **`remove-segment <project> <segment-id>`** — retire proprement un segment :
+  piste supprimée si vidée, puis sweep des materials orphelins en réutilisant
+  la logique `gc` (un material encore référencé par un autre segment n'est
+  jamais supprimé). 39ᵉ verbe ; garde CapCut-ouvert appliquée.
+
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
