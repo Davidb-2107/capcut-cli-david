@@ -371,7 +371,10 @@ export function cmdCatalogue(flags: Flags): number {
     // pointe --drafts sur un mkdtemp mais oublie --catalogue écrirait des
     // fixtures dans le vrai catalogue de l'utilisateur, sans qu'aucun garde
     // ne se déclenche — la seule combinaison qui n'a aucun usage légitime.
-    if (flags.catalogue === undefined && `${root}${sep}`.startsWith(`${realpathSync(tmpdir())}${sep}`)) {
+    // realpath des DEUX côtés : sur macOS, mkdtemp rend /var/... et tmpdir()
+    // /private/var/... (lien symbolique). Comparer les chemins bruts laissait le
+    // garde muet là-bas — exactement la plateforme où on ne le testait pas à la main.
+    if (flags.catalogue === undefined && `${realpathSync(root)}${sep}`.startsWith(`${realpathSync(tmpdir())}${sep}`)) {
       process.stderr.write(
         `${JSON.stringify({ error: "Refusing to sync a temp drafts root into the default catalogue (pass --catalogue)." })}\n`,
       );

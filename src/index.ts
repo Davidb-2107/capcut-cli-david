@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { writeSync } from "node:fs";
 import { cmdBatch } from "./commands/batch.js";
 import { cmdCatalogue } from "./commands/catalogue.js";
 import {
@@ -395,7 +396,11 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
 function main(): void {
   const raw = process.argv.slice(2);
   if (raw.length === 0 || raw[0] === "--help" || raw[0] === "-h") {
-    console.log(HELP);
+    // writeSync, pas console.log : sur macOS un pipe est asynchrone, et le
+    // process.exit() qui suit coupait l'aide à la taille du tampon (~8 ko) —
+    // tout ce qui vient après la section Add disparaissait quand la sortie
+    // était redirigée. Invisible sur Windows et Linux, où le pipe est sync.
+    writeSync(1, `${HELP}\n`);
     process.exit(0);
   }
 
@@ -431,7 +436,10 @@ function main(): void {
   }
 
   if (cmd === "catalogue") {
-    process.exit(cmdCatalogue(flags));
+    // exitCode plutôt qu'exit() : même piège que l'aide ci-dessus, un catalogue
+    // de plusieurs centaines d'entrées en -H serait tronqué sur macOS.
+    process.exitCode = cmdCatalogue(flags);
+    return;
   }
 
   if (cmd === "make-preset") {
