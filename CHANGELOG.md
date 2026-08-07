@@ -8,6 +8,21 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 
 ## [Unreleased]
 
+### Fixed
+- **macOS uniquement, deux bugs invisibles sur Windows/Linux.** (a) Le garde
+  « racine de drafts temporaire → catalogue par défaut » de `catalogue --sync`
+  comparait des chemins bruts : `mkdtemp` rend `/var/...` et `tmpdir()`
+  `/private/var/...` (lien symbolique), donc le garde restait muet là-bas et un
+  sync depuis un dossier temporaire écrivait le catalogue par défaut — l'inverse
+  de ce qu'il promet. (b) `--help` sortait par `console.log` + `process.exit(0)` ;
+  un pipe étant asynchrone sur macOS, l'aide était coupée au tampon et tout ce
+  qui suit la section Add disparaissait dès que la sortie était redirigée
+  (antérieur à 2.6.0). `catalogue -H` passe aussi par `process.exitCode` pour
+  ne pas tronquer un gros catalogue.
+- CI verte de bout en bout : `biome.json` déclarait le schéma `2.0.0` alors que
+  la CLI est en `2.4.15`, ce qui faisait échouer `biome ci` sur ce seul décalage
+  et masquait le rouge macOS ci-dessus depuis plusieurs commits.
+
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
