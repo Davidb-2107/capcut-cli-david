@@ -2,7 +2,7 @@
 // library. Where `query` is stateless (delete a draft, lose the resource_id),
 // this file remembers forever and carries the human's hand-written notes.
 // Frozen design: docs/superpowers/specs/2026-08-07-catalogue-design.md
-import { renameSync, writeFileSync } from "node:fs";
+import { renameSync, unlinkSync, writeFileSync } from "node:fs";
 import type { RawItem } from "./query.js";
 import { die } from "../utils/cli.js";
 
@@ -198,31 +198,60 @@ export function parseCatalogue(text: string): CatalogueEntry[] {
   if (rec.type !== ENVELOPE)
     throw new CatalogueFormatError(`catalogue illisible : type "${String(rec.type)}" (attendu "${ENVELOPE}").`);
   if (!Array.isArray(rec.entries)) throw new CatalogueFormatError("catalogue illisible : champ `entries` absent ou non-tableau.");
-  return rec.entries.map((raw, i) => normalizeEntry(raw, i));
+  const entries = rec.entries.map((raw, i) => normalizeEntry(raw, i));
+  // Two entries with the same id: the merge index would keep only the last one
+  // and destroy the first one's note. That is exactly what a "keep both" git
+  // conflict resolution produces, so refuse instead of silently deduplicating.
+  const seen = new Set<string>();
+  for (const e of entries) {
+    if (seen.has(e.id)) throw new CatalogueFormatError(`catalogue illisible : id dupliqué "${e.id}". Fusionne les deux entrées à la main.`);
+    seen.add(e.id);
+  }
+  return entries;
 }
 
 function normalizeEntry(raw: unknown, i: number): CatalogueEntry {
   const r = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
   if (!r || typeof r.id !== "string" || r.id === "") throw new CatalogueFormatError(`catalogue illisible : entrée #${i} sans \`id\`.`);
-  const strArr = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
-  const strOrNull = (v: unknown): string | null => (typeof v === "string" && v !== "" ? v : null);
+  // Absent → default. Present but wrong-typed → refuse: coercing it would write
+  // the repaired value back and lose whatever the human actually meant.
+  const bad = (f: string): CatalogueFormatError =>
+    new CatalogueFormatError(`catalogue illisible : entrée #${i} (${r.id as string}), champ \`${f}\` de type inattendu.`);
+  const strArr = (v: unknown, f: string): string[] => {
+    if (v === undefined || v === null) return [];
+    if (!Array.isArray(v) || v.some((x) => typeof x !== "string")) throw bad(f);
+    return v as string[];
+  };
+  const strOrNull = (v: unknown, f: string): string | null => {
+    if (v === undefined || v === null) return null;
+    if (typeof v !== "string") throw bad(f);
+    return v === "" ? null : v;
+  };
+  const str = (v: unknown, f: string): string => {
+    if (v === undefined || v === null) return "";
+    if (typeof v !== "string") throw bad(f);
+    return v;
+  };
   return {
     id: r.id as string,
-    kinds: strArr(r.kinds),
-    names: strArr(r.names),
-    resource_id: strOrNull(r.resource_id),
-    effect_id: strOrNull(r.effect_id),
-    font_paths: strArr(r.font_paths),
-    first_seen: typeof r.first_seen === "string" ? r.first_seen : "",
-    witness_drafts: strArr(r.witness_drafts),
-    note: typeof r.note === "string" ? r.note : "",
+    kinds: strArr(r.kinds, "kinds"),
+    names: strArr(r.names, "names"),
+    resource_id: strOrNull(r.resource_id, "resource_id"),
+    effect_id: strOrNull(r.effect_id, "effect_id"),
+    font_paths: strArr(r.font_paths, "font_paths"),
+    first_seen: str(r.first_seen, "first_seen"),
+    witness_drafts: strArr(r.witness_drafts, "witness_drafts"),
+    note: str(r.note, "note"),
     ignored: r.ignored === true,
-    merged_from: strArr(r.merged_from),
+    merged_from: strArr(r.merged_from, "merged_from"),
   };
 }
 
+// The sort lives here, not only in planCatalogueMerge: the empty-diff guarantee
+// must not depend on every future caller remembering to route through the merge.
 export function serializeCatalogue(entries: CatalogueEntry[]): string {
-  return `${JSON.stringify({ type: ENVELOPE, entries }, null, 2)}\n`;
+  const sorted = [...entries].sort((a, b) => byCodepoint(a.id, b.id));
+  return `${JSON.stringify({ type: ENVELOPE, entries: sorted }, null, 2)}\n`;
 }
 
 /**
@@ -232,16 +261,26 @@ export function serializeCatalogue(entries: CatalogueEntry[]): string {
  * loudly. Never degrade to a direct (truncating) write.
  */
 export function writeCatalogueAtomic(path: string, text: string): void {
-  const tmpPath = `${path}.tmp`;
+  // pid-suffixed: two concurrent runs must not write into the same tmp file.
+  const tmpPath = `${path}.${process.pid}.tmp`;
+  const scrub = () => {
+    try {
+      unlinkSync(tmpPath);
+    } catch {}
+  };
   writeFileSync(tmpPath, text, "utf-8");
   try {
     renameSync(tmpPath, path);
   } catch (e) {
     const code = (e as NodeJS.ErrnoException).code;
-    if (code !== "EPERM" && code !== "EBUSY" && code !== "EACCES") throw e;
+    if (code !== "EPERM" && code !== "EBUSY" && code !== "EACCES") {
+      scrub();
+      throw e;
+    }
     try {
       renameSync(tmpPath, path);
     } catch {
+      scrub();
       die(`catalogue verrouillé (${code}) : ${path}. Ferme Obsidian ou ton client de synchro et relance.`);
     }
   }
