@@ -211,7 +211,8 @@ Catalogue:
              from_drafts[]. JSON (or -H table). Exit 0 even on zero matches;
              2 if the drafts root is missing or all drafts are unreadable.
 
-  catalogue  [--sync] [--dry-run] [--kind effect|filter|transition|font]
+  catalogue  [--sync] [--add <id> --kind <k> --name <nom>] [--note <texte>]
+             [--dry-run] [--kind effect|filter|transition|font]
              [--drafts <dir>] [--catalogue <path>]
              Persistent memory of every resource seen in a draft: name +
              resource_id frozen in <vault>/Shared/capcut-catalogue.json (anchor-
@@ -220,6 +221,9 @@ Catalogue:
              draft. Append-only: \`note\` and \`ignored\` are hand-written and never
              rewritten by a sync. Without --sync it only reads. --dry-run reports
              without writing; --kind filters the listing, never the merge.
+             --add: enter a resource whose witness draft is gone (nothing to
+             harvest, so --sync cannot reach it) — needs --kind and --name;
+             --note adds a human note without ever overwriting an existing one.
              Exit 0 (incl. nothing new), 1 usage, 2 unreadable catalogue /
              missing drafts root / write refused.
 
@@ -366,6 +370,20 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.full = true;
     } else if (a === "--all") {
       flags.all = true;
+      // Même garde de valeur que --catalogue/--drafts : ces trois-là décident
+      // CE QUI est écrit dans le catalogue, un flag avalé y mettrait n'importe quoi.
+    } else if (a === "--add" || a.startsWith("--add=")) {
+      if (a !== "--add") die(`--add takes a space-separated value (use --add <resource_id>), got "${a}"`);
+      if (i + 1 >= args.length || args[i + 1].startsWith("--")) die("--add requires a resource_id (e.g. --add 7637780179456118024)");
+      flags.add = args[++i];
+    } else if (a === "--name" || a.startsWith("--name=")) {
+      if (a !== "--name") die(`--name takes a space-separated value (use --name <nom>), got "${a}"`);
+      if (i + 1 >= args.length || args[i + 1].startsWith("--")) die("--name requires a value (e.g. --name Disco)");
+      flags.name = args[++i];
+    } else if (a === "--note" || a.startsWith("--note=")) {
+      if (a !== "--note") die(`--note takes a space-separated value (use --note "<texte>"), got "${a}"`);
+      if (i + 1 >= args.length || args[i + 1].startsWith("--")) die("--note requires a value");
+      flags.note = args[++i];
     } else if (a === "--sync") {
       flags.sync = true;
     } else if (a === "--catalogue" || a.startsWith("--catalogue=")) {

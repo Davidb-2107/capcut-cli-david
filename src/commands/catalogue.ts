@@ -355,6 +355,38 @@ export function cmdCatalogue(flags: Flags): number {
   let added: string[] = [];
   let promoted: string[] = [];
 
+  // Entrer une ressource dont on connaît l'id mais dont le draft témoin n'existe
+  // plus — rien à moissonner, donc `--sync` ne peut rien pour elle. Volontairement
+  // HORS de planCatalogueMerge : celui-ci remet à zéro les witness_drafts de
+  // toutes les entrées non ignorées, ce qui effacerait les témoins de tout le
+  // catalogue au passage. Ici on ne touche que l'entrée visée.
+  if (flags.add !== undefined) {
+    if (flags.sync) die("--add et --sync sont exclusifs : --add n'a rien à moissonner.");
+    if (!flags.kind) die("--add exige --kind (effect | filter | transition | font).");
+    if (!flags.name) die("--add exige --name (le nom affiché par CapCut).");
+    const id = flags.add;
+    if (id === "") die("--add exige un resource_id non vide.");
+    let e = entries.find((x) => x.id === id);
+    if (!e) {
+      e = blank(id, todayUtc());
+      entries = [...entries, e];
+      added = [id];
+    }
+    e.kinds = sortedSet([...e.kinds, flags.kind]);
+    e.names = sortedSet([...e.names, nfc(flags.name)]);
+    if (!e.resource_id && !id.startsWith("local:") && !id.startsWith("unresolved:")) e.resource_id = id;
+    // Jamais choisir entre deux notes humaines — même règle que la promotion.
+    if (flags.note) e.note = e.note ? `${e.note}\n---\n${flags.note}` : flags.note;
+    if (!flags.dryRun) {
+      try {
+        writeCatalogueAtomic(cataloguePath, serializeCatalogue(entries));
+      } catch (err) {
+        process.stderr.write(`${JSON.stringify({ error: (err as Error).message })}\n`);
+        return 2;
+      }
+    }
+  }
+
   if (flags.sync) {
     const root = flags.drafts ?? defaultProjectsRoot();
     if (!existsSync(root) || !statSync(root).isDirectory()) {

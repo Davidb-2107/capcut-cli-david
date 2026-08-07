@@ -1,6 +1,6 @@
 // Le verbe `catalogue` de bout en bout : flags, codes de sortie, écriture.
 import { test } from "node:test";
-import { strictEqual, ok } from "node:assert/strict";
+import { strictEqual, ok, deepStrictEqual } from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -138,6 +138,65 @@ test("17: a hand-written note survives a re-sync", (t) => {
   runCli(["catalogue", "--sync", "--drafts", root, "--catalogue", cat]);
   const after = JSON.parse(readFileSync(cat, "utf-8"));
   strictEqual(after.entries[0].note, "ma note à moi");
+});
+
+// --add : entrer une ressource dont on connaît l'id mais dont le draft témoin
+// n'existe plus (le cas Disco/SpeedLines/CC-DerStil). Rien à moissonner.
+test("19: --add crée l'entrée sans aucun draft", (t) => {
+  const cat = catPath(t);
+  const r = runCli(["catalogue", "--add", "7637780179456118024", "--kind", "font", "--name", "Disco", "--catalogue", cat]);
+  strictEqual(r.status, 0);
+  const doc = JSON.parse(readFileSync(cat, "utf-8"));
+  strictEqual(doc.entries.length, 1);
+  strictEqual(doc.entries[0].id, "7637780179456118024");
+  strictEqual(doc.entries[0].resource_id, "7637780179456118024");
+  deepStrictEqual(doc.entries[0].names, ["Disco"]);
+  deepStrictEqual(doc.entries[0].witness_drafts, []);
+});
+
+// Le piège : planCatalogueMerge REMET À ZÉRO witness_drafts de toutes les entrées
+// non ignorées. Un --add qui passerait par lui effacerait les témoins de tout le
+// catalogue au passage.
+test("20: --add ne touche pas les autres entrées", (t) => {
+  const root = makeLib(t, { d1: "transitions-draft" });
+  const cat = catPath(t);
+  runCli(["catalogue", "--sync", "--drafts", root, "--catalogue", cat]);
+  const before = JSON.parse(readFileSync(cat, "utf-8")).entries;
+  runCli(["catalogue", "--add", "7605981975781887248", "--kind", "font", "--name", "SpeedLines", "--catalogue", cat]);
+  const after = JSON.parse(readFileSync(cat, "utf-8")).entries;
+  strictEqual(after.length, before.length + 1);
+  for (const e of before) {
+    const now = after.find((x) => x.id === e.id);
+    deepStrictEqual(now.witness_drafts, e.witness_drafts, `témoins perdus sur ${e.id}`);
+  }
+});
+
+test("21: --add deux fois n'ajoute pas de doublon, et une note s'accumule", (t) => {
+  const cat = catPath(t);
+  const args = ["catalogue", "--add", "7457793217560318481", "--kind", "font", "--name", "CC-DerStil", "--catalogue", cat];
+  runCli([...args, "--note", "dropdown System"]);
+  const r = runCli([...args, "--note", "absente du cache panel"]);
+  strictEqual(r.status, 0);
+  const doc = JSON.parse(readFileSync(cat, "utf-8"));
+  strictEqual(doc.entries.length, 1);
+  ok(doc.entries[0].note.includes("dropdown System"), "la première note doit survivre");
+  ok(doc.entries[0].note.includes("absente du cache panel"));
+});
+
+test("22: --add sans --name ou --kind, ou avec --sync, est une erreur d'usage", (t) => {
+  const cat = catPath(t);
+  strictEqual(runCli(["catalogue", "--add", "123", "--kind", "font", "--catalogue", cat]).status, 1);
+  strictEqual(runCli(["catalogue", "--add", "123", "--name", "X", "--catalogue", cat]).status, 1);
+  strictEqual(runCli(["catalogue", "--add", "123", "--kind", "font", "--name", "X", "--sync", "--catalogue", cat]).status, 1);
+  strictEqual(existsSync(cat), false, "aucune écriture sur erreur d'usage");
+});
+
+test("23: --add --dry-run n'écrit rien mais rapporte", (t) => {
+  const cat = catPath(t);
+  const r = runCli(["catalogue", "--add", "999", "--kind", "effect", "--name", "Truc", "--dry-run", "--catalogue", cat]);
+  strictEqual(r.status, 0);
+  deepStrictEqual(r.json.added, ["999"]);
+  strictEqual(existsSync(cat), false);
 });
 
 test("18: listing a missing catalogue is empty and exit 0, and creates nothing", (t) => {

@@ -8,6 +8,16 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 
 ## [Unreleased]
 
+### Added
+- `catalogue --add <resource_id> --kind <k> --name <nom> [--note <texte>]` —
+  entre une ressource dont le **draft témoin n'existe plus** : `--sync` ne peut
+  rien pour elle puisqu'il n'y a rien à moissonner. Cas réel : les polices
+  Disco / SpeedLines / CC-DerStil, dont les id avaient été relevés dans une
+  session d'enquête sur le dropdown « System » et vivaient depuis dans un fichier
+  de gotchas. Exclusif avec `--sync`, honore `--dry-run`, et **ne touche que
+  l'entrée visée** — délibérément hors de `planCatalogueMerge`, qui remet à zéro
+  les `witness_drafts` de toutes les entrées non ignorées.
+
 ### Fixed
 - **macOS uniquement, deux bugs invisibles sur Windows/Linux.** (a) Le garde
   « racine de drafts temporaire → catalogue par défaut » de `catalogue --sync`

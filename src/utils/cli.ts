@@ -46,6 +46,9 @@ export interface Flags {
   all?: boolean;
   sync?: boolean;
   catalogue?: string;
+  add?: string;
+  name?: string;
+  note?: string;
   font?: string;
   width?: number;
   height?: number;

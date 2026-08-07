@@ -153,6 +153,10 @@ l'écrit sur disque qu'à la sauvegarde) → `capcut-david catalogue --sync` →
 l'entrée est figée pour toujours. Consulter avec `catalogue -H`, ou
 `catalogue --kind font -H` pour une seule rubrique.
 
+Ressource dont le draft témoin a disparu : `--sync` ne peut rien pour elle
+(il n'y a rien à moissonner). L'entrer à la main :
+`catalogue --add <resource_id> --kind font --name Disco --note "<pourquoi>"`.
+
 Ne jamais éditer `note` ni `ignored` depuis un agent : ces champs
 appartiennent à l'humain, et le hook `no_main_tree_write` du vault bloque de
 toute façon un Write/Edit sur ce fichier.
