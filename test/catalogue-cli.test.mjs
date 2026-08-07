@@ -73,6 +73,23 @@ test("13b: --catalogue=<x> is refused → exit 1", (t) => {
   strictEqual(r.status, 1);
 });
 
+// Un flag qui avale le flag suivant, ou qui devient un positionnel muet, change
+// la CIBLE du sync sans le dire : --drafts absent retombe sur la vraie
+// bibliothèque CapCut, --catalogue avalé écrirait un fichier nommé "--sync".
+test("13c: a valueless or flag-swallowing --drafts/--catalogue → exit 1", (t) => {
+  const root = makeLib(t, { d1: "transitions-draft" });
+  const cat = catPath(t);
+  strictEqual(runCli(["catalogue", "--catalogue", cat, "--drafts"]).status, 1);
+  strictEqual(runCli(["catalogue", "--sync", "--catalogue", cat, "--drafts", "--dry-run"]).status, 1);
+  strictEqual(runCli(["catalogue", "--drafts", root, "--catalogue", "--sync"]).status, 1);
+  strictEqual(existsSync(cat), false);
+});
+
+test("13d: --kind '' is a usage error, not a silent no-filter", (t) => {
+  const cat = catPath(t);
+  strictEqual(runCli(["catalogue", "--catalogue", cat, "--kind", ""]).status, 1);
+});
+
 test("14: --kind filters the listing", (t) => {
   const root = makeLib(t, { d1: "transitions-draft" });
   const cat = catPath(t);

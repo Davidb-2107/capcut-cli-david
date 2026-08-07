@@ -283,7 +283,12 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.volume = parseFloat(args[++i]);
     } else if (a === "--template" && i + 1 < args.length) {
       flags.template = args[++i];
-    } else if (a === "--drafts" && i + 1 < args.length) {
+    } else if (a === "--drafts" || a.startsWith("--drafts=")) {
+      // Même garde que --catalogue : sans elle, un `--drafts` en fin de ligne
+      // devient un positionnel muet et `catalogue --sync` retombe sur la VRAIE
+      // bibliothèque CapCut au lieu du dossier demandé.
+      if (a !== "--drafts") die(`--drafts takes a space-separated value (use --drafts <dir>), got "${a}"`);
+      if (i + 1 >= args.length || args[i + 1].startsWith("--")) die("--drafts requires a value (e.g. --drafts <dir>)");
       flags.drafts = args[++i];
     } else if (a === "--font" && i + 1 < args.length) {
       flags.font = args[++i];
@@ -355,7 +360,8 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       // devient un positionnel. Sans ce garde, un --catalogue=<x> serait ignoré
       // et le sync écrirait dans le chemin par défaut résolu par ancre.
       if (a !== "--catalogue") die(`--catalogue takes a space-separated value (use --catalogue <path>), got "${a}"`);
-      if (i + 1 >= args.length) die("--catalogue requires a value (e.g. --catalogue ./capcut-catalogue.json)");
+      if (i + 1 >= args.length || args[i + 1].startsWith("--"))
+        die("--catalogue requires a value (e.g. --catalogue ./capcut-catalogue.json)");
       flags.catalogue = args[++i];
     } else if (a === "--id" && i + 1 < args.length) {
       if (!flags.ids) flags.ids = [];

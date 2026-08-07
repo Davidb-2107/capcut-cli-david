@@ -323,7 +323,7 @@ function scanDrafts(root: string): { scanned: ScannedItem[]; draftCount: number 
 
 // Returns the process exit code. 0 success (incl. nothing new), 2 operational.
 export function cmdCatalogue(flags: Flags): number {
-  if (flags.kind && !KINDS.has(flags.kind)) {
+  if (flags.kind !== undefined && !KINDS.has(flags.kind)) {
     die(`Invalid --kind '${flags.kind}'. Expected one of: effect, filter, transition, font.`);
   }
   const cataloguePath = resolveCataloguePath(flags.catalogue, process.cwd());
@@ -370,11 +370,24 @@ export function cmdCatalogue(flags: Flags): number {
     entries = plan.entries;
     added = plan.added;
     promoted = plan.promoted;
-    if (!flags.dryRun) writeCatalogueAtomic(cataloguePath, serializeCatalogue(entries));
+    if (!flags.dryRun) {
+      try {
+        writeCatalogueAtomic(cataloguePath, serializeCatalogue(entries));
+      } catch (e) {
+        // Fichier verrouillé, disque plein, droits : opérationnel (2), pas usage (1).
+        process.stderr.write(`${JSON.stringify({ error: (e as Error).message })}\n`);
+        return 2;
+      }
+    }
   }
 
   const shown = flags.kind ? entries.filter((e) => e.kinds.includes(flags.kind as string)) : entries;
   if (flags.human) {
+    // Sans ça, `catalogue --sync -H` (l'exemple documenté) ne dit rien de ce
+    // qu'il vient de capturer : la table seule ne distingue pas un sync vide.
+    if (flags.sync && !flags.quiet) {
+      console.log(`${added.length} ajoutée(s), ${promoted.length} promue(s)${flags.dryRun ? " — dry-run, rien écrit" : ""}`);
+    }
     renderCatalogueHuman(shown, flags);
     return 0;
   }
