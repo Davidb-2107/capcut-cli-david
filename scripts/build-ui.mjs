@@ -29,12 +29,12 @@ writeFileSync(resolve(ROOT, "dist/ui/index.html"), html);
 console.log(`build-ui: dist/ui/index.html (${CAPABILITIES.length} verbes, v${pkg.version})`);
 
 // Miroir vault : cartographie/ garde une copie ouvrable sans passer par le CLI.
-// Découverte par ancre (racine vault = Projects/ + Shared/) — absente hors du vault (CI, clone nu) → skip.
-const vault = ROOT.split(/[\\/]/).reduce((acc, _, i, parts) => {
-  const p = parts.slice(0, parts.length - i).join("/");
-  return acc || (p && existsSync(`${p}/Projects`) && existsSync(`${p}/Shared`) ? p : null);
-}, null);
-if (vault && existsSync(`${vault}/cartographie`)) {
-  writeFileSync(`${vault}/cartographie/capcut-cli-capabilities.html`, html);
-  console.log(`build-ui: miroir → ${vault}/cartographie/capcut-cli-capabilities.html`);
+// Même ancre que le CLI (dist/utils/vault.js) — une seule implémentation.
+// Absente hors du vault (CI, clone nu) → skip.
+const { findVaultRoot } = await import(new URL("../dist/utils/vault.js", import.meta.url));
+const vault = findVaultRoot(ROOT);
+if (vault && existsSync(resolve(vault, "cartographie"))) {
+  const mirror = resolve(vault, "cartographie", "capcut-cli-capabilities.html");
+  writeFileSync(mirror, html);
+  console.log(`build-ui: miroir → ${mirror}`);
 }
