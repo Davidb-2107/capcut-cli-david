@@ -1075,7 +1075,8 @@ export function importCaptions(
     }
     const matId = uuid();
     const segId = uuid();
-    const cardHex = opts.colorCycle && opts.colorCycle.length > 0 ? opts.colorCycle[i % opts.colorCycle.length] : baseHex;
+    const cardHex =
+      opts.colorCycle && opts.colorCycle.length > 0 ? opts.colorCycle[i % opts.colorCycle.length] : baseHex;
     const cardRgb = cardHex === baseHex ? baseRgb : hexToRgb(cardHex);
     const hl = card.hl;
     // Batch tolerance (1:1 with the patcher): a degenerate/sentinel range (e.g. [0,0]
@@ -1147,7 +1148,12 @@ export function cmdImportCaptions(draft: Draft, filePath: string, positional: st
 }
 
 /** Resolve <start>/<duration> from positionals, or the whole timeline when --full. */
-function resolveRange(draft: Draft, positional: string[], flags: Flags, usage: string): { start: number; duration: number } {
+function resolveRange(
+  draft: Draft,
+  positional: string[],
+  flags: Flags,
+  usage: string,
+): { start: number; duration: number } {
   if (flags.full) {
     if (typeof draft.duration !== "number" || draft.duration <= 0) die("--full: draft has no duration");
     return { start: 0, duration: draft.duration };

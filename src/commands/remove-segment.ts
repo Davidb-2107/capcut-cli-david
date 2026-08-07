@@ -1,8 +1,8 @@
 import { dirname } from "node:path";
 import { type Draft, findSegment, saveDraft } from "../draft.js";
 import { CliError, type Flags, out } from "../utils/cli.js";
-import { hasBlockingErrors } from "./validate.js";
 import { applyGc, planGc } from "./gc.js";
+import { hasBlockingErrors } from "./validate.js";
 
 // remove-segment — remove one segment from its track, drop the track when it
 // becomes empty, then sweep the materials this removal orphaned via gc's
@@ -10,12 +10,7 @@ import { applyGc, planGc } from "./gc.js";
 // guarantee: a material still referenced by ANY other segment is never deleted,
 // and the sweep only ever touches materials.texts/videos/audios.
 
-export function cmdRemoveSegment(
-  draft: Draft,
-  filePath: string,
-  positional: string[],
-  flags: Flags,
-): void {
+export function cmdRemoveSegment(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
   // Same refusal as gc: a dangling ref means the draft is already inconsistent,
   // a duplicate material id makes the id-based sweep ambiguous.
   if (hasBlockingErrors(draft)) {

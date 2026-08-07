@@ -426,7 +426,7 @@ Every fixture in `test-fixtures/fixtures/` parses without error and round-trips 
 
 ```bash
 for f in test-fixtures/fixtures/*.json; do
-  node dist/index.js info --input "$f" > /dev/null || { echo "FAIL: $f"; exit 1; }
+  node dist/index.js info "$f" > /dev/null || { echo "FAIL: $f"; exit 1; }
 done
 ```
 
