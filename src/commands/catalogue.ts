@@ -144,7 +144,10 @@ export function planCatalogueMerge(
         e.witness_drafts = sortedSet([...e.witness_drafts, ...other.witness_drafts]);
         if (!e.effect_id && other.effect_id) e.effect_id = other.effect_id;
         if (byCodepoint(other.first_seen, e.first_seen) < 0) e.first_seen = other.first_seen;
-        if (!e.note && other.note) e.note = other.note; // the note follows the resource
+        // Never drop a human note: if both sides carry one, keep both. The loser's
+        // entry is about to be deleted from the index, so a silent choice here is
+        // unrecoverable data loss.
+        if (other.note) e.note = e.note ? `${e.note}\n---\n${other.note}` : other.note;
         e.merged_from = sortedSet([...e.merged_from, ...other.merged_from, otherId]);
         index.delete(otherId);
         promoted.push(otherId);

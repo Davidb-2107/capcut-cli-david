@@ -96,6 +96,34 @@ test("6: PROMOTION — a local font gaining a resource_id keeps its note", () =>
   deepStrictEqual(r.promoted, ["local:c:/f/cc-derstil.ttf"]);
 });
 
+test("6b: PROMOTION with a note on BOTH sides keeps both", () => {
+  const local = entry({
+    id: "local:c:/f/cc-derstil.ttf",
+    kinds: ["font"],
+    names: ["CC-DerStil"],
+    resource_id: null,
+    font_paths: ["c:/f/cc-derstil.ttf"],
+    note: "note locale",
+  });
+  const resolved = entry({
+    id: "745",
+    kinds: ["font"],
+    names: ["CC-DerStil"],
+    resource_id: "745",
+    font_paths: [],
+    note: "note catalogue",
+  });
+  const r = planCatalogueMerge(
+    [local, resolved],
+    [seen({ kind: "font", name: "CC-DerStil", resource_id: "745", font_path: "C:\\f\\CC-DerStil.ttf" })],
+    TODAY,
+  );
+  strictEqual(r.entries.length, 1);
+  const e = r.entries[0];
+  ok(e.note.includes("note locale"));
+  ok(e.note.includes("note catalogue"));
+});
+
 test("7: one resource_id under two locales → one entry, two names", () => {
   const r = planCatalogueMerge(
     [],
