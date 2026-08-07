@@ -8,6 +8,14 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 
 ## [Unreleased]
 
+### Planned
+- `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
+
+## [2.6.0] — 2026-08-07
+
+Minor release. **Lot découverte** : `query --all` et `catalogue` — le CLI passe à 41 verbes,
+et il gagne une mémoire qui survit à la suppression des drafts.
+
 ### Added
 - `query --all` — inventaire complet de la bibliothèque de drafts, sans terme de
   recherche. Répond à « qu'est-ce que le CLI sait nommer aujourd'hui ? » : toutes
@@ -25,8 +33,10 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 - `build-ui` écrit un miroir de la page capacités dans `cartographie/` du vault
   quand il tourne depuis celui-ci (racine détectée par ancre) ; sauté ailleurs.
 
-### Planned
-- `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
+### Fixed
+- Un BOM UTF-8 en tête de `draft_content.json` rendait le draft invisible au scan
+  de la bibliothèque : `query` le comptait comme illisible et le sautait en
+  silence, donc une police n'existant que dans ce draft était introuvable.
 
 ## [2.5.0] — 2026-07-17
 
@@ -719,7 +729,10 @@ First release of the fork. Baseline = upstream `capcut-cli@0.2.2` (commit `c9223
 - Node ≥ 18; CI matrix covers Node 18, 20, 22.
 - JianYing 6+ remains unsupported (encrypted `draft_content.json` — see `COMPATIBILITY.md` §5).
 
-[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.6.0...HEAD
+[2.6.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.5.0...v2.6.0
+[2.5.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.4.0...v2.5.0
+[2.4.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.2.0...v2.3.0
 [2.0.1]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v1.16.0...v2.0.0
