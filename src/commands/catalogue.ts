@@ -2,7 +2,17 @@
 // library. Where `query` is stateless (delete a draft, lose the resource_id),
 // this file remembers forever and carries the human's hand-written notes.
 // Frozen design: docs/superpowers/specs/2026-08-07-catalogue-design.md
-import { existsSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  renameSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
 import { isCapCutRunning } from "../utils/capcut-guard.js";
 import { defaultProjectsRoot } from "../utils/capcut-paths.js";
@@ -334,8 +344,9 @@ export function cmdCatalogue(flags: Flags): number {
       entries = parseCatalogue(readFileSync(cataloguePath, "utf-8"));
     } catch (e) {
       // Échec OPÉRATIONNEL, pas d'usage : le fichier existe, on refuse d'y toucher.
-      if (!(e instanceof CatalogueFormatError)) throw e;
-      process.stderr.write(`${JSON.stringify({ error: e.message })}\n`);
+      // Vaut aussi pour un EACCES / EISDIR : un fichier présent mais illisible est
+      // exactement le cas où un script appelant a besoin du 2 documenté.
+      process.stderr.write(`${JSON.stringify({ error: (e as Error).message })}\n`);
       return 2;
     }
   }
@@ -353,6 +364,16 @@ export function cmdCatalogue(flags: Flags): number {
     // résout le vrai catalogue. Les fixtures ne doivent jamais l'atteindre.
     if (`${root}${sep}`.includes(`${sep}test-fixtures${sep}`)) {
       process.stderr.write(`${JSON.stringify({ error: "Refusing to sync from a test-fixtures/ drafts root." })}\n`);
+      return 2;
+    }
+    // Le garde ci-dessus protège la SOURCE ; celui-ci la CIBLE. Un test qui
+    // pointe --drafts sur un mkdtemp mais oublie --catalogue écrirait des
+    // fixtures dans le vrai catalogue de l'utilisateur, sans qu'aucun garde
+    // ne se déclenche — la seule combinaison qui n'a aucun usage légitime.
+    if (flags.catalogue === undefined && `${root}${sep}`.startsWith(`${realpathSync(tmpdir())}${sep}`)) {
+      process.stderr.write(
+        `${JSON.stringify({ error: "Refusing to sync a temp drafts root into the default catalogue (pass --catalogue)." })}\n`,
+      );
       return 2;
     }
     const { scanned, draftCount } = scanDrafts(root);
@@ -386,7 +407,9 @@ export function cmdCatalogue(flags: Flags): number {
     // Sans ça, `catalogue --sync -H` (l'exemple documenté) ne dit rien de ce
     // qu'il vient de capturer : la table seule ne distingue pas un sync vide.
     if (flags.sync && !flags.quiet) {
-      console.log(`${added.length} ajoutée(s), ${promoted.length} promue(s)${flags.dryRun ? " — dry-run, rien écrit" : ""}`);
+      console.log(
+        `${added.length} ajoutée(s), ${promoted.length} promue(s)${flags.dryRun ? " — dry-run, rien écrit" : ""}`,
+      );
     }
     renderCatalogueHuman(shown, flags);
     return 0;
@@ -412,7 +435,9 @@ function renderCatalogueHuman(entries: CatalogueEntry[], flags: Flags): void {
     name: e.names.join(" / "),
     id: e.id,
     seen: e.first_seen,
-    note: e.ignored ? "(ignorée)" : e.note,
+    // La promotion fabrique des notes multi-lignes ("<a>\n---\n<b>") : telles
+    // quelles, elles disloquent la table.
+    note: e.ignored ? "(ignorée)" : e.note.replace(/\n/g, " ⏎ "),
   }));
   const w = (key: keyof (typeof rows)[0], min: number) => Math.max(min, ...rows.map((r) => r[key].length));
   const wk = w("kinds", 5);

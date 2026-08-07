@@ -90,6 +90,14 @@ test("13d: --kind '' is a usage error, not a silent no-filter", (t) => {
   strictEqual(runCli(["catalogue", "--catalogue", cat, "--kind", ""]).status, 1);
 });
 
+// Le repo vit SOUS le vault : sans ce garde, ce test-ci écrirait ses fixtures
+// dans le VRAI Shared/capcut-catalogue.json de l'utilisateur.
+test("13e: a temp drafts root without --catalogue refuses to touch the default path", (t) => {
+  const root = makeLib(t, { d1: "transitions-draft" });
+  const r = runCli(["catalogue", "--sync", "--drafts", root]);
+  strictEqual(r.status, 2);
+});
+
 test("14: --kind filters the listing", (t) => {
   const root = makeLib(t, { d1: "transitions-draft" });
   const cat = catPath(t);
