@@ -2,7 +2,9 @@
 // library. Where `query` is stateless (delete a draft, lose the resource_id),
 // this file remembers forever and carries the human's hand-written notes.
 // Frozen design: docs/superpowers/specs/2026-08-07-catalogue-design.md
+import { renameSync, writeFileSync } from "node:fs";
 import type { RawItem } from "./query.js";
+import { die } from "../utils/cli.js";
 
 // Durable identity. NEVER the display name for a resolved entry: CapCut names
 // are localized (the same resource_id comes back as "Fade Out" or "渐隐"
@@ -159,4 +161,88 @@ export function planCatalogueMerge(
 
   const entries = [...index.values()].sort((a, b) => byCodepoint(a.id, b.id));
   return { entries, added: sortedSet(added), promoted: sortedSet(promoted) };
+}
+
+const ENVELOPE = "capcut-david/catalogue@1";
+
+// A malformed existing catalogue is an OPERATIONAL failure (exit 2), not a usage
+// error (exit 1): the file exists and we refuse to touch it. Distinct from
+// CliError so the command layer can map it to the right code.
+export class CatalogueFormatError extends Error {
+  constructor(msg: string) {
+    super(msg);
+    this.name = "CatalogueFormatError";
+  }
+}
+
+/**
+ * Parse an existing catalogue. THROWS on anything it does not recognize.
+ *
+ * This is the most important rule in the feature: a truncated write or a bad
+ * hand-edit must stop the run, not silently reset the file. `note` is the only
+ * datum here that nobody can regenerate.
+ */
+export function parseCatalogue(text: string): CatalogueEntry[] {
+  const clean = text.replace(/^﻿/, "").replace(/\r\n/g, "\n").trim();
+  if (clean === "") return [];
+  let data: unknown;
+  try {
+    data = JSON.parse(clean);
+  } catch (e) {
+    throw new CatalogueFormatError(
+      `catalogue illisible (JSON invalide) : ${(e as Error).message}. Aucune écriture effectuée.`,
+    );
+  }
+  const rec = data && typeof data === "object" && !Array.isArray(data) ? (data as Record<string, unknown>) : null;
+  if (!rec) throw new CatalogueFormatError("catalogue illisible : racine JSON inattendue (objet attendu). Aucune écriture effectuée.");
+  if (rec.type !== ENVELOPE)
+    throw new CatalogueFormatError(`catalogue illisible : type "${String(rec.type)}" (attendu "${ENVELOPE}").`);
+  if (!Array.isArray(rec.entries)) throw new CatalogueFormatError("catalogue illisible : champ `entries` absent ou non-tableau.");
+  return rec.entries.map((raw, i) => normalizeEntry(raw, i));
+}
+
+function normalizeEntry(raw: unknown, i: number): CatalogueEntry {
+  const r = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
+  if (!r || typeof r.id !== "string" || r.id === "") throw new CatalogueFormatError(`catalogue illisible : entrée #${i} sans \`id\`.`);
+  const strArr = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
+  const strOrNull = (v: unknown): string | null => (typeof v === "string" && v !== "" ? v : null);
+  return {
+    id: r.id as string,
+    kinds: strArr(r.kinds),
+    names: strArr(r.names),
+    resource_id: strOrNull(r.resource_id),
+    effect_id: strOrNull(r.effect_id),
+    font_paths: strArr(r.font_paths),
+    first_seen: typeof r.first_seen === "string" ? r.first_seen : "",
+    witness_drafts: strArr(r.witness_drafts),
+    note: typeof r.note === "string" ? r.note : "",
+    ignored: r.ignored === true,
+    merged_from: strArr(r.merged_from),
+  };
+}
+
+export function serializeCatalogue(entries: CatalogueEntry[]): string {
+  return `${JSON.stringify({ type: ENVELOPE, entries }, null, 2)}\n`;
+}
+
+/**
+ * Same-directory tmp + rename: the rename is atomic on one volume, so a crash
+ * mid-write can never leave a truncated catalogue. On Windows the rename can
+ * lose to Obsidian or a sync client holding the file — retry once, then fail
+ * loudly. Never degrade to a direct (truncating) write.
+ */
+export function writeCatalogueAtomic(path: string, text: string): void {
+  const tmpPath = `${path}.tmp`;
+  writeFileSync(tmpPath, text, "utf-8");
+  try {
+    renameSync(tmpPath, path);
+  } catch (e) {
+    const code = (e as NodeJS.ErrnoException).code;
+    if (code !== "EPERM" && code !== "EBUSY" && code !== "EACCES") throw e;
+    try {
+      renameSync(tmpPath, path);
+    } catch {
+      die(`catalogue verrouillé (${code}) : ${path}. Ferme Obsidian ou ton client de synchro et relance.`);
+    }
+  }
 }
