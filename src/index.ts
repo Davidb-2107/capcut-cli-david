@@ -210,6 +210,18 @@ Catalogue:
              from_drafts[]. JSON (or -H table). Exit 0 even on zero matches;
              2 if the drafts root is missing or all drafts are unreadable.
 
+  catalogue  [--sync] [--dry-run] [--kind effect|filter|transition|font]
+             [--drafts <dir>] [--catalogue <path>]
+             Persistent memory of every resource seen in a draft: name +
+             resource_id frozen in <vault>/Shared/capcut-catalogue.json (anchor-
+             resolved; cwd outside a vault). Where query reads the drafts that
+             exist right now, an entry here SURVIVES the deletion of its witness
+             draft. Append-only: \`note\` and \`ignored\` are hand-written and never
+             rewritten by a sync. Without --sync it only reads. --dry-run reports
+             without writing; --kind filters the listing, never the merge.
+             Exit 0 (incl. nothing new), 1 usage, 2 unreadable catalogue /
+             missing drafts root / write refused.
+
   make-preset --font <name|resource_id> [--out <file>] [--drafts <dir>]
              Generate a BARE-FONT restyle preset for a font already used in your
              drafts library (the generation cousin of query). Reads the font's

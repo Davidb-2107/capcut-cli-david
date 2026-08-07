@@ -36,9 +36,10 @@ extended with cutcli-style creation commands (keyframes, Ken Burns, animations).
 
 > **Status:** Published with capcut-cli-david **v0.5.0** (Phase E, 2026-05-12).
 > This skill supersedes the 5 legacy `cut-*` skills — see §Migration for the
-> cutover plan. The `query` command referenced in some recipes is **planned for
-> v0.6.0**; until then, hard-code animation/filter names from
-> [`docs/draft-schema/04-effects-filters-stickers.md`](../../docs/draft-schema/04-effects-filters-stickers.md).
+> cutover plan. `query` shipped in v1.13.0 and `catalogue` in v2.6.0 — see
+> §Retrouver un resource_id. The name tables in
+> [`docs/draft-schema/04-effects-filters-stickers.md`](../../docs/draft-schema/04-effects-filters-stickers.md)
+> remain the fallback for a resource no draft has ever used.
 
 ---
 
@@ -141,6 +142,20 @@ capcut-david psycho-build <manifest.yml>
 
 **All commands accept `--json` for machine-readable output.** `inspect` family
 emits the parsed structures from `docs/draft-schema/`.
+
+### Retrouver un resource_id
+
+`query <term>|--all` lit les drafts présents à l'instant T. `catalogue` est la
+mémoire : elle survit à la suppression du draft témoin.
+
+Boucle : David applique la ressource dans CapCut et **sauvegarde** (CapCut ne
+l'écrit sur disque qu'à la sauvegarde) → `capcut-david catalogue --sync` →
+l'entrée est figée pour toujours. Consulter avec `catalogue -H`, ou
+`catalogue --kind font -H` pour une seule rubrique.
+
+Ne jamais éditer `note` ni `ignored` depuis un agent : ces champs
+appartiennent à l'humain, et le hook `no_main_tree_write` du vault bloque de
+toute façon un Write/Edit sur ce fichier.
 
 ---
 

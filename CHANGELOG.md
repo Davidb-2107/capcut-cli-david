@@ -14,6 +14,14 @@ per [`RELEASE.md`](./RELEASE.md) §4.
   les polices, effets, filtres et transitions rencontrés dans les drafts, avec
   leur `resource_id`. Se combine à `--kind` (une rubrique à la fois) et `-H`.
   Sans `--all`, un terme reste obligatoire (exit 1) — comportement inchangé.
+- `catalogue` — mémoire persistante des ressources validées. Fige nom +
+  `resource_id` de chaque police / effet / filtre / transition vue dans un draft,
+  dans `<vault>/Shared/capcut-catalogue.json` (résolu par ancre, `--catalogue`
+  pour outrepasser, dossier courant hors vault). Append-only : une entrée
+  survit à la suppression du draft témoin. Les champs `note` et `ignored` sont
+  écrits à la main et ne sont jamais réécrits par un sync. `--sync` moissonne,
+  `--dry-run` rapporte sans écrire, `--kind` filtre l'affichage.
+  Design : [`docs/superpowers/specs/2026-08-07-catalogue-design.md`](./docs/superpowers/specs/2026-08-07-catalogue-design.md).
 - `build-ui` écrit un miroir de la page capacités dans `cartographie/` du vault
   quand il tourne depuis celui-ci (racine détectée par ancre) ; sauté ailleurs.
 

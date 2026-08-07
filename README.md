@@ -150,6 +150,13 @@ Full index — group by family. For per-flag reference, run `capcut-david <comma
 |---|---|
 | `psycho-build <manifest.yaml> [--out <dir>] [--seed <n>]` | Full TikTok-format draft from a YAML manifest |
 
+### Discovery
+| Command | Purpose |
+|---|---|
+| `query <term>\|--all [--kind <k>] [--drafts <dir>]` | Search the drafts library for effects, filters, transitions, fonts (read-only, stateless) |
+| `make-preset --font <name\|resource_id> [--out <file>]` | Generate a bare-font restyle preset from a font already used in your drafts |
+| `catalogue [--sync] [--kind <k>] [--dry-run] [--catalogue <path>]` | Mémoire persistante des ressources validées (nom → resource_id), annotable à la main |
+
 ## Output modes
 
 JSON (default), human-readable (`-H` / `--human`), quiet (`-q` / `--quiet`).
