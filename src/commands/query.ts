@@ -36,6 +36,13 @@ function str(v: unknown): string | null {
   return typeof v === "string" && v.length > 0 ? v : null;
 }
 
+// PowerShell-written drafts carry a UTF-8 BOM; a bare JSON.parse throws on it
+// and the caller's catch would silently drop the whole draft. draft.ts strips
+// it on the load path — the scan path must too.
+export function stripBom(text: string): string {
+  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+}
+
 // Closed set of trailing weight/variant tokens deriveFontName may strip.
 const WEIGHT_TOKENS = new Set([
   "thin",
@@ -243,7 +250,7 @@ export function cmdQuery(positional: string[], flags: Flags): number {
   for (const { name, file } of draftFolders) {
     let draft: unknown;
     try {
-      draft = JSON.parse(readFileSync(file, "utf8"));
+      draft = JSON.parse(stripBom(readFileSync(file, "utf8")));
     } catch {
       continue; // skip unreadable/malformed, keep scanning
     }

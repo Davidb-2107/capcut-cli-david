@@ -347,3 +347,12 @@ test("CLI: sans --all et sans terme → toujours exit 1", (t) => {
   const r = runCli(["query", "--drafts", root]);
   strictEqual(r.status, 1);
 });
+
+test("CLI: a BOM'd draft is scanned, not silently skipped", (t) => {
+  const root = makeLib(t, {
+    "bom-draft": { raw: `﻿${loadFixtureRaw("transitions-draft")}` },
+  });
+  const r = runCli(["query", "--all", "--drafts", root]);
+  strictEqual(r.status, 0);
+  ok(r.json.results.length > 0, "a BOM must not make the draft invisible");
+});
