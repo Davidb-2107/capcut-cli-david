@@ -22,7 +22,7 @@ export interface QueryResultItem {
   from_drafts: string[]; // sorted, unique draft folder basenames
 }
 
-type RawItem = Omit<QueryResultItem, "from_drafts">;
+export type RawItem = Omit<QueryResultItem, "from_drafts">;
 
 // --- defensive narrowing (drafts are untrusted JSON) ------------------------
 function rec(v: unknown): Record<string, unknown> | null {
@@ -83,7 +83,7 @@ export function deriveFontName(fontPath: string): string {
 }
 
 // Extract every catalogue item from ONE draft (from_drafts filled by caller).
-function extractItems(draft: unknown): RawItem[] {
+export function extractItems(draft: unknown): RawItem[] {
   const items: RawItem[] = [];
   const d = rec(draft);
   const m = d ? rec(d.materials) : null;
