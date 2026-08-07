@@ -338,17 +338,18 @@ export function cmdCatalogue(flags: Flags): number {
   }
   const cataloguePath = resolveCataloguePath(flags.catalogue, process.cwd());
 
+  const readEntries = (): CatalogueEntry[] =>
+    existsSync(cataloguePath) ? parseCatalogue(readFileSync(cataloguePath, "utf-8")) : [];
+
   let entries: CatalogueEntry[] = [];
-  if (existsSync(cataloguePath)) {
-    try {
-      entries = parseCatalogue(readFileSync(cataloguePath, "utf-8"));
-    } catch (e) {
-      // Échec OPÉRATIONNEL, pas d'usage : le fichier existe, on refuse d'y toucher.
-      // Vaut aussi pour un EACCES / EISDIR : un fichier présent mais illisible est
-      // exactement le cas où un script appelant a besoin du 2 documenté.
-      process.stderr.write(`${JSON.stringify({ error: (e as Error).message })}\n`);
-      return 2;
-    }
+  try {
+    entries = readEntries();
+  } catch (e) {
+    // Échec OPÉRATIONNEL, pas d'usage : le fichier existe, on refuse d'y toucher.
+    // Vaut aussi pour un EACCES / EISDIR : un fichier présent mais illisible est
+    // exactement le cas où un script appelant a besoin du 2 documenté.
+    process.stderr.write(`${JSON.stringify({ error: (e as Error).message })}\n`);
+    return 2;
   }
 
   let added: string[] = [];
@@ -393,6 +394,15 @@ export function cmdCatalogue(flags: Flags): number {
     promoted = plan.promoted;
     if (!flags.dryRun) {
       try {
+        // Relecture + refusion juste avant le rename (spec §6). Le scan dure des
+        // secondes sur une vraie bibliothèque : une note tapée dans Obsidian
+        // pendant ce temps serait écrasée par le rename. planCatalogueMerge est
+        // pur et idempotent, donc rejouable tel quel. Il reste la fenêtre entre
+        // cette relecture et le rename — des microsecondes, pas des secondes.
+        const fresh = planCatalogueMerge(readEntries(), scanned, todayUtc());
+        entries = fresh.entries;
+        added = fresh.added;
+        promoted = fresh.promoted;
         writeCatalogueAtomic(cataloguePath, serializeCatalogue(entries));
       } catch (e) {
         // Fichier verrouillé, disque plein, droits : opérationnel (2), pas usage (1).
