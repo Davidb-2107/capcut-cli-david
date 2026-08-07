@@ -440,7 +440,8 @@ export const CAPABILITIES: Capability[] = [
     verb: "add-effect",
     category: "animer",
     summary: "Applique un effet vidéo (FX) via son resource_id de catalogue, sur une plage temporelle donnée.",
-    signature: "add-effect <project> <resource-id> <name> (<start> <duration> | --full) [--value <n>] [--bind <segment-id>]",
+    signature:
+      "add-effect <project> <resource-id> <name> (<start> <duration> | --full) [--value <n>] [--bind <segment-id>]",
     flags: [
       { flag: "--value <n>", desc: "intensité/paramètre de l'effet" },
       { flag: "--bind <segment-id>", desc: "segment auquel lier l'effet" },
@@ -544,6 +545,25 @@ export const CAPABILITIES: Capability[] = [
     readOnly: true,
     capcutClosed: false,
     since: "1.13.0",
+  },
+  {
+    verb: "catalogue",
+    category: "decouvrir",
+    summary:
+      "Mémoire persistante des ressources validées : fige nom + resource_id de chaque police/effet/filtre/transition vue dans un draft, pour qu'ils survivent à la suppression du draft témoin. Append-only, annotable à la main (champs `note` et `ignored`, jamais réécrits). Sans --sync : lecture seule.",
+    signature:
+      "catalogue [--kind effect|filter|transition|font] [--sync] [--dry-run] [--drafts <dir>] [--catalogue <path>]",
+    flags: [
+      { flag: "--sync", desc: "moissonne les drafts et fusionne dans le catalogue", since: "2.6.0" },
+      { flag: "--dry-run", desc: "avec --sync : rapporte sans écrire", since: "2.6.0" },
+      { flag: "--kind <k>", desc: "restreint à effect | filter | transition | font" },
+      { flag: "--catalogue <path>", desc: "chemin du fichier (défaut : <vault>/Shared/capcut-catalogue.json)" },
+      { flag: "--drafts <dir>", desc: "root de la bibliothèque de drafts à scanner" },
+    ],
+    example: "capcut-david catalogue --sync -H",
+    readOnly: false,
+    capcutClosed: false,
+    since: "2.6.0",
   },
   {
     verb: "info",

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { cmdBatch } from "./commands/batch.js";
+import { cmdCatalogue } from "./commands/catalogue.js";
 import {
   cmdAddAudio,
   cmdAddAudioBatch,
@@ -347,6 +348,15 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.full = true;
     } else if (a === "--all") {
       flags.all = true;
+    } else if (a === "--sync") {
+      flags.sync = true;
+    } else if (a === "--catalogue" || a.startsWith("--catalogue=")) {
+      // parseFlags ne rejette pas les flags inconnus : tout ce qui ne matche pas
+      // devient un positionnel. Sans ce garde, un --catalogue=<x> serait ignoré
+      // et le sync écrirait dans le chemin par défaut résolu par ancre.
+      if (a !== "--catalogue") die(`--catalogue takes a space-separated value (use --catalogue <path>), got "${a}"`);
+      if (i + 1 >= args.length) die("--catalogue requires a value (e.g. --catalogue ./capcut-catalogue.json)");
+      flags.catalogue = args[++i];
     } else if (a === "--id" && i + 1 < args.length) {
       if (!flags.ids) flags.ids = [];
       flags.ids.push(args[++i]);
@@ -400,6 +410,10 @@ function main(): void {
 
   if (cmd === "query") {
     process.exit(cmdQuery(positional, flags));
+  }
+
+  if (cmd === "catalogue") {
+    process.exit(cmdCatalogue(flags));
   }
 
   if (cmd === "make-preset") {

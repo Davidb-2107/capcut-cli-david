@@ -2,9 +2,13 @@
 // library. Where `query` is stateless (delete a draft, lose the resource_id),
 // this file remembers forever and carries the human's hand-written notes.
 // Frozen design: docs/superpowers/specs/2026-08-07-catalogue-design.md
-import { renameSync, unlinkSync, writeFileSync } from "node:fs";
-import type { RawItem } from "./query.js";
-import { die } from "../utils/cli.js";
+import { existsSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { join, sep } from "node:path";
+import { isCapCutRunning } from "../utils/capcut-guard.js";
+import { defaultProjectsRoot } from "../utils/capcut-paths.js";
+import { die, type Flags, out } from "../utils/cli.js";
+import { resolveCataloguePath } from "../utils/vault.js";
+import { extractItems, type RawItem, stripBom } from "./query.js";
 
 // Durable identity. NEVER the display name for a resolved entry: CapCut names
 // are localized (the same resource_id comes back as "Fade Out" or "渐隐"
@@ -194,17 +198,24 @@ export function parseCatalogue(text: string): CatalogueEntry[] {
     );
   }
   const rec = data && typeof data === "object" && !Array.isArray(data) ? (data as Record<string, unknown>) : null;
-  if (!rec) throw new CatalogueFormatError("catalogue illisible : racine JSON inattendue (objet attendu). Aucune écriture effectuée.");
+  if (!rec)
+    throw new CatalogueFormatError(
+      "catalogue illisible : racine JSON inattendue (objet attendu). Aucune écriture effectuée.",
+    );
   if (rec.type !== ENVELOPE)
     throw new CatalogueFormatError(`catalogue illisible : type "${String(rec.type)}" (attendu "${ENVELOPE}").`);
-  if (!Array.isArray(rec.entries)) throw new CatalogueFormatError("catalogue illisible : champ `entries` absent ou non-tableau.");
+  if (!Array.isArray(rec.entries))
+    throw new CatalogueFormatError("catalogue illisible : champ `entries` absent ou non-tableau.");
   const entries = rec.entries.map((raw, i) => normalizeEntry(raw, i));
   // Two entries with the same id: the merge index would keep only the last one
   // and destroy the first one's note. That is exactly what a "keep both" git
   // conflict resolution produces, so refuse instead of silently deduplicating.
   const seen = new Set<string>();
   for (const e of entries) {
-    if (seen.has(e.id)) throw new CatalogueFormatError(`catalogue illisible : id dupliqué "${e.id}". Fusionne les deux entrées à la main.`);
+    if (seen.has(e.id))
+      throw new CatalogueFormatError(
+        `catalogue illisible : id dupliqué "${e.id}". Fusionne les deux entrées à la main.`,
+      );
     seen.add(e.id);
   }
   return entries;
@@ -212,11 +223,14 @@ export function parseCatalogue(text: string): CatalogueEntry[] {
 
 function normalizeEntry(raw: unknown, i: number): CatalogueEntry {
   const r = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
-  if (!r || typeof r.id !== "string" || r.id === "") throw new CatalogueFormatError(`catalogue illisible : entrée #${i} sans \`id\`.`);
+  if (!r || typeof r.id !== "string" || r.id === "")
+    throw new CatalogueFormatError(`catalogue illisible : entrée #${i} sans \`id\`.`);
   // Absent → default. Present but wrong-typed → refuse: coercing it would write
   // the repaired value back and lose whatever the human actually meant.
   const bad = (f: string): CatalogueFormatError =>
-    new CatalogueFormatError(`catalogue illisible : entrée #${i} (${r.id as string}), champ \`${f}\` de type inattendu.`);
+    new CatalogueFormatError(
+      `catalogue illisible : entrée #${i} (${r.id as string}), champ \`${f}\` de type inattendu.`,
+    );
   const strArr = (v: unknown, f: string): string[] => {
     if (v === undefined || v === null) return [];
     if (!Array.isArray(v) || v.some((x) => typeof x !== "string")) throw bad(f);
@@ -283,5 +297,117 @@ export function writeCatalogueAtomic(path: string, text: string): void {
       scrub();
       die(`catalogue verrouillé (${code}) : ${path}. Ferme Obsidian ou ton client de synchro et relance.`);
     }
+  }
+}
+
+const KINDS = new Set(["effect", "filter", "transition", "font"]);
+
+function scanDrafts(root: string): { scanned: ScannedItem[]; draftCount: number } {
+  const scanned: ScannedItem[] = [];
+  let draftCount = 0;
+  for (const dirent of readdirSync(root, { withFileTypes: true })) {
+    if (!dirent.isDirectory()) continue;
+    const file = join(root, dirent.name, "draft_content.json");
+    if (!existsSync(file)) continue;
+    let draft: unknown;
+    try {
+      draft = JSON.parse(stripBom(readFileSync(file, "utf8")));
+    } catch {
+      continue; // draft illisible : on saute, le scan continue
+    }
+    draftCount++;
+    for (const item of extractItems(draft)) scanned.push({ item, draft: dirent.name });
+  }
+  return { scanned, draftCount };
+}
+
+// Returns the process exit code. 0 success (incl. nothing new), 2 operational.
+export function cmdCatalogue(flags: Flags): number {
+  if (flags.kind && !KINDS.has(flags.kind)) {
+    die(`Invalid --kind '${flags.kind}'. Expected one of: effect, filter, transition, font.`);
+  }
+  const cataloguePath = resolveCataloguePath(flags.catalogue, process.cwd());
+
+  let entries: CatalogueEntry[] = [];
+  if (existsSync(cataloguePath)) {
+    try {
+      entries = parseCatalogue(readFileSync(cataloguePath, "utf-8"));
+    } catch (e) {
+      // Échec OPÉRATIONNEL, pas d'usage : le fichier existe, on refuse d'y toucher.
+      if (!(e instanceof CatalogueFormatError)) throw e;
+      process.stderr.write(`${JSON.stringify({ error: e.message })}\n`);
+      return 2;
+    }
+  }
+
+  let added: string[] = [];
+  let promoted: string[] = [];
+
+  if (flags.sync) {
+    const root = flags.drafts ?? defaultProjectsRoot();
+    if (!existsSync(root) || !statSync(root).isDirectory()) {
+      process.stderr.write(`${JSON.stringify({ error: `Drafts root not found: ${root}` })}\n`);
+      return 2;
+    }
+    // Le repo vit SOUS le vault : la marche par ancre depuis `node --test`
+    // résout le vrai catalogue. Les fixtures ne doivent jamais l'atteindre.
+    if (`${root}${sep}`.includes(`${sep}test-fixtures${sep}`)) {
+      process.stderr.write(`${JSON.stringify({ error: "Refusing to sync from a test-fixtures/ drafts root." })}\n`);
+      return 2;
+    }
+    const { scanned, draftCount } = scanDrafts(root);
+    if (draftCount === 0) {
+      process.stderr.write(`${JSON.stringify({ error: `No readable drafts found under: ${root}` })}\n`);
+      return 2;
+    }
+    // CapCut garde le draft en mémoire et ne le vide qu'à la sauvegarde/fermeture :
+    // un sync lancé juste après avoir appliqué un effet ne capture rien, et
+    // l'utilisateur conclurait que le catalogue est complet.
+    if (!flags.quiet && isCapCutRunning()) {
+      process.stderr.write("[warn] CapCut est ouvert : sauvegarde le draft avant de synchroniser.\n");
+    }
+    const plan = planCatalogueMerge(entries, scanned, todayUtc());
+    entries = plan.entries;
+    added = plan.added;
+    promoted = plan.promoted;
+    if (!flags.dryRun) writeCatalogueAtomic(cataloguePath, serializeCatalogue(entries));
+  }
+
+  const shown = flags.kind ? entries.filter((e) => e.kinds.includes(flags.kind as string)) : entries;
+  if (flags.human) {
+    renderCatalogueHuman(shown, flags);
+    return 0;
+  }
+  out({ type: ENVELOPE, path: cataloguePath, dry_run: flags.dryRun === true, added, promoted, entries: shown }, flags);
+  return 0;
+}
+
+// UTC, pas l'heure locale : champ reproductible en test et identique sur toutes
+// les machines. Coût : un sync à 00h30 CET est daté de la veille.
+function todayUtc(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function renderCatalogueHuman(entries: CatalogueEntry[], flags: Flags): void {
+  if (flags.quiet) return;
+  if (entries.length === 0) {
+    console.log("Catalogue vide.");
+    return;
+  }
+  const rows = entries.map((e) => ({
+    kinds: e.kinds.join(","),
+    name: e.names.join(" / "),
+    id: e.id,
+    seen: e.first_seen,
+    note: e.ignored ? "(ignorée)" : e.note,
+  }));
+  const w = (key: keyof (typeof rows)[0], min: number) => Math.max(min, ...rows.map((r) => r[key].length));
+  const wk = w("kinds", 5);
+  const wn = w("name", 4);
+  const wi = w("id", 2);
+  const pad = (s: string, n: number) => s.padEnd(n);
+  console.log(`${pad("KINDS", wk)}  ${pad("NAME", wn)}  ${pad("ID", wi)}  FIRST_SEEN  NOTE`);
+  for (const r of rows) {
+    console.log(`${pad(r.kinds, wk)}  ${pad(r.name, wn)}  ${pad(r.id, wi)}  ${r.seen}  ${r.note}`);
   }
 }
