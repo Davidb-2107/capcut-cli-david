@@ -26,3 +26,134 @@ export function normalizePath(p: string): string {
 export function nfc(s: string): string {
   return s.normalize("NFC");
 }
+
+export interface CatalogueEntry {
+  id: string;
+  kinds: string[];
+  names: string[];
+  resource_id: string | null;
+  effect_id: string | null;
+  font_paths: string[];
+  first_seen: string; // YYYY-MM-DD, UTC
+  witness_drafts: string[];
+  note: string;
+  ignored: boolean;
+  merged_from: string[];
+}
+
+export interface ScannedItem {
+  item: RawItem;
+  draft: string;
+}
+
+// Codepoint order. Never localeCompare: its result depends on the host locale
+// and the ICU build, so the same catalogue would reorder between this machine
+// and CI, destroying the empty-diff guarantee.
+const byCodepoint = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+
+const sortedSet = (values: Iterable<string>): string[] => [...new Set(values)].sort(byCodepoint);
+
+function blank(id: string, today: string): CatalogueEntry {
+  return {
+    id,
+    kinds: [],
+    names: [],
+    resource_id: null,
+    effect_id: null,
+    font_paths: [],
+    first_seen: today,
+    witness_drafts: [],
+    note: "",
+    ignored: false,
+    merged_from: [],
+  };
+}
+
+// Merge one sighting into an entry. Only ever widens: note, ignored and
+// first_seen are untouchable here.
+function absorb(e: CatalogueEntry, s: ScannedItem): void {
+  const it = s.item;
+  e.kinds = sortedSet([...e.kinds, it.kind]);
+  e.names = sortedSet([...e.names, nfc(it.name)]);
+  e.witness_drafts = sortedSet([...e.witness_drafts, s.draft]);
+  if (it.font_path) e.font_paths = sortedSet([...e.font_paths, normalizePath(it.font_path)]);
+  if (!e.resource_id && it.resource_id) e.resource_id = it.resource_id;
+  if (!e.effect_id && it.effect_id) e.effect_id = it.effect_id;
+}
+
+/**
+ * Append-only merge. Pure: no I/O, no clock — `today` is injected.
+ *
+ * Invariants, each one guarding a reproduced failure:
+ *  - nothing is ever removed, even when every witness draft is gone;
+ *  - `note` / `ignored` / `merged_from` belong to the human and are copied through;
+ *  - `ignored` entries are inert: never re-fed, never renamed, never re-added;
+ *  - a `local:` font entry that later shows up with a resource_id is PROMOTED
+ *    into the id-bearing entry (note and oldest first_seen follow) instead of
+ *    spawning a second entry that would orphan the note.
+ */
+export function planCatalogueMerge(
+  existing: CatalogueEntry[],
+  scanned: ScannedItem[],
+  today: string,
+): { entries: CatalogueEntry[]; added: string[]; promoted: string[] } {
+  // witness_drafts is a projection of current reality ("which drafts contain
+  // this resource right now"), not history — so it is rebuilt from scratch
+  // from this scan on every merge. Reset it here for every non-ignored entry;
+  // do not "restore" a stale witness later, that would undo this on purpose.
+  // Ignored entries are inert and keep whatever they had.
+  const index = new Map<string, CatalogueEntry>();
+  for (const e of existing)
+    index.set(e.id, {
+      ...e,
+      kinds: [...e.kinds],
+      names: [...e.names],
+      font_paths: [...e.font_paths],
+      witness_drafts: e.ignored ? [...e.witness_drafts] : [],
+      merged_from: [...e.merged_from],
+    });
+
+  const added: string[] = [];
+  const promoted: string[] = [];
+
+  for (const s of scanned) {
+    const id = catalogueId(s.item);
+    let e = index.get(id);
+    if (e?.ignored) continue;
+    if (!e) {
+      e = blank(id, today);
+      index.set(id, e);
+      added.push(id);
+    }
+    absorb(e, s);
+
+    // Promotion: this sighting carries a resource_id, so fold in any local:
+    // entry for the same font. Path match first (the file IS the identity),
+    // name match as the fallback for a re-downloaded font at a new path.
+    if (s.item.resource_id && s.item.kind === "font") {
+      const path = s.item.font_path ? normalizePath(s.item.font_path) : null;
+      const name = nfc(s.item.name);
+      for (const [otherId, other] of index) {
+        if (otherId === id || !otherId.startsWith("local:") || other.ignored) continue;
+        const samePath = path !== null && (otherId === `local:${path}` || other.font_paths.includes(path));
+        const sameName = other.names.includes(name);
+        if (!samePath && !sameName) continue;
+        e.kinds = sortedSet([...e.kinds, ...other.kinds]);
+        e.names = sortedSet([...e.names, ...other.names]);
+        e.font_paths = sortedSet([...e.font_paths, ...other.font_paths]);
+        e.witness_drafts = sortedSet([...e.witness_drafts, ...other.witness_drafts]);
+        if (!e.effect_id && other.effect_id) e.effect_id = other.effect_id;
+        if (byCodepoint(other.first_seen, e.first_seen) < 0) e.first_seen = other.first_seen;
+        if (!e.note && other.note) e.note = other.note; // the note follows the resource
+        e.merged_from = sortedSet([...e.merged_from, ...other.merged_from, otherId]);
+        index.delete(otherId);
+        promoted.push(otherId);
+        const at = added.indexOf(otherId);
+        if (at !== -1) added.splice(at, 1);
+      }
+    }
+  }
+
+  const entries = [...index.values()].sort((a, b) => byCodepoint(a.id, b.id));
+  return { entries, added: sortedSet(added), promoted: sortedSet(promoted) };
+}
