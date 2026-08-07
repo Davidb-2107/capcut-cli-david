@@ -8,6 +8,15 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 
 ## [Unreleased]
 
+### Added
+- `query --all` — inventaire complet de la bibliothèque de drafts, sans terme de
+  recherche. Répond à « qu'est-ce que le CLI sait nommer aujourd'hui ? » : toutes
+  les polices, effets, filtres et transitions rencontrés dans les drafts, avec
+  leur `resource_id`. Se combine à `--kind` (une rubrique à la fois) et `-H`.
+  Sans `--all`, un terme reste obligatoire (exit 1) — comportement inchangé.
+- `build-ui` écrit un miroir de la page capacités dans `cartographie/` du vault
+  quand il tourne depuis celui-ci (racine détectée par ancre) ; sauté ailleurs.
+
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 

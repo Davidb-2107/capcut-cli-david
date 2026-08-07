@@ -320,3 +320,30 @@ test("CLI RED22: --human zero matches → 'No matches.'", (t) => {
   strictEqual(r.status, 0);
   ok(/No matches\./.test(r.stdout));
 });
+
+// ===========================================================================
+// --all — inventaire complet (2.6.0)
+// ===========================================================================
+
+test("CLI: --all sans terme → liste tout, exit 0", (t) => {
+  const root = makeLib(t, { "transitions-draft": { fixture: "transitions-draft" } });
+  const withTerm = runCli(["query", "dissolve", "--drafts", root]);
+  const all = runCli(["query", "--all", "--drafts", root]);
+  strictEqual(all.status, 0);
+  ok(all.json.results.length >= withTerm.json.results.length);
+  ok(all.json.results.length > 0);
+});
+
+test("CLI: --all respecte --kind", (t) => {
+  const root = makeLib(t, { "transitions-draft": { fixture: "transitions-draft" } });
+  const r = runCli(["query", "--all", "--kind", "transition", "--drafts", root]);
+  strictEqual(r.status, 0);
+  ok(r.json.results.length > 0);
+  ok(r.json.results.every((it) => it.kind === "transition"));
+});
+
+test("CLI: sans --all et sans terme → toujours exit 1", (t) => {
+  const root = makeLib(t, { "transitions-draft": { fixture: "transitions-draft" } });
+  const r = runCli(["query", "--drafts", root]);
+  strictEqual(r.status, 1);
+});

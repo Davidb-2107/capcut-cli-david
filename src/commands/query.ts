@@ -212,10 +212,11 @@ function renderHuman(results: QueryResultItem[], flags: Flags): void {
 // Returns the process exit code (0 success incl. zero matches; 2 operational).
 // Usage / invalid-flag errors throw via die() → exit 1 in the top-level catch.
 export function cmdQuery(positional: string[], flags: Flags): number {
-  const term = positional[1];
-  if (!term)
+  // --all = inventaire complet (terme vide → tout matche). Sinon terme requis.
+  const term = flags.all ? "" : positional[1];
+  if (term === undefined)
     die(
-      "Missing search term. Usage: capcut-david query <term> [--kind effect|filter|transition|font] [--drafts <dir>]",
+      "Missing search term. Usage: capcut-david query <term>|--all [--kind effect|filter|transition|font] [--drafts <dir>]",
     );
   if (flags.kind && !KINDS.includes(flags.kind as QueryKind)) {
     die(`Invalid --kind '${flags.kind}'. Expected one of: effect, filter, transition, font.`);

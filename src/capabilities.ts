@@ -533,13 +533,14 @@ export const CAPABILITIES: Capability[] = [
     verb: "query",
     category: "decouvrir",
     summary:
-      "Recherche un effet/filtre/transition/police par nom dans toute la bibliothèque de drafts CapCut, renvoie son resource_id. Lecture seule.",
-    signature: "query <term> [--kind effect|filter|transition|font] [--drafts <dir>]",
+      "Recherche un effet/filtre/transition/police par nom dans toute la bibliothèque de drafts CapCut, renvoie son resource_id. --all liste l'inventaire complet (tout ce que le CLI sait nommer). Lecture seule.",
+    signature: "query <term>|--all [--kind effect|filter|transition|font] [--drafts <dir>]",
     flags: [
+      { flag: "--all", desc: "inventaire complet, sans terme de recherche", since: "2.6.0" },
       { flag: "--kind <k>", desc: "restreint à effect | filter | transition | font" },
       { flag: "--drafts <dir>", desc: "root de la bibliothèque de drafts à scanner" },
     ],
-    example: "capcut-david query glitch --kind effect",
+    example: "capcut-david query --all -H",
     readOnly: true,
     capcutClosed: false,
     since: "1.13.0",

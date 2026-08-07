@@ -345,6 +345,8 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.apply = true;
     } else if (a === "--full") {
       flags.full = true;
+    } else if (a === "--all") {
+      flags.all = true;
     } else if (a === "--id" && i + 1 < args.length) {
       if (!flags.ids) flags.ids = [];
       flags.ids.push(args[++i]);

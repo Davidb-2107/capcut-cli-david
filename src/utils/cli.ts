@@ -43,6 +43,7 @@ export interface Flags {
   fix?: boolean;
   apply?: boolean;
   full?: boolean;
+  all?: boolean;
   font?: string;
   width?: number;
   height?: number;
