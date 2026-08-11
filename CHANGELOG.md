@@ -8,6 +8,14 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 
 ## [Unreleased]
 
+### Planned
+- `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
+
+## [2.7.0] — 2026-08-11
+
+Minor release. **Lot mémoire** : le catalogue apprend les 4 familles CapCut qui lui
+manquaient, s'ouvre aux ressources sans draft témoin, et se donne à lire en HTML.
+
 ### Added
 - `catalogue --add <resource_id> --kind <k> --name <nom> [--note <texte>]` —
   entre une ressource dont le **draft témoin n'existe plus** : `--sync` ne peut
@@ -57,9 +65,6 @@ per [`RELEASE.md`](./RELEASE.md) §4.
   `query` comme il l'était déjà dans `catalogue`, et la signature `catalogue`
   du registre `capabilities.ts` n'est plus en contradiction avec son propre
   tableau de flags sur la place de `--kind` (il manquait dans `--add`).
-
-### Planned
-- `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
 ## [2.6.0] — 2026-08-07
 
@@ -779,7 +784,8 @@ First release of the fork. Baseline = upstream `capcut-cli@0.2.2` (commit `c9223
 - Node ≥ 18; CI matrix covers Node 18, 20, 22.
 - JianYing 6+ remains unsupported (encrypted `draft_content.json` — see `COMPATIBILITY.md` §5).
 
-[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.6.0...HEAD
+[Unreleased]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.7.0...HEAD
+[2.7.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.6.0...v2.7.0
 [2.6.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.5.0...v2.6.0
 [2.5.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/Davidb-2107/capcut-cli-david/compare/v2.3.0...v2.4.0
