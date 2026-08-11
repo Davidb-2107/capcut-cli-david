@@ -7,6 +7,7 @@ import { dirname, join } from "node:path";
 
 import { runCli } from "./helpers/spawn-cli.mjs";
 import { loadFixtureRaw } from "./helpers/load-fixture.mjs";
+import { KINDS } from "../dist/commands/query.js";
 
 function makeLib(t, drafts) {
   const root = mkdtempSync(join(tmpdir(), "capcut-cat-cli-"));
@@ -205,4 +206,58 @@ test("18: listing a missing catalogue is empty and exit 0, and creates nothing",
   strictEqual(r.status, 0);
   strictEqual(r.json.entries.length, 0);
   strictEqual(existsSync(cat), false);
+});
+
+// ===========================================================================
+// Élargissement --kind aux familles sticker/mask/animation/curve.
+// ===========================================================================
+
+test("24: --add accepte les nouvelles familles (sticker)", (t) => {
+  const cat = catPath(t);
+  const r = runCli(["catalogue", "--add", "7237287015903972613", "--kind", "sticker", "--name", "Simple Artistic Circle", "--catalogue", cat]);
+  strictEqual(r.status, 0);
+  deepStrictEqual(r.json.added, ["7237287015903972613"]);
+  const e = r.json.entries.find((x) => x.id === "7237287015903972613");
+  ok(e.kinds.includes("sticker"));
+  strictEqual(existsSync(cat), true);
+});
+
+test("25: --kind bogus reste une erreur d'usage", (t) => {
+  const cat = catPath(t);
+  strictEqual(runCli(["catalogue", "--kind", "bogus", "--catalogue", cat]).status, 1);
+  strictEqual(existsSync(cat), false);
+});
+
+test("26: --sync moissonne les 4 nouvelles familles avec les anciennes", (t) => {
+  const root = makeLib(t, {
+    d1: "stickers-draft",
+    d2: "masks-filters-draft",
+    d3: "animations-draft",
+    d4: "ken-burns-draft",
+  });
+  const cat = catPath(t);
+  const r = runCli(["catalogue", "--sync", "--drafts", root, "--catalogue", cat]);
+  strictEqual(r.status, 0);
+  const ids = new Set(r.json.entries.map((e) => e.id));
+  ok(ids.has("7237287015903972613"), "sticker Simple Artistic Circle moissonné");
+  ok(ids.has("7374021188315517456"), "mask Circle moissonné");
+  ok(ids.has("6724916044072227332"), "animation Fade In moissonnée");
+  ok(ids.has("7034098919583781377"), "curve Cubic Out moissonnée");
+  const kinds = new Set(r.json.entries.flatMap((e) => e.kinds));
+  for (const k of ["sticker", "mask", "animation", "curve"]) ok(kinds.has(k), `kind ${k} présent`);
+});
+
+// Le seul garde-fou contre le retour des 10 copies de la liste : les deux verbes
+// doivent accepter exactement le même ensemble de kinds (exit ≠ 1 = accepté).
+test("27: query et catalogue acceptent exactement les mêmes kinds", (t) => {
+  const cat = catPath(t);
+  for (const k of KINDS) {
+    strictEqual(runCli(["catalogue", "--kind", k, "--catalogue", cat]).status, 0, `catalogue doit accepter --kind ${k}`);
+    // query refuse (2) si le root manque — mais JAMAIS 1 : le kind est accepté.
+    strictEqual(runCli(["query", "x", "--kind", k, "--drafts", join(tmpdir(), "capcut-kindcheck-absent-zz9")]).status, 2, `query doit accepter --kind ${k}`);
+  }
+  for (const k of ["bogus", ""]) {
+    strictEqual(runCli(["catalogue", "--kind", k, "--catalogue", cat]).status, 1, `catalogue doit refuser --kind '${k}'`);
+    strictEqual(runCli(["query", "x", "--kind", k, "--drafts", join(tmpdir(), "capcut-kindcheck-absent-zz9")]).status, 1, `query doit refuser --kind '${k}'`);
+  }
 });

@@ -6,6 +6,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { CAPABILITIES, CHAINS } from "../dist/capabilities.js";
+import { KINDS } from "../dist/commands/query.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -53,4 +54,23 @@ test("chains: chaque étape référence une carte existante", () => {
   ok(CHAINS.length >= 3, "au moins Stickman, Repost, psycho-build");
   for (const ch of CHAINS)
     for (const s of ch.steps) ok(carded.has(s.verb), `${ch.name}: étape ${s.verb} sans carte`);
+});
+
+// La liste des kinds vit en UNE seule constante (KINDS dans query.ts) dont se
+// dérivent les messages du code — mais les cartes ci-dessous restent du texte
+// libre. Ce test est le verrou qui l'empêche de ré-écarter de la réalité.
+test("anti-dérive kinds: chaque kind de KINDS apparaît dans les cartes query et catalogue", () => {
+  strictEqual(KINDS.length, 8, "si KINDS change, les docs et ce test doivent suivre");
+  for (const verb of ["query", "catalogue"]) {
+    const card = CAPABILITIES.find((c) => c.verb === verb);
+    ok(card, `carte ${verb} introuvable`);
+    const hay = `${card.signature} ${card.summary} ${card.flags.map((f) => `${f.flag} ${f.desc}`).join(" ")}`;
+    for (const k of KINDS) ok(hay.includes(k), `${verb}: kind "${k}" absent de la carte (signature/summary/flags)`);
+  }
+});
+
+test("anti-dérive kinds: catalogue.ts consomme KINDS, pas une copie locale", () => {
+  const src = readFileSync(resolve(ROOT, "src/commands/catalogue.ts"), "utf-8");
+  ok(!/"(?:sticker|mask|animation|curve)"\]\)?;/.test(src), "copie en dur de la liste de kinds dans catalogue.ts");
+  ok(/import \{[^}]*KINDS[^}]*\} from "\.\/query\.js"/.test(src), "catalogue.ts doit importer KINDS depuis query.ts");
 });

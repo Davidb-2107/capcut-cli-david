@@ -14,7 +14,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { planQuery, deriveFontName } from "../dist/commands/query.js";
+import { planQuery, deriveFontName, KINDS } from "../dist/commands/query.js";
 import { runCli } from "./helpers/spawn-cli.mjs";
 import { loadFixtureRaw } from "./helpers/load-fixture.mjs";
 
@@ -139,18 +139,25 @@ test("RED7/zero: no matches → empty array", () => {
   deepStrictEqual(planQuery(named("dA", d), "nope"), []);
 });
 
-test("RED8: --kind filter isolates one kind", () => {
-  const d = draftWith({
-    effects: [
-      { type: "effect", name: "edge-fx", resource_id: "E1", effect_id: "E1" },
-      { type: "filter", name: "edge-filter", resource_id: "F1", effect_id: "F1" },
-    ],
-    transitions: [{ type: "transition", name: "edge-trans", resource_id: "T1", effect_id: "T1" }],
-    texts: [{ type: "text", font_path: "/x/edge.ttf", font_resource_id: "" }],
-  });
+test("RED8: --kind filter isolates one kind (each of the 8 families)", () => {
+  const d = {
+    ...draftWith({
+      effects: [
+        { type: "effect", name: "edge-fx", resource_id: "E1", effect_id: "E1" },
+        { type: "filter", name: "edge-filter", resource_id: "F1", effect_id: "F1" },
+      ],
+      transitions: [{ type: "transition", name: "edge-trans", resource_id: "T1", effect_id: "T1" }],
+      texts: [{ type: "text", font_path: "/x/edge.ttf", font_resource_id: "" }],
+      stickers: [{ name: "edge-sticker", resource_id: "S1" }],
+      common_mask: [{ name: "edge-mask", resource_id: "M1" }],
+      material_animations: [{ animations: [{ id: "A1", name: "edge-anim", resource_id: "A1" }] }],
+    }),
+    keyframe_graph_list: [{ id: "g1", resource_id: "C1", resource_name: "edge-curve" }],
+  };
   const all = planQuery(named("dA", d), "edge");
-  strictEqual(all.length, 4);
-  for (const k of ["effect", "filter", "transition", "font"]) {
+  strictEqual(all.length, KINDS.length);
+  strictEqual(KINDS.length, 8, "si KINDS grandit, étendre ce draft avec la nouvelle famille");
+  for (const k of KINDS) {
     const only = planQuery(named("dA", d), "edge", k);
     strictEqual(only.length, 1, `--kind ${k} should isolate one`);
     strictEqual(only[0].kind, k);
@@ -197,6 +204,26 @@ test("RED23: video_effects folded into kind effect", () => {
 test("planQuery: nameless entries are skipped; missing material slots tolerated", () => {
   const d = draftWith({ effects: [{ type: "effect", resource_id: "E1" }], transitions: undefined });
   deepStrictEqual(planQuery(named("dA", d), ""), []);
+});
+
+test("planQuery: curves survive a draft WITHOUT a materials block (root-level array)", () => {
+  const d = { id: "D", keyframe_graph_list: [{ id: "g1", resource_id: "C1", resource_name: "Cubic Out" }] };
+  const r = planQuery(named("dA", d), "");
+  strictEqual(r.length, 1);
+  strictEqual(r[0].kind, "curve");
+  strictEqual(r[0].name, "Cubic Out");
+});
+
+test("planQuery: empty animation slots (id:\"\") are ignored — their resource_id is NOT the animation's own id", () => {
+  const d = draftWith({
+    material_animations: [
+      { animations: [{ id: "", name: "Fade In", resource_id: "WRONG1", third_resource_id: "A1" }] },
+      { animations: [{ id: "A2", name: "Fade Out", resource_id: "A2" }] },
+    ],
+  });
+  const r = planQuery(named("dA", d), "fade");
+  strictEqual(r.length, 1);
+  strictEqual(r[0].resource_id, "A2");
 });
 
 // ===========================================================================
@@ -355,4 +382,72 @@ test("CLI: a BOM'd draft is scanned, not silently skipped", (t) => {
   const r = runCli(["query", "--all", "--drafts", root]);
   strictEqual(r.status, 0);
   ok(r.json.results.length > 0, "a BOM must not make the draft invisible");
+});
+
+// ===========================================================================
+// Nouvelles familles (sticker/mask/animation/curve) — sur fixtures RÉELLES,
+// jamais d'objet écrit à la main pour ces familles.
+// ===========================================================================
+
+test("CLI: sticker from stickers-draft (materials.stickers) — id ET nom attendus", (t) => {
+  const root = makeLib(t, { "stickers-draft": { fixture: "stickers-draft" } });
+  const r = runCli(["query", "artistic", "--drafts", root]);
+  strictEqual(r.status, 0);
+  const s = r.json.results.find((x) => x.kind === "sticker");
+  ok(s, "expected a sticker result");
+  strictEqual(s.name, "Simple Artistic Circle");
+  strictEqual(s.resource_id, "7237287015903972613");
+});
+
+test("CLI: mask from masks-filters-draft — materials.common_mask (SINGULIER)", (t) => {
+  const root = makeLib(t, { "masks-filters-draft": { fixture: "masks-filters-draft" } });
+  const r = runCli(["query", "circle", "--kind", "mask", "--drafts", root]);
+  strictEqual(r.status, 0);
+  strictEqual(r.json.results.length, 1);
+  strictEqual(r.json.results[0].name, "Circle");
+  strictEqual(r.json.results[0].resource_id, "7374021188315517456");
+});
+
+test("CLI: animation from animations-draft — doubly nested, ids in the INNER array", (t) => {
+  const root = makeLib(t, { "animations-draft": { fixture: "animations-draft" } });
+  const r = runCli(["query", "fade", "--kind", "animation", "--drafts", root]);
+  strictEqual(r.status, 0);
+  deepStrictEqual(
+    r.json.results.map((a) => a.resource_id).sort(),
+    ["6724916044072227332", "6724919382104871427"],
+  );
+});
+
+test("CLI: stickers-draft's empty animation slots (id:\"\") do NOT surface", (t) => {
+  const root = makeLib(t, { "stickers-draft": { fixture: "stickers-draft" } });
+  const r = runCli(["query", "--all", "--drafts", root]);
+  strictEqual(r.status, 0);
+  ok(!r.json.results.some((x) => x.kind === "animation"), "empty slots (id:\"\") must stay invisible");
+});
+
+test("CLI: curve from keyframe_graph_list — name = resource_name, 172 graphs → ONE entry, drafts merged", (t) => {
+  const root = makeLib(t, {
+    "full-psycho-draft": { fixture: "full-psycho-draft" },
+    "ken-burns-draft": { fixture: "ken-burns-draft" },
+  });
+  const r = runCli(["query", "cubic", "--kind", "curve", "--drafts", root]);
+  strictEqual(r.status, 0);
+  strictEqual(r.json.results.length, 1, "162 graphs (full-psycho) + 10 (ken-burns) must dedupe to one Cubic Out");
+  strictEqual(r.json.results[0].name, "Cubic Out");
+  strictEqual(r.json.results[0].resource_id, "7034098919583781377");
+  deepStrictEqual(r.json.results[0].from_drafts, ["full-psycho-draft", "ken-burns-draft"]);
+});
+
+test("CLI: --kind=font (forme =) est une erreur, plus un terme de recherche muet", (t) => {
+  const root = makeLib(t, { "transitions-draft": { fixture: "transitions-draft" } });
+  const r = runCli(["query", "--kind=font", "--all", "--drafts", root]);
+  strictEqual(r.status, 1);
+});
+
+test("CLI: --kind sans valeur est une erreur ; --kind '' cohérent query/catalogue", (t) => {
+  const root = makeLib(t, { "transitions-draft": { fixture: "transitions-draft" } });
+  strictEqual(runCli(["query", "x", "--kind", "--drafts", root]).status, 1);
+  // --kind "" : erreur d'usage dans les DEUX verbes (cohérence du fix parser).
+  strictEqual(runCli(["query", "x", "--kind", ""]).status, 1);
+  strictEqual(runCli(["catalogue", "--kind", ""]).status, 1);
 });

@@ -14,11 +14,12 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
+import { regenerateCatalogueMirror } from "../ui/catalogue-ui.js";
 import { isCapCutRunning } from "../utils/capcut-guard.js";
 import { defaultProjectsRoot } from "../utils/capcut-paths.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { resolveCataloguePath } from "../utils/vault.js";
-import { extractItems, type RawItem, stripBom } from "./query.js";
+import { extractItems, KINDS, KINDS_LIST, KINDS_SPACED, type RawItem, stripBom } from "./query.js";
 
 // Durable identity. NEVER the display name for a resolved entry: CapCut names
 // are localized (the same resource_id comes back as "Fade Out" or "渐隐"
@@ -308,9 +309,15 @@ export function writeCatalogueAtomic(path: string, text: string): void {
       die(`catalogue verrouillé (${code}) : ${path}. Ferme Obsidian ou ton client de synchro et relance.`);
     }
   }
+  // Le JSON est posé : la cartographie HTML se régénère, best-effort — sa
+  // fraîcheur ne doit jamais pouvoir faire échouer le verbe d'écriture.
+  try {
+    regenerateCatalogueMirror(path);
+  } catch {}
 }
 
-const KINDS = new Set(["effect", "filter", "transition", "font"]);
+// Ensemble dérivé de la SEULE liste de kinds (query.ts) — jamais de copie locale.
+const KIND_SET = new Set<string>(KINDS);
 
 function scanDrafts(root: string): { scanned: ScannedItem[]; draftCount: number } {
   const scanned: ScannedItem[] = [];
@@ -333,8 +340,8 @@ function scanDrafts(root: string): { scanned: ScannedItem[]; draftCount: number 
 
 // Returns the process exit code. 0 success (incl. nothing new), 2 operational.
 export function cmdCatalogue(flags: Flags): number {
-  if (flags.kind !== undefined && !KINDS.has(flags.kind)) {
-    die(`Invalid --kind '${flags.kind}'. Expected one of: effect, filter, transition, font.`);
+  if (flags.kind !== undefined && !KIND_SET.has(flags.kind)) {
+    die(`Invalid --kind '${flags.kind}'. Expected one of: ${KINDS_LIST}.`);
   }
   const cataloguePath = resolveCataloguePath(flags.catalogue, process.cwd());
 
@@ -362,7 +369,7 @@ export function cmdCatalogue(flags: Flags): number {
   // catalogue au passage. Ici on ne touche que l'entrée visée.
   if (flags.add !== undefined) {
     if (flags.sync) die("--add et --sync sont exclusifs : --add n'a rien à moissonner.");
-    if (!flags.kind) die("--add exige --kind (effect | filter | transition | font).");
+    if (!flags.kind) die(`--add exige --kind (${KINDS_SPACED}).`);
     if (!flags.name) die("--add exige --name (le nom affiché par CapCut).");
     const id = flags.add;
     if (id === "") die("--add exige un resource_id non vide.");

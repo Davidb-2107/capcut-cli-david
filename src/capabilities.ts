@@ -534,11 +534,15 @@ export const CAPABILITIES: Capability[] = [
     verb: "query",
     category: "decouvrir",
     summary:
-      "Recherche un effet/filtre/transition/police par nom dans toute la bibliothèque de drafts CapCut, renvoie son resource_id. --all liste l'inventaire complet (tout ce que le CLI sait nommer). Lecture seule.",
-    signature: "query <term>|--all [--kind effect|filter|transition|font] [--drafts <dir>]",
+      "Recherche un effet/filtre/transition/police/sticker/masque/animation/courbe de keyframe par nom dans toute la bibliothèque de drafts CapCut, renvoie son resource_id. --all liste l'inventaire complet (tout ce que le CLI sait nommer). Lecture seule.",
+    signature:
+      "query <term>|--all [--kind effect|filter|transition|font|sticker|mask|animation|curve] [--drafts <dir>]",
     flags: [
       { flag: "--all", desc: "inventaire complet, sans terme de recherche", since: "2.6.0" },
-      { flag: "--kind <k>", desc: "restreint à effect | filter | transition | font" },
+      {
+        flag: "--kind <k>",
+        desc: "restreint à effect | filter | transition | font | sticker | mask | animation | curve",
+      },
       { flag: "--drafts <dir>", desc: "root de la bibliothèque de drafts à scanner" },
     ],
     example: "capcut-david query --all -H",
@@ -550,9 +554,9 @@ export const CAPABILITIES: Capability[] = [
     verb: "catalogue",
     category: "decouvrir",
     summary:
-      "Mémoire persistante des ressources validées : fige nom + resource_id de chaque police/effet/filtre/transition vue dans un draft, pour qu'ils survivent à la suppression du draft témoin. Append-only, annotable à la main (champs `note` et `ignored`, jamais réécrits). Sans --sync : lecture seule.",
+      "Mémoire persistante des ressources validées : fige nom + resource_id de chaque police/effet/filtre/transition/sticker/masque/animation/courbe vue dans un draft, pour qu'ils survivent à la suppression du draft témoin. Append-only, annotable à la main (champs `note` et `ignored`, jamais réécrits). Sans --sync : lecture seule.",
     signature:
-      "catalogue [--kind effect|filter|transition|font] [--sync] [--add <id> --name <nom>] [--note <texte>] [--dry-run] [--drafts <dir>] [--catalogue <path>]",
+      "catalogue [--kind effect|filter|transition|font|sticker|mask|animation|curve] [--sync] [--add <id> --kind <k> --name <nom>] [--note <texte>] [--dry-run] [--drafts <dir>] [--catalogue <path>]",
     flags: [
       { flag: "--sync", desc: "moissonne les drafts et fusionne dans le catalogue", since: "2.6.0" },
       {
@@ -560,9 +564,16 @@ export const CAPABILITIES: Capability[] = [
         desc: "entre une ressource dont le draft témoin n'existe plus (rien à moissonner) ; exclusif avec --sync",
         since: "2.7.0",
       },
-      { flag: "--note <texte>", desc: "avec --add : note humaine, ajoutée sans jamais écraser l'existante", since: "2.7.0" },
+      {
+        flag: "--note <texte>",
+        desc: "avec --add : note humaine, ajoutée sans jamais écraser l'existante",
+        since: "2.7.0",
+      },
       { flag: "--dry-run", desc: "avec --sync ou --add : rapporte sans écrire", since: "2.6.0" },
-      { flag: "--kind <k>", desc: "restreint à effect | filter | transition | font" },
+      {
+        flag: "--kind <k>",
+        desc: "restreint à effect | filter | transition | font | sticker | mask | animation | curve",
+      },
       { flag: "--catalogue <path>", desc: "chemin du fichier (défaut : <vault>/Shared/capcut-catalogue.json)" },
       { flag: "--drafts <dir>", desc: "root de la bibliothèque de drafts à scanner" },
     ],

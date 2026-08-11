@@ -32,7 +32,7 @@ import {
 import { cmdAddKeyframe, cmdAddKeyframeBatch, cmdKenBurns } from "./commands/keyframe.js";
 import { cmdMakePreset } from "./commands/make-preset.js";
 import { cmdPsychoBuild } from "./commands/pipeline.js";
-import { cmdQuery } from "./commands/query.js";
+import { cmdQuery, KINDS_PIPE } from "./commands/query.js";
 import { cmdRegister } from "./commands/register.js";
 import { cmdRemoveSegment } from "./commands/remove-segment.js";
 import { cmdRestyle } from "./commands/restyle.js";
@@ -203,16 +203,17 @@ Garbage-collect:
              after (the root then diverges from any Timelines/ mirrors).
 
 Catalogue:
-  query      <term> [--kind effect|filter|transition|font] [--drafts <dir>]
+  query      <term> [--kind ${KINDS_PIPE}] [--drafts <dir>]
              Search the CapCut drafts library (every draft under the projects
-             root) for effects, filters, transitions and fonts. <term> =
-             case-insensitive substring on the item name. Read-only. Results
-             dedupe by resource_id (local fonts by name+path) and list
-             from_drafts[]. JSON (or -H table). Exit 0 even on zero matches;
+             root) for effects, filters, transitions, fonts, stickers, masks,
+             animations and keyframe curves. <term> = case-insensitive
+             substring on the item name. Read-only. Results dedupe by
+             resource_id (local fonts by name+path) and list from_drafts[].
+             JSON (or -H table). Exit 0 even on zero matches;
              2 if the drafts root is missing or all drafts are unreadable.
 
   catalogue  [--sync] [--add <id> --kind <k> --name <nom>] [--note <texte>]
-             [--dry-run] [--kind effect|filter|transition|font]
+             [--dry-run] [--kind ${KINDS_PIPE}]
              [--drafts <dir>] [--catalogue <path>]
              Persistent memory of every resource seen in a draft: name +
              resource_id frozen in <vault>/Shared/capcut-catalogue.json (anchor-
@@ -309,7 +310,12 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.drafts = args[++i];
     } else if (a === "--font" && i + 1 < args.length) {
       flags.font = args[++i];
-    } else if (a === "--kind" && i + 1 < args.length) {
+    } else if (a === "--kind" || a.startsWith("--kind=")) {
+      // Même garde que --name : sans elle, --kind=font devenait un positionnel
+      // muet — sur query c'est pire qu'un flag perdu : la forme = devient le
+      // TERME DE RECHERCHE, donc « zéro résultat, exit 0 », en silence.
+      if (a !== "--kind") die(`--kind takes a space-separated value (use --kind <k>), got "${a}"`);
+      if (i + 1 >= args.length || args[i + 1].startsWith("--")) die("--kind requires a value (e.g. --kind font)");
       flags.kind = args[++i];
     } else if (a === "--property" && i + 1 < args.length) {
       flags.property = args[++i];
@@ -374,7 +380,8 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       // CE QUI est écrit dans le catalogue, un flag avalé y mettrait n'importe quoi.
     } else if (a === "--add" || a.startsWith("--add=")) {
       if (a !== "--add") die(`--add takes a space-separated value (use --add <resource_id>), got "${a}"`);
-      if (i + 1 >= args.length || args[i + 1].startsWith("--")) die("--add requires a resource_id (e.g. --add 7637780179456118024)");
+      if (i + 1 >= args.length || args[i + 1].startsWith("--"))
+        die("--add requires a resource_id (e.g. --add 7637780179456118024)");
       flags.add = args[++i];
     } else if (a === "--name" || a.startsWith("--name=")) {
       if (a !== "--name") die(`--name takes a space-separated value (use --name <nom>), got "${a}"`);

@@ -1,6 +1,7 @@
 # Élargir `--kind` : le catalogue ne connaît que 4 des ~7 familles CapCut
 
-Statut : `ready-for-agent` (à brainstormer puis spécifier — RIEN n'est décidé ici)
+Statut : ✅ CLOS — implémenté 2026-08-09 (kinds `sticker`, `mask`, `animation`,
+`curve`, dans `query` comme `catalogue`). Plan : `.claude/plans/traitons-le-chantier-est-buzzing-duckling.md`.
 Ouvert : 2026-08-07 · Contexte : suite immédiate de v2.6.0 (`catalogue`) + `--add`
 
 ## Le problème, tel qu'il s'est manifesté
@@ -20,8 +21,12 @@ Trois ressources RÉELLES sont ressorties **inentrables**, faute de `kind` :
 | animation de catalogue | `6724916044072227332` | `docs/draft-schema/03-keyframes-and-animations.md` |
 
 `KINDS` (`src/commands/catalogue.ts`) et `QueryKind` (`src/commands/query.ts`)
-n'acceptent que `effect | filter | transition | font`. Les masques
-(`7374021188315517456`, `6706773528277946894`) sont dans le même cas.
+n'acceptent que `effect | filter | transition | font`. Le masque
+`7374021188315517456` (Circle) est dans le même cas. À noter — correction
+adversariale en cours d'implémentation : `6706773528277946894` (cité ici comme
+masque dans la version d'origine) est en réalité le **filter** « Vintage »,
+dont `effect_id` égale `resource_id` — il était déjà extractable, pas besoin de
+`--add` pour lui.
 
 ## Ce qu'on sait déjà du terrain
 
@@ -31,9 +36,26 @@ n'acceptent que `effect | filter | transition | font`. Les masques
 - `materials.transitions[]` → transition
 - `materials.texts[].fonts[].title` → font (fallback `texts[].font_path` = police locale)
 
-Les familles manquantes vivent ailleurs (`materials.stickers[]`,
-`materials.masks[]`, les animations dans `material_animations`, les courbes dans
-`material_curves` — À VÉRIFIER sur un vrai draft, ne pas croire cette liste).
+Les familles manquantes vivent ailleurs. ~~`materials.masks[]`~~ — la liste
+ci-dessous était à vérifier sur un vrai draft ; **vérifiée (2 fois, dont une
+adversariale), elle est fausse sur trois points** :
+
+| famille | chemin JSON réel | fixture témoin | clé durable | nom |
+|---|---|---|---|---|
+| sticker | `materials.stickers[]` | `stickers-draft` | `resource_id` | `name` + `category_name` |
+| mask | `materials.common_mask[]` ⚠️ singulier, jamais `masks` | `masks-filters-draft` | `resource_id` | `name` (`category_name` = `""`) |
+| animation | `materials.material_animations[].animations[]` ⚠️ **doublement imbriqué** | `animations-draft`, `full-psycho` | `resource_id` | `name` |
+| curve | `keyframe_graph_list[]` ⚠️ **racine, pas `materials`** | `effects`, `ken-burns`, `full-psycho` | `resource_id` | `resource_name` ⚠️ |
+
+Corrections : `materials.masks[]` **n'existe pas** → `common_mask` (singulier) ;
+`materials.material_curves` **n'existe pas** → les courbes sont un tableau de
+premier niveau `keyframe_graph_list[]` (les keyframes le référencent par
+`graphID` → `keyframe_graph_list[].id`, un UUID local, PAS un id catalogue) ;
+les animations ne sont pas imbriquées par segment mais dans un wrapper plat
+(`{id, type:"sticker_animation", animations[]}`) lié au segment par
+`extra_material_refs[]`, les `resource_id`/`name` vivant dans le tableau
+**interne** ; les entrées à `id: ""` sont des **slots vides** (leur
+`resource_id` porte un autre identifiant que celui de l'animation) → ignorées.
 
 ## Le vrai partage du travail
 

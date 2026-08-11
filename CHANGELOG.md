@@ -17,6 +17,24 @@ per [`RELEASE.md`](./RELEASE.md) §4.
   de gotchas. Exclusif avec `--sync`, honore `--dry-run`, et **ne touche que
   l'entrée visée** — délibérément hors de `planCatalogueMerge`, qui remet à zéro
   les `witness_drafts` de toutes les entrées non ignorées.
+- `--kind` s'élargit de 4 à 8 familles — **`sticker`, `mask`, `animation`,
+  `curve`** (courbe de keyframe) — dans `query` comme dans `catalogue`
+  (`--sync` les moissonne, `--add` et le filtre de listing les acceptent).
+  Terrains réels : stickers dans `materials.stickers[]`, masques dans
+  `materials.common_mask[]` (**singulier** — `materials.masks` n'existe pas),
+  animations doublement imbriquées (`materials.material_animations[].animations[]`,
+  les slots à `id:""` ignorés), courbes en tableau **racine**
+  `keyframe_graph_list[]` (nom = `resource_name`, lues même sans bloc
+  `materials`). La liste des kinds est factorisée (`KINDS` dans `query.ts`,
+  consommé par `catalogue.ts`) : les messages d'usage/erreur s'en dérivent,
+  plus aucune copie en dur dans le code.
+- Cartographie visuelle du catalogue — `src/ui/catalogue-template.html` rendu en
+  HTML autonome (même charte que la carte des capacités) et mirroiré dans
+  `<vault>/cartographie/capcut-cli-catalogue.html` : les 8 familles en sections
+  filtrables, recherche plein-texte (noms, id, notes), badges témoins/sans-id,
+  notes humaines affichées. Régénération **best-effort** après chaque écriture
+  du catalogue (`--sync`, `--add`, au sein de `writeCatalogueAtomic`) et à
+  `npm run build` ; jamais bloquante pour l'écriture JSON.
 
 ### Fixed
 - **macOS uniquement, deux bugs invisibles sur Windows/Linux.** (a) Le garde
@@ -32,6 +50,13 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 - CI verte de bout en bout : `biome.json` déclarait le schéma `2.0.0` alors que
   la CLI est en `2.4.15`, ce qui faisait échouer `biome ci` sur ce seul décalage
   et masquait le rouge macOS ci-dessus depuis plusieurs commits.
+- **`--kind=font` (forme `=`) devenait le terme de recherche de `query`** :
+  « zéro résultat, exit 0 », une mauvaise réponse silencieuse. `--kind` a
+  maintenant la même garde de valeur que `--name` (forme `=` refusée, valeur
+  obligatoire). Aligné au passage : `--kind ""` est une erreur d'usage dans
+  `query` comme il l'était déjà dans `catalogue`, et la signature `catalogue`
+  du registre `capabilities.ts` n'est plus en contradiction avec son propre
+  tableau de flags sur la place de `--kind` (il manquait dans `--add`).
 
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.

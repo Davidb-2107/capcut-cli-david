@@ -1,16 +1,22 @@
 // Read-only catalogue lookup across the CapCut drafts library. Finds effects,
-// filters, transitions and fonts by NAME (case-insensitive substring) and
-// returns their resource_id — so a draft builder can inject the right resource
-// without guessing the long numeric id. Scans every draft under the projects
-// root (or --drafts), dedupes, and reports which drafts each item came from.
-// Never writes. See QUERY-kickoff.md for the frozen spec.
+// filters, transitions, fonts, stickers, masks, animations and keyframe curves
+// by NAME (case-insensitive substring) and returns their resource_id — so a
+// draft builder can inject the right resource without guessing the long numeric
+// id. Scans every draft under the projects root (or --drafts), dedupes, and
+// reports which drafts each item came from. Never writes.
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { defaultProjectsRoot } from "../utils/capcut-paths.js";
 import { die, type Flags, out } from "../utils/cli.js";
 
-export type QueryKind = "effect" | "filter" | "transition" | "font";
-const KINDS: QueryKind[] = ["effect", "filter", "transition", "font"];
+export type QueryKind = "effect" | "filter" | "transition" | "font" | "sticker" | "mask" | "animation" | "curve";
+// Seule liste de kinds du CLI — catalogue.ts la consomme aussi (new Set(KINDS)),
+// et chaque message d'aide/erreur se dérive des constantes ci-dessous. Ne jamais
+// ré-écrire la liste en dur ailleurs (elle a vécu en 10 copies, 4 orthographes).
+export const KINDS: QueryKind[] = ["effect", "filter", "transition", "font", "sticker", "mask", "animation", "curve"];
+export const KINDS_PIPE = KINDS.join("|"); // signatures d'usage : a|b|c
+export const KINDS_LIST = KINDS.join(", "); // messages d'erreur : a, b, c
+export const KINDS_SPACED = KINDS.join(" | "); // invite --add : a | b | c
 
 export interface QueryResultItem {
   kind: QueryKind;
@@ -86,6 +92,26 @@ export function deriveFontName(fontPath: string): string {
 export function extractItems(draft: unknown): RawItem[] {
   const items: RawItem[] = [];
   const d = rec(draft);
+
+  // curves: keyframe_graph_list is a ROOT-level array, NOT under materials —
+  // it must be read before the early return below (a draft with curves and no
+  // materials block would otherwise lose them). Keyframes reference a graph by
+  // graphID → keyframe_graph_list[].id (a LOCAL uuid, never the catalogue id);
+  // the catalogue id is resource_id, and the name lives in resource_name (the
+  // only family where the display name is not `name`).
+  for (const g of arr(d?.keyframe_graph_list)) {
+    const name = str(g.resource_name);
+    if (!name) continue;
+    items.push({
+      kind: "curve",
+      name,
+      resource_id: str(g.resource_id),
+      effect_id: null,
+      category_name: null,
+      font_path: null,
+    });
+  }
+
   const m = d ? rec(d.materials) : null;
   if (!m) return items;
 
@@ -128,6 +154,55 @@ export function extractItems(draft: unknown): RawItem[] {
       category_name: str(e.category_name),
       font_path: null,
     });
+  }
+  // stickers — flat, same shape as transitions.
+  for (const e of arr(m.stickers)) {
+    const name = str(e.name);
+    if (!name) continue;
+    items.push({
+      kind: "sticker",
+      name,
+      resource_id: str(e.resource_id),
+      effect_id: str(e.effect_id),
+      category_name: str(e.category_name),
+      font_path: null,
+    });
+  }
+  // masks — materials.common_mask (SINGULAR: materials.masks does not exist).
+  // category_name is present but "" on the real drafts seen so far.
+  for (const e of arr(m.common_mask)) {
+    const name = str(e.name);
+    if (!name) continue;
+    items.push({
+      kind: "mask",
+      name,
+      resource_id: str(e.resource_id),
+      effect_id: str(e.effect_id),
+      category_name: str(e.category_name),
+      font_path: null,
+    });
+  }
+  // animations — doubly nested under materials: a flat wrapper
+  // ({id, type:"sticker_animation", animations[]}) linked to its segment via
+  // extra_material_refs[]; the resource_id/name live in the INNER array, so
+  // reading the wrapper alone yields nothing. Skip entries with an empty id:
+  // that is an EMPTY SLOT, and its resource_id carries a different identifier
+  // than the actual animation (the animation's own id sits in
+  // third_resource_id there) — dedupeKey would key on the wrong value.
+  for (const w of arr(m.material_animations)) {
+    for (const a of arr(w.animations)) {
+      if (!str(a.id)) continue;
+      const name = str(a.name);
+      if (!name) continue;
+      items.push({
+        kind: "animation",
+        name,
+        resource_id: str(a.resource_id),
+        effect_id: str(a.effect_id),
+        category_name: str(a.category_name),
+        font_path: null,
+      });
+    }
   }
   // fonts: primary = texts[].fonts[].title; fallback = texts[].font_path (local).
   for (const t of arr(m.texts)) {
@@ -222,11 +297,11 @@ export function cmdQuery(positional: string[], flags: Flags): number {
   // --all = inventaire complet (terme vide → tout matche). Sinon terme requis.
   const term = flags.all ? "" : positional[1];
   if (term === undefined)
-    die(
-      "Missing search term. Usage: capcut-david query <term>|--all [--kind effect|filter|transition|font] [--drafts <dir>]",
-    );
-  if (flags.kind && !KINDS.includes(flags.kind as QueryKind)) {
-    die(`Invalid --kind '${flags.kind}'. Expected one of: effect, filter, transition, font.`);
+    die(`Missing search term. Usage: capcut-david query <term>|--all [--kind ${KINDS_PIPE}] [--drafts <dir>]`);
+  // !== undefined, pas de test de véracité : --kind "" doit être l'erreur
+  // d'usage qu'il est déjà dans catalogue, pas un filtre-vide silencieux.
+  if (flags.kind !== undefined && !KINDS.includes(flags.kind as QueryKind)) {
+    die(`Invalid --kind '${flags.kind}'. Expected one of: ${KINDS_LIST}.`);
   }
 
   const root = flags.drafts ?? defaultProjectsRoot();

@@ -151,7 +151,9 @@ mémoire : elle survit à la suppression du draft témoin.
 Boucle : David applique la ressource dans CapCut et **sauvegarde** (CapCut ne
 l'écrit sur disque qu'à la sauvegarde) → `capcut-david catalogue --sync` →
 l'entrée est figée pour toujours. Consulter avec `catalogue -H`, ou
-`catalogue --kind font -H` pour une seule rubrique.
+`catalogue --kind font -H` pour une seule rubrique. Kinds acceptés (query et
+catalogue) : `effect`, `filter`, `transition`, `font`, `sticker`, `mask`,
+`animation`, `curve` (courbe de keyframe).
 
 Ressource dont le draft témoin a disparu : `--sync` ne peut rien pour elle
 (il n'y a rien à moissonner). L'entrer à la main :
