@@ -2,12 +2,21 @@
 
 This document defines how `capcut-cli-david` (fork) maintains its relationship with `renezander030/capcut-cli` (upstream). It is the rulebook every commit, sync, and PR-back must respect.
 
-**Last reviewed:** 2026-05-11
-**Next review trigger:** upstream cuts v1.0.0 OR no upstream activity for 90 days OR fork ships v1.0.0
+**Last reviewed:** 2026-08-11
+**Next review trigger:** a change to our attribution obligations (§5) — nothing else. Sync and PR-back are terminated, see §7 (2026-08-11).
+
+> **Statut au 2026-08-11 — le sync est ARRÊTÉ, l'attribution CONTINUE.** Les deux
+> bases de code n'ont plus de tronc commun (§7) : §2 (branches), §3 (cadence) et §4
+> (PR-back) sont conservés comme historique de décision, **plus comme procédure à
+> appliquer**. Seul §5 (obligations MIT) reste vivant et contraignant.
 
 ---
 
-## 1. Upstream snapshot (frozen 2026-05-11)
+## 1. Upstream snapshot (frozen 2026-05-11 — PÉRIMÉ, conservé tel quel)
+
+> Ce tableau décrit upstream **au 2026-05-11**, jour de la décision de fork. Il n'a
+> pas été rafraîchi depuis et ne le sera plus : il documente le contexte de la
+> décision, pas l'état courant d'upstream. Pour l'état courant : `git fetch upstream`.
 
 | Field | Value |
 |---|---|
@@ -284,18 +293,20 @@ Use this section to record divergences as they happen. One bullet per decision. 
 | Date | Decision | Upstream context | Outcome |
 |---|---|---|---|
 | 2026-05-11 | Initial UPSTREAM.md — sync cadence monthly, branch model `master` + `upstream-sync` + `feat/*` + `david/*` | Snapshot frozen at upstream `c92233855` (v0.2.2, 2026-05-07) | This file. |
+| 2026-08-11 | **Sync upstream ARRÊTÉ. Obligations d'attribution (§5) MAINTENUES.** La cadence mensuelle de §3 et le PR-back de §4 ne s'appliquent plus. `upstream-sync` reste gelée sur `c922338` comme référence historique ; ne plus la fast-forwarder. | Divergence MESURÉE ce jour, upstream à `1ee49dd` (v0.18.0), **201 commits** non intégrés depuis le fork : `git diff master upstream/master -- src/` = **70 fichiers, 55 531 insertions / 8 626 suppressions** ; sur 36 fichiers dans notre `src/` et 37 dans le leur, **2 noms en commun** (`draft.ts`, `index.ts`) — et tous deux réécrits. Upstream est parti sur une autre surface (`wikimedia.ts`, `version.ts`). | Un merge n'a plus de cible : il n'existe plus de code où appliquer leurs commits. Un correctif upstream qui nous concernerait (ex. `fix(time)` sur les durées négatives sub-demi-frame) se traite désormais comme un bug CHEZ NOUS — on écrit le test, on ne reprend pas le commit. Rien ne change côté légal : `LICENSE` (double copyright), `NOTICE`, la bannière README et `package.json.contributors` sont vérifiés en règle ce jour et le restent. |
 
 ---
 
 ## 8. Periodic review checklist (run quarterly)
 
-- [ ] Re-snapshot upstream metrics (commits, last-commit, releases) into § 1.
-- [ ] Diff `master` against `upstream-sync` — count fork-only commits. If >50 commits drifted, schedule a deep audit.
-- [ ] Re-evaluate every `david/*` branch: still fork-only, or has upstream caught up?
+Réduite au 2026-08-11 aux seuls points d'attribution — les 4 points de veille sync
+(re-snapshot de §1, diff `master` vs `upstream-sync`, revue des branches `david/*`,
+justification des releases non mergées) sont **retirés** : ils supposaient un sync
+vivant. Voir §7.
+
 - [ ] Update LICENSE copyright years if a new calendar year passed.
 - [ ] Verify `NOTICE` URLs still resolve.
 - [ ] Confirm npm `contributors` field still credits upstream.
-- [ ] If upstream cut a release we haven't merged: write a one-paragraph reason in § 7.
 
 ---
 
