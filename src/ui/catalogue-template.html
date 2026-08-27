@@ -61,6 +61,15 @@ for (const k of DATA.kindOrder) {
 }
 
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+// Graisse (Thin/Regular/Bold...) : dérivable du nom, contrairement à la
+// classification (Serif/Sans Serif/Slab Serif/Script/Display) qui est un
+// jugement visuel — celle-là vit dans le champ éditorial `classification`.
+const FONT_WEIGHTS = ["Thin","ExtraLight","UltraLight","Light","Regular","Normal","Medium",
+  "SemiBold","DemiBold","Bold","ExtraBold","UltraBold","Black","Heavy","Italic","BoldItalic"];
+function deriveWeight(name){
+  const m = name.match(/^(.+?)[\s_-]+([A-Za-z]+)$/);
+  return m && FONT_WEIGHTS.some(w => w.toLowerCase() === m[2].toLowerCase()) ? m[2] : "";
+}
 function card(e){
   const local = e.id.startsWith("local:") || e.id.startsWith("unresolved:");
   const badges = [
@@ -69,11 +78,17 @@ function card(e){
     e.ignored ? '<span class="badge b-cc">ignorée</span>' : "",
   ].join(" ");
   const aliases = e.names.slice(1);
+  const isFont = e.kinds.includes("font");
+  const weight = isFont ? deriveWeight(e.names[0] || "") : "";
   const detail = (arr, label) => arr.length
     ? "<details><summary>" + label + " (" + arr.length + ")</summary><ul>" + arr.map(x => "<li>" + esc(x) + "</li>").join("") + "</ul></details>"
     : "";
   return '<div class="card"><h3>' + esc(e.names[0] || "(sans nom)") + " " + badges + '</h3>'
     + '<div class="sig">' + esc(e.id) + '</div>'
+    + (isFont && (e.classification || weight) ? '<div class="meta">'
+        + (e.classification ? 'classification <code>' + esc(e.classification) + '</code>' : 'classification <code>?</code>')
+        + (weight ? ' · graisse <code>' + esc(weight) + '</code>' : '')
+        + '</div>' : "")
     + (aliases.length ? '<div class="meta">alias : ' + aliases.map(esc).join(", ") + "</div>" : "")
     + (e.note ? '<div class="note">' + esc(e.note) + "</div>" : "")
     + '<div class="meta">vu depuis <code>' + esc(e.first_seen) + "</code>"

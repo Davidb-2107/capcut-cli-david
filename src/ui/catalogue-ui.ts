@@ -23,6 +23,7 @@ export interface CatalogueDoc {
     note: string;
     ignored: boolean;
     merged_from: string[];
+    classification: string;
   }[];
 }
 

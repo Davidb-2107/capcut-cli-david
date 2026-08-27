@@ -56,6 +56,9 @@ export interface CatalogueEntry {
   note: string;
   ignored: boolean;
   merged_from: string[];
+  // Classification typographique (Serif/Sans Serif/Slab Serif/Script/Display).
+  // Éditoriale comme `note` : jamais dérivée, jamais réécrite par sync/promotion.
+  classification: string;
 }
 
 export interface ScannedItem {
@@ -83,6 +86,7 @@ function blank(id: string, today: string): CatalogueEntry {
     note: "",
     ignored: false,
     merged_from: [],
+    classification: "",
   };
 }
 
@@ -165,6 +169,7 @@ export function planCatalogueMerge(
         // entry is about to be deleted from the index, so a silent choice here is
         // unrecoverable data loss.
         if (other.note) e.note = e.note ? `${e.note}\n---\n${other.note}` : other.note;
+        if (!e.classification && other.classification) e.classification = other.classification;
         e.merged_from = sortedSet([...e.merged_from, ...other.merged_from, otherId]);
         index.delete(otherId);
         promoted.push(otherId);
@@ -269,6 +274,7 @@ function normalizeEntry(raw: unknown, i: number): CatalogueEntry {
     note: str(r.note, "note"),
     ignored: r.ignored === true,
     merged_from: strArr(r.merged_from, "merged_from"),
+    classification: str(r.classification, "classification"),
   };
 }
 

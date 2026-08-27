@@ -23,6 +23,7 @@ const entry = (over = {}) => ({
   note: "",
   ignored: false,
   merged_from: [],
+  classification: "",
   ...over,
 });
 
