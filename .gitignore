@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.worktrees/
 *.bak
 *.tsbuildinfo
 .DS_Store
