@@ -151,7 +151,7 @@ export function buildRichTextContent(
  * is the frozen single-span `buildTextContent` (v1.3.0 byte-identity); otherwise
  * it is multi-span rich-text + `is_rich_text`.
  */
-function buildTextMaterial(
+export function buildTextMaterial(
   matId: string,
   text: string,
   fontSize: number,
@@ -183,6 +183,33 @@ function buildTextMaterial(
   };
   if (highlights.length > 0) mat.is_rich_text = true;
   return mat;
+}
+
+/**
+ * Font-agnostic --clone-style resolver: photocopies the style block (font/strokes/shadows/
+ * size) off an existing caption segment's material. Falls back to undefined (with a warning
+ * on stderr) if the segment is missing or its content can't be parsed — never errors, callers
+ * fall back to their own default style. Shared by import-captions and cascade-words.
+ */
+export function resolveCloneStyle(
+  texts: Array<Record<string, unknown>>,
+  segment: Segment | undefined,
+  label: string,
+  commandLabel: string,
+): { styleBlock: Record<string, unknown>; material: Record<string, unknown> } | undefined {
+  const tplMat = segment ? texts.find((m) => m.id === segment.material_id) : undefined;
+  if (tplMat && typeof tplMat.content === "string") {
+    try {
+      const parsed = JSON.parse(tplMat.content);
+      if (Array.isArray(parsed.styles) && parsed.styles[0]) {
+        return { styleBlock: parsed.styles[0] as Record<string, unknown>, material: tplMat };
+      }
+    } catch {
+      /* unparseable content → fall through to the warning + default style */
+    }
+  }
+  process.stderr.write(`[${commandLabel}] --clone-style: no styled caption found on ${label}; using default style\n`);
+  return undefined;
 }
 
 export function addText(
@@ -1036,29 +1063,10 @@ export function importCaptions(
   const texts = draft.materials.texts as unknown as Array<Record<string, unknown>>;
 
   // --clone-style: photocopy the existing caption look (font/strokes/shadows/size) from
-  // the target track's first segment BEFORE it is replaced. Font-agnostic — we copy the
-  // style block verbatim and only swap range + fill color. Falls back to the default style
-  // (with a warning) if the track is empty or its content can't be parsed — never errors.
-  let cloneTpl: { styleBlock: Record<string, unknown>; material: Record<string, unknown> } | undefined;
-  if (opts.cloneStyle) {
-    const firstSeg = track.segments[0];
-    const tplMat = firstSeg ? texts.find((m) => m.id === firstSeg.material_id) : undefined;
-    if (tplMat && typeof tplMat.content === "string") {
-      try {
-        const parsed = JSON.parse(tplMat.content);
-        if (Array.isArray(parsed.styles) && parsed.styles[0]) {
-          cloneTpl = { styleBlock: parsed.styles[0] as Record<string, unknown>, material: tplMat };
-        }
-      } catch {
-        /* unparseable content → fall through to the warning + default style */
-      }
-    }
-    if (!cloneTpl) {
-      process.stderr.write(
-        `[import-captions] --clone-style: no styled caption found on ${trackLabel}; using default style\n`,
-      );
-    }
-  }
+  // the target track's first segment BEFORE it is replaced.
+  const cloneTpl = opts.cloneStyle
+    ? resolveCloneStyle(texts, track.segments[0], trackLabel, "import-captions")
+    : undefined;
 
   const newSegs: Segment[] = [];
   opts.cards.forEach((card, i) => {

@@ -232,6 +232,35 @@ export const CAPABILITIES: Capability[] = [
     capcutClosed: true,
     since: "1.4.0",
   },
+  {
+    verb: "cascade-words",
+    category: "peupler",
+    summary:
+      "Révélation phrase mot-par-mot (PAS karaoké — les mots restent affichés jusqu'à la phrase complète). Par ligne : une piste BASE (guide de placement uniquement, masquée immédiatement) + une piste par mot en surlignage (seule couche visible), décalée en x pour se superposer au mot correspondant dans le guide. Chaque mot démarre à son timestamp et reste jusqu'à la fin de sa ligne. --max-chars découpe en plusieurs lignes si la phrase déborderait de l'écran.",
+    signature:
+      "cascade-words <project> <cards.json> --guide-track <name> [--track-prefix <name>] [--line-prefix <name>] [--font-size <n>] [--color <hex>] [--highlight-color <hex>] [--align <0|1|2>] [--clone-style] [--max-chars <n>]",
+    flags: [
+      { flag: "--guide-track <name>", desc: "piste texte tenant la phrase complète (import-captions) — requis" },
+      { flag: "--track-prefix <name>", desc: "préfixe des pistes MOT (défaut: word -> word-000, word-001...)" },
+      {
+        flag: "--line-prefix <name>",
+        desc: "préfixe des pistes BASE par ligne (défaut: line -> line-000...), masquées",
+      },
+      { flag: "--font-size <n>", desc: "taille de police (base et mots)" },
+      { flag: "--color <hex>", desc: "couleur de la piste base — invisible (guide de placement masqué)" },
+      { flag: "--highlight-color <hex>", desc: "couleur des mots (défaut #FFD600) — seule couche visible" },
+      { flag: "--clone-style", desc: "hérite du style (police/contour/ombre) de la caption guide" },
+      {
+        flag: "--max-chars <n>",
+        desc: "heuristique chars/ligne — au-delà, nouvelle ligne = nouvel escalier (pas de mesure pixel)",
+        since: "2.8.0",
+      },
+    ],
+    example: 'capcut-david cascade-words "<draft-dir>" cards.json --guide-track sentence --max-chars 15',
+    readOnly: false,
+    capcutClosed: true,
+    since: "2.8.0",
+  },
 
   // ---- captions ----------------------------------------------------------
   {

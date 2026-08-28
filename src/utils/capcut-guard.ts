@@ -17,6 +17,7 @@ export const WRITE_COMMANDS = new Set([
   "add-filter",
   "add-transition",
   "import-captions",
+  "cascade-words",
   "restyle",
   "set-text",
   "shift",

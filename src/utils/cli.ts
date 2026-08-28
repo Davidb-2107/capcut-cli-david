@@ -32,6 +32,10 @@ export interface Flags {
   highlightSize?: number;
   transformY?: number;
   cloneStyle?: boolean;
+  guideTrack?: string;
+  trackPrefix?: string;
+  linePrefix?: string;
+  maxChars?: number;
   preset?: string;
   force?: boolean;
   strict?: boolean;

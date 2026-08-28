@@ -2,6 +2,7 @@
 
 import { writeSync } from "node:fs";
 import { cmdBatch } from "./commands/batch.js";
+import { cmdCascadeWords } from "./commands/cascade-words.js";
 import { cmdCatalogue } from "./commands/catalogue.js";
 import {
   cmdAddAudio,
@@ -104,6 +105,31 @@ Add:
               --transform-y: clip.transform.y for every rebuilt caption segment
               (vertical position; negatives allowed, e.g. -0.4 = mi-bas).
               --clone-style: keep the target track's existing caption font/stroke/shadow.
+  cascade-words <project> <cards.json> --guide-track <name>
+              [--track-prefix <name>] [--line-prefix <name>] [--font-size <n>]
+              [--color <hex>] [--highlight-color <hex>] [--align <0|1|2>]
+              [--clone-style] [--max-chars <n>]
+              Word-by-word sentence build-up (NOT karaoke — words stay on screen once
+              revealed, until the full sentence shows). Per line (from --max-chars, or
+              one line if omitted): a BASE track (full line text, --color, default
+              #FFFFFF) is created as a PLACEMENT GUIDE ONLY and hidden immediately
+              (visible=false — never meant to be seen), plus one WORD track per word
+              (--highlight-color, default #FFD600, the only visible layer) that starts
+              at its own timestamp (cards = [{text,start,end}], microseconds — e.g.
+              Shared/narration-alignment build_captions_cli.py --karaoke output), stays
+              until the line ends, and is x-offset (char-count heuristic, not real font
+              metrics) to sit over its matching word in the hidden base guide.
+              --guide-track names the text track already holding the full sentence
+              (created via import-captions); its segment is likewise hidden once
+              processed — a guide track may hold several sentence segments (repeated
+              per-sentence calls), each call consumes and hides the first unhidden one.
+              Base tracks are named <line-prefix>-000, ... (default "line"); word tracks
+              <track-prefix>-000, ... (default "word", global card index).
+              --max-chars: char-count-per-line heuristic — when the cumulative sentence
+              would overflow one screen line, groups words into multiple lines; each line
+              is its own escalier, ending when the next line's first word starts. The
+              LAST line ends at its own last card's natural end (from cards.json), capped
+              at the guide segment's end — never stretched to fill guide padding/dead air.
   add-effect <project> <resource-id> <name> (<start> <duration> | --full)
               [--value <n>] [--bind <segment-id>]
               Apply a video effect (FX) via its catalogue resource ID.
@@ -358,6 +384,14 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.transformY = parseFiniteFlag(a, args[++i]);
     } else if (a === "--clone-style") {
       flags.cloneStyle = true;
+    } else if (a === "--guide-track" && i + 1 < args.length) {
+      flags.guideTrack = args[++i];
+    } else if (a === "--track-prefix" && i + 1 < args.length) {
+      flags.trackPrefix = args[++i];
+    } else if (a === "--line-prefix" && i + 1 < args.length) {
+      flags.linePrefix = args[++i];
+    } else if (a === "--max-chars" && i + 1 < args.length) {
+      flags.maxChars = parseInt(args[++i], 10);
     } else if (a === "--force") {
       flags.force = true;
     } else if (a === "--strict") {
@@ -560,6 +594,10 @@ function main(): void {
     case "import-captions":
       requireArgs(positional, 3, "capcut-david import-captions <project> <captions.json>");
       cmdImportCaptions(draft, filePath, positional, flags);
+      break;
+    case "cascade-words":
+      requireArgs(positional, 3, "capcut-david cascade-words <project> <cards.json> --guide-track <name>");
+      cmdCascadeWords(draft, filePath, positional, flags);
       break;
     case "cut":
       requireArgs(positional, 4, "capcut-david cut <project> <start> <end> --out <path>");
