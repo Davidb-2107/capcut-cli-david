@@ -127,6 +127,19 @@ test("ambiguous catalogue name includes candidate identities", (t) => {
   throws(() => resolveFontReference("line", { cwd: root }), /Line Art.*1.*Line Bold.*2/);
 });
 
+test("draft fallback keeps same-title distinct identities ambiguous", (t) => {
+  const root = sandbox(t);
+  const first = join(root, "first.ttf");
+  const second = join(root, "second.ttf");
+  writeFileSync(first, "fixture");
+  writeFileSync(second, "fixture");
+  writeCatalogue(root, []);
+  writeDraft(root, "draft-a", "Shared Name", first, "101");
+  writeDraft(root, "draft-b", "Shared Name", second, "202");
+
+  throws(() => resolveFontReference("shared name", { cwd: root, draftsRoot: root }), /Shared Name.*101.*Shared Name.*202/);
+});
+
 test("local-only catalogue entries resolve with a null resource ID", (t) => {
   const root = sandbox(t);
   const fontPath = join(root, "local.ttf");
@@ -138,4 +151,3 @@ test("local-only catalogue entries resolve with a null resource ID", (t) => {
   strictEqual(result.source, "catalogue");
   ok(existsSync(result.fontPath));
 });
-

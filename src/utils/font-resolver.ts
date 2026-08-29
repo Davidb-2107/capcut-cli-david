@@ -72,6 +72,15 @@ function dedupeKey(font: RawFont): string {
   return font.resource_id ? `rid:${font.resource_id}` : `local:${font.title}|${font.font_path ?? ""}`;
 }
 
+function normalizeFontPath(path: string | null): string | null {
+  return path ? path.replace(/\\/g, "/").toLowerCase() : null;
+}
+
+function pathCarriesResourceId(path: string | null, resourceId: string | null): boolean {
+  const normalized = normalizeFontPath(path);
+  return !!normalized && !!resourceId && normalized.includes(`/effect/${resourceId.toLowerCase()}/`);
+}
+
 function catalogueGrade(font: RawFont): boolean {
   return (
     !!font.resource_id &&
@@ -79,6 +88,16 @@ function catalogueGrade(font: RawFont): boolean {
     !!font.font_path &&
     font.font_path.replace(/\\/g, "/").includes(`/effect/${font.resource_id}/`)
   );
+}
+
+function sameFontIdentity(a: RawFont, b: RawFont): boolean {
+  if (a.resource_id && b.resource_id) return a.resource_id === b.resource_id;
+
+  const aPath = normalizeFontPath(a.font_path);
+  const bPath = normalizeFontPath(b.font_path);
+  if (aPath && bPath) return aPath === bPath;
+
+  return pathCarriesResourceId(a.font_path, b.resource_id) || pathCarriesResourceId(b.font_path, a.resource_id);
 }
 
 /**
@@ -111,15 +130,26 @@ export function planFontCandidates(drafts: Array<{ name: string; draft: unknown 
   for (const candidate of matches) candidate.from_drafts.sort();
   matches.sort((a, b) => a.title.localeCompare(b.title));
 
-  // A local witness and a catalogue witness with the same title represent one
-  // user-facing font. Prefer the catalogue-grade identity when both exist.
-  const byTitle = new Map<string, FontCandidate>();
+  // Same-title witnesses are only collapsed when they point to the same font
+  // identity. Distinct resource IDs or distinct local files must stay ambiguous.
+  const list: FontCandidate[] = [];
   for (const candidate of matches) {
-    const titleKey = candidate.title.toLowerCase();
-    const existing = byTitle.get(titleKey);
-    if (!existing || (!catalogueGrade(existing) && catalogueGrade(candidate))) byTitle.set(titleKey, candidate);
+    const existing = list.find(
+      (current) => current.title.toLowerCase() === candidate.title.toLowerCase() && sameFontIdentity(current, candidate),
+    );
+    if (!existing) {
+      list.push(candidate);
+      continue;
+    }
+    if (!existing.from_drafts.includes(candidate.from_drafts[0] ?? "")) {
+      existing.from_drafts = [...new Set([...existing.from_drafts, ...candidate.from_drafts])].sort();
+    }
+    if (!catalogueGrade(existing) && catalogueGrade(candidate)) {
+      const replacement = { ...candidate, from_drafts: existing.from_drafts };
+      list[list.indexOf(existing)] = replacement;
+    }
   }
-  const list = [...byTitle.values()].sort((a, b) => a.title.localeCompare(b.title));
+  list.sort((a, b) => a.title.localeCompare(b.title));
 
   if (list.length === 0) return { status: "none" };
   if (list.length > 1) return { status: "ambiguous", candidates: list };
@@ -253,4 +283,3 @@ export function resolveFontReference(
     source: "draft",
   };
 }
-

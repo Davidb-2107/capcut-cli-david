@@ -63,8 +63,9 @@ test("plan: same resource_id across drafts → deduped, from_drafts merged+sorte
 });
 
 test("plan: prefers catalogue-grade entry over local fallback for same title", () => {
-  // local (no rid) and catalogue (rid) both present in different drafts.
-  const local = draftWith({ texts: [{ type: "text", font_title: "SpeedLines", font_resource_id: "", font_source_platform: 0, font_path: "C:/win/fonts/speed.ttf", fonts: [{ title: "SpeedLines", resource_id: "", source_platform: 0, path: "C:/win/fonts/speed.ttf" }] }] });
+  // local witness points at the same downloaded font, but without a resource_id.
+  const localPath = "C:/cache/effect/7605/h/SpeedLines.ttf";
+  const local = draftWith({ texts: [{ type: "text", font_title: "SpeedLines", font_resource_id: "", font_source_platform: 0, font_path: localPath, fonts: [{ title: "SpeedLines", resource_id: "", source_platform: 0, path: localPath }] }] });
   const cat = draftWith({ texts: [catFont("SpeedLines", "7605")] });
   const r = planMakePreset([{ name: "loc", draft: local }, { name: "cat", draft: cat }], "speedlines");
   strictEqual(r.status, "match");
