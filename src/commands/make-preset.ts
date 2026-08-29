@@ -8,122 +8,18 @@ import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "
 import { join } from "node:path";
 import { defaultProjectsRoot } from "../utils/capcut-paths.js";
 import { die, type Flags, out } from "../utils/cli.js";
+import { planFontCandidates, type FontCandidate, type FontPlanResult } from "../utils/font-resolver.js";
 
-// --- defensive narrowing (drafts are untrusted JSON) — mirrored from query.ts
 function rec(v: unknown): Record<string, unknown> | null {
   return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
 }
-function arr(v: unknown): Record<string, unknown>[] {
-  if (!Array.isArray(v)) return [];
-  return v.filter((x): x is Record<string, unknown> => !!x && typeof x === "object" && !Array.isArray(x));
-}
-function str(v: unknown): string | null {
-  return typeof v === "string" && v.length > 0 ? v : null;
-}
 
-export interface FontCandidate {
-  resource_id: string | null;
-  title: string;
-  font_path: string | null;
-  source_platform: number;
-  /** The raw fonts[] entry from the draft — emitted verbatim for fidelity. */
-  fonts_entry: Record<string, unknown>;
-  from_drafts: string[];
-}
+export type PlanResult = FontPlanResult;
 
-export type PlanResult =
-  | { status: "match"; font: FontCandidate }
-  | { status: "none" }
-  | { status: "ambiguous"; candidates: FontCandidate[] };
-
-type RawFont = Omit<FontCandidate, "from_drafts">;
-
-// Extract every titled font block from ONE draft.
-function extractFonts(draft: unknown): RawFont[] {
-  const fonts: RawFont[] = [];
-  const d = rec(draft);
-  const m = d ? rec(d.materials) : null;
-  if (!m) return fonts;
-  for (const t of arr(m.texts)) {
-    for (const f of arr(t.fonts)) {
-      const title = str(f.title);
-      if (!title) continue;
-      const sp =
-        typeof f.source_platform === "number"
-          ? f.source_platform
-          : typeof t.font_source_platform === "number"
-            ? t.font_source_platform
-            : 0;
-      fonts.push({
-        resource_id: str(f.resource_id),
-        title,
-        font_path: str(f.path) ?? str(t.font_path),
-        source_platform: sp,
-        fonts_entry: f,
-      });
-    }
-  }
-  return fonts;
-}
-
-// Dedupe key: catalogue fonts by resource_id; local fonts by title+path.
-function dedupeKey(f: RawFont): string {
-  return f.resource_id ? `rid:${f.resource_id}` : `local:${f.title}|${f.font_path ?? ""}`;
-}
-
-// Is this entry "catalogue-grade" (a real downloaded font, preferred on tie)?
-function catalogueGrade(f: RawFont): boolean {
-  return (
-    !!f.resource_id && f.source_platform === 1 && !!f.font_path && f.font_path.includes(`/effect/${f.resource_id}/`)
-  );
-}
-
-// Pure: extract → dedupe (prefer catalogue-grade) → match → classify.
+// Keep make-preset's historical pure API while sharing the extraction, dedupe,
+// matching and ambiguity rules with cascade-words.
 export function planMakePreset(drafts: Array<{ name: string; draft: unknown }>, font: string): PlanResult {
-  const index = new Map<string, FontCandidate>();
-  for (const { name, draft } of drafts) {
-    for (const raw of extractFonts(draft)) {
-      const key = dedupeKey(raw);
-      const existing = index.get(key);
-      if (!existing) {
-        index.set(key, { ...raw, from_drafts: [name] });
-      } else {
-        if (!existing.from_drafts.includes(name)) existing.from_drafts.push(name);
-        // Upgrade to a catalogue-grade representative if a better one appears.
-        // existing.from_drafts is reused intentionally — not an aliasing bug:
-        // the array was already created above and is the live accumulator.
-        if (!catalogueGrade(existing) && catalogueGrade(raw)) {
-          index.set(key, { ...raw, from_drafts: existing.from_drafts });
-        }
-      }
-    }
-  }
-
-  const isNumeric = /^\d+$/.test(font);
-  const needle = font.toLowerCase();
-  const matches = [...index.values()].filter((c) =>
-    isNumeric ? c.resource_id === font : c.title.toLowerCase().includes(needle),
-  );
-  for (const c of matches) c.from_drafts.sort();
-  matches.sort((a, b) => a.title.localeCompare(b.title));
-
-  // Title-level dedup: if a catalogue-grade and local entry share the same title,
-  // the catalogue-grade entry wins (local is a fallback, not a distinct font).
-  // index already deduped by dedupeKey, so every entry in matches is unique —
-  // no need to rebuild a distinct Map here.
-  const byTitle = new Map<string, FontCandidate>();
-  for (const c of matches) {
-    const tk = c.title.toLowerCase();
-    const existing = byTitle.get(tk);
-    if (!existing || (!catalogueGrade(existing) && catalogueGrade(c))) {
-      byTitle.set(tk, c);
-    }
-  }
-  const list = [...byTitle.values()].sort((a, b) => a.title.localeCompare(b.title));
-
-  if (list.length === 0) return { status: "none" };
-  if (list.length > 1) return { status: "ambiguous", candidates: list };
-  return { status: "match", font: list[0] };
+  return planFontCandidates(drafts, font);
 }
 
 // Build a BARE-FONT restyle preset from a chosen font. Copies the draft's real
