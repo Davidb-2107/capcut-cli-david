@@ -178,6 +178,16 @@ test("CLI: --out writes the bare preset file (accepted by restyle's shape)", (t)
   strictEqual(preset.text_material.font_title, "SpeedLines");
 });
 
+test("CLI: failed local-only resolution leaves --out absent", (t) => {
+  const local = libDraft({ texts: [{ type: "text", font_title: "MyLocal", font_resource_id: "", font_source_platform: 0, font_path: "C:/win/fonts/mylocal.ttf", fonts: [{ title: "MyLocal", resource_id: "", source_platform: 0, path: "C:/win/fonts/mylocal.ttf" }] }] });
+  const root = makeLib(t, { dA: local });
+  const outPath = join(root, "local-only-preset.json");
+  const r = runCli(["make-preset", "--font", "mylocal", "--drafts", root, "--out", outPath]);
+  strictEqual(r.status, 2);
+  strictEqual(existsSync(outPath), false);
+  ok(/resource_id|local/i.test(r.errorJson?.error ?? r.stderr));
+});
+
 test("CLI: missing --font → exit 1, error mentions font", (t) => {
   const root = makeLib(t, { dA: libDraft({ texts: [libFont("SpeedLines", "7605")] }) });
   const r = runCli(["make-preset", "--drafts", root]);
