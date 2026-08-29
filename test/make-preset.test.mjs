@@ -2,7 +2,7 @@
 // font found in the drafts library. Spec: docs/superpowers/specs/2026-06-07-make-preset-design.md
 import { test } from "node:test";
 import { strictEqual, deepStrictEqual, ok } from "node:assert";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
