@@ -52,7 +52,24 @@ function validateStyle(style: FontMeasureStyle): void {
   }
 }
 
-export function measureTextWidthPx(text: string, style: FontMeasureStyle): number {
+export function measureTextWidthPx(
+  fontPath: string,
+  text: string,
+  capcutFontSize: number,
+  letterSpacing?: number,
+): number;
+export function measureTextWidthPx(text: string, style: FontMeasureStyle): number;
+export function measureTextWidthPx(
+  first: string,
+  second: string | FontMeasureStyle,
+  capcutFontSize?: number,
+  letterSpacing = 0,
+): number {
+  const text = typeof second === "string" ? second : first;
+  const style: FontMeasureStyle =
+    typeof second === "string"
+      ? { fontPath: first, capcutFontSize: capcutFontSize as number, letterSpacing }
+      : second;
   if (typeof text !== "string") throw new Error("Text to measure must be a string.");
   validateStyle(style);
   if (text.length === 0) return 0;
@@ -76,4 +93,3 @@ export const fontMetrics: FontMetrics = {
 export function clearFontMetricsCache(): void {
   fontCache.clear();
 }
-

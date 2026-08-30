@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { type Draft, type Segment, saveDraft, type Track } from "../draft.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { baseSegment, createCompanionMaterials, hexToRgb, registerCompanions, uuid } from "../utils/companion.js";
+import { fontMetrics, type FontMeasureStyle } from "../utils/font-metrics.js";
 import {
   applyTextFontIdentity,
   buildRichTextContent,
@@ -20,15 +21,15 @@ import { resolveFontReference, type ResolvedFont } from "../utils/font-resolver.
 // "guide" text track that already holds the full-sentence caption (created via
 // import-captions) and word-level timing from Shared/narration-alignment's --karaoke
 // mode (one {text,start,end} card per spoken word, microseconds), groups words into
-// lines (--max-chars heuristic, or one line if omitted) and per line:
+// measured lines and per line:
 //   1. a BASE track (full line text, base color, centered) spanning the line's whole
 //      time window — a PLACEMENT GUIDE only, hidden immediately (visible=false): it
 //      exists purely to line up the highlight words into a coherent sentence, never
 //      meant to be seen;
 //   2. one WORD track per word (highlight color, the only thing actually visible),
 //      staggered starts (its own spoken time), each ending when the line ends,
-//      x-offset to visually sit over its matching word in the base guide (char-count
-//      heuristic, not real font metrics — see CHAR_WIDTH_FACTOR). Pushed AFTER the
+//      x-offset to visually sit over its matching word in the base guide (measured
+//      font metrics). Pushed AFTER the
 //      base track (track order convention only — base is invisible either way).
 // A line's own end is the next line's first word start (or the guide segment's end for the
 // last line) — so a line's build-up freezes/vanishes exactly when the next line begins.
@@ -55,11 +56,8 @@ export interface CascadeWordsOptions {
   alignment?: number;
   cloneStyle?: boolean;
   font?: ResolvedFont;
-  /** Char-count-per-line heuristic (same proxy as caption_builder.py's phrase-mode
-   * max_chars — not pixel-exact, but production-proven for "stays on one line").
-   * When the cumulative "word word word" text of the current line would exceed this,
-   * the next word starts a NEW line. Omit for a single line (still gets a base track). */
-  maxChars?: number;
+  /** Test seam; production callers use the OpenType FontMetrics adapter. */
+  widthOf?: WidthOf;
 }
 
 export interface EffectiveTextStyle {
@@ -71,35 +69,73 @@ export interface EffectiveTextStyle {
   clonedStyle?: Record<string, unknown>;
 }
 
-// ponytail: empirical fit vs David's hand-placed demo draft (font_size 20 @ 1920px
-// canvas, cascade-words-demo-16x9) — not real glyph metrics. Revisit per-font once
-// fonts are catalogued with real width data (parked, same call as the earlier
-// "measure pixel width for one-line fit" deferral).
-const CHAR_WIDTH_FACTOR = 4.4;
-
 function padWidth(n: number): number {
   return Math.max(3, String(Math.max(0, n - 1)).length);
 }
 
-/** Assigns each card a 0-based line index by greedily packing cumulative text
- * length ("word word word") under maxChars. A single word longer than maxChars
- * still starts its own line alone (can't split mid-word). */
-function groupLines(cards: CaptionCard[], maxChars: number): number[] {
-  const lineOf: number[] = [];
-  let line = 0;
-  let len = 0;
-  for (const card of cards) {
-    const wordLen = card.text.length;
-    const candidate = len === 0 ? wordLen : len + 1 + wordLen;
-    if (len > 0 && candidate > maxChars) {
-      line++;
-      len = wordLen;
-    } else {
-      len = candidate;
-    }
-    lineOf.push(line);
+export type WidthOf = (text: string) => number;
+
+export interface CascadeLayout {
+  lineOf: number[];
+  lineTexts: string[];
+  charRanges: Array<[number, number]>;
+  lineWidthsPx: number[];
+  wordX: number[];
+}
+
+/**
+ * Pure measured layout. Words are greedily packed using the complete candidate
+ * string, so spaces, kerning and shaping all participate in the same decision.
+ * A word wider than the canvas is retained as one line because the MVP does not
+ * split words. The positions use measured prefixes to preserve contextual shaping.
+ */
+export function planCascadeLayout(cards: CaptionCard[], canvasWidth: number, widthOf: WidthOf): CascadeLayout {
+  if (!Number.isFinite(canvasWidth) || canvasWidth <= 0) {
+    throw new Error("cascade-words: canvas width must be a positive number");
   }
-  return lineOf;
+  if (typeof widthOf !== "function") throw new Error("cascade-words: widthOf must be a function");
+
+  const lineOf: number[] = [];
+  const lineTexts: string[] = [];
+  for (const card of cards) {
+    if (typeof card.text !== "string") throw new Error('cascade-words: card "text" must be a string');
+    const currentLine = lineTexts.length > 0 ? lineTexts[lineTexts.length - 1] : "";
+    const candidate = currentLine === "" ? card.text : `${currentLine} ${card.text}`;
+    if (currentLine !== "" && widthOf(candidate) > canvasWidth) {
+      lineTexts.push(card.text);
+      lineOf.push(lineTexts.length - 1);
+    } else {
+      if (lineTexts.length === 0) lineTexts.push(candidate);
+      else lineTexts[lineTexts.length - 1] = candidate;
+      lineOf.push(lineTexts.length - 1);
+    }
+  }
+
+  const charRanges: Array<[number, number]> = new Array(cards.length);
+  const cursorByLine = new Array<number>(lineTexts.length).fill(0);
+  cards.forEach((card, index) => {
+    const line = lineOf[index];
+    let cursor = cursorByLine[line];
+    if (cursor > 0) cursor += 1; // ASCII inter-word space
+    const start = cursor;
+    const end = start + card.text.length;
+    charRanges[index] = [start, end];
+    cursorByLine[line] = end;
+  });
+
+  const lineWidthsPx = lineTexts.map((lineText) => widthOf(lineText));
+  const wordX = cards.map((_, index) => {
+    const line = lineOf[index];
+    const lineText = lineTexts[line];
+    const [charStart, charEnd] = charRanges[index];
+    const pxStart = widthOf(lineText.slice(0, charStart));
+    const pxEnd = widthOf(lineText.slice(0, charEnd));
+    const wordMidPx = (pxStart + pxEnd) / 2;
+    const lineMidPx = lineWidthsPx[line] / 2;
+    return (wordMidPx - lineMidPx) / (canvasWidth / 2);
+  });
+
+  return { lineOf, lineTexts, charRanges, lineWidthsPx, wordX };
 }
 
 /** Each line's [start, end) window: start = its first word's own start; end = the next
@@ -122,30 +158,6 @@ function computeLineBounds(
     if (i > 0 && lineOf[i] !== lineOf[i - 1]) ends[lineOf[i - 1]] = cards[i].start;
   }
   return { starts, ends };
-}
-
-/** Per line, the concatenated "word word word" text, plus each card's [charStart, charEnd)
- * range within its line's text (single-space joins) — used for the x-offset heuristic. */
-function buildLineTexts(
-  cards: CaptionCard[],
-  lineOf: number[],
-): { lineTexts: string[]; charRanges: Array<[number, number]> } {
-  const numLines = lineOf.length > 0 ? lineOf[lineOf.length - 1] + 1 : 0;
-  const lineTexts = new Array<string>(numLines).fill("");
-  const charRanges = new Array<[number, number]>(cards.length);
-  let pos = 0;
-  cards.forEach((card, i) => {
-    if (i === 0 || lineOf[i] !== lineOf[i - 1]) pos = 0;
-    if (pos > 0) {
-      lineTexts[lineOf[i]] += " ";
-      pos += 1;
-    }
-    const start = pos;
-    lineTexts[lineOf[i]] += card.text;
-    pos += card.text.length;
-    charRanges[i] = [start, pos];
-  });
-  return { lineTexts, charRanges };
 }
 
 function checkPrefixCollision(draft: Draft, prefix: string, flagName: string): void {
@@ -331,9 +343,16 @@ export function cascadeWords(
     }
   });
 
-  const lineOf = opts.maxChars !== undefined ? groupLines(opts.cards, opts.maxChars) : opts.cards.map(() => 0);
+  const measuredStyle: FontMeasureStyle = {
+    fontPath: effectiveStyle.fontPath,
+    capcutFontSize: effectiveStyle.fontSize,
+    letterSpacing: effectiveStyle.letterSpacing,
+  };
+  const widthOf = opts.widthOf ?? ((text: string) => fontMetrics.measure(text, measuredStyle));
+  const layout = planCascadeLayout(opts.cards, canvasWidth as number, widthOf);
+  const lineOf = layout.lineOf;
+  const { lineTexts } = layout;
   const { starts: lineStarts, ends: lineEnds } = computeLineBounds(opts.cards, lineOf, guideEnd);
-  const { lineTexts, charRanges } = buildLineTexts(opts.cards, lineOf);
 
   const wordWidth = padWidth(opts.cards.length);
   const lineWidth = padWidth(lineTexts.length);
@@ -404,10 +423,6 @@ export function cascadeWords(
     trackIds.push(baseTrack.id);
     lineCount++;
 
-    const lineTextLen = lineTexts[line].length;
-    const lineMid = lineTextLen / 2;
-    const charWidthPx = fontSize * CHAR_WIDTH_FACTOR;
-
     indices.forEach((i) => {
       const card = opts.cards[i];
       if (card.start >= lineEnd) {
@@ -417,9 +432,7 @@ export function cascadeWords(
         return;
       }
 
-      const [charStart, charEnd] = charRanges[i];
-      const wordMid = (charStart + charEnd) / 2;
-      const x = ((wordMid - lineMid) * charWidthPx) / ((canvasWidth as number) / 2);
+      const x = layout.wordX[i];
 
       const track: Track = {
         id: uuid(),
@@ -479,7 +492,7 @@ export function cmdCascadeWords(draft: Draft, filePath: string, positional: stri
   const jsonPath = positional[2];
   if (!jsonPath) {
     die(
-      "Missing <cards.json>. Usage: capcut-david cascade-words <project> <cards.json> --guide-track <name> (--font <name|rid> | --clone-style) [--track-prefix <name>] [--line-prefix <name>] [--font-size <n>] [--color <hex>] [--highlight-color <hex>] [--align <0|1|2>] [--max-chars <n>]",
+      "Missing <cards.json>. Usage: capcut-david cascade-words <project> <cards.json> --guide-track <name> (--font <name|rid> | --clone-style) [--track-prefix <name>] [--line-prefix <name>] [--font-size <n>] [--color <hex>] [--highlight-color <hex>] [--align <0|1|2>] [--drafts <dir>]",
     );
   }
   if (!existsSync(jsonPath)) die(`Cards file not found: ${jsonPath}`);
@@ -503,7 +516,6 @@ export function cmdCascadeWords(draft: Draft, filePath: string, positional: stri
     alignment: flags.align,
     cloneStyle: flags.cloneStyle,
     font: flags.font ? resolveFontReference(flags.font, { draftsRoot: flags.drafts }) : undefined,
-    maxChars: flags.maxChars,
   });
   saveDraft(filePath, draft);
   out({ ok: true, track_ids: result.trackIds, word_count: result.wordCount, line_count: result.lineCount }, flags);

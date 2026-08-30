@@ -1,6 +1,6 @@
 // Tests for cascade-words (src/commands/cascade-words.ts → dist).
-// Karaoke build-up: per line, a readable BASE track (full line text) plus one WORD
-// track per word (highlight color, x-offset to sit over its matching word in the
+// Word build-up: per line, a readable BASE track (full line text) plus one WORD
+// track per word (highlight color, measured x-offset to sit over its matching word in the
 // base), staggered starts, each ending when the line ends.
 import { test } from "node:test";
 import { strictEqual, deepStrictEqual, ok, match } from "node:assert";
@@ -8,7 +8,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { addText } from "../dist/commands/create.js";
-import { cascadeWords } from "../dist/commands/cascade-words.js";
+import { cascadeWords, planCascadeLayout } from "../dist/commands/cascade-words.js";
 import { loadDraft, saveDraft } from "../dist/draft.js";
 
 import { FIXTURES } from "./helpers/load-fixture.mjs";
@@ -31,9 +31,10 @@ const MEASURED_FONT = {
   fontPath: "C:/fonts/measured.ttf",
   source: "catalogue",
 };
+const TEST_WIDTH_OF = (text) => text.length;
 
 function withFont(opts) {
-  return { ...opts, font: MEASURED_FONT };
+  return { ...opts, font: MEASURED_FONT, widthOf: opts.widthOf ?? TEST_WIDTH_OF };
 }
 
 function buildGuide(draft, filePath) {
@@ -84,9 +85,8 @@ function assertTextFontConsistency(mat, expected) {
 function makeFontLibrary(filePath) {
   const root = join(dirname(filePath), "drafts");
   const witness = join(root, "font-witness");
-  const fontPath = join(dirname(filePath), "Measured.ttf");
+  const fontPath = join(process.cwd(), "test-fixtures", "fonts", "Rubik-Bold.ttf");
   mkdirSync(witness, { recursive: true });
-  writeFileSync(fontPath, "font fixture");
   writeFileSync(
     join(witness, "draft_content.json"),
     JSON.stringify({
@@ -105,7 +105,32 @@ function makeFontLibrary(filePath) {
   return { root, fontPath };
 }
 
-test("cascadeWords: single line (no --max-chars) — one base track + N word tracks", (t) => {
+test("planCascadeLayout wraps by measured widths, including spaces and exact boundaries", () => {
+  const widthOf = (text) => [...text].reduce((sum, char) => sum + (char === "W" ? 10 : char === " " ? 2 : 1), 0);
+  const cards = [{ text: "i" }, { text: "i" }, { text: "W" }];
+  const layout = planCascadeLayout(cards, 4, widthOf);
+  deepStrictEqual(layout.lineTexts, ["i i", "W"]);
+  deepStrictEqual(layout.lineOf, [0, 0, 1]);
+  deepStrictEqual(layout.charRanges, [[0, 1], [2, 3], [0, 1]]);
+
+  // A word wider than the canvas is retained as one unsplit line.
+  deepStrictEqual(planCascadeLayout([{ text: "WW" }], 4, widthOf).lineTexts, ["WW"]);
+});
+
+test("planCascadeLayout can split equal-length phrases differently and positions use prefixes", () => {
+  const widthOf = (text) => [...text].reduce((sum, char) => sum + (char === "W" ? 10 : char === " " ? 2 : 1), 0);
+  const narrow = planCascadeLayout([{ text: "i" }, { text: "i" }, { text: "i" }], 4, widthOf);
+  const wide = planCascadeLayout([{ text: "W" }, { text: "i" }, { text: "i" }], 4, widthOf);
+  deepStrictEqual(narrow.lineTexts, ["i i", "i"]);
+  deepStrictEqual(wide.lineTexts, ["W", "i i"]);
+
+  const prefixWidth = (text) => [...text].reduce((sum, char) => sum + (char === " " ? 2 : char === "W" ? 10 : 1), 0);
+  const positioned = planCascadeLayout([{ text: "i" }, { text: "W" }], 20, prefixWidth);
+  strictEqual(positioned.wordX[0], (0.5 - positioned.lineWidthsPx[0] / 2) / 10);
+  strictEqual(positioned.wordX[1], (1 + 2 + 5 - positioned.lineWidthsPx[0] / 2) / 10);
+});
+
+test("cascadeWords: measured single line — one base track + N word tracks", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
   const { draft } = loadDraft(filePath);
   buildGuide(draft, filePath);
@@ -182,12 +207,14 @@ test("cascadeWords: base track pushed before its line's word tracks (z-order)", 
   for (const w of wordIdx) ok(w > baseIdx, `word track ${w} must be pushed after base track ${baseIdx}`);
 });
 
-test("cascadeWords --max-chars: splits into multiple lines, each with its own base + words", (t) => {
+test("cascadeWords: measured width splits into multiple lines, each with its own base + words", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
   const { draft } = loadDraft(filePath);
   buildGuide(draft, filePath);
-  // "this is the" = 11 chars (fits <=12); adding "second" would make 18 -> overflows.
-  const res = cascadeWords(draft, filePath, withFont({ cards: WORDS, guideTrackName: "sentence", maxChars: 12 }));
+  // The injected test metric is one unit per character; 12 canvas units fit
+  // "this is the" exactly with room, while the full phrase measures 18.
+  draft.canvas_config.width = 12;
+  const res = cascadeWords(draft, filePath, withFont({ cards: WORDS, guideTrackName: "sentence" }));
   strictEqual(res.lineCount, 2);
   strictEqual(res.wordCount, 4);
 
@@ -352,7 +379,7 @@ test("cascadeWords --clone-style: base and word segments inherit the guide capti
   const guide = buildGuide(draft, filePath);
   const { fontPath } = setGuideStyle(draft, guide, filePath);
 
-  const res = cascadeWords(draft, filePath, { cards: WORDS, guideTrackName: "sentence", cloneStyle: true });
+  const res = cascadeWords(draft, filePath, { cards: WORDS, guideTrackName: "sentence", cloneStyle: true, widthOf: TEST_WIDTH_OF });
   for (const id of res.trackIds) {
     const tr = draft.tracks.find((t2) => t2.id === id);
     const mat = draft.materials.texts.find((m) => m.id === tr.segments[0].material_id);
@@ -380,7 +407,7 @@ test("cascadeWords --clone-style: cloned materials keep font path/id and size mi
   const guide = buildGuide(draft, filePath);
   const { fontPath } = setGuideStyle(draft, guide, filePath);
 
-  const res = cascadeWords(draft, filePath, { cards: WORDS, guideTrackName: "sentence", cloneStyle: true });
+  const res = cascadeWords(draft, filePath, { cards: WORDS, guideTrackName: "sentence", cloneStyle: true, widthOf: TEST_WIDTH_OF });
   for (const id of res.trackIds) {
     assertTextFontConsistency(materialForTrack(draft, id), { path: fontPath, id: "fake", size: 22 });
   }
@@ -476,4 +503,10 @@ test("cascade-words (CLI): missing --guide-track dies", (t) => {
   strictEqual(r.status, 1);
   ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
   match(r.errorJson.error, /--guide-track/);
+});
+
+test("cascade-words (CLI): removed --max-chars is rejected explicitly", () => {
+  const r = runCli(["cascade-words", "missing-project", "missing-cards.json", "--max-chars", "12"]);
+  strictEqual(r.status, 1);
+  match(r.errorJson.error, /--max-chars was removed.*font metrics/);
 });
