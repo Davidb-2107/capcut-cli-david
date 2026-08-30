@@ -67,6 +67,41 @@ export interface AddTextOptions {
   highlights?: TextHighlight[];
 }
 
+export interface TextFontIdentity {
+  path: string;
+  id: string;
+  title?: string;
+  resourceId?: string | null;
+  sourcePlatform?: number;
+  fontsEntry?: Record<string, unknown>;
+}
+
+export function applyTextFontIdentity(material: Record<string, unknown>, identity: TextFontIdentity): void {
+  if (typeof material.content === "string") {
+    try {
+      const parsed = JSON.parse(material.content) as { styles?: unknown };
+      if (Array.isArray(parsed.styles)) {
+        for (const style of parsed.styles) {
+          if (style && typeof style === "object" && !Array.isArray(style)) {
+            (style as Record<string, unknown>).font = { path: identity.path, id: identity.id };
+          }
+        }
+        material.content = JSON.stringify(parsed);
+      }
+    } catch {
+      /* Leave malformed content untouched; builders only call this with fresh JSON. */
+    }
+  }
+
+  material.font_path = identity.path;
+  material.font_id = identity.id;
+  material.font_title = identity.title ?? "";
+  material.font_resource_id = identity.resourceId ?? identity.id;
+  material.font_source_platform = identity.sourcePlatform ?? 0;
+  const fontsEntry = identity.fontsEntry ? { ...identity.fontsEntry } : {};
+  material.fonts = [{ ...fontsEntry, path: identity.path, id: identity.id, resource_id: identity.resourceId ?? identity.id }];
+}
+
 function buildTextContent(text: string, fontSize: number, color: [number, number, number]): string {
   const encoded = Buffer.from(text, "utf16le");
   return JSON.stringify({
@@ -159,6 +194,8 @@ export function buildTextMaterial(
   colorHex: string,
   alignment: number,
   highlights: TextHighlight[],
+  font?: TextFontIdentity,
+  letterSpacing = 0,
 ): Record<string, unknown> {
   const content =
     highlights.length > 0
@@ -172,7 +209,7 @@ export function buildTextMaterial(
     font_size: fontSize,
     text_color: colorHex,
     typesetting: 0,
-    letter_spacing: 0,
+    letter_spacing: letterSpacing,
     line_spacing: 0.02,
     line_feed: 1,
     line_max_width: 0.82,
@@ -182,6 +219,7 @@ export function buildTextMaterial(
     fixed_height: -1,
   };
   if (highlights.length > 0) mat.is_rich_text = true;
+  if (font) applyTextFontIdentity(mat, font);
   return mat;
 }
 

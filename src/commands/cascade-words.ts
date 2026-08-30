@@ -3,12 +3,15 @@ import { type Draft, type Segment, saveDraft, type Track } from "../draft.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { baseSegment, createCompanionMaterials, hexToRgb, registerCompanions, uuid } from "../utils/companion.js";
 import {
+  applyTextFontIdentity,
   buildRichTextContent,
   buildTextMaterial,
   type CaptionCard,
   DEFAULT_HIGHLIGHT_COLOR,
   resolveCloneStyle,
+  type TextFontIdentity,
 } from "./create.js";
+import { resolveFontReference, type ResolvedFont } from "../utils/font-resolver.js";
 
 // --- Cascade words (word-by-word sentence build-up, not karaoke) ---
 //
@@ -51,11 +54,21 @@ export interface CascadeWordsOptions {
   highlightColor?: string;
   alignment?: number;
   cloneStyle?: boolean;
+  font?: ResolvedFont;
   /** Char-count-per-line heuristic (same proxy as caption_builder.py's phrase-mode
    * max_chars — not pixel-exact, but production-proven for "stays on one line").
    * When the cumulative "word word word" text of the current line would exceed this,
    * the next word starts a NEW line. Omit for a single line (still gets a base track). */
   maxChars?: number;
+}
+
+export interface EffectiveTextStyle {
+  fontPath: string;
+  fontId: string;
+  fontTitle: string;
+  fontSize: number;
+  letterSpacing: number;
+  clonedStyle?: Record<string, unknown>;
 }
 
 // ponytail: empirical fit vs David's hand-placed demo draft (font_size 20 @ 1920px
@@ -146,6 +159,121 @@ function checkPrefixCollision(draft: Draft, prefix: string, flagName: string): v
   }
 }
 
+function str(v: unknown): string | undefined {
+  return typeof v === "string" && v.length > 0 ? v : undefined;
+}
+
+function num(v: unknown): number | undefined {
+  return typeof v === "number" && Number.isFinite(v) ? v : undefined;
+}
+
+function firstFontEntry(material: Record<string, unknown>): Record<string, unknown> | undefined {
+  return Array.isArray(material.fonts) && material.fonts[0] && typeof material.fonts[0] === "object"
+    ? (material.fonts[0] as Record<string, unknown>)
+    : undefined;
+}
+
+function ensureCloneIsMeasurable(
+  cloneTpl: { styleBlock: Record<string, unknown>; material: Record<string, unknown> },
+  guideTrackName: string,
+): void {
+  const material = cloneTpl.material;
+  const styleBlock = cloneTpl.styleBlock;
+  const letterSpacing = num(material.letter_spacing) ?? 0;
+  if (letterSpacing !== 0) {
+    die("cascade-words: cloned styles with non-zero letter_spacing are not supported yet");
+  }
+  const textCurve = material.text_curve ?? styleBlock.text_curve;
+  if (textCurve !== undefined && textCurve !== null && textCurve !== 0) {
+    die("cascade-words: cloned style uses text_curve; cascade-words requires measurable linear text");
+  }
+  if ((num(material.fixed_width) ?? -1) > 0 || (num(material.fixed_height) ?? -1) > 0) {
+    die("cascade-words: cloned style uses fixed_width/fixed_height; cascade-words requires measurable linear text");
+  }
+
+  const font = styleBlock.font;
+  const fontPath = font && typeof font === "object" ? str((font as Record<string, unknown>).path) : undefined;
+  if (!fontPath || !existsSync(fontPath)) {
+    die(`cascade-words: --clone-style requires a readable content.styles[0].font.path on guide track "${guideTrackName}"`);
+  }
+}
+
+function fontIdentityFromResolved(font: ResolvedFont): TextFontIdentity {
+  return {
+    path: font.fontPath,
+    id: font.resourceId ?? "",
+    title: font.title,
+    resourceId: font.resourceId,
+    sourcePlatform: font.resourceId ? 1 : 0,
+    fontsEntry: {
+      title: font.title,
+      path: font.fontPath,
+      id: font.resourceId ?? "",
+      resource_id: font.resourceId ?? "",
+      source_platform: font.resourceId ? 1 : 0,
+      effect_id: font.resourceId ?? "",
+      request_id: "",
+    },
+  };
+}
+
+function fontIdentityFromClone(
+  styleBlock: Record<string, unknown>,
+  material: Record<string, unknown>,
+): TextFontIdentity {
+  const font = styleBlock.font as Record<string, unknown>;
+  const fontsEntry = firstFontEntry(material);
+  const path = str(font.path) as string;
+  const id = str(font.id) ?? str(material.font_id) ?? str(material.font_resource_id) ?? str(fontsEntry?.resource_id) ?? "";
+  const resourceId = str(material.font_resource_id) ?? str(fontsEntry?.resource_id) ?? id;
+  return {
+    path,
+    id,
+    title: str(material.font_title) ?? str(fontsEntry?.title) ?? "",
+    resourceId,
+    sourcePlatform: num(material.font_source_platform) ?? num(fontsEntry?.source_platform) ?? 0,
+    fontsEntry,
+  };
+}
+
+function resolveEffectiveTextStyle(
+  opts: CascadeWordsOptions,
+  cloneTpl: { styleBlock: Record<string, unknown>; material: Record<string, unknown> } | undefined,
+): EffectiveTextStyle & { font: TextFontIdentity; spanStyle?: Record<string, unknown> } {
+  if (opts.font) {
+    const font = fontIdentityFromResolved(opts.font);
+    const fontSize = opts.fontSize ?? num(cloneTpl?.styleBlock.size) ?? num(cloneTpl?.material.font_size) ?? 15;
+    const letterSpacing = cloneTpl ? (num(cloneTpl.material.letter_spacing) ?? 0) : 0;
+    return {
+      fontPath: font.path,
+      fontId: font.id,
+      fontTitle: font.title ?? "",
+      fontSize,
+      letterSpacing,
+      clonedStyle: cloneTpl?.styleBlock,
+      font,
+      spanStyle: cloneTpl ? { ...cloneTpl.styleBlock, size: fontSize, font: { path: font.path, id: font.id } } : undefined,
+    };
+  }
+
+  if (cloneTpl) {
+    const font = fontIdentityFromClone(cloneTpl.styleBlock, cloneTpl.material);
+    const fontSize = opts.fontSize ?? num(cloneTpl.styleBlock.size) ?? num(cloneTpl.material.font_size) ?? 15;
+    return {
+      fontPath: font.path,
+      fontId: font.id,
+      fontTitle: font.title ?? "",
+      fontSize,
+      letterSpacing: num(cloneTpl.material.letter_spacing) ?? 0,
+      clonedStyle: cloneTpl.styleBlock,
+      font,
+      spanStyle: { ...cloneTpl.styleBlock, size: fontSize, font: { path: font.path, id: font.id } },
+    };
+  }
+
+  die("cascade-words: either --font <name|resource_id> or --clone-style is required before generating measurable text");
+}
+
 export function cascadeWords(
   draft: Draft,
   _filePath: string,
@@ -182,7 +310,6 @@ export function cascadeWords(
     die("cascade-words: draft.canvas_config.width must be a positive number");
   }
 
-  const fontSize = opts.fontSize ?? 15;
   const baseHex = opts.color ?? "#FFFFFF";
   const baseRgb = hexToRgb(baseHex);
   const highlightHex = opts.highlightColor ?? DEFAULT_HIGHLIGHT_COLOR;
@@ -193,6 +320,9 @@ export function cascadeWords(
   const cloneTpl = opts.cloneStyle
     ? resolveCloneStyle(texts, guideSeg, opts.guideTrackName, "cascade-words")
     : undefined;
+  if (cloneTpl) ensureCloneIsMeasurable(cloneTpl, opts.guideTrackName);
+  const effectiveStyle = resolveEffectiveTextStyle(opts, cloneTpl);
+  const fontSize = effectiveStyle.fontSize;
 
   opts.cards.forEach((card, i) => {
     if (typeof card.text !== "string") die(`cascade-words: cards[${i}] missing string field "text"`);
@@ -242,13 +372,18 @@ export function cascadeWords(
     if (cloneTpl) {
       const mat = JSON.parse(JSON.stringify(cloneTpl.material)) as Record<string, unknown>;
       mat.id = baseMatId;
-      mat.content = buildRichTextContent(lineTexts[line], fontSize, baseRgb, [], cloneTpl.styleBlock);
+      mat.content = buildRichTextContent(lineTexts[line], fontSize, baseRgb, [], effectiveStyle.spanStyle);
       mat.base_content = lineTexts[line];
       if ("recognize_text" in mat) mat.recognize_text = lineTexts[line];
       mat.is_rich_text = true;
+      mat.font_size = fontSize;
+      mat.letter_spacing = effectiveStyle.letterSpacing;
+      applyTextFontIdentity(mat, effectiveStyle.font);
       texts.push(mat);
     } else {
-      texts.push(buildTextMaterial(baseMatId, lineTexts[line], fontSize, baseRgb, baseHex, alignment, []));
+      texts.push(
+        buildTextMaterial(baseMatId, lineTexts[line], fontSize, baseRgb, baseHex, alignment, [], effectiveStyle.font),
+      );
     }
     const baseCompanions = createCompanionMaterials("text");
     registerCompanions(draft, baseCompanions);
@@ -300,13 +435,18 @@ export function cascadeWords(
       if (cloneTpl) {
         const mat = JSON.parse(JSON.stringify(cloneTpl.material)) as Record<string, unknown>;
         mat.id = matId;
-        mat.content = buildRichTextContent(card.text, fontSize, highlightRgb, [], cloneTpl.styleBlock);
+        mat.content = buildRichTextContent(card.text, fontSize, highlightRgb, [], effectiveStyle.spanStyle);
         mat.base_content = card.text;
         if ("recognize_text" in mat) mat.recognize_text = card.text;
         mat.is_rich_text = true;
+        mat.font_size = fontSize;
+        mat.letter_spacing = effectiveStyle.letterSpacing;
+        applyTextFontIdentity(mat, effectiveStyle.font);
         texts.push(mat);
       } else {
-        texts.push(buildTextMaterial(matId, card.text, fontSize, highlightRgb, highlightHex, alignment, []));
+        texts.push(
+          buildTextMaterial(matId, card.text, fontSize, highlightRgb, highlightHex, alignment, [], effectiveStyle.font),
+        );
       }
 
       const companions = createCompanionMaterials("text");
@@ -339,7 +479,7 @@ export function cmdCascadeWords(draft: Draft, filePath: string, positional: stri
   const jsonPath = positional[2];
   if (!jsonPath) {
     die(
-      "Missing <cards.json>. Usage: capcut-david cascade-words <project> <cards.json> --guide-track <name> [--track-prefix <name>] [--line-prefix <name>] [--font-size <n>] [--color <hex>] [--highlight-color <hex>] [--align <0|1|2>] [--clone-style] [--max-chars <n>]",
+      "Missing <cards.json>. Usage: capcut-david cascade-words <project> <cards.json> --guide-track <name> (--font <name|rid> | --clone-style) [--track-prefix <name>] [--line-prefix <name>] [--font-size <n>] [--color <hex>] [--highlight-color <hex>] [--align <0|1|2>] [--max-chars <n>]",
     );
   }
   if (!existsSync(jsonPath)) die(`Cards file not found: ${jsonPath}`);
@@ -362,6 +502,7 @@ export function cmdCascadeWords(draft: Draft, filePath: string, positional: stri
     highlightColor: flags.highlightColor,
     alignment: flags.align,
     cloneStyle: flags.cloneStyle,
+    font: flags.font ? resolveFontReference(flags.font, { draftsRoot: flags.drafts }) : undefined,
     maxChars: flags.maxChars,
   });
   saveDraft(filePath, draft);
