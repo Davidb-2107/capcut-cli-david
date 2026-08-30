@@ -105,7 +105,7 @@ Add:
               --transform-y: clip.transform.y for every rebuilt caption segment
               (vertical position; negatives allowed, e.g. -0.4 = mi-bas).
               --clone-style: keep the target track's existing caption font/stroke/shadow.
-  cascade-words <project> <cards.json> --guide-track <name> (--font <name|rid> | --clone-style)
+  cascade-words <project> <cards.json> --guide-track <name> (--font <name|resource_id> | --clone-style)
               [--track-prefix <name>] [--line-prefix <name>] [--font-size <n>]
               [--color <hex>] [--highlight-color <hex>] [--align <0|1|2>]
               [--drafts <dir>]

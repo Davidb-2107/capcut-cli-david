@@ -236,9 +236,9 @@ export const CAPABILITIES: Capability[] = [
     verb: "cascade-words",
     category: "peupler",
     summary:
-      "Révélation phrase mot-par-mot (PAS karaoké — les mots restent affichés jusqu'à la phrase complète). Par ligne : une piste BASE (guide de placement uniquement, masquée immédiatement) + une piste par mot en surlignage (seule couche visible), décalée en x pour se superposer au mot correspondant dans le guide. Chaque mot démarre à son timestamp et reste jusqu'à la fin de sa ligne. --max-chars découpe en plusieurs lignes si la phrase déborderait de l'écran.",
+      "Révélation phrase mot-par-mot (PAS karaoké — les mots restent affichés jusqu'à la phrase complète). Par ligne : une piste BASE (guide de placement uniquement, masquée immédiatement) + une piste par mot en surlignage (seule couche visible), décalée en x pour se superposer au mot correspondant dans le guide. Chaque mot démarre à son timestamp et reste jusqu'à la fin de sa ligne. Le wrapping et le placement utilisent les largeurs OpenType mesurées de la police résolue, avec --font requis sauf --clone-style exploitable.",
     signature:
-      "cascade-words <project> <cards.json> --guide-track <name> [--track-prefix <name>] [--line-prefix <name>] [--font-size <n>] [--color <hex>] [--highlight-color <hex>] [--align <0|1|2>] [--clone-style] [--max-chars <n>]",
+      "cascade-words <project> <cards.json> --guide-track <name> (--font <name|resource_id> | --clone-style) [--drafts <dir>] [--track-prefix <name>] [--line-prefix <name>] [--font-size <n>] [--color <hex>] [--highlight-color <hex>] [--align <0|1|2>]",
     flags: [
       { flag: "--guide-track <name>", desc: "piste texte tenant la phrase complète (import-captions) — requis" },
       { flag: "--track-prefix <name>", desc: "préfixe des pistes MOT (défaut: word -> word-000, word-001...)" },
@@ -246,17 +246,23 @@ export const CAPABILITIES: Capability[] = [
         flag: "--line-prefix <name>",
         desc: "préfixe des pistes BASE par ligne (défaut: line -> line-000...), masquées",
       },
-      { flag: "--font-size <n>", desc: "taille de police (base et mots)" },
+      {
+        flag: "--font <name|resource_id>",
+        desc: "police mesurée à résoudre d'abord dans le catalogue puis dans les drafts ; requis sauf --clone-style",
+      },
+      { flag: "--drafts <dir>", desc: "racine des drafts servant de repli à la résolution de --font" },
+      {
+        flag: "--font-size <n>",
+        desc: "taille effective ; priorité à cette valeur, puis style cloné, puis material.font_size, puis 15",
+      },
       { flag: "--color <hex>", desc: "couleur de la piste base — invisible (guide de placement masqué)" },
       { flag: "--highlight-color <hex>", desc: "couleur des mots (défaut #FFD600) — seule couche visible" },
-      { flag: "--clone-style", desc: "hérite du style (police/contour/ombre) de la caption guide" },
       {
-        flag: "--max-chars <n>",
-        desc: "heuristique chars/ligne — au-delà, nouvelle ligne = nouvel escalier (pas de mesure pixel)",
-        since: "2.8.0",
+        flag: "--clone-style",
+        desc: "hérite du style linéaire lisible de la caption guide ; --font remplace seulement son identité de police",
       },
     ],
-    example: 'capcut-david cascade-words "<draft-dir>" cards.json --guide-track sentence --max-chars 15',
+    example: 'capcut-david cascade-words "<draft-dir>" cards.json --guide-track sentence --font Rubik --drafts "<drafts-dir>"',
     readOnly: false,
     capcutClosed: true,
     since: "2.8.0",
