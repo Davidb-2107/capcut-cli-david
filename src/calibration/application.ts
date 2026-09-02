@@ -1,11 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import type {
-  CalibrationBridge,
-  CanonicalProfilePort,
-  CredentialProvider,
-  ExecutionResult,
-} from "./bridge.js";
+import type { CalibrationBridge, CanonicalProfilePort, CredentialProvider, ExecutionResult } from "./bridge.js";
 import type {
   CalibrationReport,
   CalibrationRun,
@@ -86,6 +81,7 @@ export const systemClock: Clock = {
 const DEFAULT_WORKSPACE = "local-default";
 const APPROVAL_TTL_MS = 15 * 60 * 1000;
 const REPORT_NAME = "report.json";
+const INVENTORY_SOURCE_REVISION = "2eedac32fd3f4275e58ca8510d0d49be0b589f96";
 const sessionNonces = new WeakMap<object, string>();
 const runLocks = new WeakMap<object, Map<string, Promise<unknown>>>();
 
@@ -102,7 +98,9 @@ function nowIso(clock: Clock): string {
 }
 
 function isUnavailableMessage(message: string): boolean {
-  return /not configured|credential|canonical_wpm_unavailable|mcp process|provider unavailable|core unavailable/i.test(message);
+  return /not configured|credential|canonical_wpm_unavailable|mcp process|provider unavailable|core unavailable/i.test(
+    message,
+  );
 }
 
 function errorMessage(error: unknown): string {
@@ -110,10 +108,16 @@ function errorMessage(error: unknown): string {
 }
 
 function safeError(error: unknown): { code: string; message: string } {
-  const message = errorMessage(error)
+  const candidate = isRecord(error) ? error : {};
+  const message = String(candidate.message ?? errorMessage(error))
     .replace(/ELEVENLABS_API_KEY\s*=\s*[^\s,;]+/gi, "ELEVENLABS_API_KEY=[REDACTED]")
     .replace(/(api[_-]?key|secret|token|password)\s*[:=]\s*[^\s,;]+/gi, "$1=[REDACTED]");
-  const code = error instanceof Error && "code" in error && typeof error.code === "string" ? error.code : "calibration_failed";
+  const code =
+    typeof candidate.code === "string"
+      ? candidate.code
+      : error instanceof Error && "code" in error && typeof error.code === "string"
+        ? error.code
+        : "calibration_failed";
   return { code, message };
 }
 
@@ -169,8 +173,7 @@ function recentRunSort(left: CalibrationRun, right: CalibrationRun): number {
 function wpmFromReport(report: CalibrationReport): number | null {
   const provider = isRecord(report.providerResult) ? report.providerResult : {};
   const metric = isRecord(report.metrics) ? report.metrics : {};
-  const precisionStats = [metric.precision_stats, provider.precision_stats]
-    .find((value) => isRecord(value));
+  const precisionStats = [metric.precision_stats, provider.precision_stats].find((value) => isRecord(value));
   const candidates: unknown[] = [
     isRecord(precisionStats) ? precisionStats.median : undefined,
     metric.wpm,
@@ -178,7 +181,9 @@ function wpmFromReport(report: CalibrationReport): number | null {
     provider.wpm,
     provider.wpm_calibrated,
   ];
-  const wpm = candidates.find((value): value is number => typeof value === "number" && Number.isFinite(value) && value > 0);
+  const wpm = candidates.find(
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && value > 0,
+  );
   return wpm ?? null;
 }
 
@@ -240,11 +245,15 @@ export class CalibrationApplication {
   }
 
   private async currentDigests(schema?: unknown): Promise<{ contractDigest: string; coreDigest: string }> {
-    const currentSchema = schema ?? await this.bridge.getSchema();
+    const currentSchema = schema ?? (await this.bridge.getSchema());
     const digest = schemaDigest(currentSchema);
     return {
       contractDigest: this.contractDigestOverride ?? explicitDigest(currentSchema, "contractDigest") ?? digest,
-      coreDigest: this.coreDigestOverride ?? explicitDigest(currentSchema, "coreDigest") ?? digest,
+      coreDigest:
+        this.coreDigestOverride ??
+        explicitDigest(currentSchema, "coreDigest") ??
+        process.env.VOICE_CALIBRATION_CORE_DIGEST ??
+        `voice-calibration-core:${INVENTORY_SOURCE_REVISION}`,
     };
   }
 
@@ -255,7 +264,10 @@ export class CalibrationApplication {
     return run;
   }
 
-  private async persistReport(run: CalibrationRun, result: Partial<ExecutionResult> & { error?: { code: string; message: string } }): Promise<string> {
+  private async persistReport(
+    run: CalibrationRun,
+    result: Partial<ExecutionResult> & { error?: { code: string; message: string } },
+  ): Promise<string> {
     const report: CalibrationReport = {
       id: `report-${run.id}`,
       runId: run.id,
@@ -287,7 +299,7 @@ export class CalibrationApplication {
       this.repositories.corpus.getActiveVersion(workspaceId),
       this.repositories.profiles.list(workspaceId),
       (async () => {
-        const list = (this.repositories.runs as LocalStore["runs"] & { list?: (scope: string) => Promise<CalibrationRun[]> }).list;
+        const list = this.repositories.runs.list;
         if (list) return list.call(this.repositories.runs, workspaceId);
         return [...this.knownRuns.values()];
       })(),
@@ -312,7 +324,7 @@ export class CalibrationApplication {
 
   async getDraft(workspaceId = DEFAULT_WORKSPACE): Promise<{ draft: CorpusDraft; etag: string }> {
     const draft = await this.repositories.corpus.getDraft(workspaceId);
-    return { draft, etag: `W/\"corpus-draft-${draft.revision}\"` };
+    return { draft, etag: `W/"corpus-draft-${draft.revision}"` };
   }
 
   async saveDraft(workspaceId: string, draft: CorpusDraft, expectedRevision: number): Promise<CorpusDraft> {
@@ -338,9 +350,9 @@ export class CalibrationApplication {
     params.text_source = { kind: "inline", text: corpusText(activeCorpus.items) };
     params.corpus_key = params.corpus_key ?? input.voiceRef;
     params.dry_run = false;
-    const postproc = input.postproc ?? (isRecord(schema) && isRecord(schema.properties) && isRecord(schema.properties.postproc)
-      ? schema.properties.postproc.default ?? "cut"
-      : "cut");
+    if (input.postproc === undefined || input.postproc === null)
+      throw new ContractValidationError("postproc is required");
+    const postproc = input.postproc;
     if (params.postproc !== undefined) delete params.postproc;
     const digests = await this.currentDigests(schema);
     const request: ResolvedCalibrationRequest = {
@@ -385,7 +397,8 @@ export class CalibrationApplication {
   async approve(runId: string, input: { requestDigest: string }): Promise<CalibrationRun> {
     return this.withRunLock(runId, async () => {
       const run = await this.getRunOrThrow(runId);
-      if (run.status !== "dry_run_ready") throw new ConflictError(`approval requires dry_run_ready state, got ${run.status}`);
+      if (run.status !== "dry_run_ready")
+        throw new ConflictError(`approval requires dry_run_ready state, got ${run.status}`);
       if (input.requestDigest !== run.requestDigest) throw new ConflictError("request digest mismatch");
       const expiresAt = new Date(this.clock.now().getTime() + APPROVAL_TTL_MS).toISOString();
       const approved = transitionRun(run, { type: "approve", expiresAt });
@@ -400,7 +413,8 @@ export class CalibrationApplication {
   async execute(runId: string): Promise<CalibrationRun> {
     return this.withRunLock(runId, async () => {
       const run = await this.getRunOrThrow(runId);
-      if (run.status === "execution_unknown") throw new ConflictError("execution_unknown cannot be retried; retry is forbidden; reconcile required");
+      if (run.status === "execution_unknown")
+        throw new ConflictError("execution_unknown cannot be retried; retry is forbidden; reconcile required");
       if (run.status !== "approved") throw new ConflictError(`approval required; got ${run.status}`);
       if (!run.approval || run.approval.consumedAt) throw new ConflictError("approval already consumed");
       if (this.clock.now().getTime() >= Date.parse(run.approval.expiresAt)) throw new ConflictError("approval expired");
@@ -408,21 +422,38 @@ export class CalibrationApplication {
       if (run.request.contractDigest !== digests.contractDigest || run.request.coreDigest !== digests.coreDigest) {
         throw new ConflictError("approval invalidated by contract or core change");
       }
-      if (fingerprintRequest(run.request) !== run.requestDigest) throw new ConflictError("approved snapshot digest mismatch");
+      if (fingerprintRequest(run.request) !== run.requestDigest)
+        throw new ConflictError("approved snapshot digest mismatch");
 
-      const running = transitionRun(run, { type: "execute" });
-      if (running.approval) running.approval.consumedAt = nowIso(this.clock);
-      running.updatedAt = nowIso(this.clock);
-      await this.repositories.runs.save(running);
+      const consumedAt = nowIso(this.clock);
+      const running = this.repositories.runs.consumeApproval
+        ? await this.repositories.runs.consumeApproval(run.id, consumedAt)
+        : (() => {
+            const fallback = transitionRun(run, { type: "execute" });
+            if (fallback.approval) fallback.approval.consumedAt = consumedAt;
+            fallback.updatedAt = consumedAt;
+            return fallback;
+          })();
+      if (!this.repositories.runs.consumeApproval) await this.repositories.runs.save(running);
       this.knownRuns.set(running.id, clone(running));
 
       let result: ExecutionResult;
       try {
-        result = await this.bridge.execute({ runId: running.id, idempotencyKey: running.idempotencyKey, snapshot: clone(running.request) });
+        result = await this.bridge.execute({
+          runId: running.id,
+          idempotencyKey: running.idempotencyKey,
+          snapshot: clone(running.request),
+        });
       } catch (error) {
         const failure = safeError(error);
         result = isExecutionUnknown(error)
-          ? { status: "unknown", metrics: {}, artifacts: [], raw: null, error: { code: "execution_unknown", message: failure.message } }
+          ? {
+              status: "unknown",
+              metrics: {},
+              artifacts: [],
+              raw: null,
+              error: { code: "execution_unknown", message: failure.message },
+            }
           : { status: "failed", metrics: {}, artifacts: [], raw: null, error: failure };
       }
       const reportId = await this.persistReport(running, result);
@@ -440,7 +471,8 @@ export class CalibrationApplication {
       const run = await this.getRunOrThrow(runId);
       if (run.status !== "execution_unknown") throw new ConflictError("reconcile requires execution_unknown state");
       const result = await this.bridge.reconcile({ runId: run.id, idempotencyKey: run.idempotencyKey });
-      if (result.status !== "unknown") throw new ConflictError("reconciliation cannot safely change execution_unknown without provider confirmation");
+      if (result.status !== "unknown")
+        throw new ConflictError("reconciliation cannot safely change execution_unknown without provider confirmation");
       return run;
     });
   }
@@ -451,14 +483,15 @@ export class CalibrationApplication {
 
   async getReport(runId: string): Promise<CalibrationReport | null> {
     const run = await this.repositories.runs.get(runId);
-    if (!run || !run.reportId) return null;
+    if (!run?.reportId) return null;
     return this.loadReport(run);
   }
 
   async publishProfile(runId: string): Promise<VoiceProfile> {
     const run = await this.getRunOrThrow(runId);
     if (run.status !== "succeeded") throw new ConflictError("profile publication requires a successful run");
-    if (run.request.postproc !== "cut") throw new ContractValidationError("profile publication requires postproc=\"cut\" for the canonical WPM source");
+    if (run.request.postproc !== "cut")
+      throw new ContractValidationError('profile publication requires postproc="cut" for the canonical WPM source');
     const report = await this.loadReport(run);
     const wpm = wpmFromReport(report);
     if (wpm === null) throw new ContractValidationError("successful calibration result has no WPM");
@@ -469,6 +502,7 @@ export class CalibrationApplication {
         wpm,
         runId: run.id,
         corpusVersionId: run.request.corpusVersionId,
+        language: run.request.params.language === "en" ? "en" : "fr",
       });
     } catch (error) {
       const message = errorMessage(error);

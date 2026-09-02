@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 
 import type { ConfigStatus, CredentialProvider } from "./bridge.js";
@@ -43,18 +43,27 @@ function ancestorDirectories(start: string): string[] {
 function discoverEnvFiles(cwd: string): string[] {
   const ancestors = ancestorDirectories(cwd);
   const projectsDirectory = ancestors.find((directory) => basename(directory) === "Projects");
-  if (!projectsDirectory) return ancestors.flatMap((directory) => [join(directory, ".env"), join(directory, "elevenlabs-mcp-server", ".env")]);
+  if (!projectsDirectory)
+    return ancestors.flatMap((directory) => [
+      join(directory, ".env"),
+      join(directory, "elevenlabs-mcp-server", ".env"),
+    ]);
 
   const projectFiles = readdirSync(projectsDirectory, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort((left, right) => left.localeCompare(right))
-    .flatMap((name) => [join(projectsDirectory, name, ".env"), join(projectsDirectory, name, "elevenlabs-mcp-server", ".env")]);
+    .flatMap((name) => [
+      join(projectsDirectory, name, ".env"),
+      join(projectsDirectory, name, "elevenlabs-mcp-server", ".env"),
+    ]);
   return [join(projectsDirectory, ".env"), ...projectFiles];
 }
 
 function readDiscoveredEnv(options: CredentialOptions): Record<string, string> {
-  const files = options.envFile ? [resolve(options.cwd ?? process.cwd(), options.envFile)] : discoverEnvFiles(options.cwd ?? process.cwd());
+  const files = options.envFile
+    ? [resolve(options.cwd ?? process.cwd(), options.envFile)]
+    : discoverEnvFiles(options.cwd ?? process.cwd());
   const result: Record<string, string> = {};
   for (const file of files) {
     if (!existsSync(file)) continue;

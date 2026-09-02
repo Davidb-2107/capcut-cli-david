@@ -1,9 +1,9 @@
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { readFile } from "node:fs/promises";
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { fileURLToPath } from "node:url";
 
 import {
-  CalibrationApplication,
+  type CalibrationApplication,
   ContractValidationError,
   NotFoundError,
   UnavailableError,
@@ -30,7 +30,11 @@ export interface CalibrationUiHandle {
 }
 
 class HttpError extends Error {
-  constructor(readonly status: number, readonly code: string, message: string) {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    message: string,
+  ) {
     super(message);
     this.name = "HttpError";
   }
@@ -52,10 +56,12 @@ function redacted(value: unknown): unknown {
   }
   if (Array.isArray(value)) return value.map(redacted);
   if (isRecord(value)) {
-    return Object.fromEntries(Object.entries(value).map(([key, item]) => [
-      /api[_-]?key|secret|token|password|authorization/i.test(key) ? key : key,
-      /api[_-]?key|secret|token|password|authorization/i.test(key) ? "[REDACTED]" : redacted(item),
-    ]));
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        /api[_-]?key|secret|token|password|authorization/i.test(key) ? key : key,
+        /api[_-]?key|secret|token|password|authorization/i.test(key) ? "[REDACTED]" : redacted(item),
+      ]),
+    );
   }
   return value;
 }
@@ -66,8 +72,32 @@ function errorPayload(error: unknown): { code: string; message: string } {
   if (error instanceof ContractValidationError) return { code: error.code, message: error.message };
   if (error instanceof UnavailableError) return { code: error.code, message: error.message };
   if (error instanceof ConflictError) return { code: "conflict", message: error.message };
-  if (error instanceof Error && /revision conflict/i.test(error.message)) return { code: "if_match_failed", message: error.message };
+  if (error instanceof Error && /revision conflict/i.test(error.message))
+    return { code: "if_match_failed", message: error.message };
   return { code: "internal_error", message: "unexpected local failure" };
+}
+
+function executionHttpError(report: { error: { code: string; message: string } | null } | null): HttpError | null {
+  if (!report?.error) return null;
+  const { code, message } = report.error;
+  if (
+    [
+      "invalid_request",
+      "unsupported_input_feature",
+      "profile_mismatch",
+      "domain_error",
+      "contract_validation",
+    ].includes(code)
+  ) {
+    return new HttpError(422, code, message);
+  }
+  if (
+    ["quota_exceeded", "unavailable", "credentials_unavailable", "provider_unavailable"].includes(code) ||
+    /not configured|credential|provider unavailable|core unavailable/i.test(message)
+  ) {
+    return new HttpError(503, code, message);
+  }
+  return null;
 }
 
 function statusForError(error: unknown): number {
@@ -78,9 +108,19 @@ function statusForError(error: unknown): number {
   if (error instanceof Error && /revision conflict/i.test(error.message)) return 412;
   if (error instanceof ConflictError) return 409;
   const message = error instanceof Error ? error.message : String(error);
-  if (/revision conflict|approval|required|expired|digest|state|execution_unknown|reconcile|already consumed/i.test(message)) return 409;
+  if (
+    /revision conflict|approval|required|expired|digest|state|execution_unknown|reconcile|already consumed/i.test(
+      message,
+    )
+  )
+    return 409;
   if (/invalid_request|validation|unsupported_input_feature|profile_mismatch|domain_error/i.test(message)) return 422;
-  if (/not configured|credential|canonical_wpm_unavailable|mcp process|provider unavailable|core unavailable/i.test(message)) return 503;
+  if (
+    /not configured|credential|canonical_wpm_unavailable|mcp process|provider unavailable|core unavailable/i.test(
+      message,
+    )
+  )
+    return 503;
   return 500;
 }
 
@@ -127,7 +167,7 @@ function requireNonce(request: IncomingMessage, application: CalibrationApplicat
 
 function parseRevision(value: string | undefined): number {
   if (!value) throw new HttpError(412, "if_match_required", "If-Match is required");
-  const match = /^W\/\"corpus-draft-(\d+)\"$/.exec(value) ?? /^\"?(\d+)\"?$/.exec(value);
+  const match = /^W\/"corpus-draft-(\d+)"$/.exec(value) ?? /^"?(\d+)"?$/.exec(value);
   if (!match) throw new HttpError(412, "if_match_failed", "If-Match does not match the current draft");
   return Number(match[1]);
 }
@@ -144,10 +184,17 @@ function idFromPath(pathname: string, action = true): string {
   }
 }
 
-async function dispatch(request: IncomingMessage, response: ServerResponse, options: CalibrationHttpServerOptions): Promise<void> {
+async function dispatch(
+  request: IncomingMessage,
+  response: ServerResponse,
+  options: CalibrationHttpServerOptions,
+): Promise<void> {
+  const configuredHost = options.host ?? "127.0.0.1";
+  const localPort = request.socket.localPort ?? options.port ?? 0;
+  const expectedOrigin = `http://${urlHost(configuredHost)}:${localPort}`;
   const host = stringHeader(request.headers.host);
   const origin = stringHeader(request.headers.origin);
-  if (origin && origin !== `http://${host}`) {
+  if (origin && origin !== expectedOrigin) {
     sendJson(response, 403, { error: { code: "cross_origin", message: "cross-origin requests are not allowed" } });
     return;
   }
@@ -177,7 +224,7 @@ async function dispatch(request: IncomingMessage, response: ServerResponse, opti
       const body = await parseBody(request);
       const draft = isRecord(body.draft) ? body.draft : body;
       const saved = await application.saveDraft(workspaceId, draft as never, expectedRevision);
-      sendJson(response, 200, saved, { etag: `W/\"corpus-draft-${saved.revision}\"` });
+      sendJson(response, 200, saved, { etag: `W/"corpus-draft-${saved.revision}"` });
       return;
     }
     if (method === "POST" && url.pathname === "/api/v1/corpus/versions") {
@@ -209,14 +256,23 @@ async function dispatch(request: IncomingMessage, response: ServerResponse, opti
     if (method === "POST" && approveMatch) {
       requireNonce(request, application);
       const body = await parseBody(request);
-      if (typeof body.requestDigest !== "string") throw new HttpError(400, "request_digest_required", "requestDigest is required");
-      sendJson(response, 200, await application.approve(idFromPath(url.pathname), { requestDigest: body.requestDigest }));
+      if (typeof body.requestDigest !== "string")
+        throw new HttpError(400, "request_digest_required", "requestDigest is required");
+      sendJson(
+        response,
+        200,
+        await application.approve(idFromPath(url.pathname), { requestDigest: body.requestDigest }),
+      );
       return;
     }
     const executeMatch = /^\/api\/v1\/calibration-runs\/[^/]+\/execute$/.test(url.pathname);
     if (method === "POST" && executeMatch) {
       requireNonce(request, application);
-      sendJson(response, 200, await application.execute(idFromPath(url.pathname)));
+      const runId = idFromPath(url.pathname);
+      const run = await application.execute(runId);
+      const failure = run.status === "failed" ? executionHttpError(await application.getReport(runId)) : null;
+      if (failure) throw failure;
+      sendJson(response, 200, run);
       return;
     }
     const reconcileMatch = /^\/api\/v1\/calibration-runs\/[^/]+\/reconcile$/.test(url.pathname);
@@ -294,14 +350,22 @@ export async function startCalibrationUi(options: CalibrationHttpServerOptions):
   const host = options.host ?? "127.0.0.1";
   const port = options.port ?? 0;
   if (!isLoopbackHost(host) && !options.allowNetwork) {
-    throw new Error("non-loopback host requires --allow-network; this exposes an unauthenticated local credential consumer");
+    throw new Error(
+      "non-loopback host requires --allow-network; this exposes an unauthenticated local credential consumer",
+    );
   }
   if (!Number.isInteger(port) || port < 0 || port > 65_535) throw new Error("port must be an integer from 0 to 65535");
   const server = createCalibrationServer({ ...options, host, port });
   await new Promise<void>((resolve, reject) => {
-    const onError = (error: Error) => { server.off("error", onError); reject(error); };
+    const onError = (error: Error) => {
+      server.off("error", onError);
+      reject(error);
+    };
     server.once("error", onError);
-    server.listen(port, host, () => { server.off("error", onError); resolve(); });
+    server.listen(port, host, () => {
+      server.off("error", onError);
+      resolve();
+    });
   });
   const address = server.address();
   if (!address || typeof address === "string") {

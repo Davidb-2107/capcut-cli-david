@@ -2,6 +2,7 @@
 
 import { writeSync } from "node:fs";
 import { cmdBatch } from "./commands/batch.js";
+import { cmdCalibrationUi } from "./commands/calibration-ui.js";
 import { cmdCascadeWords } from "./commands/cascade-words.js";
 import { cmdCatalogue } from "./commands/catalogue.js";
 import {
@@ -39,7 +40,6 @@ import { cmdRemoveSegment } from "./commands/remove-segment.js";
 import { cmdRestyle } from "./commands/restyle.js";
 import { cmdSyncTimelines } from "./commands/sync-timelines.js";
 import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template.js";
-import { cmdCalibrationUi } from "./commands/calibration-ui.js";
 import { cmdUi } from "./commands/ui.js";
 import { cmdValidate } from "./commands/validate.js";
 import { cmdValidateFix } from "./commands/validate-fix.js";
@@ -271,7 +271,8 @@ Catalogue:
   calibration-ui [--data-dir <dir>] [--host <host>] [--port <port>] [--open]
                  [--allow-network]
                  Lance l’interface locale de calibration ElevenLabs. Le bind
-                 réseau est refusé sans --allow-network.
+                 réseau est refusé sans --allow-network ; cette option expose
+                 un consommateur de credentials local non authentifié.
 
 Project:
   cut        <project> <start> <end> --out <path>

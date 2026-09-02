@@ -96,6 +96,30 @@ captions:
   style: { font_size: 24, color: "#FFD700", align: 0 }
 ```
 
+### Calibrer une voix ElevenLabs localement
+
+Le parcours local est BYOK : placez la clé dans le fichier `.env` déjà utilisé
+par l’environnement (`ELEVENLABS_API_KEY=…`), puis lancez :
+
+```bash
+capcut-david calibration-ui --open
+```
+
+La clé reste côté backend et n’est jamais envoyée au navigateur. Publiez le
+corpus standard avant de préparer une calibration : tous ses textes sont alors
+envoyés ensemble au cœur de calibration, dans l’ordre publié. `postproc` est
+toujours explicite. Le dry-run est obligatoire et une approbation explicite
+est requise avant le run réel facturable.
+
+Le WPM n’est réutilisable qu’après vérification ou mise à jour de la table
+Python canonique `Shared/voice-calibration/voice_wpm.json`. Le profil affiché
+localement est une projection traçable, pas une seconde source de vérité. Le
+l’outil/skill `calibrate-voice` reste
+l’entrée manuelle/agent et appelle le même outil MCP `calibrate_voice` ; cette
+interface est un client supplémentaire, pas un remplacement. Le contrat
+effectif est inventorié dans
+[`docs/elevenlabs-calibration-contract-inventory.md`](./docs/elevenlabs-calibration-contract-inventory.md).
+
 ## Commands
 
 Full index — group by family. For per-flag reference, run `capcut-david <command> --help`.

@@ -1,9 +1,4 @@
-import type {
-  CalibrationRun,
-  CorpusDraft,
-  CorpusVersion,
-  VoiceProfile,
-} from "./domain.js";
+import type { CalibrationRun, CorpusDraft, CorpusVersion, VoiceProfile } from "./domain.js";
 
 export interface CorpusRepository {
   getDraft(workspaceId: string): Promise<CorpusDraft>;
@@ -17,6 +12,8 @@ export interface CalibrationRunRepository {
   create(run: CalibrationRun): Promise<void>;
   get(id: string): Promise<CalibrationRun | null>;
   save(run: CalibrationRun): Promise<void>;
+  list?(workspaceId: string): Promise<CalibrationRun[]>;
+  consumeApproval?(runId: string, consumedAt: string): Promise<CalibrationRun>;
 }
 
 export interface VoiceProfileRepository {

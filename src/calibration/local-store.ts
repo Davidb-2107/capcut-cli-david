@@ -1,16 +1,11 @@
 import { createHash, randomUUID } from "node:crypto";
 import { constants } from "node:fs";
-import { mkdir, open, readFile, readdir, rename, access, lstat, rm, link } from "node:fs/promises";
+import { access, link, lstat, mkdir, open, readdir, readFile, rename, rm } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join, relative, resolve, sep } from "node:path";
 
-import type {
-  CalibrationRun,
-  CorpusDraft,
-  CorpusItem,
-  CorpusVersion,
-  VoiceProfile,
-} from "./domain.js";
+import type { CalibrationRun, CorpusDraft, CorpusItem, CorpusVersion, VoiceProfile } from "./domain.js";
+import { transitionRun } from "./domain.js";
 import type {
   ArtifactStore,
   CalibrationRunRepository,
@@ -116,7 +111,9 @@ async function withFileLock<T>(lockPath: string, work: () => Promise<T>): Promis
     try {
       const handle = await open(tempLock, "wx");
       try {
-        await handle.write(Buffer.from(JSON.stringify({ pid: process.pid, acquiredAt: new Date().toISOString() }), "utf8"));
+        await handle.write(
+          Buffer.from(JSON.stringify({ pid: process.pid, acquiredAt: new Date().toISOString() }), "utf8"),
+        );
         await handle.sync();
       } finally {
         await handle.close();
@@ -235,7 +232,9 @@ function makeCorpusRepository(dataDir: string): CorpusRepository {
     async getActiveVersion(workspaceId) {
       const versionId = await loadActiveId(workspaceId);
       if (!versionId) return null;
-      const version = await readJson<CorpusVersion>(join(versionsRoot(workspaceId), `${safeSegment(versionId, "versionId")}.json`));
+      const version = await readJson<CorpusVersion>(
+        join(versionsRoot(workspaceId), `${safeSegment(versionId, "versionId")}.json`),
+      );
       return cloneVersion({ ...version, status: "active" });
     },
 
@@ -256,7 +255,8 @@ function makeCorpusRepository(dataDir: string): CorpusRepository {
 }
 
 function makeRunRepository(dataDir: string): CalibrationRunRepository {
-  const pathFor = (id: string) => join(dataDir, "workspaces", "local-default", "runs", `${safeSegment(id, "runId")}.json`);
+  const pathFor = (id: string) =>
+    join(dataDir, "workspaces", "local-default", "runs", `${safeSegment(id, "runId")}.json`);
   return {
     async create(run) {
       const path = pathFor(run.id);
@@ -269,6 +269,28 @@ function makeRunRepository(dataDir: string): CalibrationRunRepository {
     },
     async save(run) {
       await writeJson(pathFor(run.id), run);
+    },
+    async list(workspaceId) {
+      const root = join(dataDir, "workspaces", safeSegment(workspaceId, "workspaceId"), "runs");
+      if (!(await exists(root))) return [];
+      const names = (await readdir(root)).filter((name) => name.endsWith(".json")).sort();
+      return Promise.all(names.map((name) => readJson<CalibrationRun>(join(root, name))));
+    },
+    async consumeApproval(runId, consumedAt) {
+      const path = pathFor(runId);
+      return withFileLock(path, async () => {
+        if (!(await exists(path))) throw new ConflictError("calibration run not found");
+        const run = await readJson<CalibrationRun>(path);
+        if (run.status !== "approved" || !run.approval || run.approval.consumedAt) {
+          throw new ConflictError("approval already consumed or run is no longer approved");
+        }
+        if (Date.parse(consumedAt) >= Date.parse(run.approval.expiresAt)) throw new ConflictError("approval expired");
+        const running = transitionRun(run, { type: "execute" });
+        if (running.approval) running.approval.consumedAt = consumedAt;
+        running.updatedAt = consumedAt;
+        await writeJson(path, running);
+        return running;
+      });
     },
   };
 }
