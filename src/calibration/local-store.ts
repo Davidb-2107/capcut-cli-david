@@ -106,42 +106,13 @@ async function readJson<T>(path: string): Promise<T> {
 
 const LOCK_WAIT_MS = 10;
 const LOCK_TIMEOUT_MS = 30_000;
-const LOCK_STALE_MS = 30_000;
-
-function isSafePid(pid: unknown): pid is number {
-  return typeof pid === "number" && Number.isSafeInteger(pid) && pid > 0 && pid <= 0x7fffffff;
-}
-
-async function processIsAlive(pid: number): Promise<boolean | null> {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (error) {
-    const code = (error as NodeJS.ErrnoException).code;
-    if (code === "ESRCH") return false;
-    if (code === "EPERM") return true;
-    return null;
-  }
-}
-
-async function reclaimLock(lockPath: string): Promise<boolean> {
-  const quarantine = `${lockPath}.reclaim-${randomUUID()}`;
-  try {
-    await rename(lockPath, quarantine);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
-    throw error;
-  }
-  await rm(quarantine, { recursive: true, force: true });
-  return true;
-}
-
 async function withFileLock<T>(lockPath: string, work: () => Promise<T>): Promise<T> {
   const lockFile = `${lockPath}.lock`;
   await mkdir(dirname(lockPath), { recursive: true });
   const deadline = Date.now() + LOCK_TIMEOUT_MS;
   while (true) {
     const tempLock = `${lockFile}.${process.pid}-${randomUUID()}.tmp`;
+    let acquired = false;
     try {
       const handle = await open(tempLock, "wx");
       try {
@@ -152,7 +123,7 @@ async function withFileLock<T>(lockPath: string, work: () => Promise<T>): Promis
       }
       try {
         await link(tempLock, lockFile);
-        break;
+        acquired = true;
       } catch (error) {
         if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
       }
@@ -161,23 +132,7 @@ async function withFileLock<T>(lockPath: string, work: () => Promise<T>): Promis
     } finally {
       await rm(tempLock, { force: true });
     }
-
-    try {
-      const lockStat = await lstat(lockFile);
-      if (Date.now() - lockStat.mtimeMs > LOCK_STALE_MS) {
-        let owner: { pid?: unknown } | undefined;
-        try {
-          owner = await readJson<{ pid?: unknown }>(lockFile);
-        } catch {
-          // A malformed owner record is not proof of a dead writer.
-        }
-        if (owner && isSafePid(owner.pid) && (await processIsAlive(owner.pid)) === false) {
-          if (await reclaimLock(lockFile)) continue;
-        }
-      }
-    } catch (lockError) {
-      if ((lockError as NodeJS.ErrnoException).code !== "ENOENT") throw lockError;
-    }
+    if (acquired) break;
     if (Date.now() >= deadline) {
       throw new Error("calibration store lock timeout; existing lock was not taken over");
     }
