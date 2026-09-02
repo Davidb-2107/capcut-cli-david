@@ -106,17 +106,44 @@ async function readJson<T>(path: string): Promise<T> {
 
 const LOCK_WAIT_MS = 10;
 const LOCK_TIMEOUT_MS = 30_000;
+const LOCK_STALE_MS = 30_000;
+
+async function processIsAlive(pid: number): Promise<boolean> {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === "EPERM";
+  }
+}
 
 async function withFileLock<T>(lockPath: string, work: () => Promise<T>): Promise<T> {
   const lockDirectory = `${lockPath}.lock`;
+  const ownerPath = join(lockDirectory, "owner.json");
   await mkdir(dirname(lockPath), { recursive: true });
   const deadline = Date.now() + LOCK_TIMEOUT_MS;
   while (true) {
     try {
       await mkdir(lockDirectory);
+      await writeJson(ownerPath, { pid: process.pid, acquiredAt: new Date().toISOString() });
       break;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+      try {
+        const lockStat = await lstat(lockDirectory);
+        if (Date.now() - lockStat.mtimeMs > LOCK_STALE_MS) {
+          const owner = await readJson<{ pid?: number }>(ownerPath);
+          if (typeof owner.pid === "number" && !(await processIsAlive(owner.pid))) {
+            await rm(lockDirectory, { recursive: true, force: true });
+            continue;
+          }
+        }
+      } catch (lockError) {
+        if ((lockError as NodeJS.ErrnoException).code !== "ENOENT") {
+          // An absent or malformed owner record is not proof of a dead writer.
+          // Keep the lock and fail closed rather than risking concurrent writes.
+        }
+      }
       if (Date.now() >= deadline) {
         throw new Error("calibration store lock timeout; existing lock was not taken over");
       }
