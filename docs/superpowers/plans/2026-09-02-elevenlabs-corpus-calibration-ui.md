@@ -151,7 +151,17 @@ missing integration instead of creating a competing local WPM authority.
 
   test("canonicalization is stable regardless of object key order", () => {
     strictEqual(
-      canonicalizeRequest({ ...request, params: { stability: 0.5, model: "model-x" } }),
+      canonicalizeRequest({
+        ...request,
+        params: {
+          corpus_key: "standard-v1",
+          mode: "precision",
+          text_source: "standard",
+          voice_settings: { stability: 0.5 },
+          model_id: "model-x",
+          language: "fr",
+        },
+      }),
       canonicalizeRequest(request),
     );
     match(fingerprintRequest(request), /^[a-f0-9]{64}$/);
@@ -160,7 +170,7 @@ missing integration instead of creating a competing local WPM authority.
   test("changing corpus, parameter or postproc changes the fingerprint", () => {
     strictEqual(fingerprintRequest(request), fingerprintRequest({ ...request }));
     strictEqual(fingerprintRequest({ ...request, corpusDigest: "other" }) === fingerprintRequest(request), false);
-    strictEqual(fingerprintRequest({ ...request, postproc: { mode: "other" } }) === fingerprintRequest(request), false);
+    strictEqual(fingerprintRequest({ ...request, postproc: "trim" }) === fingerprintRequest(request), false);
   });
 
   test("illegal state transitions are rejected", () => {
@@ -529,9 +539,22 @@ account while verifying the canonical WPM write/read boundary.
 
 The test file defines `memoryRepositories()`, `fakeBridge()`,
 `fakeCanonicalProfilePort()` and
-`makeApplication({ repositories, bridge, canonical })`; each helper returns the
+`makeApplication({ repositories, bridge, canonical, clock })`; each helper returns the
 exact Task 3/4 interface and is used only to avoid network and filesystem
 effects in application tests.
+
+Add an injectable application clock: `makeApplication({ repositories, bridge,
+canonical, clock })` passes `clock` through to the application, while production
+wiring supplies a `systemClock` implementation. Keep the port minimal:
+
+```ts
+export interface Clock {
+  now(): Date;
+}
+```
+
+Tests must use a fake clock and must never monkey-patch `Date` or wait in real
+time.
 
 The test-only `RepositoryBundle` is
 `{ corpus: CorpusRepository; runs: CalibrationRunRepository; profiles: VoiceProfileRepository; artifacts: ArtifactStore }`.
@@ -571,7 +594,18 @@ export interface CorpusView {
   6. persists a report without creating a profile;
   7. publishes a profile only from a successful report with WPM;
   8. maps a lost response to `execution_unknown` without a retry;
-  9. rejects approval after the 15-minute TTL.
+  9. rejects approval after the 15-minute TTL using the injected clock:
+
+     ```js
+     let now = new Date("2026-09-02T10:00:00Z");
+     const clock = { now: () => now };
+     const repositories = memoryRepositories();
+     const app = makeApplication({ repositories, bridge: fakeBridge(), canonical: fakeCanonicalProfilePort(), clock });
+     const run = await app.prepareDryRun(input);
+     await app.approve(run.id, { requestDigest: run.requestDigest });
+     now = new Date("2026-09-02T10:16:00Z");
+     await assert.rejects(app.execute(run.id), /approval expired/);
+     ```
 
   ```js
   import { assert, strictEqual } from "node:assert";
