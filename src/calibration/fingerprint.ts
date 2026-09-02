@@ -2,7 +2,12 @@ import { createHash } from "node:crypto";
 
 import type { ResolvedCalibrationRequest } from "./domain.js";
 
-function canonicalizeValue(value: unknown, path: string): unknown {
+function isPlainObject(value: object): value is Record<string, unknown> {
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function serializeValue(value: unknown, path: string): string {
   if (value === undefined) {
     throw new TypeError(`undefined value at ${path}`);
   }
@@ -11,22 +16,32 @@ function canonicalizeValue(value: unknown, path: string): unknown {
     if (typeof value === "function" || typeof value === "symbol" || typeof value === "bigint") {
       throw new TypeError(`unsupported value at ${path}`);
     }
-    return value;
+    return JSON.stringify(value);
   }
 
   if (Array.isArray(value)) {
-    return value.map((item, index) => canonicalizeValue(item, `${path}[${index}]`));
+    const items: string[] = [];
+    for (let index = 0; index < value.length; index += 1) {
+      if (!Object.hasOwn(value, index)) {
+        throw new TypeError(`undefined value at ${path}[${index}]`);
+      }
+      items.push(serializeValue(value[index], `${path}[${index}]`));
+    }
+    return `[${items.join(",")}]`;
   }
 
-  const sorted: Record<string, unknown> = {};
-  for (const key of Object.keys(value).sort()) {
-    sorted[key] = canonicalizeValue((value as Record<string, unknown>)[key], `${path}.${key}`);
+  if (!isPlainObject(value)) {
+    throw new TypeError(`non-plain object at ${path}`);
   }
-  return sorted;
+
+  const members = Object.keys(value)
+    .sort()
+    .map((key) => `${JSON.stringify(key)}:${serializeValue(value[key], `${path}.${key}`)}`);
+  return `{${members.join(",")}}`;
 }
 
 export function canonicalizeRequest(request: ResolvedCalibrationRequest): string {
-  return JSON.stringify(canonicalizeValue(request, "$"));
+  return serializeValue(request, "$");
 }
 
 export function fingerprintRequest(request: ResolvedCalibrationRequest): string {

@@ -1,5 +1,5 @@
 import { test } from "node:test";
-import { deepStrictEqual, match, strictEqual, throws } from "node:assert";
+import { match, strictEqual, throws } from "node:assert";
 
 import { fingerprintRequest, canonicalizeRequest } from "../dist/calibration/fingerprint.js";
 import { transitionRun } from "../dist/calibration/domain.js";
@@ -41,7 +41,21 @@ test("canonicalization is stable regardless of object key order", () => {
     canonicalizeRequest(request),
   );
   strictEqual(canonicalizeRequest({ b: null, a: false, nested: [3, 1] }), '{"a":false,"b":null,"nested":[3,1]}');
+  strictEqual(
+    canonicalizeRequest({ "2": "two", "10": "ten", a: "a" }),
+    '{"10":"ten","2":"two","a":"a"}',
+  );
   match(fingerprintRequest(request), /^[a-f0-9]{64}$/);
+});
+
+test("canonicalization rejects non-plain objects", () => {
+  class CustomValue {
+    value = 1;
+  }
+
+  for (const value of [new Date(), new Map(), new Set(), new CustomValue()]) {
+    throws(() => canonicalizeRequest({ value }), /plain object/);
+  }
 });
 
 test("canonicalization rejects undefined values", () => {
@@ -64,6 +78,10 @@ test("illegal state transitions are rejected", () => {
   strictEqual(transitionRun(draft, { type: "dry_run_succeeded" }).status, "dry_run_ready");
   throws(() => transitionRun(draft, { type: "execute" }), /invalid transition/);
   throws(() => transitionRun({ status: "dry_run_ready" }, { type: "execute" }), /invalid transition/);
+  throws(
+    () => transitionRun({ status: "approved", approval: null }, { type: "execute" }),
+    /invalid transition/,
+  );
   throws(() => transitionRun({ status: "failed" }, { type: "execute" }), /invalid transition/);
   throws(() => transitionRun({ status: "execution_unknown" }, { type: "execute" }), /invalid transition/);
 });
@@ -76,6 +94,7 @@ test("documented run transitions produce the expected statuses", () => {
   strictEqual(approved.status, "approved");
   strictEqual(approved.approval.expiresAt, "2026-09-03T00:00:00Z");
   strictEqual(running.status, "running");
+  match(running.approval.consumedAt, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
   strictEqual(transitionRun(running, { type: "succeeded" }).status, "succeeded");
   strictEqual(transitionRun(running, { type: "failed" }).status, "failed");
   strictEqual(transitionRun(running, { type: "execution_unknown" }).status, "execution_unknown");

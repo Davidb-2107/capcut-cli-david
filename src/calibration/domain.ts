@@ -111,6 +111,10 @@ export function transitionRun<T extends TransitionableRun>(run: T, event: RunEve
     throw new Error(`invalid transition: ${run.status} + ${event.type}`);
   }
 
+  if (event.type === "execute" && !run.approval) {
+    throw new Error("invalid transition: approved run requires an approval record");
+  }
+
   const nextRun = { ...run, status: nextStatus };
 
   if (event.type === "approve") {
