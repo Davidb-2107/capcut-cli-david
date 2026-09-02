@@ -13,17 +13,24 @@
 ## Global Constraints
 
 - La gate d’inventaire de `voice-calibration/` et des contrats MCP est bloquante avant tout type provider-specific ou toute route de calibration.
+- La source à inventorier est `Shared/voice-calibration/` dans le vault ; son `README.md`, le serveur MCP câblé dans `.mcp.json` et le skill `calibrate-voice` décrivent le contrat effectif.
 - Le transport Node ↔ Python est encapsulé dans `CalibrationBridge`; l’UI ne connaît ni MCP, ni Python, ni ElevenLabs.
 - Le corpus canonique est unique, utilisé en entier et versionné par snapshots immuables ; une seule version publiée est active.
 - `run_calibration` et les contrats MCP restent la source de vérité des paramètres, défauts, validations, dry-run et métriques.
+- Le MCP actuel expose `calibrate_voice`, qui délègue à `core.calibration.run_calibration`; le parcours WPM utilise `mode = "precision"` et conserve `precision_stats` comme résultat source.
+- Le parcours WPM MVP utilise le mode de calibration qui retourne directement les statistiques WPM (`mode = "precision"` dans le contrat actuel) ; le mode batterie, qui ne retourne pas de WPM agrégé, est hors périmètre.
 - `postproc` est transmis explicitement dans chaque requête de calibration.
 - Le dry-run est obligatoire ; l’exécution réelle exige une approbation explicite liée au snapshot approuvé.
 - L’empreinte SHA-256 inclut le digest du contrat, le digest du cœur, le corpus, la voix, tous les paramètres et `postproc`.
 - Un timeout après émission d’une requête passe en `execution_unknown` et ne déclenche pas de retry automatique.
 - `run_id` et la clé d’idempotence sont conservés pour toute reprise autorisée ; un nouveau run est une action explicite.
 - Le rapport est immuable et ne publie jamais automatiquement un profil ; le WPM est publié séparément dans `VoiceProfile`.
+- Le WPM canonique reste dans la source Python `voice_wpm`/`Shared/voice-calibration`. Le `VoiceProfile` local est une projection traçable et ne doit jamais être lu par les gates de durée à la place de cette source.
 - La clé locale est lue côté backend depuis `.env`, ne passe jamais au navigateur et n’apparaît ni dans les logs ni dans les artefacts.
 - L’API et l’UI locales sont same-origin, liées à `127.0.0.1` par défaut, sans CORS large et avec nonce de session sur les mutations.
+- L’approbation expire par défaut après 15 minutes, valeur calculée par le backend et affichée dans le dry-run ; l’exécution consomme l’approbation une seule fois.
+- Un bind `--host` autre que `127.0.0.1`/`localhost` est refusé sauf présence d’un flag explicite `--allow-network` ; ce mode n’est pas activé par le MVP.
+- Le client navigateur ne contient aucun import runtime ; les imports TypeScript éventuels sont `import type` et doivent disparaître du JavaScript compilé.
 - Le stockage local utilise `workspace_id = local-default`, une révision/ETag simple et aucune infrastructure distribuée.
 - Le build conserve Node >= 18, zéro dépendance runtime et les modifications non liées déjà présentes dans le worktree.
 
@@ -65,7 +72,7 @@ Tests created by the plan:
 
 **Files:**
 - Create: `docs/elevenlabs-calibration-contract-inventory.md`
-- Read-only source: the existing `voice-calibration/` checkout/package identified from the workspace configuration
+- Read-only source: `Shared/voice-calibration/` in the vault, its authoritative `README.md`, the MCP wiring in `.mcp.json` and the `calibrate-voice` skill
 
 **Interfaces:**
 - Consumes: the actual Python source, its package metadata, its MCP definitions and its existing `.env` loading convention.
@@ -73,19 +80,19 @@ Tests created by the plan:
 
 - [ ] **Step 1: Locate and fingerprint the source checkout**
 
-  Resolve the existing `voice-calibration/` checkout from the configured workspace/project context. Record its absolute path only in local notes, then record in the inventory the repository/package identifier and the output of `git rev-parse HEAD` run from that checkout when it is a Git repository. If the source checkout is not available, stop the implementation sequence at this task and request that checkout; do not create a replacement implementation in `capcut-cli-david`.
+  Resolve `Shared/voice-calibration/` from the vault root. Record in the inventory the repository/package identifier and the output of `git rev-parse HEAD` run from that checkout when it is a Git repository. Confirm the `.mcp.json` entry that wires the `voice-calibration` server and the command/environment it uses. If the source checkout or its MCP wiring is not available, stop the implementation sequence at this task and request it; do not create a replacement implementation in `capcut-cli-david`.
 
 - [ ] **Step 2: Record the callable contract**
 
-  Read the source definitions and record the exact `run_calibration` entrypoint, MCP tool name, input schema, required fields, optional fields, default ownership, `postproc` representation, dry-run operation, success result, WPM location, error result and artifact references. Include a compact JSON example copied from the actual schema, with credentials removed.
+  Read the source definitions and record the exact `core.calibration.run_calibration` entrypoint and MCP tool `calibrate_voice`, including input fields `voice`, `model_id`, `voice_settings`, `text_source`, `mode`, `language`, `runs`, `corpus_key`/`voice_id`, `postproc` and `dry_run` as applicable. Record required fields, optional fields, default ownership, dry-run operation, `voice_resolution`, cost fields, success result, WPM location, error result and artifact references. The WPM-producing MVP path must use `mode = "precision"`; record how the canonical Python `voice_wpm` profile/table is updated or read after success. Include a compact JSON example copied from the actual schema, with credentials removed.
 
 - [ ] **Step 3: Decide and document the bridge transport from evidence**
 
-  Record exactly one transport selected from the source: MCP stdio, direct Python subprocess, or HTTP intermediary. Document process lifecycle, message framing, stderr/exit-code behavior, cancellation, timeout boundary, Python executable/environment resolution and whether the runner/provider guarantees idempotency. The later `CalibrationBridge` must implement this documented protocol rather than guessing from the UI.
+  Record exactly one transport selected from the `.mcp.json` wiring: expected current path is an MCP server over stdio, but the inventory must confirm the launch command and protocol rather than assume it. Document process lifecycle, message framing, stderr/exit-code behavior, cancellation, timeout boundary, Python executable/environment resolution and whether the runner/provider guarantees idempotency. Document the canonical write/read path for the WPM source. The later `CalibrationBridge` must implement this documented protocol rather than guessing from the UI.
 
 - [ ] **Step 4: Verify the inventory is sufficient**
 
-  Review the inventory against this checklist: an engineer can construct one dry-run request, distinguish a provider rejection from a lost response, locate WPM in a success result, redact credentials and decide whether a timed-out execution is retryable. Expected: every item has a source citation and no unresolved marker or invented field remains.
+  Review the inventory against this checklist: an engineer can construct one `calibrate_voice` dry-run request in precision mode, display `billable_characters` and `estimated_cost_usd`, distinguish a provider rejection from a lost response, locate `precision_stats` WPM, update or verify the canonical Python profile/table, redact credentials and decide whether a timed-out execution is retryable. Expected: every item has a source citation and no unresolved marker or invented field remains.
 
 - [ ] **Step 5: Commit the gate artifact**
 
@@ -107,6 +114,14 @@ Tests created by the plan:
 - Consumes: `docs/elevenlabs-calibration-contract-inventory.md` only for opaque contract/core digests and the result envelope; no provider-specific field is copied into the domain model.
 - Produces: `RunStatus`, `CorpusItem`, `CorpusDraft`, `CorpusVersion`, `CalibrationRun`, `CalibrationReport`, `VoiceProfile`, `ResolvedCalibrationRequest`, `canonicalizeRequest()`, `fingerprintRequest()` and `transitionRun()`. Tasks 3–6 consume these names.
 
+`VoiceProfile` is a local projection, not the WPM source of truth. Its
+`wpmSnapshot` is historical display data; `canonicalRef` points to the Python
+`voice_wpm` record/table that project duration gates consume. `publishProfile()`
+must not report success until the canonical write/update or registration path
+identified by Task 1 has succeeded. If the source exposes no supported write
+path, the implementation must keep the profile unpublished and report the
+missing integration instead of creating a competing local WPM authority.
+
 - [ ] **Step 1: Write the failing domain tests**
 
   Add tests for the invariants below:
@@ -123,8 +138,15 @@ Tests created by the plan:
     corpusVersionId: "standard-v1",
     corpusDigest: "corpus-sha",
     voiceRef: "voice-1",
-    params: { model: "model-x", stability: 0.5 },
-    postproc: { mode: "explicit-none" },
+    params: {
+      model_id: "model-x",
+      voice_settings: { stability: 0.5 },
+      text_source: "standard",
+      mode: "precision",
+      language: "fr",
+      corpus_key: "standard-v1",
+    },
+    postproc: "cut",
   };
 
   test("canonicalization is stable regardless of object key order", () => {
@@ -186,7 +208,8 @@ Tests created by the plan:
     createdAt: string;
   }
   export interface VoiceProfile {
-    id: string; workspaceId: string; voiceRef: string; wpm: number;
+    id: string; workspaceId: string; voiceRef: string; wpmSnapshot: number;
+    wpmAuthority: "python-voice-wpm"; canonicalRef: string;
     sourceRunId: string; corpusVersionId: string; reportId: string; publishedAt: string;
   }
   export type RunEvent =
@@ -359,12 +382,13 @@ interfaces.
 
 **Interfaces:**
 - Consumes: the exact transport and result semantics in `docs/elevenlabs-calibration-contract-inventory.md`.
-- Produces: `CalibrationBridge`, `CredentialProvider`, `DryRunResult`, `ExecutionResult` and `ConfigStatus`. Task 5 calls these interfaces and never spawns Python or reads `.env` itself.
+- Produces: `CalibrationBridge`, `CanonicalProfilePort`, `CredentialProvider`, `DryRunResult`, `ExecutionResult` and `ConfigStatus`. Task 5 calls these interfaces and never spawns Python or reads `.env` itself.
 
 The test file defines `resolvedRequest` with the Task 2 shape,
 `fakeTransport(options)`, `makeBridge(options)` and
-`makeCredentialProvider(env)`. These helpers isolate the tests from a real
-Python process and a real ElevenLabs account.
+`makeCredentialProvider(env)`, plus `makeCanonicalProfilePort(result)`. These
+helpers isolate the tests from a real Python process and a real ElevenLabs
+account while verifying the canonical WPM write/read boundary.
 
 - [ ] **Step 1: Write failing bridge tests with a fake transport**
 
@@ -393,6 +417,11 @@ Python process and a real ElevenLabs account.
     const provider = makeCredentialProvider({ ELEVENLABS_API_KEY: "secret" });
     deepStrictEqual(await provider.status(), { configured: true });
     assert.equal(JSON.stringify(await provider.status()).includes("secret"), false);
+  });
+
+  test("profile publication delegates to the canonical Python WPM source", async () => {
+    const canonical = makeCanonicalProfilePort({ canonicalRef: "voice_wpm:voice-1" });
+    deepStrictEqual(await canonical.ensurePublished({ voiceRef: "voice-1", wpm: 148, runId: "r1", corpusVersionId: "standard-v1" }), { canonicalRef: "voice_wpm:voice-1" });
   });
   ```
 
@@ -425,6 +454,9 @@ Python process and a real ElevenLabs account.
     raw: unknown;
     error?: { code: string; message: string };
   }
+  export interface CanonicalProfilePort {
+    ensurePublished(input: { voiceRef: string; wpm: number; runId: string; corpusVersionId: string }): Promise<{ canonicalRef: string }>;
+  }
   export interface CalibrationBridge {
     getSchema(): Promise<unknown>;
     dryRun(input: { runId: string; request: ResolvedCalibrationRequest }): Promise<DryRunResult>;
@@ -452,6 +484,15 @@ Python process and a real ElevenLabs account.
   - do not automatically replay a request after `execution_unknown`;
   - reuse the same idempotency key only when the inventory explicitly permits
     reconciliation.
+
+  `CanonicalProfilePort.ensurePublished()` must use the canonical Python path
+  recorded in Task 1. If the real calibration already updates `voice_wpm`, it
+  verifies that record and returns its canonical reference. If the source
+  exposes an explicit publish/update operation, it invokes that operation
+  through the bridge. If neither path exists, it returns a structured
+  integration error and the application must not create a local profile that
+  pretends to be the production WPM source. The deprecated calibration scripts
+  are never invoked directly.
 
 - [ ] **Step 5: Implement `.env` resolution and safe configuration status**
 
@@ -483,13 +524,14 @@ Python process and a real ElevenLabs account.
 - Test: `test/calibration-api.test.mjs`
 
 **Interfaces:**
-- Consumes: repositories from Task 3, `CalibrationBridge`/`CredentialProvider` from Task 4 and domain/fingerprint functions from Task 2.
-- Produces: `CalibrationApplication`, API routes under `/api/v1`, `startCalibrationUi()` and the CLI command `capcut-david calibration-ui [--data-dir <dir>] [--host <host>] [--port <port>] [--open]`.
+- Consumes: repositories from Task 3, `CalibrationBridge`/`CanonicalProfilePort`/`CredentialProvider` from Task 4 and domain/fingerprint functions from Task 2.
+- Produces: `CalibrationApplication`, API routes under `/api/v1`, `startCalibrationUi()` and the CLI command `capcut-david calibration-ui [--data-dir <dir>] [--host <host>] [--port <port>] [--open] [--allow-network]`.
 
-The test file defines `memoryRepositories()`, `fakeBridge()` and
-`makeApplication({ repositories, bridge })`; each helper returns the exact
-Task 3/4 interface and is used only to avoid network and filesystem effects in
-application tests.
+The test file defines `memoryRepositories()`, `fakeBridge()`,
+`fakeCanonicalProfilePort()` and
+`makeApplication({ repositories, bridge, canonical })`; each helper returns the
+exact Task 3/4 interface and is used only to avoid network and filesystem
+effects in application tests.
 
 The test-only `RepositoryBundle` is
 `{ corpus: CorpusRepository; runs: CalibrationRunRepository; profiles: VoiceProfileRepository; artifacts: ArtifactStore }`.
@@ -504,6 +546,7 @@ export interface CalibrationInput {
   postproc: unknown;
 }
 export interface BootstrapView {
+  sessionNonce: string;
   config: { configured: boolean };
   activeCorpus: CorpusVersion | null;
   profiles: VoiceProfile[];
@@ -527,14 +570,27 @@ export interface CorpusView {
   5. atomically consumes approval before execution;
   6. persists a report without creating a profile;
   7. publishes a profile only from a successful report with WPM;
-  8. maps a lost response to `execution_unknown` without a retry.
+  8. maps a lost response to `execution_unknown` without a retry;
+  9. rejects approval after the 15-minute TTL.
 
   ```js
   import { assert, strictEqual } from "node:assert";
 
   test("execute requires the still-valid approved snapshot", async () => {
-    const app = makeApplication({ repositories: memoryRepositories(), bridge: fakeBridge() });
-    const run = await app.prepareDryRun({ workspaceId: "local-default", voiceRef: "voice-1", params: { model: "m" }, postproc: { mode: "none" } });
+    const app = makeApplication({ repositories: memoryRepositories(), bridge: fakeBridge(), canonical: fakeCanonicalProfilePort() });
+    const run = await app.prepareDryRun({
+      workspaceId: "local-default",
+      voiceRef: "voice-1",
+      params: {
+        model_id: "m",
+        voice_settings: { stability: 0.5 },
+        text_source: "standard",
+        mode: "precision",
+        language: "fr",
+        corpus_key: "standard-v1",
+      },
+      postproc: "cut",
+    });
     await assert.rejects(app.execute(run.id), /approval required/);
     await app.approve(run.id, { requestDigest: run.requestDigest });
     const result = await app.execute(run.id);
@@ -575,8 +631,11 @@ export interface CorpusView {
   resolve defaults through the contract adapter, set explicit `postproc`,
   calculate the digest and persist the run only after dry-run succeeds.
   `approve()` compares the submitted digest with the stored digest. `execute()`
-  checks expiry, current contract/core digests and state, atomically consumes
-  approval, and executes the stored snapshot rather than rebuilding it.
+  checks the 15-minute expiry, current contract/core digests and state,
+  atomically consumes approval, and executes the stored snapshot rather than
+  rebuilding it. `publishProfile()` extracts WPM from the successful source
+  result, calls `CanonicalProfilePort.ensurePublished()`, and stores the local
+  projection only after the canonical Python source returns its reference.
 
 - [ ] **Step 4: Implement the HTTP server and routes**
 
@@ -603,7 +662,10 @@ export interface CorpusView {
   `422` for contract validation, `503` for unavailable credentials/core and
   `500` only for an unexpected local failure. Redact errors before serializing.
 
-  `GET /corpus/draft` returns an `ETag` derived from the revision. `PUT` requires
+  `GET /api/v1/bootstrap` creates/returns the process nonce once; the client
+  keeps it in memory and sends it as `X-Calibration-Nonce` on mutations.
+  `GET /api/v1/calibration/schema` exposes the actual `calibrate_voice` schema
+  from the bridge. `GET /api/v1/corpus/draft` returns an `ETag` derived from the revision. `PUT` requires
   `If-Match`; a mismatch changes nothing. Mutations require the process nonce in
   `X-Calibration-Nonce`. Serve the HTML and API from the same origin, reject
   broad CORS, reject unknown static paths and prevent path traversal.
@@ -612,7 +674,10 @@ export interface CorpusView {
 
   Add `calibration-ui` to `src/index.ts` before project-path handling. The
   command starts on `127.0.0.1` by default, accepts port `0` to select a free
-  port, prints the final URL, and opens it only when `--open` is supplied. Reuse
+  port, prints the final URL, and opens it only when `--open` is supplied. A
+  non-loopback `--host` is rejected unless `--allow-network` is also present;
+  the command documents that this opt-in exposes an unauthenticated local
+  credential consumer. Reuse
   the existing platform-specific browser-opening helper from `src/commands/ui.ts`
   without changing the existing `ui` behavior.
 
@@ -621,7 +686,7 @@ export interface CorpusView {
   Run: `npm run build && node --test test/calibration-api.test.mjs`
 
   Expected: PASS, including approval mismatch, expiry, nonce failure, ETag
-  conflict and `execution_unknown` behavior.
+  conflict, non-loopback host refusal and `execution_unknown` behavior.
 
   ```bash
   git add src/calibration/application.ts src/calibration/http-server.ts src/commands/calibration-ui.ts src/index.ts src/commands/ui.ts test/calibration-api.test.mjs
@@ -641,6 +706,10 @@ export interface CorpusView {
 - Consumes: API routes from Task 5, especially the returned MCP schema, ETag, nonce and opaque run/report data.
 - Produces: `dist/ui/calibration.html` and `dist/ui/calibration-client.js`, served by the local backend. No frontend metric, default, provider validation or state-machine implementation is produced.
 
+`src/ui/calibration-client.ts` must have no runtime imports. Any shared TypeScript
+shape is imported with `import type`, so `tsc` erases it. The browser bundle must
+be self-contained and may call only relative `/api/v1` URLs.
+
 - [ ] **Step 1: Write failing static UI/build tests**
 
   Assert that the built page exists, contains the five required views, references
@@ -657,10 +726,13 @@ export interface CorpusView {
   test("calibration UI is built and same-origin", () => {
     ok(existsSync(resolve(ROOT, "dist/ui/calibration.html")));
     const html = readFileSync(resolve(ROOT, "dist/ui/calibration.html"), "utf8");
+    const client = readFileSync(resolve(ROOT, "dist/ui/calibration-client.js"), "utf8");
     for (const label of ["Corpus", "Préparer", "Dry-run", "Résultat", "Profils"]) ok(html.includes(label));
     ok(html.includes("/calibration-client.js"));
     ok(!/src=\"https?:|href=\"https?:|ELEVENLABS_API_KEY/.test(html));
     ok(!html.includes("/*__CALIBRATION_TEMPLATE__*/"));
+    ok(!/^\s*(?:import|export)\b/m.test(client), "browser client must have no runtime module imports/exports");
+    ok(!client.includes("import("), "browser client must not use dynamic imports");
   });
   ```
 
@@ -689,11 +761,18 @@ export interface CorpusView {
   The client may perform input formatting and empty-field affordances, but the
   backend remains authoritative for all validation and state transitions.
 
+  Put the marker `/*__CALIBRATION_TEMPLATE__*/` in the template’s module
+  script. The build step replaces it with a small `const BUILD = { version,
+  builtAt }` literal; the client does not import package metadata at runtime.
+
 - [ ] **Step 4: Implement build integration**
 
   `scripts/build-calibration-ui.mjs` must copy the template to
   `dist/ui/calibration.html`, verify its marker and verify that the compiled
-  `dist/ui/calibration-client.js` exists. Extend `package.json`’s `build` script
+  `dist/ui/calibration-client.js` exists. It must also read the compiled client
+  and fail the build if it contains a static `import`/`export` declaration or a
+  dynamic `import(`, preventing a browser 404 caused by a Node-relative module
+  import. Extend `package.json`’s `build` script
   with `node scripts/build-calibration-ui.mjs` after `tsc` and before the final
   build assertions. Do not add a frontend package or a CDN asset.
 
@@ -733,6 +812,7 @@ export interface CorpusView {
   → approve returned digest
   → execute once
   → fetch report/WPM
+  → verify/update canonical Python `voice_wpm` record
   → publish profile
   → execute the same run again and assert no second bridge call
   ```
@@ -740,7 +820,9 @@ export interface CorpusView {
   Also assert that changing the draft after dry-run does not alter the stored
   run, that an expired approval returns `409`, that a fake lost response yields
   `execution_unknown`, and that serialized responses/log captures contain no
-  credential.
+  credential. Assert that profile publication fails closed when the canonical
+  Python WPM port fails, and that a successful publication stores a
+  `canonicalRef` in the local projection.
 
 - [ ] **Step 2: Run the acceptance test to verify the first integration failure**
 
@@ -760,7 +842,10 @@ export interface CorpusView {
 
   Explain that the key stays server-side, the corpus must be published before
   calibration, `postproc` is explicit, dry-run approval is mandatory, and WPM
-  becomes reusable only after profile publication. Do not document provider
+  becomes reusable only after the canonical Python profile/table is updated or
+  verified. The existing `calibrate-voice` skill remains the manual/agent
+  entrypoint and continues to call the same `calibrate_voice` MCP tool; the new
+  UI is an additional client, not a replacement. Do not document provider
   fields until they appear in the committed contract inventory.
 
 - [ ] **Step 4: Run the complete verification suite**
@@ -788,10 +873,12 @@ export interface CorpusView {
 
 ## Plan Self-Review
 
-- **Spec coverage:** contract/bridge gate is Task 1; corpus immutability and
-  profiles are Tasks 2–3; dry-run, approval, fingerprint and idempotence are
-  Tasks 2, 4 and 5; API and UI are Tasks 5–6; security is Task 5; acceptance is
-  Task 7; SaaS-compatible ports and workspace scope are Tasks 2–3.
+- **Spec coverage:** contract/bridge gate and canonical Python WPM ownership are
+  Task 1; corpus immutability and projection profiles are Tasks 2–3; dry-run,
+  approval, fingerprint and idempotence are Tasks 2, 4 and 5; API and UI are
+  Tasks 5–6; security and nonce bootstrap are Task 5; browser module isolation
+  is Task 6; acceptance and skill coexistence are Task 7; SaaS-compatible ports
+  and workspace scope are Tasks 2–3.
 - **Placeholder scan:** the plan contains no unresolved marker or invented
   provider field. The only source-dependent choice is intentionally confined to
   Task 1 and is recorded before any implementation task begins.
