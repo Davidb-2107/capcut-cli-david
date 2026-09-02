@@ -14,6 +14,7 @@ import { transitionRun } from "./domain.js";
 import { fingerprintRequest } from "./fingerprint.js";
 import type { LocalStore } from "./ports.js";
 import { ConflictError } from "./ports.js";
+import { redactSensitive } from "./redaction.js";
 
 export interface Clock {
   now(): Date;
@@ -107,11 +108,14 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function safeError(error: unknown): { code: string; message: string } {
+type ErrorRedactor = (value: unknown) => unknown;
+
+function safeError(
+  error: unknown,
+  redact: ErrorRedactor = (value) => redactSensitive(value),
+): { code: string; message: string } {
   const candidate = isRecord(error) ? error : {};
-  const message = String(candidate.message ?? errorMessage(error))
-    .replace(/ELEVENLABS_API_KEY\s*=\s*[^\s,;]+/gi, "ELEVENLABS_API_KEY=[REDACTED]")
-    .replace(/(api[_-]?key|secret|token|password)\s*[:=]\s*[^\s,;]+/gi, "$1=[REDACTED]");
+  const message = String(redact(candidate.message ?? errorMessage(error)));
   const code =
     typeof candidate.code === "string"
       ? candidate.code
@@ -204,7 +208,7 @@ export class CalibrationApplication {
   private readonly clock: Clock;
   private readonly contractDigestOverride?: string;
   private readonly coreDigestOverride?: string;
-  private readonly knownRuns = new Map<string, CalibrationRun>();
+  private readonly recoveryPromises = new Map<string, Promise<void>>();
   private readonly sessionNonce: string;
 
   constructor(options: CalibrationApplicationOptions) {
@@ -215,6 +219,12 @@ export class CalibrationApplication {
     this.clock = options.clock ?? systemClock;
     this.contractDigestOverride = options.contractDigest;
     this.coreDigestOverride = options.coreDigest;
+    if (typeof options.repositories.runs.list !== "function") {
+      throw new TypeError("runs.list is required for persistent calibration state");
+    }
+    if (typeof options.repositories.runs.recoverRunning !== "function") {
+      throw new TypeError("runs.recoverRunning is required for persistent calibration state");
+    }
     const key = this.repositories as unknown as object;
     const existingNonce = sessionNonces.get(key);
     this.sessionNonce = existingNonce ?? randomUUID();
@@ -244,6 +254,29 @@ export class CalibrationApplication {
     if (!status.configured) throw new UnavailableError("ElevenLabs API key is not configured");
   }
 
+  private async ensureRecovered(workspaceId: string): Promise<void> {
+    const existing = this.recoveryPromises.get(workspaceId);
+    if (existing) return existing;
+    const recovery = this.recoverOrphanedRuns(workspaceId);
+    this.recoveryPromises.set(workspaceId, recovery);
+    return recovery;
+  }
+
+  private async recoverOrphanedRuns(workspaceId: string): Promise<void> {
+    const runs = await this.repositories.runs.list(workspaceId);
+    const recoveredAt = nowIso(this.clock);
+    await Promise.all(
+      runs
+        .filter((run) => run.status === "running")
+        .map((run) => this.repositories.runs.recoverRunning(run.id, recoveredAt)),
+    );
+  }
+
+  private redactError(error: unknown): { code: string; message: string } {
+    const redact = this.credentials?.redact;
+    return safeError(error, redact ? (value) => redact(value) : undefined);
+  }
+
   private async currentDigests(schema?: unknown): Promise<{ contractDigest: string; coreDigest: string }> {
     const currentSchema = schema ?? (await this.bridge.getSchema());
     const digest = schemaDigest(currentSchema);
@@ -258,9 +291,9 @@ export class CalibrationApplication {
   }
 
   private async getRunOrThrow(runId: string): Promise<CalibrationRun> {
+    await this.ensureRecovered(DEFAULT_WORKSPACE);
     const run = await this.repositories.runs.get(runId);
     if (!run) throw new NotFoundError(`calibration run not found: ${runId}`);
-    this.knownRuns.set(run.id, clone(run));
     return run;
   }
 
@@ -276,7 +309,7 @@ export class CalibrationApplication {
       metrics: isRecord(result.metrics) ? clone(result.metrics) : {},
       artifacts: Array.isArray(result.artifacts) ? [...result.artifacts] : [],
       providerResult: result.raw === undefined ? null : clone(result.raw),
-      error: result.error ? safeError(result.error) : null,
+      error: result.error ? this.redactError(result.error) : null,
       createdAt: nowIso(this.clock),
     };
     const bytes = Buffer.from(`${JSON.stringify(report)}\n`, "utf8");
@@ -294,15 +327,12 @@ export class CalibrationApplication {
   }
 
   async getBootstrap(workspaceId = DEFAULT_WORKSPACE): Promise<BootstrapView> {
+    await this.ensureRecovered(workspaceId);
     const [config, activeCorpus, profiles, recentRuns] = await Promise.all([
       this.credentials ? this.credentials.status() : Promise.resolve({ configured: true }),
       this.repositories.corpus.getActiveVersion(workspaceId),
       this.repositories.profiles.list(workspaceId),
-      (async () => {
-        const list = this.repositories.runs.list;
-        if (list) return list.call(this.repositories.runs, workspaceId);
-        return [...this.knownRuns.values()];
-      })(),
+      this.repositories.runs.list(workspaceId),
     ]);
     return {
       sessionNonce: this.sessionNonce,
@@ -341,6 +371,7 @@ export class CalibrationApplication {
   }
 
   async prepareDryRun(input: CalibrationInput): Promise<CalibrationRun> {
+    await this.ensureRecovered(input.workspaceId);
     await this.assertConfigured();
     const activeCorpus = await this.repositories.corpus.getActiveVersion(input.workspaceId);
     if (!activeCorpus) throw new ConflictError("active published corpus is required");
@@ -390,7 +421,6 @@ export class CalibrationApplication {
     const ready = transitionRun(run, { type: "dry_run_succeeded" });
     ready.updatedAt = timestamp;
     await this.repositories.runs.create(ready);
-    this.knownRuns.set(ready.id, clone(ready));
     return ready;
   }
 
@@ -405,7 +435,6 @@ export class CalibrationApplication {
       if (approved.approval) approved.approval.approvedAt = nowIso(this.clock);
       approved.updatedAt = nowIso(this.clock);
       await this.repositories.runs.save(approved);
-      this.knownRuns.set(approved.id, clone(approved));
       return approved;
     });
   }
@@ -435,7 +464,6 @@ export class CalibrationApplication {
             return fallback;
           })();
       if (!this.repositories.runs.consumeApproval) await this.repositories.runs.save(running);
-      this.knownRuns.set(running.id, clone(running));
 
       let result: ExecutionResult;
       try {
@@ -445,7 +473,7 @@ export class CalibrationApplication {
           snapshot: clone(running.request),
         });
       } catch (error) {
-        const failure = safeError(error);
+        const failure = this.redactError(error);
         result = isExecutionUnknown(error)
           ? {
               status: "unknown",
@@ -461,7 +489,6 @@ export class CalibrationApplication {
       terminal.reportId = reportId;
       terminal.updatedAt = nowIso(this.clock);
       await this.repositories.runs.save(terminal);
-      this.knownRuns.set(terminal.id, clone(terminal));
       return terminal;
     });
   }
@@ -478,10 +505,12 @@ export class CalibrationApplication {
   }
 
   async getRun(runId: string): Promise<CalibrationRun | null> {
+    await this.ensureRecovered(DEFAULT_WORKSPACE);
     return this.repositories.runs.get(runId);
   }
 
   async getReport(runId: string): Promise<CalibrationReport | null> {
+    await this.ensureRecovered(DEFAULT_WORKSPACE);
     const run = await this.repositories.runs.get(runId);
     if (!run?.reportId) return null;
     return this.loadReport(run);

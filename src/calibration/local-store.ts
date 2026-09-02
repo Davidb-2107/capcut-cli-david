@@ -280,6 +280,22 @@ function makeRunRepository(dataDir: string, lockTimeoutMs: number): CalibrationR
       const names = (await readdir(root)).filter((name) => name.endsWith(".json")).sort();
       return Promise.all(names.map((name) => readJson<CalibrationRun>(join(root, name))));
     },
+    async recoverRunning(runId, recoveredAt) {
+      const path = pathFor(runId);
+      return withFileLock(
+        path,
+        async () => {
+          if (!(await exists(path))) return null;
+          const run = await readJson<CalibrationRun>(path);
+          if (run.status !== "running") return run;
+          const recovered = transitionRun(run, { type: "execution_unknown" });
+          recovered.updatedAt = recoveredAt;
+          await writeJson(path, recovered);
+          return recovered;
+        },
+        lockTimeoutMs,
+      );
+    },
     async consumeApproval(runId, consumedAt) {
       const path = pathFor(runId);
       return withFileLock(path, async () => {

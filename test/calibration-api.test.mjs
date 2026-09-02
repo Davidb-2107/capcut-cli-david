@@ -1,8 +1,12 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { test } from "node:test";
-import { deepStrictEqual, rejects, strictEqual, match } from "node:assert";
+import { deepStrictEqual, rejects, strictEqual, match, throws } from "node:assert";
 
 import { createCalibrationApplication } from "../dist/calibration/application.js";
 import { startCalibrationUi } from "../dist/calibration/http-server.js";
+import { createLocalStore } from "../dist/calibration/ports.js";
 
 const input = {
   workspaceId: "local-default",
@@ -62,6 +66,14 @@ export function memoryRepositories() {
       async get(id) { return runs.has(id) ? structuredClone(runs.get(id)) : null; },
       async save(run) { runs.set(run.id, structuredClone(run)); },
       async list() { return [...runs.values()].map((run) => structuredClone(run)); },
+      async recoverRunning(runId, recoveredAt) {
+        const run = runs.get(runId);
+        if (!run) return null;
+        if (run.status !== "running") return structuredClone(run);
+        const recovered = { ...run, status: "execution_unknown", updatedAt: recoveredAt };
+        runs.set(runId, structuredClone(recovered));
+        return structuredClone(recovered);
+      },
     },
     profiles: {
       async list() { return profiles.map((profile) => structuredClone(profile)); },
@@ -141,6 +153,107 @@ async function publishCorpus(repositories) {
   );
   return repositories.corpus.publishDraft("local-default", saved.revision);
 }
+
+test("the application requires a persistent run listing repository", () => {
+  const repositories = memoryRepositories();
+  delete repositories.runs.list;
+  throws(
+    () => makeApplication({ repositories, bridge: fakeBridge(), canonical: fakeCanonicalProfilePort() }),
+    /runs\.list is required/,
+  );
+});
+
+test("bootstrap reloads recent runs from persistent storage after an application restart", async () => {
+  const dataDir = mkdtempSync(join(tmpdir(), "calibration-restart-"));
+  try {
+    const repositories = createLocalStore(dataDir);
+    await publishCorpus(repositories);
+    const run = await makeApplication({
+      repositories,
+      bridge: fakeBridge(),
+      canonical: fakeCanonicalProfilePort(),
+    }).prepareDryRun(input);
+
+    const restarted = makeApplication({
+      repositories: createLocalStore(dataDir),
+      bridge: fakeBridge(),
+      canonical: fakeCanonicalProfilePort(),
+    });
+    const bootstrap = await restarted.getBootstrap();
+    strictEqual(bootstrap.recentRuns.some((candidate) => candidate.id === run.id), true);
+  } finally {
+    rmSync(dataDir, { recursive: true, force: true });
+  }
+});
+
+test("bootstrap recovers persisted running runs as execution_unknown", async () => {
+  const repositories = memoryRepositories();
+  await publishCorpus(repositories);
+  const app = makeApplication({ repositories, bridge: fakeBridge(), canonical: fakeCanonicalProfilePort() });
+  const run = await app.prepareDryRun(input);
+  const approved = await app.approve(run.id, { requestDigest: run.requestDigest });
+  await repositories.runs.save({
+    ...approved,
+    status: "running",
+    approval: { ...approved.approval, consumedAt: "2026-09-02T10:00:00.000Z" },
+  });
+
+  const restarted = makeApplication({ repositories, bridge: fakeBridge(), canonical: fakeCanonicalProfilePort() });
+  const bootstrap = await restarted.getBootstrap();
+  strictEqual(bootstrap.recentRuns.find((candidate) => candidate.id === run.id)?.status, "execution_unknown");
+  strictEqual((await repositories.runs.get(run.id)).status, "execution_unknown");
+});
+
+test("persisted error reports redact the exact provider credential", async () => {
+  const repositories = memoryRepositories();
+  await publishCorpus(repositories);
+  const secret = "sk-live-calibration-secret";
+  const credentials = {
+    async status() { return { configured: true }; },
+    async forRun() { return { provider: "elevenlabs", secret }; },
+    redact(value) { return typeof value === "string" ? value.split(secret).join("[REDACTED]") : value; },
+  };
+  const app = makeApplication({
+    repositories,
+    bridge: fakeBridge({ executeError: `provider failed with ${secret}` }),
+    canonical: fakeCanonicalProfilePort(),
+    credentials,
+  });
+  const run = await app.prepareDryRun(input);
+  await app.approve(run.id, { requestDigest: run.requestDigest });
+  await app.execute(run.id);
+  const report = await app.getReport(run.id);
+  strictEqual(JSON.stringify(report).includes(secret), false);
+  strictEqual(report.error.message.includes("[REDACTED]"), true);
+});
+
+test("HTTP responses redact sensitive values inside JSON-shaped strings", async (t) => {
+  const repositories = memoryRepositories();
+  await publishCorpus(repositories);
+  const secret = "quoted-provider-secret";
+  const app = makeApplication({
+    repositories,
+    bridge: fakeBridge({
+      execution: {
+        status: "succeeded",
+        metrics: {},
+        artifacts: [],
+        raw: { details: `{"api_key":"${secret}"}` },
+      },
+    }),
+    canonical: fakeCanonicalProfilePort(),
+  });
+  const run = await app.prepareDryRun(input);
+  await app.approve(run.id, { requestDigest: run.requestDigest });
+  await app.execute(run.id);
+  const ui = await startCalibrationUi({ application: app, host: "127.0.0.1", port: 0 });
+  t.after(async () => ui.close());
+
+  const response = await fetch(`${ui.url}/api/v1/calibration-runs/${run.id}`);
+  const body = await response.json();
+  strictEqual(JSON.stringify(body).includes(secret), false);
+  strictEqual(JSON.stringify(body).includes("[REDACTED]"), true);
+});
 
 test("prepareDryRun refuses calibration without an active published corpus", async () => {
   const bridge = fakeBridge();

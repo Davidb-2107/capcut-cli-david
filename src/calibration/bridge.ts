@@ -9,6 +9,7 @@ export interface ConfigStatus {
 export interface CredentialProvider {
   status(): Promise<ConfigStatus>;
   forRun(): Promise<{ provider: string; secret: string }>;
+  redact?(value: unknown): unknown;
 }
 export interface DryRunResult {
   accepted: boolean;

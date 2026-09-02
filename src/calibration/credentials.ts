@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 
 import type { ConfigStatus, CredentialProvider } from "./bridge.js";
+import { redactSensitive } from "./redaction.js";
 
 const KEY_NAME = "ELEVENLABS_API_KEY";
 
@@ -89,6 +90,10 @@ export function createCredentialProvider(options: CredentialOptions = {}): Crede
       const secret = value();
       if (!secret) throw new Error("ElevenLabs API key is not configured");
       return { provider: "elevenlabs", secret };
+    },
+    redact(input: unknown) {
+      const secret = value();
+      return redactSensitive(input, secret ? [secret] : []);
     },
   };
 }

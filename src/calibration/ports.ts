@@ -12,7 +12,8 @@ export interface CalibrationRunRepository {
   create(run: CalibrationRun): Promise<void>;
   get(id: string): Promise<CalibrationRun | null>;
   save(run: CalibrationRun): Promise<void>;
-  list?(workspaceId: string): Promise<CalibrationRun[]>;
+  list(workspaceId: string): Promise<CalibrationRun[]>;
+  recoverRunning(runId: string, recoveredAt: string): Promise<CalibrationRun | null>;
   consumeApproval?(runId: string, consumedAt: string): Promise<CalibrationRun>;
 }
 

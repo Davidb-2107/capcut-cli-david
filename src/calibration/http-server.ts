@@ -9,6 +9,7 @@ import {
   UnavailableError,
 } from "./application.js";
 import { ConflictError } from "./ports.js";
+import { redactSensitive } from "./redaction.js";
 
 const DEFAULT_WORKSPACE = "local-default";
 const MAX_BODY_BYTES = 2 * 1024 * 1024;
@@ -46,24 +47,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function stringHeader(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
-}
-
-function redacted(value: unknown): unknown {
-  if (typeof value === "string") {
-    return value
-      .replace(/ELEVENLABS_API_KEY\s*=\s*[^\s,;]+/gi, "ELEVENLABS_API_KEY=[REDACTED]")
-      .replace(/(api[_-]?key|secret|token|password)\s*[:=]\s*[^\s,;]+/gi, "$1=[REDACTED]");
-  }
-  if (Array.isArray(value)) return value.map(redacted);
-  if (isRecord(value)) {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [
-        /api[_-]?key|secret|token|password|authorization/i.test(key) ? key : key,
-        /api[_-]?key|secret|token|password|authorization/i.test(key) ? "[REDACTED]" : redacted(item),
-      ]),
-    );
-  }
-  return value;
 }
 
 function errorPayload(error: unknown): { code: string; message: string } {
@@ -125,7 +108,7 @@ function statusForError(error: unknown): number {
 }
 
 function sendJson(response: ServerResponse, status: number, body: unknown, headers: Record<string, string> = {}): void {
-  const bytes = Buffer.from(JSON.stringify(redacted(body)), "utf8");
+  const bytes = Buffer.from(JSON.stringify(redactSensitive(body)), "utf8");
   response.writeHead(status, {
     "content-type": "application/json; charset=utf-8",
     "cache-control": "no-store",
