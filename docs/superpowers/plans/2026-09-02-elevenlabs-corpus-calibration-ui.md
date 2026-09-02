@@ -78,7 +78,7 @@ Tests created by the plan:
 
 **Interfaces:**
 - Consumes: the actual Python source, its package metadata, its MCP definitions and its existing `.env` loading convention.
-- Produces: a committed inventory containing the source revision, entrypoint, transport, framing, schema, defaults, dry-run semantics, result shape, error mapping, timeout behavior and idempotency guarantee. Tasks 2–6 must use this inventory and must not invent a provider field.
+- Produces: a committed inventory containing the source revision, entrypoint, transport, framing, schema, defaults, dry-run semantics, result shape, error mapping, timeout behavior and idempotency guarantee. Tasks 2–7 must use this inventory and must not invent a provider field.
 
 - [ ] **Step 1: Locate and fingerprint the source checkout**
 

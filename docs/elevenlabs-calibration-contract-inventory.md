@@ -25,6 +25,19 @@ contract.
 The source checkout was clean when its revision was read. The project
 worktree does not contain a provider implementation and must not copy one.
 
+The claim-to-source index used for this inventory is:
+
+| Claim area | Evidence location / symbol |
+| --- | --- |
+| MCP purpose and environment convention | `Shared/voice-calibration/README.md`; `calibrate_battery.py::_load_env_file`, `discover_env` |
+| Input and result models | `core/contracts.py`; `VoiceSettingsModel`, `TextSource`, `CalibrationRequest`, `CalibrationResult` |
+| Tool shape and error mapping | `mcp_server/server.py`; `calibrate_voice`, `_reason_for`, `_harden_input_schema`, `main` |
+| Planning, provider calls and dry-run boundary | `core/calibration.py`; `run_calibration`, `CalibrationDeps` and request/response helpers |
+| Model limits and feature support | `core/capabilities.py`; `MODEL_CAPABILITIES` |
+| Canonical WPM persistence and verification | `voice_wpm.py`; `WPM_PATH`, `RUNS_LOG_PATH`, `log_run`, `get_profile`, `get_wpm` |
+| Stdio framing and process environment | installed `mcp==1.29.0` module `mcp/client/stdio.py`; `stdio_client`, `stdout_reader`, `stdin_writer` |
+| End-to-end MCP behavior | `test_mcp_server.py`; entrypoint, schema and tool-call tests |
+
 ## Package and MCP entrypoint
 
 `pyproject.toml` declares these runtime dependencies: `pydantic>=2,<3`,
@@ -61,13 +74,24 @@ therefore spawn the installed command, not a path relative to the vault and not
 the deprecated CLI adapter.
 
 The selected transport is **MCP JSON-RPC over the child process stdin/stdout
-stdio streams**, with the SDK owning message framing. The bridge must implement
-the MCP client lifecycle compatible with `mcp==1.29.0`: start the process,
-perform the `initialize` handshake and initialized notification, call the
-advertised `calibrate_voice` tool with a flat arguments object, read the
-in-band result, then close/terminate the process. stdout is protocol data;
-stderr is diagnostic data and must be captured separately. A non-zero exit,
-malformed protocol response or closed stdout is a transport failure.
+stdio streams**. The exact framing was checked in the installed `mcp==1.29.0`
+`mcp/client/stdio.py`: UTF-8 JSON-RPC objects are written one per line with a
+trailing `\n`; the reader accumulates chunks, splits on `\n`, and validates each
+complete line as a JSON-RPC message. This is SDK-owned framing on the Python
+side, but it is the wire contract the Node adapter must reproduce or delegate
+to a compatible MCP client.
+
+The bridge must implement the MCP client lifecycle compatible with
+`mcp==1.29.0`: resolve the configured `voice-calibration-mcp` command through
+the child process PATH, start it, perform the `initialize` handshake and
+initialized notification, call the advertised `calibrate_voice` tool with a
+flat arguments object, correlate the response by JSON-RPC request id, read the
+in-band result, then close stdin and terminate the process if needed. stdout
+is protocol data; stderr is diagnostic data and must be captured separately. A
+non-zero exit, malformed protocol response or closed stdout is a transport
+failure. The Python SDK's safe inherited environment is a baseline; the local
+bridge must add the server-side `.env` values explicitly and never put them in
+arguments or browser responses.
 
 The source tests verify that schema-invalid tool calls return an in-band
 `CallToolResult(isError=True)` under this SDK, rather than a raw JSON-RPC
@@ -106,7 +130,7 @@ truth, `core.calibration.run_calibration(request)`. The exact input fields are:
 | `dry_run` | no | boolean | Defaults to `false` |
 | `corpus_key` | no | string or null | Defaults to `voice`; this is the `voice_wpm.json` alias, not a local corpus-version ID |
 | `voice_id` | no | string or null | If set, skips ElevenLabs name resolution |
-| `postproc` | no in schema, required by this UI | `"cut"` or `"trim"` | Core model default is `"cut"`; the UI always sends the chosen value explicitly |
+| `postproc` | no (optional schema field) | `"cut"` or `"trim"` | `CalibrationRequest` and the MCP function both default it to `"cut"`; the UI always sends the chosen value explicitly |
 
 `voice_settings` has these exact fields: `stability` and `similarity_boost` are
 required floats in `[0, 1]`; `style` defaults to `0.0` in `[0, 1]`;
@@ -119,6 +143,12 @@ required floats in `[0, 1]`; `style` defaults to `0.0` in `[0, 1]`;
 - `{"kind":"default_battery"}` is valid only with `mode="battery"`;
 - `{"kind":"episode_file","path":"..."}` is valid only with precision;
 - `{"kind":"inline","text":"..."}` is valid only with precision.
+
+`runs` defaults to `null` at the Pydantic model boundary. That default is not a
+usable precision request: the precision validator requires an explicit integer
+from 3 through 10. Battery mode uses the fixed reference battery and rejects a
+non-null override. The `text_source` validator forbids unknown fields and
+enforces the kind-specific path/text combinations listed above.
 
 The target model limits are 5,000 characters per request for `eleven_v3` and
 10,000 for `eleven_multilingual_v2`. Bracket tags are supported by v3 and
@@ -138,6 +168,37 @@ inside the adapter map as follows:
 | other `CalibrationDomainError` | `{ "status":"error", "reason":"domain_error", "details":"..." }` |
 | Pydantic `ValidationError` | `{ "status":"error", "reason":"invalid_request", "details":"..." }` |
 | core/runtime/provider failure | `CalibrationResult` with `status="error"` or `"partial"` and an `error` string |
+
+A credential-free precision dry-run request accepted by the actual MCP schema
+has this shape:
+
+```json
+{
+  "voice": "Alice",
+  "model_id": "eleven_v3",
+  "voice_settings": {
+    "stability": 0.3,
+    "similarity_boost": 0.85,
+    "style": 0.3,
+    "use_speaker_boost": true
+  },
+  "text_source": {
+    "kind": "inline",
+    "text": "Bonjour le monde.\n\nCeci est le corpus standard."
+  },
+  "mode": "precision",
+  "language": "fr",
+  "runs": 3,
+  "dry_run": true,
+  "corpus_key": "Alice",
+  "voice_id": null,
+  "postproc": "cut"
+}
+```
+
+The UI must generate the inline text from the active corpus mapping above; the
+literal text here is only a contract fixture. `voice_id` may be omitted when
+the display name should be resolved by the core.
 
 ## Standard corpus mapping for this MVP
 
