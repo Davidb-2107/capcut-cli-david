@@ -80,9 +80,23 @@ les services :
 Le backend local écoute uniquement sur `127.0.0.1` par défaut. Le déploiement
 SaaS ajoute l’authentification et le contrôle d’accès à l’entrée de la même API.
 
+### Gate de contrat avant implémentation
+
+Avant de construire l’API ou le formulaire, une tâche bloquante doit identifier
+la source réelle de `run_calibration` et des contrats MCP : dépôt ou package,
+révision/commit, méthode d’import, schéma d’entrée, champs obligatoires,
+valeurs par défaut, sémantique du dry-run, format du résultat, erreurs et
+garantie d’idempotence du runner/provider. Cet inventaire doit être enregistré
+comme artefact de référence du projet. Le plan MVP ne peut pas franchir cette
+gate avec des types provider-specific inventés.
+
 ## Modèle métier
 
 ### Corpus de travail et versions
+
+Chaque ressource persistée porte un `workspace_id`. En local, il désigne un
+workspace local unique ; en SaaS, il devient la portée d’autorisation et de
+propriété du corpus, des runs, des profils et des artefacts.
 
 Le corpus de travail est modifiable. La publication crée un snapshot immuable
 contenant les textes, leur identifiant stable, leur ordre et un checksum du
@@ -111,11 +125,18 @@ Un run conserve au minimum :
 Les états sont :
 
 ```text
-draft → dry_run_ready → approved → running → succeeded | failed
+draft → dry_run_ready → approved → running → succeeded | failed | execution_unknown
 ```
 
-Un retry d’un run existant réutilise son identifiant et sa clé d’idempotence.
-Créer un nouveau run est une action explicite et produit une nouvelle clé.
+`execution_unknown` signifie que la requête a pu être acceptée par le provider
+mais que la réponse n’est pas connue, par exemple après un timeout. Cet état
+interdit tout retry automatique. Une reprise exige la procédure de
+réconciliation prévue par le runner/provider ; si aucune garantie d’idempotence
+externe n’existe, elle nécessite une décision manuelle explicite.
+
+Un retry autorisé d’un run existant réutilise son identifiant et sa clé
+d’idempotence. Créer un nouveau run est une action explicite et produit une
+nouvelle clé.
 
 ### VoiceProfile
 
@@ -135,21 +156,25 @@ consultables ; la publication change explicitement le profil courant.
 5. Le backend construit la requête complète et invoque le mécanisme de dry-run
    prévu par le cœur/contrat. L’UI ne simule jamais le dry-run.
 6. Le backend canonise la requête et calcule une empreinte SHA-256 comprenant la
-   version du contrat, la version du corpus, la voix, tous les paramètres et
-   `postproc`.
+   version et le digest du contrat, la version et le digest du cœur, la version
+   du corpus, la voix, tous les paramètres et `postproc`.
 7. L’UI montre la requête finale, les valeurs par défaut appliquées, la version
    du corpus, l’empreinte et les avertissements. L’utilisateur approuve.
 8. L’exécution refuse toute approbation dont l’empreinte ne correspond plus à
-   la requête, au corpus ou au contrat courant.
+   la requête, au corpus, au contrat ou au cœur courant. L’approbation possède
+   une expiration et est consommée de façon atomique avec le passage à
+   `running` ; elle ne peut servir qu’à un run.
 9. Le backend exécute le run avec le même identifiant d’idempotence, conserve
    le rapport et n’écrit pas de profil automatiquement.
 10. Après succès, l’utilisateur clique explicitement sur « Publier comme
     profil ». Le profil référence le rapport source et son WPM.
 
 La canonisation doit être déterministe : clés JSON ordonnées, représentation
-stable des valeurs et absence de champs non significatifs. Le format exact est
-une décision d’implémentation à aligner sur les utilitaires déjà présents dans
-le projet, pas une règle recodée dans le frontend.
+stable des valeurs et absence de champs non significatifs. Le snapshot approuvé
+est conservé et c’est lui qui est exécuté ; le backend ne reconstruit pas une
+nouvelle requête depuis l’état courant au moment de l’exécution. Le format exact
+est une décision d’implémentation à aligner sur les utilitaires déjà présents
+dans le projet, pas une règle recodée dans le frontend.
 
 ## API applicative
 
@@ -160,6 +185,8 @@ implémentation.
 ```text
 GET  /api/v1/bootstrap
 GET  /api/v1/corpus
+GET  /api/v1/corpus/draft
+PUT  /api/v1/corpus/draft
 POST /api/v1/corpus/versions
 GET  /api/v1/calibration/schema
 POST /api/v1/calibration-runs/dry-run
@@ -184,8 +211,10 @@ et les derniers runs. Les secrets sont toujours masqués.
 ### Corpus
 
 Affiche les textes standards avec identifiant stable et ordre. L’utilisateur
-peut modifier le brouillon, publier une version et consulter l’historique. Les
-versions publiées sont en lecture seule.
+peut modifier et enregistrer le brouillon, publier une version et consulter
+l’historique. L’enregistrement utilise une révision ou un `ETag` pour détecter
+un conflit. La publication crée atomiquement le snapshot ; les versions
+publiées sont en lecture seule.
 
 ### Préparation
 
@@ -209,8 +238,9 @@ profil est séparé.
 
 - Une clé absente, invalide ou inaccessible n’entraîne aucun appel réel.
 - Une erreur de schéma ou de validation bloque le dry-run.
-- Un timeout ne déclenche pas de retry aveugle ; le run reste vérifiable et
-  pourra être repris avec sa clé d’idempotence si le cœur le permet.
+- Un timeout après émission de la requête passe le run à
+  `execution_unknown`. Il ne déclenche pas de retry aveugle ; seule la
+  réconciliation prévue par le runner/provider peut autoriser une reprise.
 - Un résultat incomplet ou sans WPM laisse le run consultable mais interdit la
   publication du profil.
 - Une modification du corpus ou de la requête invalide toute approbation
@@ -220,19 +250,25 @@ profil est séparé.
 
 Le rapport et les logs ne contiennent jamais `ELEVENLABS_API_KEY`. Les erreurs
 peuvent contenir les identifiants de run et de voix, mais pas de credential.
+L’UI et l’API sont servies en same-origin en local. Le serveur refuse les
+origines CORS larges et exige un nonce de session sur les mutations afin qu’une
+page externe ne puisse pas déclencher un run local par simple requête.
 
 ## Tests et critères d’acceptation
 
 Les tests doivent couvrir :
 
 - publication et immutabilité des versions de corpus ;
+- lecture et enregistrement concurrents du brouillon avec révision/`ETag` ;
 - rejet d’une calibration sur un brouillon ;
 - génération du formulaire depuis le schéma MCP ;
 - résolution et affichage des paramètres complets ;
 - calcul d’empreinte déterministe ;
 - invalidation après changement de corpus, paramètre, `postproc` ou contrat ;
 - transitions d’état valides et refus des transitions impossibles ;
-- idempotence des retries ;
+- idempotence des retries et blocage de `execution_unknown` sans réconciliation ;
+- approbation expirée, consommée une seule fois et refusée après divergence de
+  digest ;
 - conservation d’un rapport sans publication automatique ;
 - publication explicite d’un profil avec WPM et run source ;
 - absence de clé dans les réponses HTTP, logs et artefacts ;
@@ -250,15 +286,23 @@ local et SaaS. La migration remplace les adaptateurs de credentials et de
 stockage, puis ajoute authentification, autorisation, quotas, facturation et
 jobs asynchrones autour du même service d’application.
 
+Les entités portent déjà un `workspace_id`. Le contexte d’exécution prévoit
+également un scope de credential et un sujet de facturation, absents ou fixes
+en local mais renseignés en SaaS. Les événements de facturation seront liés au
+run et au résultat confirmé par le runner, jamais à un clic ou à un retry du
+navigateur.
+
 Le frontend ne doit contenir aucune hypothèse de chemin local, de système de
 fichiers, de `.env` ou d’exécution synchrone. Le backend local ne doit pas
 exposer de contrat provider-specific au navigateur.
 
 ## Précondition avant implémentation
 
-Le dépôt inspecté ne contient pas actuellement `run_calibration` ni les
-contrats MCP ElevenLabs. La première tâche d’implémentation devra donc charger
-la source réelle, inventorier ses paramètres, ses valeurs par défaut, son
-mécanisme de dry-run et son format de résultat, puis faire dériver les types
-du backend de cette source. Aucun nom de champ provider-specific ne doit être
-figé avant cette vérification.
+Le dépôt inspecté ne contient pas actuellement `run_calibration`, les contrats
+MCP ElevenLabs ni un backend HTTP ; `src/commands/ui.ts` ouvre aujourd’hui un
+HTML statique. La première tâche d’implémentation est donc la gate de contrat :
+charger la source réelle, relever son dépôt/package, sa révision, ses
+paramètres, ses valeurs par défaut, son mécanisme de dry-run, son format de
+résultat et sa garantie d’idempotence. Les types du backend et les routes de
+calibration ne sont autorisés qu’après cet inventaire. Aucun nom de champ
+provider-specific ne doit être figé avant cette vérification.
