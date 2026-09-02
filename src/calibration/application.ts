@@ -1,0 +1,505 @@
+import { randomUUID } from "node:crypto";
+
+import type {
+  CalibrationBridge,
+  CanonicalProfilePort,
+  CredentialProvider,
+  ExecutionResult,
+} from "./bridge.js";
+import type {
+  CalibrationReport,
+  CalibrationRun,
+  CorpusDraft,
+  CorpusItem,
+  CorpusVersion,
+  ResolvedCalibrationRequest,
+  VoiceProfile,
+} from "./domain.js";
+import { transitionRun } from "./domain.js";
+import { fingerprintRequest } from "./fingerprint.js";
+import type { LocalStore } from "./ports.js";
+import { ConflictError } from "./ports.js";
+
+export interface Clock {
+  now(): Date;
+}
+
+export interface CalibrationInput {
+  workspaceId: string;
+  voiceRef: string;
+  params: Record<string, unknown>;
+  postproc: unknown;
+}
+
+export interface BootstrapView {
+  sessionNonce: string;
+  config: { configured: boolean };
+  activeCorpus: CorpusVersion | null;
+  profiles: VoiceProfile[];
+  recentRuns: CalibrationRun[];
+}
+
+export interface CorpusView {
+  draft: CorpusDraft;
+  activeVersion: CorpusVersion | null;
+  versions: CorpusVersion[];
+}
+
+export interface CalibrationApplicationOptions {
+  repositories: LocalStore;
+  bridge: CalibrationBridge;
+  canonical: CanonicalProfilePort;
+  credentials?: CredentialProvider;
+  clock?: Clock;
+  contractDigest?: string;
+  coreDigest?: string;
+}
+
+export class ContractValidationError extends Error {
+  readonly code = "contract_validation";
+  constructor(message: string) {
+    super(message);
+    this.name = "ContractValidationError";
+  }
+}
+
+export class UnavailableError extends Error {
+  readonly code = "unavailable";
+  constructor(message: string) {
+    super(message);
+    this.name = "UnavailableError";
+  }
+}
+
+export class NotFoundError extends Error {
+  readonly code = "not_found";
+  constructor(message: string) {
+    super(message);
+    this.name = "NotFoundError";
+  }
+}
+
+export const systemClock: Clock = {
+  now: () => new Date(),
+};
+
+const DEFAULT_WORKSPACE = "local-default";
+const APPROVAL_TTL_MS = 15 * 60 * 1000;
+const REPORT_NAME = "report.json";
+const sessionNonces = new WeakMap<object, string>();
+const runLocks = new WeakMap<object, Map<string, Promise<unknown>>>();
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function clone<T>(value: T): T {
+  return structuredClone(value);
+}
+
+function nowIso(clock: Clock): string {
+  return clock.now().toISOString();
+}
+
+function isUnavailableMessage(message: string): boolean {
+  return /not configured|credential|canonical_wpm_unavailable|mcp process|provider unavailable|core unavailable/i.test(message);
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function safeError(error: unknown): { code: string; message: string } {
+  const message = errorMessage(error)
+    .replace(/ELEVENLABS_API_KEY\s*=\s*[^\s,;]+/gi, "ELEVENLABS_API_KEY=[REDACTED]")
+    .replace(/(api[_-]?key|secret|token|password)\s*[:=]\s*[^\s,;]+/gi, "$1=[REDACTED]");
+  const code = error instanceof Error && "code" in error && typeof error.code === "string" ? error.code : "calibration_failed";
+  return { code, message };
+}
+
+function applySchemaDefaults(value: Record<string, unknown>, schema: unknown): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...value };
+  if (!isRecord(schema)) return result;
+  const properties = schema.properties;
+  if (!isRecord(properties)) return result;
+  for (const [key, propertySchema] of Object.entries(properties)) {
+    if (result[key] === undefined && isRecord(propertySchema) && propertySchema.default !== undefined) {
+      result[key] = clone(propertySchema.default);
+    }
+    if (isRecord(result[key]) && isRecord(propertySchema)) {
+      result[key] = applySchemaDefaults(result[key] as Record<string, unknown>, propertySchema);
+    }
+  }
+  return result;
+}
+
+function schemaDigest(schema: unknown): string {
+  try {
+    return fingerprintRequest({
+      contractDigest: "schema",
+      coreDigest: "schema",
+      corpusVersionId: "schema",
+      corpusDigest: "schema",
+      voiceRef: "schema",
+      params: { schema },
+      postproc: "schema",
+    });
+  } catch {
+    return "schema-unavailable";
+  }
+}
+
+function explicitDigest(schema: unknown, key: "contractDigest" | "coreDigest"): string | undefined {
+  if (!isRecord(schema)) return undefined;
+  const value = schema[key] ?? schema[`x-${key}`];
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function corpusText(items: readonly CorpusItem[]): string {
+  return [...items]
+    .sort((left, right) => left.order - right.order || left.id.localeCompare(right.id))
+    .map((item) => item.text)
+    .join("\n\n");
+}
+
+function recentRunSort(left: CalibrationRun, right: CalibrationRun): number {
+  return right.updatedAt.localeCompare(left.updatedAt) || right.createdAt.localeCompare(left.createdAt);
+}
+
+function wpmFromReport(report: CalibrationReport): number | null {
+  const provider = isRecord(report.providerResult) ? report.providerResult : {};
+  const metric = isRecord(report.metrics) ? report.metrics : {};
+  const precisionStats = [metric.precision_stats, provider.precision_stats]
+    .find((value) => isRecord(value));
+  const candidates: unknown[] = [
+    isRecord(precisionStats) ? precisionStats.median : undefined,
+    metric.wpm,
+    metric.wpm_calibrated,
+    provider.wpm,
+    provider.wpm_calibrated,
+  ];
+  const wpm = candidates.find((value): value is number => typeof value === "number" && Number.isFinite(value) && value > 0);
+  return wpm ?? null;
+}
+
+function isExecutionUnknown(error: unknown): boolean {
+  return /execution_unknown/i.test(errorMessage(error));
+}
+
+function executionEvent(result: ExecutionResult): "succeeded" | "failed" | "execution_unknown" {
+  if (result.status === "unknown") return "execution_unknown";
+  return result.status === "succeeded" ? "succeeded" : "failed";
+}
+
+export class CalibrationApplication {
+  private readonly repositories: LocalStore;
+  private readonly bridge: CalibrationBridge;
+  private readonly canonical: CanonicalProfilePort;
+  private readonly credentials?: CredentialProvider;
+  private readonly clock: Clock;
+  private readonly contractDigestOverride?: string;
+  private readonly coreDigestOverride?: string;
+  private readonly knownRuns = new Map<string, CalibrationRun>();
+  private readonly sessionNonce: string;
+
+  constructor(options: CalibrationApplicationOptions) {
+    this.repositories = options.repositories;
+    this.bridge = options.bridge;
+    this.canonical = options.canonical;
+    this.credentials = options.credentials;
+    this.clock = options.clock ?? systemClock;
+    this.contractDigestOverride = options.contractDigest;
+    this.coreDigestOverride = options.coreDigest;
+    const key = this.repositories as unknown as object;
+    const existingNonce = sessionNonces.get(key);
+    this.sessionNonce = existingNonce ?? randomUUID();
+    sessionNonces.set(key, this.sessionNonce);
+  }
+
+  private async withRunLock<T>(runId: string, work: () => Promise<T>): Promise<T> {
+    const key = this.repositories as unknown as object;
+    let locks = runLocks.get(key);
+    if (!locks) {
+      locks = new Map();
+      runLocks.set(key, locks);
+    }
+    const previous = locks.get(runId) ?? Promise.resolve();
+    const next = previous.catch(() => undefined).then(work);
+    locks.set(runId, next);
+    try {
+      return await next;
+    } finally {
+      if (locks.get(runId) === next) locks.delete(runId);
+    }
+  }
+
+  private async assertConfigured(): Promise<void> {
+    if (!this.credentials) return;
+    const status = await this.credentials.status();
+    if (!status.configured) throw new UnavailableError("ElevenLabs API key is not configured");
+  }
+
+  private async currentDigests(schema?: unknown): Promise<{ contractDigest: string; coreDigest: string }> {
+    const currentSchema = schema ?? await this.bridge.getSchema();
+    const digest = schemaDigest(currentSchema);
+    return {
+      contractDigest: this.contractDigestOverride ?? explicitDigest(currentSchema, "contractDigest") ?? digest,
+      coreDigest: this.coreDigestOverride ?? explicitDigest(currentSchema, "coreDigest") ?? digest,
+    };
+  }
+
+  private async getRunOrThrow(runId: string): Promise<CalibrationRun> {
+    const run = await this.repositories.runs.get(runId);
+    if (!run) throw new NotFoundError(`calibration run not found: ${runId}`);
+    this.knownRuns.set(run.id, clone(run));
+    return run;
+  }
+
+  private async persistReport(run: CalibrationRun, result: Partial<ExecutionResult> & { error?: { code: string; message: string } }): Promise<string> {
+    const report: CalibrationReport = {
+      id: `report-${run.id}`,
+      runId: run.id,
+      request: clone(run.request),
+      requestDigest: run.requestDigest,
+      metrics: isRecord(result.metrics) ? clone(result.metrics) : {},
+      artifacts: Array.isArray(result.artifacts) ? [...result.artifacts] : [],
+      providerResult: result.raw === undefined ? null : clone(result.raw),
+      error: result.error ? safeError(result.error) : null,
+      createdAt: nowIso(this.clock),
+    };
+    const bytes = Buffer.from(`${JSON.stringify(report)}\n`, "utf8");
+    return this.repositories.artifacts.put(run.id, REPORT_NAME, bytes);
+  }
+
+  private async loadReport(run: CalibrationRun): Promise<CalibrationReport> {
+    if (!run.reportId) throw new ConflictError("calibration report is not available");
+    const bytes = await this.repositories.artifacts.get(run.reportId);
+    return JSON.parse(Buffer.from(bytes).toString("utf8")) as CalibrationReport;
+  }
+
+  getSessionNonce(): string {
+    return this.sessionNonce;
+  }
+
+  async getBootstrap(workspaceId = DEFAULT_WORKSPACE): Promise<BootstrapView> {
+    const [config, activeCorpus, profiles, recentRuns] = await Promise.all([
+      this.credentials ? this.credentials.status() : Promise.resolve({ configured: true }),
+      this.repositories.corpus.getActiveVersion(workspaceId),
+      this.repositories.profiles.list(workspaceId),
+      (async () => {
+        const list = (this.repositories.runs as LocalStore["runs"] & { list?: (scope: string) => Promise<CalibrationRun[]> }).list;
+        if (list) return list.call(this.repositories.runs, workspaceId);
+        return [...this.knownRuns.values()];
+      })(),
+    ]);
+    return {
+      sessionNonce: this.sessionNonce,
+      config: { configured: config.configured },
+      activeCorpus,
+      profiles,
+      recentRuns: recentRuns.sort(recentRunSort).slice(0, 20),
+    };
+  }
+
+  async getCorpus(workspaceId = DEFAULT_WORKSPACE): Promise<CorpusView> {
+    const [draft, activeVersion, versions] = await Promise.all([
+      this.repositories.corpus.getDraft(workspaceId),
+      this.repositories.corpus.getActiveVersion(workspaceId),
+      this.repositories.corpus.listVersions(workspaceId),
+    ]);
+    return { draft, activeVersion, versions };
+  }
+
+  async getDraft(workspaceId = DEFAULT_WORKSPACE): Promise<{ draft: CorpusDraft; etag: string }> {
+    const draft = await this.repositories.corpus.getDraft(workspaceId);
+    return { draft, etag: `W/\"corpus-draft-${draft.revision}\"` };
+  }
+
+  async saveDraft(workspaceId: string, draft: CorpusDraft, expectedRevision: number): Promise<CorpusDraft> {
+    if (draft.workspaceId !== workspaceId) throw new ContractValidationError("draft workspace mismatch");
+    return this.repositories.corpus.saveDraft(workspaceId, clone(draft), expectedRevision);
+  }
+
+  async publishCorpusVersion(workspaceId: string, expectedRevision: number): Promise<CorpusVersion> {
+    return this.repositories.corpus.publishDraft(workspaceId, expectedRevision);
+  }
+
+  async getCalibrationSchema(): Promise<unknown> {
+    return this.bridge.getSchema();
+  }
+
+  async prepareDryRun(input: CalibrationInput): Promise<CalibrationRun> {
+    await this.assertConfigured();
+    const activeCorpus = await this.repositories.corpus.getActiveVersion(input.workspaceId);
+    if (!activeCorpus) throw new ConflictError("active published corpus is required");
+    const schema = await this.bridge.getSchema();
+    const defaults = isRecord(schema) && isRecord(schema.properties) ? schema : undefined;
+    const params = applySchemaDefaults(input.params, defaults);
+    params.text_source = { kind: "inline", text: corpusText(activeCorpus.items) };
+    params.corpus_key = params.corpus_key ?? input.voiceRef;
+    params.dry_run = false;
+    const postproc = input.postproc ?? (isRecord(schema) && isRecord(schema.properties) && isRecord(schema.properties.postproc)
+      ? schema.properties.postproc.default ?? "cut"
+      : "cut");
+    if (params.postproc !== undefined) delete params.postproc;
+    const digests = await this.currentDigests(schema);
+    const request: ResolvedCalibrationRequest = {
+      ...digests,
+      corpusVersionId: activeCorpus.id,
+      corpusDigest: activeCorpus.contentDigest,
+      voiceRef: input.voiceRef,
+      params,
+      postproc,
+    };
+    const requestDigest = fingerprintRequest(request);
+    const id = randomUUID();
+    try {
+      const dryRun = await this.bridge.dryRun({ runId: id, request: clone(request) });
+      if (!dryRun.accepted) throw new ContractValidationError("calibration dry-run was not accepted");
+    } catch (error) {
+      if (error instanceof ContractValidationError || error instanceof UnavailableError) throw error;
+      const message = errorMessage(error);
+      if (isUnavailableMessage(message)) throw new UnavailableError(message);
+      throw new ContractValidationError(message);
+    }
+    const timestamp = nowIso(this.clock);
+    const run: CalibrationRun = {
+      id,
+      workspaceId: input.workspaceId,
+      status: "draft",
+      idempotencyKey: id,
+      request,
+      requestDigest,
+      approval: null,
+      reportId: null,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    const ready = transitionRun(run, { type: "dry_run_succeeded" });
+    ready.updatedAt = timestamp;
+    await this.repositories.runs.create(ready);
+    this.knownRuns.set(ready.id, clone(ready));
+    return ready;
+  }
+
+  async approve(runId: string, input: { requestDigest: string }): Promise<CalibrationRun> {
+    return this.withRunLock(runId, async () => {
+      const run = await this.getRunOrThrow(runId);
+      if (run.status !== "dry_run_ready") throw new ConflictError(`approval requires dry_run_ready state, got ${run.status}`);
+      if (input.requestDigest !== run.requestDigest) throw new ConflictError("request digest mismatch");
+      const expiresAt = new Date(this.clock.now().getTime() + APPROVAL_TTL_MS).toISOString();
+      const approved = transitionRun(run, { type: "approve", expiresAt });
+      if (approved.approval) approved.approval.approvedAt = nowIso(this.clock);
+      approved.updatedAt = nowIso(this.clock);
+      await this.repositories.runs.save(approved);
+      this.knownRuns.set(approved.id, clone(approved));
+      return approved;
+    });
+  }
+
+  async execute(runId: string): Promise<CalibrationRun> {
+    return this.withRunLock(runId, async () => {
+      const run = await this.getRunOrThrow(runId);
+      if (run.status === "execution_unknown") throw new ConflictError("execution_unknown cannot be retried; retry is forbidden; reconcile required");
+      if (run.status !== "approved") throw new ConflictError(`approval required; got ${run.status}`);
+      if (!run.approval || run.approval.consumedAt) throw new ConflictError("approval already consumed");
+      if (this.clock.now().getTime() >= Date.parse(run.approval.expiresAt)) throw new ConflictError("approval expired");
+      const digests = await this.currentDigests();
+      if (run.request.contractDigest !== digests.contractDigest || run.request.coreDigest !== digests.coreDigest) {
+        throw new ConflictError("approval invalidated by contract or core change");
+      }
+      if (fingerprintRequest(run.request) !== run.requestDigest) throw new ConflictError("approved snapshot digest mismatch");
+
+      const running = transitionRun(run, { type: "execute" });
+      if (running.approval) running.approval.consumedAt = nowIso(this.clock);
+      running.updatedAt = nowIso(this.clock);
+      await this.repositories.runs.save(running);
+      this.knownRuns.set(running.id, clone(running));
+
+      let result: ExecutionResult;
+      try {
+        result = await this.bridge.execute({ runId: running.id, idempotencyKey: running.idempotencyKey, snapshot: clone(running.request) });
+      } catch (error) {
+        const failure = safeError(error);
+        result = isExecutionUnknown(error)
+          ? { status: "unknown", metrics: {}, artifacts: [], raw: null, error: { code: "execution_unknown", message: failure.message } }
+          : { status: "failed", metrics: {}, artifacts: [], raw: null, error: failure };
+      }
+      const reportId = await this.persistReport(running, result);
+      const terminal = transitionRun(running, { type: executionEvent(result) });
+      terminal.reportId = reportId;
+      terminal.updatedAt = nowIso(this.clock);
+      await this.repositories.runs.save(terminal);
+      this.knownRuns.set(terminal.id, clone(terminal));
+      return terminal;
+    });
+  }
+
+  async reconcile(runId: string): Promise<CalibrationRun> {
+    return this.withRunLock(runId, async () => {
+      const run = await this.getRunOrThrow(runId);
+      if (run.status !== "execution_unknown") throw new ConflictError("reconcile requires execution_unknown state");
+      const result = await this.bridge.reconcile({ runId: run.id, idempotencyKey: run.idempotencyKey });
+      if (result.status !== "unknown") throw new ConflictError("reconciliation cannot safely change execution_unknown without provider confirmation");
+      return run;
+    });
+  }
+
+  async getRun(runId: string): Promise<CalibrationRun | null> {
+    return this.repositories.runs.get(runId);
+  }
+
+  async getReport(runId: string): Promise<CalibrationReport | null> {
+    const run = await this.repositories.runs.get(runId);
+    if (!run || !run.reportId) return null;
+    return this.loadReport(run);
+  }
+
+  async publishProfile(runId: string): Promise<VoiceProfile> {
+    const run = await this.getRunOrThrow(runId);
+    if (run.status !== "succeeded") throw new ConflictError("profile publication requires a successful run");
+    if (run.request.postproc !== "cut") throw new ContractValidationError("profile publication requires postproc=\"cut\" for the canonical WPM source");
+    const report = await this.loadReport(run);
+    const wpm = wpmFromReport(report);
+    if (wpm === null) throw new ContractValidationError("successful calibration result has no WPM");
+    let canonical: { canonicalRef: string };
+    try {
+      canonical = await this.canonical.ensurePublished({
+        voiceRef: run.request.voiceRef,
+        wpm,
+        runId: run.id,
+        corpusVersionId: run.request.corpusVersionId,
+      });
+    } catch (error) {
+      const message = errorMessage(error);
+      if (isUnavailableMessage(message)) throw new UnavailableError(message);
+      throw new ContractValidationError(message);
+    }
+    const profile: VoiceProfile = {
+      id: randomUUID(),
+      workspaceId: run.workspaceId,
+      voiceRef: run.request.voiceRef,
+      wpmSnapshot: wpm,
+      wpmAuthority: "python-voice-wpm",
+      canonicalRef: canonical.canonicalRef,
+      sourceRunId: run.id,
+      corpusVersionId: run.request.corpusVersionId,
+      reportId: run.reportId as string,
+      publishedAt: nowIso(this.clock),
+    };
+    await this.repositories.profiles.publish(profile);
+    return profile;
+  }
+
+  async listVoiceProfiles(workspaceId = DEFAULT_WORKSPACE): Promise<VoiceProfile[]> {
+    return this.repositories.profiles.list(workspaceId);
+  }
+
+  async close(): Promise<void> {
+    await this.bridge.close?.();
+  }
+}
+
+export function createCalibrationApplication(options: CalibrationApplicationOptions): CalibrationApplication {
+  return new CalibrationApplication(options);
+}

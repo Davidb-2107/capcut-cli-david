@@ -88,7 +88,6 @@ export type RunEvent =
 type TransitionableRun = {
   status: RunStatus;
   approval?: CalibrationRun["approval"];
-  [key: string]: unknown;
 };
 
 const transitions: Record<RunStatus, Partial<Record<RunEvent["type"], RunStatus>>> = {
