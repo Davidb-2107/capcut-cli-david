@@ -1,4 +1,4 @@
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { deepStrictEqual, rejects, strictEqual, match } from "node:assert";
@@ -46,6 +46,27 @@ test("draft save uses revision and rejects stale writers", async () => {
   );
 });
 
+test("separate store instances serialize draft writers", async () => {
+  const dataDir = mkdtempSync(join(tmpdir(), "calibration-"));
+  const firstStore = createLocalStore(dataDir);
+  const secondStore = createLocalStore(dataDir);
+  const first = await firstStore.corpus.getDraft("local-default");
+  const results = await Promise.allSettled([
+    firstStore.corpus.saveDraft(
+      "local-default",
+      { ...first, items: [{ id: "t1", order: 0, text: "Un." }] },
+      first.revision,
+    ),
+    secondStore.corpus.saveDraft(
+      "local-default",
+      { ...first, items: [{ id: "t2", order: 0, text: "Deux." }] },
+      first.revision,
+    ),
+  ]);
+  strictEqual(results.filter((result) => result.status === "fulfilled").length, 1);
+  strictEqual(results.filter((result) => result.status === "rejected")[0].reason.message, "revision conflict");
+});
+
 test("publishing creates an immutable active version", async () => {
   const store = makeStore();
   const first = await store.corpus.getDraft("local-default");
@@ -90,6 +111,10 @@ test("writes survive reload and use the expected layout", async () => {
   const dataDir = mkdtempSync(join(tmpdir(), "calibration-"));
   const store = createLocalStore(dataDir);
   await store.runs.save(runFixture);
+  strictEqual(
+    statSync(join(dataDir, "workspaces", "local-default", "runs", "run-1.json")).isFile(),
+    true,
+  );
   const reloaded = createLocalStore(dataDir);
   deepStrictEqual(await reloaded.runs.get(runFixture.id), runFixture);
 });

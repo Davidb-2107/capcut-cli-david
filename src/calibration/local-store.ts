@@ -1,11 +1,10 @@
 import { createHash, randomUUID } from "node:crypto";
 import { constants } from "node:fs";
-import { mkdir, open, readFile, readdir, rename, access } from "node:fs/promises";
+import { mkdir, open, readFile, readdir, rename, access, lstat, rm, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join, relative, resolve, sep } from "node:path";
 
 import type {
-  CalibrationReport,
   CalibrationRun,
   CorpusDraft,
   CorpusItem,
@@ -22,6 +21,7 @@ import type {
 import { ConflictError } from "./ports.js";
 
 const DEFAULT_DATA_DIR = join(homedir(), ".capcut-david", "elevenlabs-calibration");
+const corpusQueues = new Map<string, Promise<unknown>>();
 
 function workspaceRoot(dataDir: string, workspaceId: string): string {
   return join(dataDir, "workspaces", safeSegment(workspaceId, "workspaceId"));
@@ -45,6 +45,26 @@ function safeArtifactPath(root: string, runId: string, name?: string): string {
     throw new Error("invalid artifact path");
   }
   return target;
+}
+
+async function assertNoSymlinkWithin(root: string, target: string): Promise<void> {
+  const resolvedRoot = resolve(root);
+  const resolvedTarget = resolve(target);
+  const relativeTarget = relative(resolvedRoot, resolvedTarget);
+  if (relativeTarget.startsWith("..") || relativeTarget.split(sep).includes("..")) {
+    throw new Error("invalid path boundary");
+  }
+
+  let current = resolvedRoot;
+  for (const segment of relativeTarget.split(sep).filter(Boolean)) {
+    current = join(current, segment);
+    try {
+      if ((await lstat(current)).isSymbolicLink()) throw new Error("symbolic links are not allowed");
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") break;
+      throw error;
+    }
+  }
 }
 
 async function exists(path: string): Promise<boolean> {
@@ -77,6 +97,40 @@ async function readJson<T>(path: string): Promise<T> {
   return JSON.parse(await readFile(path, "utf8")) as T;
 }
 
+const LOCK_WAIT_MS = 10;
+const LOCK_STALE_MS = 30_000;
+
+async function withFileLock<T>(lockPath: string, work: () => Promise<T>): Promise<T> {
+  const lockDirectory = `${lockPath}.lock`;
+  await mkdir(dirname(lockPath), { recursive: true });
+  const deadline = Date.now() + LOCK_STALE_MS;
+  while (true) {
+    try {
+      await mkdir(lockDirectory);
+      break;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+      try {
+        const lockStat = await stat(lockDirectory);
+        if (Date.now() - lockStat.mtimeMs > LOCK_STALE_MS) {
+          await rm(lockDirectory, { recursive: true, force: true });
+          continue;
+        }
+      } catch (statError) {
+        if ((statError as NodeJS.ErrnoException).code !== "ENOENT") throw statError;
+      }
+      if (Date.now() >= deadline) throw new Error("calibration store lock timeout");
+      await new Promise((resolvePromise) => setTimeout(resolvePromise, LOCK_WAIT_MS));
+    }
+  }
+
+  try {
+    return await work();
+  } finally {
+    await rm(lockDirectory, { recursive: true, force: true });
+  }
+}
+
 function itemsDigest(items: readonly CorpusItem[]): string {
   return createHash("sha256").update(JSON.stringify(items), "utf8").digest("hex");
 }
@@ -103,8 +157,6 @@ function queueFor<T>(queues: Map<string, Promise<unknown>>, key: string, work: (
 }
 
 function makeCorpusRepository(dataDir: string): CorpusRepository {
-  const queues = new Map<string, Promise<unknown>>();
-
   const draftPath = (workspaceId: string) => join(workspaceRoot(dataDir, workspaceId), "corpus", "draft.json");
   const versionsRoot = (workspaceId: string) => join(workspaceRoot(dataDir, workspaceId), "corpus", "versions");
   const activePath = (workspaceId: string) => join(workspaceRoot(dataDir, workspaceId), "corpus", "active.json");
@@ -127,38 +179,42 @@ function makeCorpusRepository(dataDir: string): CorpusRepository {
     getDraft: loadDraft,
 
     saveDraft(workspaceId, draft, expectedRevision) {
-      return queueFor(queues, workspaceId, async () => {
-        const current = await loadDraft(workspaceId);
-        if (current.revision !== expectedRevision) throw new ConflictError();
-        if (draft.workspaceId !== workspaceId) throw new Error("draft workspace mismatch");
-        const saved: CorpusDraft = {
-          workspaceId,
-          revision: current.revision + 1,
-          items: draft.items.map((item) => ({ ...item })),
-        };
-        await writeJson(draftPath(workspaceId), saved);
-        return cloneDraft(saved);
-      });
+      return queueFor(corpusQueues, `${resolve(dataDir)}:${workspaceId}`, () =>
+        withFileLock(join(workspaceRoot(dataDir, workspaceId), "corpus", "draft.json"), async () => {
+          const current = await loadDraft(workspaceId);
+          if (current.revision !== expectedRevision) throw new ConflictError();
+          if (draft.workspaceId !== workspaceId) throw new Error("draft workspace mismatch");
+          const saved: CorpusDraft = {
+            workspaceId,
+            revision: current.revision + 1,
+            items: draft.items.map((item) => ({ ...item })),
+          };
+          await writeJson(draftPath(workspaceId), saved);
+          return cloneDraft(saved);
+        }),
+      );
     },
 
     publishDraft(workspaceId, expectedRevision) {
-      return queueFor(queues, workspaceId, async () => {
-        const draft = await loadDraft(workspaceId);
-        if (draft.revision !== expectedRevision) throw new ConflictError();
-        const publishedAt = new Date().toISOString();
-        const version: CorpusVersion = {
-          id: randomUUID(),
-          workspaceId,
-          revision: draft.revision,
-          items: draft.items.map((item) => ({ ...item })),
-          contentDigest: itemsDigest(draft.items),
-          status: "active",
-          publishedAt,
-        };
-        await writeJson(join(versionsRoot(workspaceId), `${version.id}.json`), version);
-        await writeJson(activePath(workspaceId), { versionId: version.id });
-        return cloneVersion(version);
-      });
+      return queueFor(corpusQueues, `${resolve(dataDir)}:${workspaceId}`, () =>
+        withFileLock(join(workspaceRoot(dataDir, workspaceId), "corpus", "draft.json"), async () => {
+          const draft = await loadDraft(workspaceId);
+          if (draft.revision !== expectedRevision) throw new ConflictError();
+          const publishedAt = new Date().toISOString();
+          const version: CorpusVersion = {
+            id: randomUUID(),
+            workspaceId,
+            revision: draft.revision,
+            items: draft.items.map((item) => ({ ...item })),
+            contentDigest: itemsDigest(draft.items),
+            status: "active",
+            publishedAt,
+          };
+          await writeJson(join(versionsRoot(workspaceId), `${version.id}.json`), version);
+          await writeJson(activePath(workspaceId), { versionId: version.id });
+          return cloneVersion(version);
+        }),
+      );
     },
 
     async getActiveVersion(workspaceId) {
@@ -222,6 +278,7 @@ function makeArtifactStore(dataDir: string): ArtifactStore {
   return {
     async put(runId, name, bytes) {
       const target = safeArtifactPath(join(dataDir, "workspaces", "local-default"), runId, name);
+      await assertNoSymlinkWithin(artifactsRoot, target);
       await writeAtomic(target, bytes);
       return relative(dataDir, target).split("\\").join("/");
     },
@@ -230,6 +287,7 @@ function makeArtifactStore(dataDir: string): ArtifactStore {
       if (target !== artifactsRoot && !target.startsWith(`${artifactsRoot}${sep}`)) {
         throw new Error("invalid artifact reference");
       }
+      await assertNoSymlinkWithin(artifactsRoot, target);
       return new Uint8Array(await readFile(target));
     },
   };
