@@ -1,4 +1,4 @@
-import { mkdtempSync, statSync } from "node:fs";
+import { mkdirSync, mkdtempSync, statSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { deepStrictEqual, rejects, strictEqual, match } from "node:assert";
@@ -65,6 +65,30 @@ test("separate store instances serialize draft writers", async () => {
   ]);
   strictEqual(results.filter((result) => result.status === "fulfilled").length, 1);
   strictEqual(results.filter((result) => result.status === "rejected")[0].reason.message, "revision conflict");
+});
+
+test("reclaims a stale lock only when its owner process is dead", async () => {
+  const dataDir = mkdtempSync(join(tmpdir(), "calibration-"));
+  const lockDirectory = join(
+    dataDir,
+    "workspaces",
+    "local-default",
+    "corpus",
+    "draft.json.lock",
+  );
+  mkdirSync(lockDirectory, { recursive: true });
+  writeFileSync(join(lockDirectory, "owner.json"), JSON.stringify({ pid: 999999999 }));
+  const stale = new Date(Date.now() - 60_000);
+  utimesSync(lockDirectory, stale, stale);
+
+  const store = createLocalStore(dataDir);
+  const first = await store.corpus.getDraft("local-default");
+  const saved = await store.corpus.saveDraft(
+    "local-default",
+    { ...first, items: [{ id: "t1", order: 0, text: "Après crash." }] },
+    first.revision,
+  );
+  strictEqual(saved.revision, 1);
 });
 
 test("publishing creates an immutable active version", async () => {

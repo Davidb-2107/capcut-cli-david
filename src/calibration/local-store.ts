@@ -117,6 +117,18 @@ async function processIsAlive(pid: number): Promise<boolean> {
   }
 }
 
+async function reclaimLock(lockDirectory: string): Promise<boolean> {
+  const quarantine = `${lockDirectory}.reclaim-${randomUUID()}`;
+  try {
+    await rename(lockDirectory, quarantine);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+    throw error;
+  }
+  await rm(quarantine, { recursive: true, force: true });
+  return true;
+}
+
 async function withFileLock<T>(lockPath: string, work: () => Promise<T>): Promise<T> {
   const lockDirectory = `${lockPath}.lock`;
   const ownerPath = join(lockDirectory, "owner.json");
@@ -125,16 +137,33 @@ async function withFileLock<T>(lockPath: string, work: () => Promise<T>): Promis
   while (true) {
     try {
       await mkdir(lockDirectory);
-      await writeJson(ownerPath, { pid: process.pid, acquiredAt: new Date().toISOString() });
+      try {
+        await writeJson(ownerPath, { pid: process.pid, acquiredAt: new Date().toISOString() });
+      } catch (ownerError) {
+        await rm(lockDirectory, { recursive: true, force: true });
+        throw ownerError;
+      }
       break;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
       try {
         const lockStat = await lstat(lockDirectory);
         if (Date.now() - lockStat.mtimeMs > LOCK_STALE_MS) {
-          const owner = await readJson<{ pid?: number }>(ownerPath);
-          if (typeof owner.pid === "number" && !(await processIsAlive(owner.pid))) {
-            await rm(lockDirectory, { recursive: true, force: true });
+          let owner: { pid?: unknown } | undefined;
+          let ownerMissing = false;
+          try {
+            owner = await readJson<{ pid?: unknown }>(ownerPath);
+          } catch (ownerError) {
+            if ((ownerError as NodeJS.ErrnoException).code === "ENOENT") {
+              ownerMissing = true;
+            }
+            // A malformed owner record is not proof of a dead writer.
+          }
+          if (owner && Number.isInteger(owner.pid) && Number(owner.pid) > 0) {
+            if (!(await processIsAlive(Number(owner.pid)))) {
+              if (await reclaimLock(lockDirectory)) continue;
+            }
+          } else if (ownerMissing && (await reclaimLock(lockDirectory))) {
             continue;
           }
         }
