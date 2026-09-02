@@ -56,6 +56,7 @@ async function assertNoSymlinkWithin(root: string, target: string): Promise<void
       if ((await lstat(current)).isSymbolicLink()) throw new Error("symbolic links are not allowed");
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        if (current === resolvedRoot) break;
         const parent = dirname(current);
         if (parent === current) break;
         current = parent;
@@ -63,6 +64,7 @@ async function assertNoSymlinkWithin(root: string, target: string): Promise<void
       }
       throw error;
     }
+    if (current === resolvedRoot) break;
     const parent = dirname(current);
     if (parent === current) break;
     current = parent;
@@ -101,10 +103,10 @@ async function readJson<T>(path: string): Promise<T> {
 
 const LOCK_WAIT_MS = 10;
 const LOCK_TIMEOUT_MS = 30_000;
-async function withFileLock<T>(lockPath: string, work: () => Promise<T>): Promise<T> {
+async function withFileLock<T>(lockPath: string, work: () => Promise<T>, timeoutMs: number): Promise<T> {
   const lockFile = `${lockPath}.lock`;
   await mkdir(dirname(lockPath), { recursive: true });
-  const deadline = Date.now() + LOCK_TIMEOUT_MS;
+  const deadline = Date.now() + timeoutMs;
   while (true) {
     const tempLock = `${lockFile}.${process.pid}-${randomUUID()}.tmp`;
     let acquired = false;
@@ -168,7 +170,7 @@ function queueFor<T>(queues: Map<string, Promise<unknown>>, key: string, work: (
   });
 }
 
-function makeCorpusRepository(dataDir: string): CorpusRepository {
+function makeCorpusRepository(dataDir: string, lockTimeoutMs: number): CorpusRepository {
   const draftPath = (workspaceId: string) => join(workspaceRoot(dataDir, workspaceId), "corpus", "draft.json");
   const versionsRoot = (workspaceId: string) => join(workspaceRoot(dataDir, workspaceId), "corpus", "versions");
   const activePath = (workspaceId: string) => join(workspaceRoot(dataDir, workspaceId), "corpus", "active.json");
@@ -203,7 +205,7 @@ function makeCorpusRepository(dataDir: string): CorpusRepository {
           };
           await writeJson(draftPath(workspaceId), saved);
           return cloneDraft(saved);
-        }),
+        }, lockTimeoutMs),
       );
     },
 
@@ -225,7 +227,7 @@ function makeCorpusRepository(dataDir: string): CorpusRepository {
           await writeJson(join(versionsRoot(workspaceId), `${version.id}.json`), version);
           await writeJson(activePath(workspaceId), { versionId: version.id });
           return cloneVersion(version);
-        }),
+        }, lockTimeoutMs),
       );
     },
 
@@ -254,21 +256,23 @@ function makeCorpusRepository(dataDir: string): CorpusRepository {
   };
 }
 
-function makeRunRepository(dataDir: string): CalibrationRunRepository {
+function makeRunRepository(dataDir: string, lockTimeoutMs: number): CalibrationRunRepository {
   const pathFor = (id: string) =>
     join(dataDir, "workspaces", "local-default", "runs", `${safeSegment(id, "runId")}.json`);
   return {
     async create(run) {
       const path = pathFor(run.id);
-      if (await exists(path)) throw new ConflictError("run already exists");
-      await writeJson(path, run);
+      await withFileLock(path, async () => {
+        if (await exists(path)) throw new ConflictError("run already exists");
+        await writeJson(path, run);
+      }, lockTimeoutMs);
     },
     async get(id) {
       const path = pathFor(id);
       return (await exists(path)) ? readJson<CalibrationRun>(path) : null;
     },
     async save(run) {
-      await writeJson(pathFor(run.id), run);
+      await withFileLock(pathFor(run.id), () => writeJson(pathFor(run.id), run), lockTimeoutMs);
     },
     async list(workspaceId) {
       const root = join(dataDir, "workspaces", safeSegment(workspaceId, "workspaceId"), "runs");
@@ -290,7 +294,7 @@ function makeRunRepository(dataDir: string): CalibrationRunRepository {
         running.updatedAt = consumedAt;
         await writeJson(path, running);
         return running;
-      });
+      }, lockTimeoutMs);
     },
   };
 }
@@ -330,11 +334,23 @@ function makeArtifactStore(dataDir: string): ArtifactStore {
   };
 }
 
-export function createLocalStore(dataDir = DEFAULT_DATA_DIR): LocalStore {
+export interface LocalStoreOptions {
+  lockTimeoutMs?: number;
+}
+
+function resolveLockTimeout(lockTimeoutMs: number | undefined): number {
+  const value = lockTimeoutMs ?? LOCK_TIMEOUT_MS;
+  if (!Number.isFinite(value) || value < 0) throw new RangeError("lockTimeoutMs must be a finite non-negative number");
+  return value;
+}
+
+export function createLocalStore(dataDir = DEFAULT_DATA_DIR, options: LocalStoreOptions = {}): LocalStore {
+  const resolvedDataDir = resolve(dataDir);
+  const lockTimeoutMs = resolveLockTimeout(options.lockTimeoutMs);
   return {
-    corpus: makeCorpusRepository(resolve(dataDir)),
-    runs: makeRunRepository(resolve(dataDir)),
-    profiles: makeProfileRepository(resolve(dataDir)),
-    artifacts: makeArtifactStore(resolve(dataDir)),
+    corpus: makeCorpusRepository(resolvedDataDir, lockTimeoutMs),
+    runs: makeRunRepository(resolvedDataDir, lockTimeoutMs),
+    profiles: makeProfileRepository(resolvedDataDir),
+    artifacts: makeArtifactStore(resolvedDataDir),
   };
 }
