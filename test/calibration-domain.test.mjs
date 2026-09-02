@@ -46,6 +46,7 @@ test("canonicalization is stable regardless of object key order", () => {
     '{"10":"ten","2":"two","a":"a"}',
   );
   match(fingerprintRequest(request), /^[a-f0-9]{64}$/);
+  strictEqual(fingerprintRequest(request), "21da14fb98e7154ce45d52fa9fcec3973e94edbd1cb515ecc74ea254ec34c8f5");
 });
 
 test("canonicalization rejects non-plain objects", () => {
@@ -63,6 +64,19 @@ test("canonicalization rejects undefined values", () => {
   throws(() => canonicalizeRequest({ nested: [true, undefined] }), /undefined/);
 });
 
+test("canonicalization rejects values and properties that JSON would ignore or coerce", () => {
+  throws(() => canonicalizeRequest({ value: Number.NaN }), /non-finite/);
+  throws(() => canonicalizeRequest({ value: Number.POSITIVE_INFINITY }), /non-finite/);
+
+  const symbolProperty = { value: 1 };
+  symbolProperty[Symbol("metadata")] = "hidden";
+  throws(() => canonicalizeRequest(symbolProperty), /symbol property/);
+
+  const extraArrayProperty = [1, 2];
+  extraArrayProperty.metadata = "hidden";
+  throws(() => canonicalizeRequest(extraArrayProperty), /extra array property/);
+});
+
 test("changing corpus, parameter or postproc changes the fingerprint", () => {
   strictEqual(fingerprintRequest(request), fingerprintRequest({ ...request }));
   strictEqual(fingerprintRequest({ ...request, corpusDigest: "other" }) === fingerprintRequest(request), false);
@@ -75,13 +89,15 @@ test("changing corpus, parameter or postproc changes the fingerprint", () => {
 
 test("illegal state transitions are rejected", () => {
   const draft = { status: "draft" };
+  const ready = { status: "dry_run_ready" };
+  const approved = { status: "approved", approval: { approvedAt: "2026-09-02T10:00:00.000Z", expiresAt: "2026-09-02T11:00:00.000Z", consumedAt: null } };
   strictEqual(transitionRun(draft, { type: "dry_run_succeeded" }).status, "dry_run_ready");
   throws(() => transitionRun(draft, { type: "execute" }), /invalid transition/);
-  throws(() => transitionRun({ status: "dry_run_ready" }, { type: "execute" }), /invalid transition/);
-  throws(
-    () => transitionRun({ status: "approved", approval: null }, { type: "execute" }),
-    /invalid transition/,
-  );
+  throws(() => transitionRun(draft, { type: "approve", expiresAt: "2026-09-02T11:00:00.000Z" }), /invalid transition/);
+  throws(() => transitionRun(ready, { type: "dry_run_succeeded" }), /invalid transition/);
+  throws(() => transitionRun(ready, { type: "execute" }), /invalid transition/);
+  throws(() => transitionRun({ status: "approved", approval: null }, { type: "execute" }), /invalid transition/);
+  throws(() => transitionRun(approved, { type: "approve", expiresAt: "2026-09-02T12:00:00.000Z" }), /invalid transition/);
   throws(() => transitionRun({ status: "failed" }, { type: "execute" }), /invalid transition/);
   throws(() => transitionRun({ status: "execution_unknown" }, { type: "execute" }), /invalid transition/);
 });

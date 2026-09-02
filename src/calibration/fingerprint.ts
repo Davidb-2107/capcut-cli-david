@@ -7,6 +7,25 @@ function isPlainObject(value: object): value is Record<string, unknown> {
   return prototype === Object.prototype || prototype === null;
 }
 
+function assertNoIgnoredProperties(value: object, path: string): void {
+  if (Object.getOwnPropertySymbols(value).length > 0) {
+    throw new TypeError(`symbol property at ${path}`);
+  }
+
+  const enumerableNames = new Set(Object.keys(value));
+  for (const name of Object.getOwnPropertyNames(value)) {
+    if (!enumerableNames.has(name)) {
+      throw new TypeError(`non-enumerable property at ${path}.${name}`);
+    }
+  }
+}
+
+function isArrayIndexName(name: string, length: number): boolean {
+  if (!/^(0|[1-9]\d*)$/u.test(name)) return false;
+  const index = Number(name);
+  return Number.isSafeInteger(index) && index < length && String(index) === name;
+}
+
 function serializeValue(value: unknown, path: string): string {
   if (value === undefined) {
     throw new TypeError(`undefined value at ${path}`);
@@ -16,10 +35,21 @@ function serializeValue(value: unknown, path: string): string {
     if (typeof value === "function" || typeof value === "symbol" || typeof value === "bigint") {
       throw new TypeError(`unsupported value at ${path}`);
     }
+    if (typeof value === "number" && !Number.isFinite(value)) {
+      throw new TypeError(`non-finite number at ${path}`);
+    }
     return JSON.stringify(value);
   }
 
   if (Array.isArray(value)) {
+    if (Object.getOwnPropertySymbols(value).length > 0) {
+      throw new TypeError(`symbol property at ${path}`);
+    }
+    for (const name of Object.getOwnPropertyNames(value)) {
+      if (name !== "length" && !isArrayIndexName(name, value.length)) {
+        throw new TypeError(`extra array property at ${path}.${name}`);
+      }
+    }
     const items: string[] = [];
     for (let index = 0; index < value.length; index += 1) {
       if (!Object.hasOwn(value, index)) {
@@ -33,6 +63,8 @@ function serializeValue(value: unknown, path: string): string {
   if (!isPlainObject(value)) {
     throw new TypeError(`non-plain object at ${path}`);
   }
+
+  assertNoIgnoredProperties(value, path);
 
   const members = Object.keys(value)
     .sort()
