@@ -29,7 +29,12 @@ export interface CalibrationBridge {
 }
 
 interface TransportResponse { result?: unknown; error?: { code?: number; message?: string; data?: unknown }; }
-interface TransportCall { response: unknown; emitted: boolean; stderr: string; }
+interface TransportCall {
+  response: unknown;
+  emitted: boolean;
+  stderr: string;
+  remoteError?: { code?: number; message?: string; data?: unknown };
+}
 interface CalibrationTransport {
   schema(secret: string, timeoutMs: number): Promise<unknown>;
   call(args: Record<string, unknown>, secret: string, timeoutMs: number): Promise<TransportCall>;
@@ -184,7 +189,7 @@ class NodeMcpStdioTransport implements CalibrationTransport {
     this.ensureChild(secret);
     await this.initialize(timeoutMs);
     const response = await this.request("tools/list", {}, timeoutMs);
-    if (response.error) throw new BridgeTransportError(response.error.message ?? "MCP tools/list failed", true, this.diagnostic());
+    if (response.error) throw new BridgeTransportError(response.error.message ?? "MCP tools/list failed", false, this.diagnostic());
     const tools = resultObject(response.result).tools;
     return Array.isArray(tools) ? resultObject(tools.find((tool) => resultObject(tool).name === "calibrate_voice")).inputSchema : undefined;
   }
@@ -201,11 +206,11 @@ class NodeMcpStdioTransport implements CalibrationTransport {
     }
     try {
       const response = await this.request("tools/call", { name: "calibrate_voice", arguments: args }, timeoutMs);
-      if (response.error) throw new BridgeTransportError(response.error.message ?? "MCP tools/call failed", true, this.diagnostic());
+      if (response.error) return { response: undefined, emitted: true, stderr: this.diagnostic(), remoteError: response.error };
       return { response: unwrapToolResult(response.result), emitted: true, stderr: this.diagnostic() };
     } catch (error) {
       if (error instanceof BridgeTransportError) throw error;
-      throw new BridgeTransportError((error as Error).message, true, this.stderrBuffer);
+      throw new BridgeTransportError((error as Error).message, true, this.diagnostic());
     }
   }
 
@@ -230,7 +235,9 @@ export function createCalibrationBridge(options: {
   const transport = options.transport ?? new NodeMcpStdioTransport();
   const timeoutMs = options.timeoutMs ?? 120_000;
   const call = async (request: ResolvedCalibrationRequest, dryRun: boolean): Promise<TransportCall & { secret: string }> => {
-    const credential = await options.credentials.forRun();
+    let credential: { provider: string; secret: string };
+    try { credential = await options.credentials.forRun(); }
+    catch { throw new Error("calibration credentials unavailable"); }
     if (credential.provider !== "elevenlabs") throw new Error(`unsupported credential provider: ${credential.provider}`);
     try {
       return { ...(await transport.call(makeRequest(request, dryRun), credential.secret, timeoutMs)), secret: credential.secret };
@@ -248,13 +255,21 @@ export function createCalibrationBridge(options: {
 
   return {
     async getSchema() {
-      const credential = await options.credentials.forRun();
+      let credential: { provider: string; secret: string };
+      try { credential = await options.credentials.forRun(); }
+      catch { throw new Error("calibration credentials unavailable"); }
       if (credential.provider !== "elevenlabs") throw new Error(`unsupported credential provider: ${credential.provider}`);
-      return transport.schema(credential.secret, Math.min(timeoutMs, 10_000));
+      try {
+        return await transport.schema(credential.secret, Math.min(timeoutMs, 10_000));
+      } catch (error) {
+        if (error instanceof BridgeTransportError) throw new Error(String(redact(error.message, credential.secret)));
+        throw new Error(String(redact((error as Error).message, credential.secret)));
+      }
     },
     async dryRun(input) {
       try {
         const result = await call(input.request, true);
+        if (result.remoteError) throw new Error(String(redact(result.remoteError.message ?? "MCP tools/call failed", result.secret)));
         const safeResponse = redact(result.response, result.secret);
         const raw = resultObject(safeResponse);
         return { accepted: raw.status === "dry_run_success" || raw.accepted === true, plan: Array.isArray(raw.plan) ? raw.plan : [], raw: safeResponse };
@@ -266,10 +281,23 @@ export function createCalibrationBridge(options: {
     async execute(input) {
       let credential: { provider: string; secret: string };
       try { credential = await options.credentials.forRun(); }
-      catch (error) { throw new Error((error as Error).message); }
+      catch { throw new Error("calibration credentials unavailable"); }
       if (credential.provider !== "elevenlabs") throw new Error(`unsupported credential provider: ${credential.provider}`);
       try {
         const result = await transport.call(makeRequest(input.snapshot, false), credential.secret, timeoutMs);
+        if (result.remoteError) {
+          const safeError = redact(result.remoteError, credential.secret) as Record<string, unknown>;
+          return {
+            status: "failed",
+            metrics: {},
+            artifacts: [],
+            raw: safeError,
+            error: {
+              code: String(safeError.code ?? "mcp_error"),
+              message: String(safeError.message ?? "MCP tools/call failed"),
+            },
+          };
+        }
         const safeResponse = redact(result.response, credential.secret);
         const raw = resultObject(safeResponse);
         if (raw.status === "ok") {
@@ -283,6 +311,8 @@ export function createCalibrationBridge(options: {
         throw new Error(String(redact((error as Error).message, credential.secret)));
       }
     },
+    // The source contract has no run/idempotency field and no reconciliation
+    // operation. Local run identifiers remain application metadata only.
     async reconcile() { return { status: "unknown" }; },
     close: () => transport.close(),
   };
@@ -310,7 +340,7 @@ async function verifyWpmFile(input: { voiceRef: string; wpm: number }, wpmPath =
   const wpm = language === "en" ? resultObject(record?.[key]).en : record?.[key];
   if (typeof wpm !== "number") throw new Error("canonical_wpm_unavailable");
   const suffix = language === "en" ? "wpm_calibrated_by_lang.en" : "wpm_calibrated";
-  return { canonicalRef: `${wpmPath}#${input.voiceRef}.${suffix}`, wpm };
+  return { canonicalRef: `Shared/voice-calibration/voice_wpm.json#${input.voiceRef}.${suffix}`, wpm };
 }
 
 export { BridgeTransportError, NodeMcpStdioTransport };

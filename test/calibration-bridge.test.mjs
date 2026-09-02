@@ -43,6 +43,9 @@ function fakeTransport(options = {}) {
       if (options.dropExecutionResponse && args.dry_run === false) {
         throw new BridgeTransportError("response lost", true, `diagnostic ${secret}`);
       }
+      if (options.remoteError && args.dry_run === false) {
+        return { response: undefined, emitted: true, stderr: `stderr ${secret}`, remoteError: { code: -32602, message: `invalid request ${secret}` } };
+      }
       if (args.dry_run) return { response: options.dryRun ?? { status: "dry_run_success", requests_planned: 3 }, emitted: true, stderr: `stderr ${secret}` };
       return { response: options.execute ?? { status: "ok", precision_stats: { median: 148 } }, emitted: true, stderr: `stderr ${secret}` };
     },
@@ -84,6 +87,16 @@ test("pre-send failure is not execution_unknown and does not expose diagnostics"
     bridge.execute({ runId: "r1", idempotencyKey: "r1", snapshot: resolvedRequest }),
     (error) => error.message.includes("secret") === false && error.message.includes("pre-send failure") === true,
   );
+});
+
+test("a received MCP error is failed, not execution_unknown, and is redacted", async () => {
+  const transport = fakeTransport({ remoteError: true });
+  const bridge = createCalibrationBridge({ transport, credentials: createCredentialProvider({ env: { ELEVENLABS_API_KEY: "secret" } }) });
+  const result = await bridge.execute({ runId: "r1", idempotencyKey: "r1", snapshot: resolvedRequest });
+  strictEqual(result.status, "failed");
+  strictEqual(result.error.code, "-32602");
+  strictEqual(result.error.message.includes("secret"), false);
+  strictEqual(JSON.stringify(result.raw).includes("secret"), false);
 });
 
 test("successful source metrics and result envelope are preserved without recalculation", async () => {
