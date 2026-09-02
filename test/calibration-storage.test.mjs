@@ -69,17 +69,17 @@ test("separate store instances serialize draft writers", async () => {
 
 test("reclaims a stale lock only when its owner process is dead", async () => {
   const dataDir = mkdtempSync(join(tmpdir(), "calibration-"));
-  const lockDirectory = join(
+  const lockFile = join(
     dataDir,
     "workspaces",
     "local-default",
     "corpus",
     "draft.json.lock",
   );
-  mkdirSync(lockDirectory, { recursive: true });
-  writeFileSync(join(lockDirectory, "owner.json"), JSON.stringify({ pid: 999999999 }));
+  mkdirSync(join(dataDir, "workspaces", "local-default", "corpus"), { recursive: true });
+  writeFileSync(lockFile, JSON.stringify({ pid: 999999999 }));
   const stale = new Date(Date.now() - 60_000);
-  utimesSync(lockDirectory, stale, stale);
+  utimesSync(lockFile, stale, stale);
 
   const store = createLocalStore(dataDir);
   const first = await store.corpus.getDraft("local-default");

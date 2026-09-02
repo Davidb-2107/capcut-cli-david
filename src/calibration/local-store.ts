@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { constants } from "node:fs";
-import { mkdir, open, readFile, readdir, rename, access, lstat, rm } from "node:fs/promises";
+import { mkdir, open, readFile, readdir, rename, access, lstat, rm, link } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join, relative, resolve, sep } from "node:path";
 
@@ -108,19 +108,26 @@ const LOCK_WAIT_MS = 10;
 const LOCK_TIMEOUT_MS = 30_000;
 const LOCK_STALE_MS = 30_000;
 
-async function processIsAlive(pid: number): Promise<boolean> {
+function isSafePid(pid: unknown): pid is number {
+  return typeof pid === "number" && Number.isSafeInteger(pid) && pid > 0 && pid <= 0x7fffffff;
+}
+
+async function processIsAlive(pid: number): Promise<boolean | null> {
   try {
     process.kill(pid, 0);
     return true;
   } catch (error) {
-    return (error as NodeJS.ErrnoException).code === "EPERM";
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === "ESRCH") return false;
+    if (code === "EPERM") return true;
+    return null;
   }
 }
 
-async function reclaimLock(lockDirectory: string): Promise<boolean> {
-  const quarantine = `${lockDirectory}.reclaim-${randomUUID()}`;
+async function reclaimLock(lockPath: string): Promise<boolean> {
+  const quarantine = `${lockPath}.reclaim-${randomUUID()}`;
   try {
-    await rename(lockDirectory, quarantine);
+    await rename(lockPath, quarantine);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
     throw error;
@@ -130,60 +137,57 @@ async function reclaimLock(lockDirectory: string): Promise<boolean> {
 }
 
 async function withFileLock<T>(lockPath: string, work: () => Promise<T>): Promise<T> {
-  const lockDirectory = `${lockPath}.lock`;
-  const ownerPath = join(lockDirectory, "owner.json");
+  const lockFile = `${lockPath}.lock`;
   await mkdir(dirname(lockPath), { recursive: true });
   const deadline = Date.now() + LOCK_TIMEOUT_MS;
   while (true) {
+    const tempLock = `${lockFile}.${process.pid}-${randomUUID()}.tmp`;
     try {
-      await mkdir(lockDirectory);
+      const handle = await open(tempLock, "wx");
       try {
-        await writeJson(ownerPath, { pid: process.pid, acquiredAt: new Date().toISOString() });
-      } catch (ownerError) {
-        await rm(lockDirectory, { recursive: true, force: true });
-        throw ownerError;
+        await handle.write(Buffer.from(JSON.stringify({ pid: process.pid, acquiredAt: new Date().toISOString() }), "utf8"));
+        await handle.sync();
+      } finally {
+        await handle.close();
       }
-      break;
+      try {
+        await link(tempLock, lockFile);
+        break;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+      }
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
-      try {
-        const lockStat = await lstat(lockDirectory);
-        if (Date.now() - lockStat.mtimeMs > LOCK_STALE_MS) {
-          let owner: { pid?: unknown } | undefined;
-          let ownerMissing = false;
-          try {
-            owner = await readJson<{ pid?: unknown }>(ownerPath);
-          } catch (ownerError) {
-            if ((ownerError as NodeJS.ErrnoException).code === "ENOENT") {
-              ownerMissing = true;
-            }
-            // A malformed owner record is not proof of a dead writer.
-          }
-          if (owner && Number.isInteger(owner.pid) && Number(owner.pid) > 0) {
-            if (!(await processIsAlive(Number(owner.pid)))) {
-              if (await reclaimLock(lockDirectory)) continue;
-            }
-          } else if (ownerMissing && (await reclaimLock(lockDirectory))) {
-            continue;
-          }
-        }
-      } catch (lockError) {
-        if ((lockError as NodeJS.ErrnoException).code !== "ENOENT") {
-          // An absent or malformed owner record is not proof of a dead writer.
-          // Keep the lock and fail closed rather than risking concurrent writes.
-        }
-      }
-      if (Date.now() >= deadline) {
-        throw new Error("calibration store lock timeout; existing lock was not taken over");
-      }
-      await new Promise((resolvePromise) => setTimeout(resolvePromise, LOCK_WAIT_MS));
+    } finally {
+      await rm(tempLock, { force: true });
     }
+
+    try {
+      const lockStat = await lstat(lockFile);
+      if (Date.now() - lockStat.mtimeMs > LOCK_STALE_MS) {
+        let owner: { pid?: unknown } | undefined;
+        try {
+          owner = await readJson<{ pid?: unknown }>(lockFile);
+        } catch {
+          // A malformed owner record is not proof of a dead writer.
+        }
+        if (owner && isSafePid(owner.pid) && (await processIsAlive(owner.pid)) === false) {
+          if (await reclaimLock(lockFile)) continue;
+        }
+      }
+    } catch (lockError) {
+      if ((lockError as NodeJS.ErrnoException).code !== "ENOENT") throw lockError;
+    }
+    if (Date.now() >= deadline) {
+      throw new Error("calibration store lock timeout; existing lock was not taken over");
+    }
+    await new Promise((resolvePromise) => setTimeout(resolvePromise, LOCK_WAIT_MS));
   }
 
   try {
     return await work();
   } finally {
-    await rm(lockDirectory, { recursive: true, force: true });
+    await rm(lockFile, { force: true });
   }
 }
 
