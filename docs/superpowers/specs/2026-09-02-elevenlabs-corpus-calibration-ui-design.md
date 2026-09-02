@@ -54,7 +54,7 @@ Navigateur
 API applicative versionnée
     ▼
 Services d’application
-    ├── CalibrationRunner ──► run_calibration / contrats MCP
+    ├── CalibrationRunner ──► CalibrationBridge ──► run_calibration / MCP
     ├── CorpusRepository
     ├── CalibrationRunRepository
     ├── VoiceProfileRepository
@@ -66,6 +66,14 @@ Le navigateur ne connaît ni la clé, ni le fournisseur ElevenLabs, ni la logiqu
 de mesure. L’API applicative orchestre le parcours, mais délègue les règles
 fonctionnelles au contrat MCP et au cœur de calibration.
 
+Le `CalibrationRunner` ne suppose pas que le cœur soit écrit en TypeScript :
+il passe par un `CalibrationBridge` qui encapsule le pont Node/TypeScript ↔
+Python. Le transport réel — serveur MCP en stdio, subprocess Python direct ou
+appel HTTP intermédiaire — sera choisi uniquement après la gate de contrat et
+reste invisible pour l’UI. Le bridge possède le cycle de vie du processus, le
+framing des messages, la propagation stderr/exit code, les timeouts,
+l’annulation et la résolution de l’environnement Python.
+
 Les ports permettent de remplacer les implémentations sans modifier l’UI ni
 les services :
 
@@ -75,7 +83,7 @@ les services :
 | `CorpusRepository` | fichiers JSON locaux | base de données |
 | `CalibrationRunRepository` | fichiers JSON locaux | base de données |
 | `ArtifactStore` | répertoire local | stockage objet |
-| `CalibrationRunner` | appel direct au cœur/MCP | même cœur derrière un worker si nécessaire |
+| `CalibrationRunner` | utilise le `CalibrationBridge` vers le cœur/MCP | même bridge derrière un worker si nécessaire |
 
 Le backend local écoute uniquement sur `127.0.0.1` par défaut. Le déploiement
 SaaS ajoute l’authentification et le contrôle d’accès à l’entrée de la même API.
@@ -164,8 +172,11 @@ consultables ; la publication change explicitement le profil courant.
    la requête, au corpus, au contrat ou au cœur courant. L’approbation possède
    une expiration et est consommée de façon atomique avec le passage à
    `running` ; elle ne peut servir qu’à un run.
-9. Le backend exécute le run avec le même identifiant d’idempotence, conserve
-   le rapport et n’écrit pas de profil automatiquement.
+9. Le backend réserve atomiquement le run puis demande au `CalibrationBridge`
+   d’exécuter le snapshot approuvé avec le même identifiant d’idempotence. Si
+   le transport perd la réponse après émission, le run devient
+   `execution_unknown` ; le rapport reste incomplet et aucun profil n’est écrit
+   automatiquement.
 10. Après succès, l’utilisateur clique explicitement sur « Publier comme
     profil ». Le profil référence le rapport source et son WPM.
 
@@ -272,7 +283,9 @@ Les tests doivent couvrir :
 - conservation d’un rapport sans publication automatique ;
 - publication explicite d’un profil avec WPM et run source ;
 - absence de clé dans les réponses HTTP, logs et artefacts ;
-- parcours API complet avec un faux `CalibrationRunner`.
+- parcours API complet avec un faux `CalibrationRunner` ;
+- bridge Node/Python testé avec un faux processus ou transport, incluant
+  framing, timeout, stderr et codes de sortie.
 
 Le parcours MVP est accepté lorsque l’on peut créer une version du corpus,
 préparer un run, voir un dry-run complet, l’approuver, l’exécuter une seule
@@ -292,6 +305,13 @@ en local mais renseignés en SaaS. Les événements de facturation seront liés 
 run et au résultat confirmé par le runner, jamais à un clic ou à un retry du
 navigateur.
 
+Ces champs et garde-fous sont conservés dès le local parce qu’ils stabilisent
+la migration, mais leur implémentation locale reste minimale : un
+`workspace_id` fixe, une révision entière ou un `ETag` simple, un hash
+déterministe local et aucune infrastructure distribuée. La réconciliation de
+`execution_unknown` est un état et une action manuelle, pas un service de jobs
+à construire dans le MVP.
+
 Le frontend ne doit contenir aucune hypothèse de chemin local, de système de
 fichiers, de `.env` ou d’exécution synchrone. Le backend local ne doit pas
 exposer de contrat provider-specific au navigateur.
@@ -300,9 +320,12 @@ exposer de contrat provider-specific au navigateur.
 
 Le dépôt inspecté ne contient pas actuellement `run_calibration`, les contrats
 MCP ElevenLabs ni un backend HTTP ; `src/commands/ui.ts` ouvre aujourd’hui un
-HTML statique. La première tâche d’implémentation est donc la gate de contrat :
-charger la source réelle, relever son dépôt/package, sa révision, ses
-paramètres, ses valeurs par défaut, son mécanisme de dry-run, son format de
-résultat et sa garantie d’idempotence. Les types du backend et les routes de
-calibration ne sont autorisés qu’après cet inventaire. Aucun nom de champ
-provider-specific ne doit être figé avant cette vérification.
+HTML statique. La première tâche d’implémentation est donc la gate de contrat
+et de bridge : identifier le dépôt/package Python `voice-calibration/`, sa
+révision, son point d’entrée, son transport MCP réel, son framing, son
+environnement d’exécution, ses paramètres, ses valeurs par défaut, son
+mécanisme de dry-run, son format de résultat, ses erreurs, ses timeouts et sa
+garantie d’idempotence. Les types du backend et les routes de calibration ne
+sont autorisés qu’après cet inventaire. Aucun nom de champ provider-specific,
+aucun transport et aucun protocole Node/Python ne doit être figé avant cette
+vérification.
