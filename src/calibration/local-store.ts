@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { constants } from "node:fs";
-import { mkdir, open, readFile, readdir, rename, access, lstat, rm, stat } from "node:fs/promises";
+import { mkdir, open, readFile, readdir, rename, access, lstat, rm } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join, relative, resolve, sep } from "node:path";
 
@@ -55,15 +55,22 @@ async function assertNoSymlinkWithin(root: string, target: string): Promise<void
     throw new Error("invalid path boundary");
   }
 
-  let current = resolvedRoot;
-  for (const segment of relativeTarget.split(sep).filter(Boolean)) {
-    current = join(current, segment);
+  let current = resolvedTarget;
+  while (true) {
     try {
       if ((await lstat(current)).isSymbolicLink()) throw new Error("symbolic links are not allowed");
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") break;
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        const parent = dirname(current);
+        if (parent === current) break;
+        current = parent;
+        continue;
+      }
       throw error;
     }
+    const parent = dirname(current);
+    if (parent === current) break;
+    current = parent;
   }
 }
 
@@ -98,28 +105,21 @@ async function readJson<T>(path: string): Promise<T> {
 }
 
 const LOCK_WAIT_MS = 10;
-const LOCK_STALE_MS = 30_000;
+const LOCK_TIMEOUT_MS = 30_000;
 
 async function withFileLock<T>(lockPath: string, work: () => Promise<T>): Promise<T> {
   const lockDirectory = `${lockPath}.lock`;
   await mkdir(dirname(lockPath), { recursive: true });
-  const deadline = Date.now() + LOCK_STALE_MS;
+  const deadline = Date.now() + LOCK_TIMEOUT_MS;
   while (true) {
     try {
       await mkdir(lockDirectory);
       break;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
-      try {
-        const lockStat = await stat(lockDirectory);
-        if (Date.now() - lockStat.mtimeMs > LOCK_STALE_MS) {
-          await rm(lockDirectory, { recursive: true, force: true });
-          continue;
-        }
-      } catch (statError) {
-        if ((statError as NodeJS.ErrnoException).code !== "ENOENT") throw statError;
+      if (Date.now() >= deadline) {
+        throw new Error("calibration store lock timeout; existing lock was not taken over");
       }
-      if (Date.now() >= deadline) throw new Error("calibration store lock timeout");
       await new Promise((resolvePromise) => setTimeout(resolvePromise, LOCK_WAIT_MS));
     }
   }
