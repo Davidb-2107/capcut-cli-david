@@ -1,0 +1,20 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const templatePath = resolve(root, "src/ui/calibration-template.html");
+const clientPath = resolve(root, "dist/ui/calibration-client.js");
+const outputPath = resolve(root, "dist/ui/calibration.html");
+const template = readFileSync(templatePath, "utf8");
+const marker = "/*__CALIBRATION_TEMPLATE__*/";
+if (!template.includes(marker)) throw new Error("calibration UI template marker is missing");
+if (!existsSync(clientPath)) throw new Error("compiled calibration browser client is missing; run tsc first");
+const client = readFileSync(clientPath, "utf8").replace(/\nexport \{\};?\s*$/u, "\n");
+writeFileSync(clientPath, client);
+if (/^\s*(?:import|export)\b/m.test(client) || client.includes("import(")) throw new Error("calibration browser client must be self-contained");
+const packageJson = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
+const html = template.replace(marker, `const BUILD = ${JSON.stringify({ version: packageJson.version, builtAt: new Date().toISOString() })};`);
+mkdirSync(resolve(root, "dist/ui"), { recursive: true });
+writeFileSync(outputPath, html);
+console.log(`build-calibration-ui: ${outputPath}`);

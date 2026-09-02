@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Calibration ElevenLabs</title>
+    <style>
+      :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #111827; color: #e5e7eb; }
+      body { margin: 0; }
+      main { max-width: 1100px; margin: auto; padding: 24px; }
+      nav { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 24px; }
+      button, input, textarea, select { font: inherit; border-radius: 6px; border: 1px solid #4b5563; padding: 8px; }
+      button { cursor: pointer; background: #2563eb; color: white; border: 0; }
+      button:disabled { cursor: not-allowed; opacity: .45; }
+      input, textarea, select { background: #1f2937; color: #f9fafb; width: 100%; box-sizing: border-box; }
+      textarea { min-height: 120px; }
+      section { background: #1f2937; border: 1px solid #374151; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+      .view { display: none; }
+      .view.active { display: block; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+      label { display: grid; gap: 6px; margin-bottom: 12px; }
+      .muted { color: #9ca3af; }
+      .danger { color: #fca5a5; }
+      pre { white-space: pre-wrap; overflow: auto; background: #111827; padding: 12px; border-radius: 6px; }
+      .item { display: grid; grid-template-columns: 90px 1fr auto; gap: 8px; align-items: start; margin-bottom: 8px; }
+      #status { min-height: 1.5em; }
+    </style>
+    <script type="module">/*__CALIBRATION_TEMPLATE__*/</script>
+    <script src="/calibration-client.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <h1>Calibration ElevenLabs</h1>
+      <p id="status" class="muted" role="status">Chargement…</p>
+      <nav aria-label="Vues">
+        <button data-view="home">Accueil / configuration</button>
+        <button data-view="corpus">Corpus</button>
+        <button data-view="prepare">Préparer</button>
+        <button data-view="dry-run">Dry-run</button>
+        <button data-view="result">Résultat</button>
+        <button data-view="profiles">Profils</button>
+      </nav>
+
+      <section id="view-home" class="view active">
+        <h2>Accueil / configuration</h2>
+        <p id="config-status">Configuration ElevenLabs inconnue.</p>
+        <button id="refresh">Rafraîchir</button>
+      </section>
+
+      <section id="view-corpus" class="view">
+        <h2>Corpus standard</h2>
+        <p class="muted">Les textes sont envoyés ensemble au cœur de calibration, dans l’ordre publié.</p>
+        <div id="corpus-items"></div>
+        <button id="add-item">Ajouter un texte</button>
+        <button id="save-corpus">Enregistrer</button>
+        <button id="publish-corpus">Publier la version</button>
+      </section>
+
+      <section id="view-prepare" class="view">
+        <h2>Préparer</h2>
+        <form id="prepare-form">
+          <label>Voix <input name="voiceRef" required autocomplete="off"></label>
+          <div id="schema-fields" class="grid"></div>
+          <label>postproc (explicite)
+            <select name="postproc"><option value="cut">cut</option><option value="trim">trim</option></select>
+          </label>
+          <button type="submit">Préparer le dry-run</button>
+        </form>
+      </section>
+
+      <section id="view-dry-run" class="view">
+        <h2>Dry-run</h2>
+        <p id="dry-run-state" class="muted">Aucun dry-run préparé.</p>
+        <pre id="request-preview"></pre>
+        <button id="approve" disabled>Approuver l’exécution réelle</button>
+        <button id="execute" disabled>Exécuter une fois</button>
+      </section>
+
+      <section id="view-result" class="view">
+        <h2>Résultat</h2>
+        <pre id="result-preview"></pre>
+        <button id="publish-profile" disabled>Publier le profil WPM</button>
+      </section>
+
+      <section id="view-profiles" class="view">
+        <h2>Profils</h2>
+        <div id="profiles-list" class="muted">Aucun profil chargé.</div>
+      </section>
+    </main>
+  </body>
+</html>
