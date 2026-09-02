@@ -12,7 +12,8 @@ contract.
 | Evidence | Observed value |
 |---|---|
 | Source checkout | `Shared/voice-calibration/` in the `Wiki_Claude` vault |
-| Source revision | `2eedac32fd3f4275e58ca8510d0d49be0b589f96` |
+| Source repository | `Wiki_Claude` vault Git repository; `Shared/voice-calibration/` is a tracked directory, not a standalone Git checkout |
+| Capture ref | `2eedac32fd3f4275e58ca8510d0d49be0b589f96`, the vault repository HEAD observed at capture time; this is not a revision of `voice-calibration/` alone |
 | Package | `voice-calibration` version `0.1.0`, Python `>=3.11` |
 | Authoritative README | `Shared/voice-calibration/README.md`, read with the enabled Obsidian CLI |
 | Contract models | `Shared/voice-calibration/core/contracts.py` |
@@ -22,8 +23,29 @@ contract.
 | Environment convention | `Shared/voice-calibration/calibrate_battery.py` |
 | MCP wiring | `Shared/.mcp.json` in the vault; the file is hidden from the Obsidian file index, so its JSON was inspected read-only with all environment values redacted |
 
-The source checkout was clean when its revision was read. The project
-worktree does not contain a provider implementation and must not copy one.
+`Shared/voice-calibration/` has no independent `.git` directory. The capture
+ref above identifies the containing vault repository only; the vault working
+tree was not treated as clean, so this inventory makes no clean-checkout claim.
+The project worktree does not contain a provider implementation and must not
+copy one.
+
+The following SHA-256 fingerprints pin the source files actually used for the
+contract claims at capture time. They complement, rather than replace, the
+vault HEAD reference:
+
+| Source file | SHA-256 |
+|---|---|
+| `Shared/voice-calibration/README.md` | `CD1CBD00D328BE69C17DA88F3A6767C80198C293B4B35440D2EEF1622FB3C78F` |
+| `Shared/voice-calibration/pyproject.toml` | `43733EF318C72BBE69422E1AE72F113459960EF14CA59254F75EA85B0F9A8710` |
+| `Shared/voice-calibration/core/contracts.py` | `49F34689BE5501CED2DED4B0E9737FDBB7BCACE9D3BDE908CAA7D19D9198878D` |
+| `Shared/voice-calibration/core/calibration.py` | `F23B8284BCBC129A7228BC4CC6EEE9C705F58EB4F86134C4A56875590863D62E` |
+| `Shared/voice-calibration/core/capabilities.py` | `8713362530F1F12C9F117366A08B4CF8BB31A7180CB24FEEE7D3D7FABC3D003B` |
+| `Shared/voice-calibration/mcp_server/server.py` | `F0A703198CCB062A680BDD14EB04DBEEC3CA51AAA22A0B87944C7F1C6F6F59A0` |
+| `Shared/voice-calibration/voice_wpm.py` | `B5E3BEB77E134D0B1BCEA65E97D85792E60B274842F03EF5C150FF38F1C9E53F` |
+| `Shared/voice-calibration/voice_wpm.json` | `49A4103790A6DC9A0F2C87BFF742C49AA6C7FA1DC7AC37BA80666083B584100F` |
+| `Shared/voice-calibration/calibrate_battery.py` | `B68A4B00AB0BBC91ABF2DBC3DEFACAF3B14ED67F233B89FAE7C7DC883852A4CC` |
+| `Shared/voice-calibration/test_mcp_server.py` | `582A22A6B0CF41BC7E9A434907CAE03DE89807AF5A2D1A150231B2A4F81BFA9F` |
+| `Shared/.mcp.json` | `9CEB30B594BCFB82BBAA907A8832C0C80B8FB0755102FEF0D5B9E5F7372BABC4` |
 
 The claim-to-source index used for this inventory is:
 
