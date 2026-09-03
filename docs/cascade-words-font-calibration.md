@@ -503,3 +503,59 @@ shaping OpenType et les invariants de layout, mais ne remplacent pas cette
 vérification moteur. Le code de production reste inchangé dans la branche
 principale ; le correctif kerning est uniquement présent comme adaptation
 provisoire dans les worktrees de sonde et d’intégration.
+
+## Sonde `cascade-words` sur texte réel — Rubik, taille 20 — 2026-09-03
+
+Une sonde distincte a été générée par le CLI pour vérifier non plus des
+glyphes isolés, mais le placement mot-par-mot de deux phrases réelles :
+`this is the second` et `fi office`. Le draft est :
+
+`C:/Users/dbele/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft/cascade-words-rubik-real-text-2026-09-03`
+
+Le canvas est `1080×1920`. Les captions visibles ont été générées avec
+`Rubik-Bold`, resource ID `7517472189348695297`, et `--font-size 20`. Le
+contrôle JSON avant export confirmait, pour chaque matériau visible,
+`font_size = 20`, `content.styles[0].size = 20` et le même identifiant de
+police. `validate` passait avec `0` erreur et `0` warning.
+
+L’export contrôlé est :
+
+`C:/Users/dbele/AppData/Local/CapCut/Videos/cascade-words-rubik-real-text-2026-09-03.mp4`
+
+`ffprobe` donne une vidéo H.264 `1080×1920` à `30 fps`, `3,500 s` de vidéo et
+`3,506 s` de conteneur. Les frames ont été extraites avec le binaire local
+`ffmpeg` à `4 fps` dans le dossier temporaire
+`C:/Users/dbele/AppData/Local/Temp/cascade-rubik-real-text-frames-2026-09-03`.
+
+### Résultat observé
+
+La première caption seule, `this`, produit une encre de `204 px` de large.
+À l’apparition des mots suivants, l’enveloppe ne s’élargit presque pas :
+
+| Moment | Texte attendu | Bounding box d’encre observée | Observation |
+|---|---|---:|---|
+| `0,00–0,25 s` | `this` | `x=368`, largeur `204 px` | correct seul |
+| `0,50–0,75 s` | `this is` | `x=368`, largeur `204 px` | `is` recouvre `this` |
+| `1,00–1,25 s` | `this is the` | `x=368`, largeur `253 px` | chevauchement manifeste |
+| `1,50–1,75 s` | `this is the second` | `x=368`, largeur `411 px` | phrase illisible, mots superposés |
+| `2,50–2,75 s` | `fi` | `x=473`, largeur `67 px` | correct seul |
+| `3,00–3,25 s` | `fi office` | `x=399`, largeur `301 px` | `fi` est recouvert par `office` |
+
+Le problème n’est donc ni la police, ni la taille, ni la durée des cartes :
+c’est l’échelle utilisée pour transformer les mesures Fontkit en offsets
+CapCut. Pour Rubik-Bold à la taille 20, Fontkit mesure `39,52 px` d’avance pour
+`this` et `177,20 px` pour `this is the second`, tandis que le rendu CapCut
+donne une encre de `204 px` pour `this`. Le rapport encre/avance du premier cas
+est d’environ `5,16`, cohérent avec le facteur candidat `≈ 5,2` déjà relevé sur
+la sonde Rubik corrigée.
+
+Les offsets actuellement écrits par le CLI restent ceux calculés à partir des
+mesures non amplifiées : `this = -0,12748`, `is = -0,06715`, `the = -0,01146`,
+`second = 0,09620`. Ils ne séparent donc pas les mots après rendu CapCut.
+
+**Verdict :** la sonde confirme la cause du mauvais wrapping/placement : une
+mesure Fontkit canonique à `×1` ne peut pas être utilisée directement pour
+positionner une taille CapCut. Le facteur `≈ 5,2` est maintenant confirmé à la
+fois par les glyphes isolés et par une phrase réelle, mais reste un facteur
+empirique de Rubik et ne doit pas encore être généralisé aux autres polices.
+Cette analyse n’a modifié aucun code de production.
