@@ -110,8 +110,38 @@ Les valeurs exportées sont des boîtes d’encre rasterisées, pas des avances
 OpenType. Leur dispersion, ainsi que le clipping des deux chaînes longues,
 interdit d’en déduire un facteur ou un profil validé. Le draft a depuis été
 remplacé par une sonde qui tient entièrement dans le canvas (`AA/AAAA`,
-`WW/WWWW`, `iiii/iiiiiiii`) ; un nouvel export reste nécessaire avant toute
-conclusion.
+`WW/WWWW`, `iiii/iiiiiiii`). Le nouvel export corrigé est analysé dans la
+section suivante.
+
+### Contrôle de l’export Rubik corrigé reçu le 2026-09-03
+
+L’export `cascade-words-font-calibration-rubik-2026-09-(1).mp4` présente les
+mêmes caractéristiques techniques attendues : vidéo H.264 `1080×1920`,
+`30 fps`, durée `6,014 s`. Les six frames centrales ont été extraites avec
+`ffmpeg` local et mesurées à un seuil de luminance de `24/255`.
+
+| Caption | `fontkit` xAdvance à 10 | Encre exportée | Encre / xAdvance | Clipping |
+|---|---:|---:|---:|---|
+| `AA` | 14,36 px | 360 px | 25,070 | non |
+| `AAAA` | 28,72 px | 723 px | 25,174 | non |
+| `WW` | 16,64 px | 408 px | 24,519 | non |
+| `WWWW` | 33,28 px | 830 px | 24,940 | non |
+| `iiii` | 11,84 px | 272 px | 22,973 | non |
+| `iiiiiiii` | 23,68 px | 572 px | 24,155 | non |
+
+Les six captions sont désormais exploitables : aucune n’est tronquée et les
+centres sont alignés à `x ≈ 540 px`. En revanche, la largeur d’encre ne suit
+pas exactement l’avance fontkit : un ajustement linéaire sans intercept sur
+les six cas donne un facteur `24,743462`, avec une erreur maximale de
+`20,96 px` et un RMSE de `12,01 px`. L’écart est particulièrement visible sur
+`iiii`, dont les sidebearings et la forme étroite rendent l’encre beaucoup plus
+petite que l’avance OpenType.
+
+**Résultat :** cet export valide le protocole de capture et confirme que la
+sonde tient dans le canvas, mais il ne valide toujours pas une règle universelle
+« encre rasterisée = facteur × xAdvance ». Il faut conserver `fontkit` pour le
+wrapping et traiter séparément la question de la largeur réellement rendue,
+police par police, sans enregistrer `24,743462` comme profil de production.
 
 ## Références `fontkit` calculées le 2026-09-03
 
