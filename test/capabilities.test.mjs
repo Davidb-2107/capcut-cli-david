@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 
 import { CAPABILITIES, CHAINS } from "../dist/capabilities.js";
 import { KINDS } from "../dist/commands/query.js";
+import { runCli } from "./helpers/spawn-cli.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -73,4 +74,26 @@ test("anti-dérive kinds: catalogue.ts consomme KINDS, pas une copie locale", ()
   const src = readFileSync(resolve(ROOT, "src/commands/catalogue.ts"), "utf-8");
   ok(!/"(?:sticker|mask|animation|curve)"\]\)?;/.test(src), "copie en dur de la liste de kinds dans catalogue.ts");
   ok(/import \{[^}]*KINDS[^}]*\} from "\.\/query\.js"/.test(src), "catalogue.ts doit importer KINDS depuis query.ts");
+});
+
+test("cascade-words: help, capability card and generated UI share the measured-font contract", () => {
+  const card = CAPABILITIES.find((c) => c.verb === "cascade-words");
+  ok(card, "carte cascade-words introuvable");
+  const cardText = `${card.summary} ${card.signature} ${card.flags.map((f) => `${f.flag} ${f.desc}`).join(" ")}`;
+  ok(cardText.includes("--font <name|resource_id>"), "la carte doit documenter --font");
+  ok(cardText.includes("--clone-style"), "la carte doit documenter le repli clone-style");
+  ok(/largeurs OpenType mesurées|largeur.*mesur/i.test(cardText), "la carte doit documenter la mesure de largeur");
+  ok(!cardText.includes("--max-chars"), "la carte ne doit plus documenter --max-chars");
+  strictEqual(card.readOnly, false);
+  strictEqual(card.capcutClosed, true);
+
+  const help = runCli(["--help"]);
+  strictEqual(help.status, 0);
+  ok(help.stdout.includes("--font <name|resource_id>"), "--help doit documenter --font");
+  ok(/measured\s+font widths/.test(help.stdout), "--help doit documenter les largeurs mesurées");
+  ok(!help.stdout.includes("--max-chars"), "--help ne doit plus contenir --max-chars");
+
+  const html = readFileSync(resolve(ROOT, "dist/ui/index.html"), "utf-8");
+  ok(html.includes("--font <name|resource_id>"), "la page UI doit documenter --font");
+  ok(!html.includes("--max-chars"), "la page UI ne doit plus contenir --max-chars");
 });

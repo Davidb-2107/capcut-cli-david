@@ -6,7 +6,17 @@ import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { basename, dirname, resolve, join } from "node:path";
 
-import { addAudio, addEffect, addFilter, addText, addTransition, addVideo, initDraft } from "../dist/commands/create.js";
+import {
+  addAudio,
+  addEffect,
+  addFilter,
+  addText,
+  addTransition,
+  addVideo,
+  applyTextFontIdentity,
+  buildTextMaterial,
+  initDraft,
+} from "../dist/commands/create.js";
 import { loadDraft, saveDraft } from "../dist/draft.js";
 
 import { FIXTURES, fixturePath } from "./helpers/load-fixture.mjs";
@@ -288,6 +298,42 @@ test("add-text: addText writes text material w/ #FF0000 color and parseable cont
   saveDraft(filePath, draft);
   const { draft: reloaded } = loadDraft(filePath);
   ok(reloaded.materials.texts.some((m) => m.id === result.materialId));
+});
+
+test("buildTextMaterial: applies the same font identity in content and material mirrors", () => {
+  const font = {
+    path: "C:/fonts/Measured.ttf",
+    id: "font-id",
+    title: "Measured",
+    resourceId: "resource-id",
+    sourcePlatform: 1,
+    fontsEntry: { title: "Measured", request_id: "native" },
+  };
+  const mat = buildTextMaterial("mat-1", "Hello", 23, [1, 1, 1], "#FFFFFF", 1, [], font);
+  const style = JSON.parse(mat.content).styles[0];
+  strictEqual(style.font.path, font.path);
+  strictEqual(style.font.id, font.id);
+  strictEqual(mat.font_path, font.path);
+  strictEqual(mat.font_id, font.id);
+  strictEqual(mat.font_title, font.title);
+  strictEqual(mat.font_resource_id, font.resourceId);
+  strictEqual(mat.font_source_platform, 1);
+  strictEqual(mat.fonts[0].path, font.path);
+});
+
+test("applyTextFontIdentity: updates every rich-text span plus external mirrors", () => {
+  const mat = {
+    content: JSON.stringify({ text: "Hello", styles: [{ range: [0, 2] }, { range: [2, 5] }] }),
+    font_size: 19,
+  };
+  applyTextFontIdentity(mat, { path: "C:/fonts/Span.ttf", id: "span-id", title: "Span" });
+  for (const style of JSON.parse(mat.content).styles) {
+    strictEqual(style.font.path, "C:/fonts/Span.ttf");
+    strictEqual(style.font.id, "span-id");
+  }
+  strictEqual(mat.font_path, "C:/fonts/Span.ttf");
+  strictEqual(mat.font_id, "span-id");
+  strictEqual(mat.font_title, "Span");
 });
 
 test("add-text: addText with custom trackName creates a new text track", (t) => {

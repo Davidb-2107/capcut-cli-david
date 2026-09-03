@@ -105,31 +105,29 @@ Add:
               --transform-y: clip.transform.y for every rebuilt caption segment
               (vertical position; negatives allowed, e.g. -0.4 = mi-bas).
               --clone-style: keep the target track's existing caption font/stroke/shadow.
-  cascade-words <project> <cards.json> --guide-track <name>
+  cascade-words <project> <cards.json> --guide-track <name> (--font <name|resource_id> | --clone-style)
               [--track-prefix <name>] [--line-prefix <name>] [--font-size <n>]
               [--color <hex>] [--highlight-color <hex>] [--align <0|1|2>]
-              [--clone-style] [--max-chars <n>]
+              [--drafts <dir>]
               Word-by-word sentence build-up (NOT karaoke — words stay on screen once
-              revealed, until the full sentence shows). Per line (from --max-chars, or
-              one line if omitted): a BASE track (full line text, --color, default
+              revealed, until the full sentence shows). Lines are packed from measured
+              font widths: a BASE track (full line text, --color, default
               #FFFFFF) is created as a PLACEMENT GUIDE ONLY and hidden immediately
               (visible=false — never meant to be seen), plus one WORD track per word
               (--highlight-color, default #FFD600, the only visible layer) that starts
               at its own timestamp (cards = [{text,start,end}], microseconds — e.g.
               Shared/narration-alignment build_captions_cli.py --karaoke output), stays
-              until the line ends, and is x-offset (char-count heuristic, not real font
-              metrics) to sit over its matching word in the hidden base guide.
+              until the line ends, and is x-offset from measured font prefixes to sit
+              over its matching word in the hidden base guide.
+              --font resolves a measured font from the catalogue/drafts and writes the
+              same font into content.styles[*].font and material mirrors. Without
+              --font, --clone-style must clone a readable guide font.
               --guide-track names the text track already holding the full sentence
               (created via import-captions); its segment is likewise hidden once
               processed — a guide track may hold several sentence segments (repeated
               per-sentence calls), each call consumes and hides the first unhidden one.
               Base tracks are named <line-prefix>-000, ... (default "line"); word tracks
               <track-prefix>-000, ... (default "word", global card index).
-              --max-chars: char-count-per-line heuristic — when the cumulative sentence
-              would overflow one screen line, groups words into multiple lines; each line
-              is its own escalier, ending when the next line's first word starts. The
-              LAST line ends at its own last card's natural end (from cards.json), capped
-              at the guide segment's end — never stretched to fill guide padding/dead air.
   add-effect <project> <resource-id> <name> (<start> <duration> | --full)
               [--value <n>] [--bind <segment-id>]
               Apply a video effect (FX) via its catalogue resource ID.
@@ -390,8 +388,8 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.trackPrefix = args[++i];
     } else if (a === "--line-prefix" && i + 1 < args.length) {
       flags.linePrefix = args[++i];
-    } else if (a === "--max-chars" && i + 1 < args.length) {
-      flags.maxChars = parseInt(args[++i], 10);
+    } else if (a === "--max-chars") {
+      die("--max-chars was removed; cascade-words now wraps from the resolved font metrics.");
     } else if (a === "--force") {
       flags.force = true;
     } else if (a === "--strict") {

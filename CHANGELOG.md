@@ -11,6 +11,22 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 ### Planned
 - `1.x` — see [`release-notes/1.0.0.md`](./release-notes/1.0.0.md) §Roadmap for the non-binding 1.x backlog.
 
+### 2.8.0 draft — measured font metrics for `cascade-words`
+
+#### Added
+- `cascade-words` resolves a readable font from the catalogue/drafts and measures OpenType layout for line wrapping and word placement. `--clone-style` remains a supported fallback when its guide style is readable and linear.
+- `fontkit` is now the first production runtime dependency, and generated text materials receive a consistent font identity and effective size.
+
+#### Changed
+- `cascade-words` uses measured widths and measured prefixes; the effective size priority is explicit `--font-size`, cloned style, `material.font_size`, then `15`.
+- Font parsing, validation and layout planning happen before draft mutation, so malformed or unreadable font inputs fail without partially writing the draft.
+
+#### Removed
+- `--max-chars` was removed. Existing invocations must select a font (or use a valid `--clone-style`) and rely on measured wrapping instead of character counts.
+
+#### Compatibility gate
+- The OpenType-to-CapCut scale still requires a real CapCut/cutcli calibration and visual render check; no empirical scale factor is claimed until [`docs/cascade-words-font-calibration.md`](./docs/cascade-words-font-calibration.md) records that result.
+
 ## [2.7.0] — 2026-08-11
 
 Minor release. **Lot mémoire** : le catalogue apprend les 4 familles CapCut qui lui

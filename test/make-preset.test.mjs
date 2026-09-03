@@ -2,7 +2,7 @@
 // font found in the drafts library. Spec: docs/superpowers/specs/2026-06-07-make-preset-design.md
 import { test } from "node:test";
 import { strictEqual, deepStrictEqual, ok } from "node:assert";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -63,8 +63,9 @@ test("plan: same resource_id across drafts → deduped, from_drafts merged+sorte
 });
 
 test("plan: prefers catalogue-grade entry over local fallback for same title", () => {
-  // local (no rid) and catalogue (rid) both present in different drafts.
-  const local = draftWith({ texts: [{ type: "text", font_title: "SpeedLines", font_resource_id: "", font_source_platform: 0, font_path: "C:/win/fonts/speed.ttf", fonts: [{ title: "SpeedLines", resource_id: "", source_platform: 0, path: "C:/win/fonts/speed.ttf" }] }] });
+  // local witness points at the same downloaded font, but without a resource_id.
+  const localPath = "C:/cache/effect/7605/h/SpeedLines.ttf";
+  const local = draftWith({ texts: [{ type: "text", font_title: "SpeedLines", font_resource_id: "", font_source_platform: 0, font_path: localPath, fonts: [{ title: "SpeedLines", resource_id: "", source_platform: 0, path: localPath }] }] });
   const cat = draftWith({ texts: [catFont("SpeedLines", "7605")] });
   const r = planMakePreset([{ name: "loc", draft: local }, { name: "cat", draft: cat }], "speedlines");
   strictEqual(r.status, "match");
@@ -175,6 +176,16 @@ test("CLI: --out writes the bare preset file (accepted by restyle's shape)", (t)
   const preset = JSON.parse(readFileSync(outPath, "utf8"));
   ok(preset.text_material && preset.content_template && preset.segment);
   strictEqual(preset.text_material.font_title, "SpeedLines");
+});
+
+test("CLI: failed local-only resolution leaves --out absent", (t) => {
+  const local = libDraft({ texts: [{ type: "text", font_title: "MyLocal", font_resource_id: "", font_source_platform: 0, font_path: "C:/win/fonts/mylocal.ttf", fonts: [{ title: "MyLocal", resource_id: "", source_platform: 0, path: "C:/win/fonts/mylocal.ttf" }] }] });
+  const root = makeLib(t, { dA: local });
+  const outPath = join(root, "local-only-preset.json");
+  const r = runCli(["make-preset", "--font", "mylocal", "--drafts", root, "--out", outPath]);
+  strictEqual(r.status, 2);
+  strictEqual(existsSync(outPath), false);
+  ok(/resource_id|local/i.test(r.errorJson?.error ?? r.stderr));
 });
 
 test("CLI: missing --font → exit 1, error mentions font", (t) => {

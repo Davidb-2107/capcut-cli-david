@@ -35,7 +35,6 @@ export interface Flags {
   guideTrack?: string;
   trackPrefix?: string;
   linePrefix?: string;
-  maxChars?: number;
   preset?: string;
   force?: boolean;
   strict?: boolean;
