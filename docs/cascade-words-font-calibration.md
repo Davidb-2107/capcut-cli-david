@@ -52,6 +52,28 @@ Les deux exports ont ensuite été analysés à leur résolution native. Les fra
 de contrôle sont prises au milieu de chacun des 12 segments de deux secondes,
 aux timestamps `1, 3, 5, …, 23 s`.
 
+## Sonde incrémentale Rubik créée par le CLI le 2026-09-03
+
+Une sonde ciblée a ensuite été générée directement par le checkout
+`codex/cascade-words-integration`, afin d’isoler l’avance d’un glyphe sans
+risque de clipping :
+
+- draft : `C:/Users/dbele/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft/cascade-words-font-calibration-rubik-2026-09-03` ;
+- canvas : `1080×1920`, 30 fps, durée globale `6 s` ;
+- piste unique : `rubik-calibration` ;
+- six captions contiguës d’une seconde, toutes en taille CapCut `10` :
+  `AAAA`, `AAAAAAAA`, `WWWW`, `WWWWWWWW`, `iiii`, `iiiiiiii` ;
+- police appliquée par le couple CLI `make-preset` → `restyle` :
+  `Rubik-Bold`, resource ID `7517472189348695297`, avec le chemin catalogue
+  `.../effect/7517472189348695297/.../Rubik-Bold.ttf`.
+
+La création a utilisé `init`, `add-text`, puis `import-captions` pour recalculer
+la durée globale, suivis de `init-meta --register`, `restyle` et `gc`. Le
+contrôle final par `info` et `validate` confirme `6` segments, `6` matériaux
+texte actifs, `0` erreur, `0` warning et `0` finding. Le preset temporaire a
+été écrit hors du dépôt ; le fichier JSON de captions temporaire a été supprimé
+après utilisation.
+
 ## Références `fontkit` calculées le 2026-09-03
 
 Avec `letterSpacing = 0`, le module intégré calcule les largeurs suivantes
