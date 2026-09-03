@@ -23,6 +23,10 @@ const SPAN_STYLE = {
   bold: true,
 };
 
+const FONT_ONLY_STYLE = {
+  font: { path: "C:/fonts/Rubik-Bold.ttf", id: "7517472189348695297" },
+};
+
 const WHITE = [1, 1, 1];
 const GREEN = [0.20392157137393951, 0.7803921699523926, 0.3490196168422699];
 
@@ -84,6 +88,16 @@ test("restyleContent: single-span lean (byte-length range) → promoted to code-
   deepStrictEqual(out.styles[0].range, [0, 19], "byte-length range converted to code units");
   deepStrictEqual(out.styles[0].fill.content.solid.color, WHITE, "fill preserved");
   deepStrictEqual(out.styles[0].font, SPAN_STYLE.font, "style grafted");
+});
+
+test("restyleContent: font-only preset preserves the existing span size", () => {
+  const content = JSON.stringify({
+    text: "AA",
+    styles: [{ fill: { content: { render_type: "solid", solid: { color: WHITE } } }, size: 10, range: [0, 2] }],
+  });
+  const out = JSON.parse(restyleContent(content, FONT_ONLY_STYLE));
+  strictEqual(out.styles[0].size, 10, "font-only restyle must not erase the caption size");
+  deepStrictEqual(out.styles[0].font, FONT_ONLY_STYLE.font, "font identity is still grafted");
 });
 
 // --- material-level graft (font_path/fonts[]/shadow_*/border_* + content rebuild) ---

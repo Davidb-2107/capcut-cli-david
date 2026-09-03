@@ -31,13 +31,19 @@ export function restyleContent(contentStr: string, spanStyle: SpanStyle): string
   // legacy single-span path stores a UTF-16 BYTE-length range, so re-derive it here;
   // multi-span keyword ranges are already code units and are preserved verbatim.
   const single = span0.length === 1;
-  const styles = span0.map((span) => ({
-    // Preserve the keyword color (fill) + range; graft the preset look on top.
-    // Key order mirrors CapCut's content_template span: fill, <style…>, range.
-    fill: span.fill,
-    ...(JSON.parse(JSON.stringify(spanStyle)) as Record<string, unknown>),
-    range: single ? [0, parsed.text.length] : span.range,
-  }));
+  const styles = span0.map((span) => {
+    // Preserve source-only fields (notably size) when a font-only preset does
+    // not provide them; preset fields still override matching source fields.
+    const source = JSON.parse(JSON.stringify(span)) as Record<string, unknown>;
+    const graft = JSON.parse(JSON.stringify(spanStyle)) as Record<string, unknown>;
+    return {
+      ...source,
+      ...graft,
+      // Keyword colors belong to the source caption, never to the preset.
+      fill: source.fill,
+      range: single ? [0, parsed.text.length] : span.range,
+    };
+  });
   return JSON.stringify({ ...parsed, styles });
 }
 
