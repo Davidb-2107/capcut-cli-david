@@ -143,6 +143,28 @@ sonde tient dans le canvas, mais il ne valide toujours pas une règle universell
 wrapping et traiter séparément la question de la largeur réellement rendue,
 police par police, sans enregistrer `24,743462` comme profil de production.
 
+### Diagnostic du mapping CLI/CapCut
+
+Une inspection en lecture seule des matériaux explique l’échelle anormalement
+grande observée dans cet export. Le matériau du draft corrigé produit par le
+CLI contient `font_size = 10`, mais `text_size` est absent et
+`content.styles[0].size` est absent. Dans les drafts enregistrés après édition
+dans CapCut, `text_size = 30` est présent et `content.styles[0].size` reprend
+exactement la taille de sonde (`10`, `20` ou `40`).
+
+Les deux chemins Rubik comparés — resource IDs `7517472189348695297` et
+`7148699606082130433` — pointent vers des fichiers de `212 840` octets ayant le
+même SHA-256 (`5bdf72fe…8705d01`). Il ne s’agit donc pas d’une différence de
+police, mais d’une différence de représentation du matériau texte. Le facteur
+`24,743462` mesuré sur l’export CLI est par conséquent diagnostique uniquement
+et ne doit pas être comparé directement aux facteurs des drafts CapCut
+enregistrés.
+
+La prochaine correction doit porter sur le générateur de matériau : reproduire
+les champs de taille du contenu CapCut, régénérer la sonde, puis refaire un
+export. La calibration typographique ne sera reprise qu’après cette
+normalisation du matériau.
+
 ## Références `fontkit` calculées le 2026-09-03
 
 Avec `letterSpacing = 0`, le module intégré calcule les largeurs suivantes
