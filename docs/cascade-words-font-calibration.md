@@ -210,6 +210,26 @@ toutefois candidat : il dépasse encore la tolérance de `2 px` sur cette sonde
 et ne doit pas être enregistré comme profil validé sans une passe de validation
 sur des chaînes de texte normales.
 
+### Correctif de réapplication d’un preset de police (2026-09-03)
+
+Le diagnostic précédent révélait aussi un défaut indépendant dans `restyle` :
+un preset généré avec `--font` ne contient que l’identité de la police, mais la
+réapplication reconstruisait chaque span sans recopier sa taille existante.
+Une taille déjà correcte dans CapCut pouvait donc disparaître, même si la
+police était bien résolue.
+
+Le correctif porte désormais chaque span source, puis applique les champs
+présents dans le preset par-dessus. La couleur `fill` et la plage `range`
+restent contrôlées par le caption source. Ainsi, un preset « police seule »
+préserve `size`, tandis qu’un preset qui fournit explicitement `size` continue
+de l’écraser comme prévu. Une régression dédiée couvre ce cas dans
+`test/restyle.test.mjs`.
+
+Le correctif a été compilé et validé par `npm test` (`677/677`), ainsi que par
+le test ciblé `restyle` (`17/17`). Cette correction règle la perte de taille
+dans le chemin CLI ; elle ne valide pas encore le facteur de calibration
+`5,200473`, qui reste à confirmer sur une sonde Rubik exportée après correction.
+
 ## Références `fontkit` calculées le 2026-09-03
 
 Avec `letterSpacing = 0`, le module intégré calcule les largeurs suivantes
