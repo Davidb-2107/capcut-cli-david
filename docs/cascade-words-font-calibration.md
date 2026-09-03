@@ -175,11 +175,40 @@ Les six captions pointent vers le même fichier Rubik (`SHA-256
 5bdf72fe…8705d01`), avec `fixed_width = -1`, `fixed_height = -1` et
 `alignment = 1`. `validate` passe avec `0` erreur, `0` warning et `0` finding.
 
-Cette version est la référence correcte pour le prochain export. Le résultat
-devra être comparé au précédent export CLI ; si l’échelle redevient cohérente,
-le correctif devra être porté dans le chemin `restyle`/génération des matériaux,
-en préservant la taille existante lorsqu’un preset de police ne fournit que
-l’identité de la police, avant de recalculer tout facteur de calibration.
+Cette version est la référence correcte pour l’export suivant. Le résultat est
+documenté ci-dessous ; si l’échelle redevient cohérente, le correctif devra être
+porté dans le chemin `restyle`/génération des matériaux, en préservant la taille
+existante lorsqu’un preset de police ne fournit que l’identité de la police,
+avant de recalculer tout facteur de calibration.
+
+### Export après correction manuelle CapCut reçu le 2026-09-03
+
+L’export `cascade-words-font-calibration-rubik-2026-09-(2).mp4` a été produit
+après la correction manuelle des six captions. Il est en H.264 `1080×1920`,
+`30 fps`, pour `6,014 s`. Les frames centrales ont été extraites avec `ffmpeg`
+local et mesurées à un seuil de luminance de `24/255`.
+
+| Caption | `fontkit` xAdvance à 10 | Encre exportée | Encre / xAdvance | Clipping |
+|---|---:|---:|---:|---|
+| `AA` | 14,36 px | 76 px | 5,292 | non |
+| `AAAA` | 28,72 px | 152 px | 5,292 | non |
+| `WW` | 16,64 px | 86 px | 5,168 | non |
+| `WWWW` | 33,28 px | 174 px | 5,228 | non |
+| `iiii` | 11,84 px | 58 px | 4,899 | non |
+| `iiiiiiii` | 23,68 px | 120 px | 5,068 | non |
+
+La correction manuelle ramène donc le facteur observé dans la plage attendue
+des essais CapCut précédents (`≈ 5,2`) et élimine le facteur aberrant `≈ 24,7`
+du draft CLI incomplet. Un ajustement linéaire sans intercept sur ces six cas
+donne `5,200473`, avec une erreur maximale de `3,57 px` et un RMSE de
+`2,33 px`. Le cas `iiii` reste plus étroit visuellement que son avance
+OpenType, à cause des sidebearings et de la forme du glyphe.
+
+**Décision :** le mapping des matériaux est maintenant suffisamment normalisé
+pour reprendre une calibration Rubik sérieuse. Le facteur `5,200473` reste
+toutefois candidat : il dépasse encore la tolérance de `2 px` sur cette sonde
+et ne doit pas être enregistré comme profil validé sans une passe de validation
+sur des chaînes de texte normales.
 
 ## Références `fontkit` calculées le 2026-09-03
 
