@@ -74,6 +74,35 @@ texte actifs, `0` erreur, `0` warning et `0` finding. Le preset temporaire a
 été écrit hors du dépôt ; le fichier JSON de captions temporaire a été supprimé
 après utilisation.
 
+### Contrôle de l’export Rubik CLI reçu le 2026-09-03
+
+L’export `cascade-words-font-calibration-rubik-2026-09-.mp4` a été contrôlé
+avec `ffprobe` et les frames ont été extraites avec la version locale de
+`ffmpeg`, à la résolution native `1080×1920` et à `2 fps`. La vidéo dure
+`6,014 s`, contient six segments d’une seconde et les frames centrales des six
+captions ont été retenues pour la mesure.
+
+La sonde est rejetée comme donnée de calibration : deux captions touchent les
+deux bords du canvas et sont donc tronquées. La bounding box d’encre, mesurée
+avec un seuil de luminance de `24/255`, donne :
+
+| Caption | `fontkit` à 10 | Encre exportée | Clipping |
+|---|---:|---:|---|
+| `AAAA` | 28,72 px | 722 px | non |
+| `AAAAAAAA` | 57,44 px | 1 080 px | oui |
+| `WWWW` | 33,28 px | 830 px | non |
+| `WWWWWWWW` | 66,56 px | 1 080 px | oui |
+| `iiii` | 11,84 px | 58 px | non |
+| `iiiiiiii` | 23,68 px | 572 px | non |
+
+Les valeurs `fontkit` sont la somme des avances de glyphes Rubik-Bold façonnés
+à `fontSize = 10`; aucune réduction de kerning n’apparaît dans ces six runs.
+Les valeurs exportées sont des boîtes d’encre rasterisées, pas des avances
+OpenType. Leur dispersion, ainsi que le clipping des deux chaînes longues,
+interdit d’en déduire un facteur ou un profil validé. Le draft doit être
+remplacé par une sonde qui tient entièrement dans le canvas (`AA/AAAA`,
+`WW/WWWW`, `iiii/iiiiiiii`) puis exporté à nouveau avant toute conclusion.
+
 ## Références `fontkit` calculées le 2026-09-03
 
 Avec `letterSpacing = 0`, le module intégré calcule les largeurs suivantes
