@@ -130,6 +130,32 @@ test("planCascadeLayout can split equal-length phrases differently and positions
   strictEqual(positioned.wordX[1], (1 + 2 + 5 - positioned.lineWidthsPx[0] / 2) / 10);
 });
 
+test("cascadeWords: measurement failure leaves draft unchanged in memory", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const { draft } = loadDraft(filePath);
+  buildGuide(draft, filePath);
+  const before = JSON.stringify(draft);
+
+  try {
+    cascadeWords(
+      draft,
+      filePath,
+      withFont({
+        cards: WORDS,
+        guideTrackName: "sentence",
+        widthOf: (text) => {
+          if (text.includes("second")) throw new Error("metric boom");
+          return text.length * 10;
+        },
+      }),
+    );
+    ok(false, "should have thrown");
+  } catch (e) {
+    match(e.message, /metric boom/);
+  }
+  strictEqual(JSON.stringify(draft), before);
+});
+
 test("cascadeWords: measured single line — one base track + N word tracks", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
   const { draft } = loadDraft(filePath);

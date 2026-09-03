@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { parseCatalogue, type CatalogueEntry } from "../commands/catalogue.js";
+import { type CatalogueEntry, parseCatalogue } from "../commands/catalogue.js";
 import { defaultProjectsRoot } from "./capcut-paths.js";
 import { resolveCataloguePath } from "./vault.js";
 

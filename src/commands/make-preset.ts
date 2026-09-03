@@ -8,7 +8,7 @@ import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "
 import { join } from "node:path";
 import { defaultProjectsRoot } from "../utils/capcut-paths.js";
 import { die, type Flags, out } from "../utils/cli.js";
-import { planFontCandidates, type FontCandidate, type FontPlanResult } from "../utils/font-resolver.js";
+import { type FontCandidate, type FontPlanResult, planFontCandidates } from "../utils/font-resolver.js";
 
 function rec(v: unknown): Record<string, unknown> | null {
   return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;

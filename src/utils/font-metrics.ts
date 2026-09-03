@@ -1,5 +1,5 @@
 import { existsSync, realpathSync, statSync } from "node:fs";
-import { openSync, type Font } from "fontkit";
+import { type Font, openSync } from "fontkit";
 
 export interface FontMeasureStyle {
   fontPath: string;

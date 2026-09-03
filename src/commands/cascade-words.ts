@@ -2,7 +2,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { type Draft, type Segment, saveDraft, type Track } from "../draft.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { baseSegment, createCompanionMaterials, hexToRgb, registerCompanions, uuid } from "../utils/companion.js";
-import { fontMetrics, type FontMeasureStyle } from "../utils/font-metrics.js";
+import { type FontMeasureStyle, fontMetrics } from "../utils/font-metrics.js";
+import { type ResolvedFont, resolveFontReference } from "../utils/font-resolver.js";
 import {
   applyTextFontIdentity,
   buildRichTextContent,
@@ -12,7 +13,6 @@ import {
   resolveCloneStyle,
   type TextFontIdentity,
 } from "./create.js";
-import { resolveFontReference, type ResolvedFont } from "../utils/font-resolver.js";
 
 // --- Cascade words (word-by-word sentence build-up, not karaoke) ---
 //
