@@ -230,6 +230,40 @@ le test ciblé `restyle` (`17/17`). Cette correction règle la perte de taille
 dans le chemin CLI ; elle ne valide pas encore le facteur de calibration
 `5,200473`, qui reste à confirmer sur une sonde Rubik exportée après correction.
 
+### Export Rubik après correction CLI reçu le 2026-09-03
+
+Le draft recréé par le CLI après le correctif a été ouvert puis exporté depuis
+CapCut sous le fichier
+`C:/Users/dbele/AppData/Local/CapCut/Videos/cascade-words-font-calibration-rubik-cli-fix-.mp4`.
+`ffprobe` confirme un flux vidéo H.264 `1080×1920` à `30 fps`, pour `6,000 s`
+de vidéo et `6,014 s` de durée de conteneur. Les douze frames ont été extraites
+avec le `ffmpeg` local à `2 fps`, puis les frames centrales des six captions ont
+été mesurées avec le même seuil de luminance `24/255` que les exports
+précédents.
+
+| Caption | `fontkit` xAdvance à 10 | Encre exportée | Encre / xAdvance | Clipping |
+|---|---:|---:|---:|---|
+| `AA` | 14,36 | 76 px | 5,292 | non |
+| `AAAA` | 28,72 | 152 px | 5,292 | non |
+| `WW` | 16,64 | 86 px | 5,168 | non |
+| `WWWW` | 33,28 | 174 px | 5,228 | non |
+| `iiii` | 11,84 | 58 px | 4,899 | non |
+| `iiiiiiii` | 23,68 | 120 px | 5,068 | non |
+
+Les largeurs sont identiques pixel par pixel à celles de l’export produit après
+correction manuelle CapCut (`cascade-words-font-calibration-rubik-2026-09-(2).mp4`).
+Le test ferme donc le diagnostic du mapping : le facteur aberrant `≈ 24,7` de
+l’export CLI initial venait bien de l’absence de `content.styles[0].size`, et
+non du fichier Rubik. Un preset `--font` seul conserve maintenant la taille
+`10` portée par le span source.
+
+Cette passe confirme le rendu et l’absence de clipping, mais ne transforme pas
+le facteur `≈ 5,2` en profil de production : la mesure reste une boîte d’encre
+rasterisée comparée à une avance OpenType, avec une erreur maximale antérieure
+de `3,57 px` sur cette famille de cas. La prochaine validation doit donc porter
+sur des chaînes normales et sur le contrat de largeur retenu pour le wrapping,
+sans réintroduire de facteur global non validé.
+
 ## Références `fontkit` calculées le 2026-09-03
 
 Avec `letterSpacing = 0`, le module intégré calcule les largeurs suivantes
