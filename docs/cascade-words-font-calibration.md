@@ -165,20 +165,21 @@ les champs de taille du contenu CapCut, régénérer la sonde, puis refaire un
 export. La calibration typographique ne sera reprise qu’après cette
 normalisation du matériau.
 
-### Test d’isolement du mapping de taille dans le draft
+### Vérification manuelle du mapping de taille dans le draft
 
-Sans modifier le code de production, un preset temporaire a été appliqué au
-draft Rubik pour ajouter les champs observés dans les matériaux CapCut :
-`content.styles[0].size = 10` et `text_size = 30`. Le premier matériau vérifié
-contient désormais ces deux champs, conserve `font_size = 10` et pointe toujours
-vers le même fichier Rubik (`SHA-256 5bdf72fe…8705d01`). `validate` passe avec
-`0` erreur, `0` warning et `0` finding.
+Sans modifier le code de production, le draft a d’abord reçu un preset
+expérimental, puis les six captions ont été corrigées manuellement dans
+CapCut. Le matériau vérifié contient maintenant les champs natifs attendus :
+`font_size = 10`, `content.styles[0].size = 10` et `text_size = 30`.
+Les six captions pointent vers le même fichier Rubik (`SHA-256
+5bdf72fe…8705d01`), avec `fixed_width = -1`, `fixed_height = -1` et
+`alignment = 1`. `validate` passe avec `0` erreur, `0` warning et `0` finding.
 
-Cette version constitue le prochain export de contrôle. Si sa taille redevient
-cohérente avec les captions créées dans CapCut, le correctif devra être porté
-dans le chemin `restyle`/génération des matériaux — en préservant la taille
-existante lorsqu’un preset de police ne fournit que l’identité de la police —
-avant de recalculer tout facteur de calibration.
+Cette version est la référence correcte pour le prochain export. Le résultat
+devra être comparé au précédent export CLI ; si l’échelle redevient cohérente,
+le correctif devra être porté dans le chemin `restyle`/génération des matériaux,
+en préservant la taille existante lorsqu’un preset de police ne fournit que
+l’identité de la police, avant de recalculer tout facteur de calibration.
 
 ## Références `fontkit` calculées le 2026-09-03
 
