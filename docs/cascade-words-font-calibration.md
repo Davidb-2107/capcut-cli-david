@@ -61,8 +61,9 @@ risque de clipping :
 - draft : `C:/Users/dbele/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft/cascade-words-font-calibration-rubik-2026-09-03` ;
 - canvas : `1080×1920`, 30 fps, durée globale `6 s` ;
 - piste unique : `rubik-calibration` ;
-- six captions contiguës d’une seconde, toutes en taille CapCut `10` :
-  `AAAA`, `AAAAAAAA`, `WWWW`, `WWWWWWWW`, `iiii`, `iiiiiiii` ;
+- la première version contenait six captions contiguës d’une seconde, toutes en
+  taille CapCut `10` : `AAAA`, `AAAAAAAA`, `WWWW`, `WWWWWWWW`, `iiii`,
+  `iiiiiiii` ;
 - police appliquée par le couple CLI `make-preset` → `restyle` :
   `Rubik-Bold`, resource ID `7517472189348695297`, avec le chemin catalogue
   `.../effect/7517472189348695297/.../Rubik-Bold.ttf`.
@@ -73,6 +74,14 @@ contrôle final par `info` et `validate` confirme `6` segments, `6` matériaux
 texte actifs, `0` erreur, `0` warning et `0` finding. Le preset temporaire a
 été écrit hors du dépôt ; le fichier JSON de captions temporaire a été supprimé
 après utilisation.
+
+Après rejet de l’export initial pour clipping, ce même draft a été reconstruit
+avec six captions contiguës d’une seconde, toujours en taille CapCut `10` :
+`AA`, `AAAA`, `WW`, `WWWW`, `iiii`, `iiiiiiii`. Le preset Rubik-Bold a été
+réappliqué, les six anciens matériaux orphelins ont été nettoyés, puis les
+miroirs `Timelines` ont été synchronisés. Le contrôle final passe de nouveau
+avec `0` erreur, `0` warning et `0` finding. Cette version corrigée n’est pas
+encore exportée.
 
 ### Contrôle de l’export Rubik CLI reçu le 2026-09-03
 
@@ -99,9 +108,10 @@ Les valeurs `fontkit` sont la somme des avances de glyphes Rubik-Bold façonnés
 à `fontSize = 10`; aucune réduction de kerning n’apparaît dans ces six runs.
 Les valeurs exportées sont des boîtes d’encre rasterisées, pas des avances
 OpenType. Leur dispersion, ainsi que le clipping des deux chaînes longues,
-interdit d’en déduire un facteur ou un profil validé. Le draft doit être
+interdit d’en déduire un facteur ou un profil validé. Le draft a depuis été
 remplacé par une sonde qui tient entièrement dans le canvas (`AA/AAAA`,
-`WW/WWWW`, `iiii/iiiiiiii`) puis exporté à nouveau avant toute conclusion.
+`WW/WWWW`, `iiii/iiiiiiii`) ; un nouvel export reste nécessaire avant toute
+conclusion.
 
 ## Références `fontkit` calculées le 2026-09-03
 
