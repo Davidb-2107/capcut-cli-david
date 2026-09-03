@@ -16,13 +16,34 @@
 - `--font <name|resource_id>` doit modifier la police écrite dans les matériaux texte, pas seulement la police utilisée pour les calculs.
 - `--clone-style` conserve le style du guide ; si `--font` est également fourni, `--font` remplace uniquement l’identité de police et le reste du style cloné est conservé.
 - La taille effective est `--font-size` explicite, puis la taille du style cloné, puis `material.font_size`, puis `15`.
-- La mesure utilise le layout OpenType (`font.layout()` et ses positions `xAdvance`), pas une simple somme de glyphes indépendants. La documentation officielle de fontkit expose explicitement cette API et son support du kerning et des substitutions avancées : https://github.com/foliojs/fontkit#glyph-metrics-and-layout.
-- La calibration `font_size` CapCut → pixels doit être déterminée sur un rendu CapCut réel avant d’être codée. Aucun chiffre empirique ne doit être ajouté avant cette étape.
+- La mesure utilise `font.layout()` pour conserver le shaping et les substitutions avancées, puis les `glyph.advanceWidth` du run pour reproduire le comportement CapCut observé sans kerning de paire. La documentation officielle de fontkit expose explicitement cette API et son support du kerning et des substitutions avancées : https://github.com/foliojs/fontkit#glyph-metrics-and-layout.
+- La calibration `font_size` CapCut → pixels doit être déterminée sur un rendu CapCut réel. Tant qu’aucune règle universelle n’est démontrée, la calibration est portée par un profil propre à chaque police ; aucun facteur inconnu ne doit être deviné ou appliqué silencieusement.
 - Le wrapping MVP utilise la largeur complète du canvas (`draft.canvas_config.width`) et conserve chaque mot trop long sur sa propre ligne ; aucune marge de sécurité implicite n’est ajoutée.
 - `--max-chars` est supprimé : `cascade-words` est encore sur une branche locale non publiée, et la police devient la source unique de mesure. Le parser doit refuser explicitement l’ancien flag au lieu de l’ignorer.
 - Toute erreur de police ou de mise en page survient avant la première mutation du draft.
 - `package.json` et `package-lock.json` restent synchronisés ; l’ajout de `fontkit` est la première dépendance de production du CLI.
 - Les tests ne dépendent pas d’une police installée dans le dossier CapCut de la machine de développement.
+
+## Décision de calibration — 2026-09-03
+
+Les exports CapCut corrigés et la mini-sonde de paires montrent que le kerning
+de paire doit être ignoré pour la mesure, mais que l’échelle `fontkit → CapCut`
+diffère entre Rubik et Pricedown. La stratégie retenue est donc progressive :
+
+1. appliquer la règle commune `font.layout()` + somme des `glyph.advanceWidth` ;
+2. utiliser un profil de calibration explicite pour chaque police non couverte
+   par une règle universelle ;
+3. identifier le profil par l’identité de police la plus stable disponible
+   (`resource_id`, puis empreinte/chemin de fichier local) ;
+4. refuser avant mutation toute police sans profil validé, plutôt que d’utiliser
+   une constante générique ou une estimation par nom ;
+5. remplacer les profils individuels par une règle commune uniquement lorsque
+   la tolérance `≤ 1 %` et `≤ 2 px` est démontrée sur plusieurs familles.
+
+Rubik et Pricedown disposent actuellement de mesures candidates, mais aucune
+ne doit encore être marquée comme profil de production : la comparaison des
+largeurs d’encre à l’avance OpenType dépasse encore la tolérance sur certains
+cas.
 
 ## État actuel vérifié
 
@@ -57,7 +78,32 @@ export function measureTextWidthPx(
 ): number;
 ```
 
-Le module cache les polices parsées par chemin canonique. Il convertit les unités internes de la police vers les pixels CapCut avec la constante de calibration documentée dans `docs/cascade-words-font-calibration.md`.
+Le module cache les polices parsées par chemin canonique. Il convertit les unités internes de la police vers les pixels CapCut avec le profil de calibration documenté dans `docs/cascade-words-font-calibration.md`.
+
+Le profil est une donnée explicite, séparée du moteur de mesure :
+
+```ts
+export interface FontCalibrationIdentity {
+  title: string;
+  resourceId: string | null;
+  fontPath: string;
+}
+
+export interface FontCalibrationProfile {
+  key: string;
+  scale: number;
+  status: "candidate" | "validated";
+}
+
+function resolveValidatedFontCalibration(
+  identity: FontCalibrationIdentity,
+  profiles: readonly FontCalibrationProfile[],
+): FontCalibrationProfile;
+```
+
+La clé privilégie `resource_id`, puis le chemin local normalisé. Un profil
+`candidate` ou absent est refusé avant mutation ; aucune estimation par nom de
+police ni facteur global de secours n’est autorisé.
 
 Le planificateur interne utilise le seam suivant :
 
@@ -92,7 +138,7 @@ function planCascadeLayout(
 
 **Interfaces:**
 - Consumes: `capcut-david init`, `init-meta --register`, `add-text`, le draft de démonstration de `cascade-words` et une vraie police avec un chemin connu.
-- Produces: une formule et une constante mesurées, avec date, version CapCut, dimensions du canvas, police, taille et tolérance d’erreur consignées dans `docs/cascade-words-font-calibration.md`.
+- Produces: une formule et un profil mesurés par police — ou une règle commune si elle est démontrée — avec date, version CapCut, dimensions du canvas, police, taille et tolérance d’erreur consignées dans `docs/cascade-words-font-calibration.md`.
 
 - [ ] **Step 1: Construire une sonde avec une chaîne connue.**
 
@@ -112,11 +158,11 @@ function planCascadeLayout(
              + letterSpacingContribution
   ```
 
-  Mesurer au moins deux tailles et deux familles de police. Accepter la formule seulement si la même constante reste dans `<= 1 %` et `<= 2 px` d’erreur sur les cas retenus. Si l’échelle dépend du canvas ou du style, conserver cette dépendance dans le contrat au lieu de la masquer derrière une constante globale.
+  Mesurer au moins deux tailles et deux familles de police. Pour chaque police, accepter un profil seulement s’il reste dans `<= 1 %` et `<= 2 px` d’erreur sur les cas retenus. N’adopter une règle commune que si une même constante satisfait cette tolérance ; si l’échelle dépend du canvas ou du style, conserver cette dépendance dans le contrat au lieu de la masquer derrière une constante globale.
 
 - [ ] **Step 4: Documenter la décision de calibration.**
 
-  Écrire dans `docs/cascade-words-font-calibration.md` les valeurs mesurées, la formule finale, la tolérance, la version CapCut et le motif de rejet de toute formule concurrente. Ne pas écrire de valeur dans le code avant que ce fichier soit complet.
+  Écrire dans `docs/cascade-words-font-calibration.md` les valeurs mesurées, la formule et les profils retenus ou rejetés, la tolérance, la version CapCut et le motif de rejet de toute formule concurrente. Ne pas écrire de facteur dans le code avant que le profil correspondant soit complet.
 
 - [ ] **Step 5: Committer la sonde documentaire.**
 
@@ -178,14 +224,16 @@ function planCascadeLayout(
 
 **Files:**
 - Create: `src/utils/font-metrics.ts`
+- Create: `src/utils/font-calibration.ts`
 - Create: `test-fixtures/fonts/Rubik-Bold.ttf`
 - Create: `test-fixtures/fonts/OFL.txt`
 - Create: `test/font-metrics.test.mjs`
+- Create: `test/font-calibration.test.mjs`
 - Modify: `package.json`
 - Modify: `package-lock.json`
 
 **Interfaces:**
-- Consumes: `ResolvedFont.fontPath`, la formule de `docs/cascade-words-font-calibration.md` et `FontMeasureStyle`.
+- Consumes: `ResolvedFont`, le profil de calibration de `docs/cascade-words-font-calibration.md` et `FontMeasureStyle`.
 - Produces: `FontMetrics.measure()` et `measureTextWidthPx()` ; aucune classe fontkit n’est exportée aux commandes.
 
 - [ ] **Step 1: Ajouter la dépendance de production.**
@@ -196,9 +244,9 @@ function planCascadeLayout(
 
   Les tests doivent vérifier : fichier TTF lisible, largeur positive, largeur nulle pour la chaîne vide, proportionnalité avec la taille, cache du même chemin, erreur lisible pour fichier absent et erreur lisible pour police illisible. Ajouter des cas `AV`, `fi`, espaces et accents.
 
-- [ ] **Step 3: Implémenter le cache et le layout OpenType.**
+- [ ] **Step 3: Implémenter le cache, le layout OpenType et le contrat de profil.**
 
-  Utiliser `fontkit.openSync()` une fois par chemin canonique. Pour chaque texte, utiliser `font.layout(text)` et sommer les positions `xAdvance` du run, avec la conversion `unitsPerEm → pixels` issue de la calibration. Ne pas utiliser `glyphsForString()` comme moteur de mesure : cette méthode ne fait qu’une correspondance caractère-glyphe, alors que `layout()` applique le shaping.
+  Utiliser `fontkit.openSync()` une fois par chemin canonique. Pour chaque texte, utiliser `font.layout(text)` afin d’appliquer le shaping, puis sommer les `glyph.advanceWidth` du run pour éviter les réductions de kerning de paire observées dans CapCut. Appliquer ensuite le profil de conversion `unitsPerEm → pixels` validé pour la police. Résoudre ce profil par `resource_id`, puis par chemin local normalisé, et refuser les profils absents ou seulement candidats. Ne pas utiliser `glyphsForString()` comme moteur de mesure : cette méthode ne fait qu’une correspondance caractère-glyphe, alors que `layout()` applique le shaping.
 
 - [ ] **Step 4: Ajouter la contribution de l’espacement.**
 
@@ -429,7 +477,7 @@ function planCascadeLayout(
 
 Le chantier est prêt à merger lorsque :
 
-1. la formule de calibration est écrite et validée sur un rendu CapCut réel ;
+1. la formule de calibration est écrite et validée sur un rendu CapCut réel, soit comme règle universelle, soit comme profils individuels explicites ;
 2. `--font` et `--clone-style` produisent la même police que celle mesurée ;
 3. `font.layout()` est utilisé derrière le module de métriques caché ;
 4. le wrapping et `transform.x` sont calculés par le layout pur injecté ;

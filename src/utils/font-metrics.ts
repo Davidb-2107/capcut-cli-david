@@ -76,7 +76,10 @@ export function measureTextWidthPx(
 
   const font = loadFont(style.fontPath);
   const run = font.layout(text);
-  const advanceUnits = run.positions.reduce((sum, position) => sum + position.xAdvance, 0);
+  // CapCut's rendered pair widths matched the shaped glyph advances without
+  // OpenType pair-kerning adjustments. Keeping the shaped glyphs preserves
+  // substitutions such as ligatures while using the engine-compatible width.
+  const advanceUnits = run.glyphs.reduce((sum, glyph) => sum + glyph.advanceWidth, 0);
   if (!Number.isFinite(font.unitsPerEm) || font.unitsPerEm <= 0) {
     throw new Error(`Font ${style.fontPath} has invalid unitsPerEm: ${font.unitsPerEm}.`);
   }
