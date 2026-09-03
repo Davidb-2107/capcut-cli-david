@@ -342,6 +342,9 @@ test("the HTTP API enforces nonce, ETag, same-origin and safe static paths", asy
   strictEqual(draftResponse.status, 200);
   const etag = draftResponse.headers.get("etag");
   strictEqual(typeof etag, "string");
+  const corpusResponse = await fetch(`${ui.url}/api/v1/corpus`);
+  strictEqual(corpusResponse.status, 200);
+  strictEqual(corpusResponse.headers.get("etag"), etag);
 
   const missingNonce = await fetch(`${ui.url}/api/v1/corpus/draft`, {
     method: "PUT",

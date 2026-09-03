@@ -193,7 +193,8 @@ async function dispatch(
       return;
     }
     if (method === "GET" && url.pathname === "/api/v1/corpus") {
-      sendJson(response, 200, await application.getCorpus(workspaceId));
+      const corpus = await application.getCorpus(workspaceId);
+      sendJson(response, 200, corpus, { etag: `W/"corpus-draft-${corpus.draft.revision}"` });
       return;
     }
     if (method === "GET" && url.pathname === "/api/v1/corpus/draft") {

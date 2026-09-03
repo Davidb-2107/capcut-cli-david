@@ -693,7 +693,7 @@ export const CAPABILITIES: Capability[] = [
     example: "capcut-david calibration-ui --open",
     readOnly: false,
     capcutClosed: false,
-    since: "2.3.0",
+    since: "2.7.0",
   },
   {
     verb: "ui",

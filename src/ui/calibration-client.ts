@@ -26,7 +26,12 @@ async function api(path: string, init: RequestInit = {}): Promise<{ response: Re
   if (init.body && !headers.has("content-type")) headers.set("content-type", "application/json");
   if (init.method && init.method !== "GET" && state.nonce) headers.set("X-Calibration-Nonce", state.nonce);
   const response = await fetch(`/api/v1${path}`, { ...init, headers });
-  const body = await response.json().catch(() => ({}));
+  let body: JsonRecord | unknown;
+  try {
+    body = await response.json();
+  } catch {
+    throw new Error("Réponse JSON invalide du serveur local");
+  }
   if (!response.ok) {
     const message =
       (body as JsonRecord)?.error && typeof (body as JsonRecord).error === "object"
@@ -65,9 +70,22 @@ function renderSchema(): void {
     return;
   }
   const required = Array.isArray(state.schema?.required) ? state.schema.required : [];
+  const postprocField = element<HTMLSelectElement>("postproc");
+  postprocField.replaceChildren();
   for (const [name, rawSchema] of Object.entries(properties as JsonRecord)) {
-    if (name === "postproc" || name === "text_source") continue;
+    if (name === "text_source") continue;
     const schema = (rawSchema && typeof rawSchema === "object" ? rawSchema : {}) as JsonRecord;
+    if (name === "postproc") {
+      const enumValues = Array.isArray(schema.enum) ? schema.enum : [];
+      for (const option of enumValues) {
+        const item = document.createElement("option");
+        item.value = String(option);
+        item.textContent = String(option);
+        postprocField.append(item);
+      }
+      if (schema.default !== undefined) postprocField.value = String(schema.default);
+      continue;
+    }
     const label = document.createElement("label");
     label.textContent = `${name}${required.includes(name) ? " *" : ""}`;
     let field: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
@@ -118,9 +136,11 @@ function renderCorpus(): void {
     const order = document.createElement("input");
     order.type = "number";
     order.value = String(item.order ?? 0);
+    order.setAttribute("aria-label", "Ordre");
     order.dataset.field = "order";
     const text = document.createElement("textarea");
     text.value = String(item.text ?? "");
+    text.setAttribute("aria-label", "Texte");
     text.dataset.field = "text";
     const remove = document.createElement("button");
     remove.type = "button";
@@ -181,7 +201,8 @@ async function refresh(): Promise<void> {
     : "Clé ElevenLabs absente côté backend.";
   const corpus = await api("/corpus");
   state.corpus = corpus.body as JsonRecord;
-  state.etag = `W/"corpus-draft-${(state.corpus.draft as JsonRecord).revision}"`;
+  state.etag = corpus.response.headers.get("etag");
+  if (!state.etag) state.etag = `W/"corpus-draft-${(state.corpus.draft as JsonRecord).revision}"`;
   renderCorpus();
   const schema = await api("/calibration/schema");
   state.schema = schema.body as JsonRecord;
@@ -241,11 +262,22 @@ async function approve(): Promise<void> {
 
 async function execute(): Promise<void> {
   if (!state.run) return;
-  state.run = (await api(`/calibration-runs/${state.run.id}/execute`, { method: "POST", body: "{}" }))
-    .body as JsonRecord;
-  renderRun();
-  activateView("result");
-  showStatus("Run terminé ; le profil WPM reste une publication séparée.");
+  const runId = String(state.run.id);
+  try {
+    state.run = (await api(`/calibration-runs/${runId}/execute`, { method: "POST", body: "{}" })).body as JsonRecord;
+    renderRun();
+    activateView("result");
+    showStatus("Run terminé ; le profil WPM reste une publication séparée.");
+  } catch (error) {
+    try {
+      state.run = (await api(`/calibration-runs/${runId}`)).body as JsonRecord;
+      renderRun();
+      activateView("result");
+    } catch {
+      // Keep the original execute error visible when the recovery read also fails.
+    }
+    throw error;
+  }
 }
 
 async function publishProfile(): Promise<void> {
