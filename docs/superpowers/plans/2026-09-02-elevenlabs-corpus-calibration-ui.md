@@ -26,8 +26,8 @@
 - L’empreinte SHA-256 inclut le digest du contrat, le digest du cœur, le corpus, la voix, tous les paramètres et `postproc`.
 - Un timeout après émission d’une requête passe en `execution_unknown` et ne déclenche pas de retry automatique.
 - `run_id` et la clé d’idempotence sont conservés pour toute reprise autorisée ; un nouveau run est une action explicite.
-- Le rapport est immuable et ne publie jamais automatiquement un profil ; le WPM est publié séparément dans `VoiceProfile`.
-- Le WPM canonique reste dans la source Python `voice_wpm`/`Shared/voice-calibration`. Le `VoiceProfile` local est une projection traçable et ne doit jamais être lu par les gates de durée à la place de cette source.
+- Le rapport est immuable et ne publie jamais automatiquement un profil. Le WPM canonique est écrit et validé par Python dans `voice_wpm`/`Shared/voice-calibration/voice_wpm.json`, seule source consommée par les gates de durée ; Node ne possède ni n’écrit une autorité WPM concurrente.
+- Le `VoiceProfile` local Node est uniquement une projection traçable pour l’affichage et l’historique. Son `wpmSnapshot` ne remplace jamais le record Python canonique et ne doit jamais être lu par les gates de durée.
 - La clé locale est lue côté backend depuis `.env`, ne passe jamais au navigateur et n’apparaît ni dans les logs ni dans les artefacts.
 - L’API et l’UI locales sont same-origin, liées à `127.0.0.1` par défaut, sans CORS large et avec nonce de session sur les mutations.
 - L’approbation expire par défaut après 15 minutes, valeur calculée par le backend et affichée dans le dry-run ; l’exécution consomme l’approbation une seule fois.

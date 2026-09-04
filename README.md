@@ -113,12 +113,22 @@ est requise avant le run réel facturable.
 
 Le WPM n’est réutilisable qu’après vérification ou mise à jour de la table
 Python canonique `Shared/voice-calibration/voice_wpm.json`. Le profil affiché
-localement est une projection traçable, pas une seconde source de vérité. Le
-l’outil/skill `calibrate-voice` reste
+localement est une projection traçable, pas une seconde source de vérité. L’outil
+ou skill `calibrate-voice` reste
 l’entrée manuelle/agent et appelle le même outil MCP `calibrate_voice` ; cette
 interface est un client supplémentaire, pas un remplacement. Le contrat
 effectif est inventorié dans
 [`docs/elevenlabs-calibration-contract-inventory.md`](./docs/elevenlabs-calibration-contract-inventory.md).
+
+Le gate d’approbation persistant est porté par le cœur Python : il expose les
+opérations `propose`, `approve`, `execute`, `get` et `reconcile`, en figeant le
+snapshot du corpus, les paramètres, le `postproc`, les digests et l’aperçu du
+dry-run avant toute consommation. `run_calibration` reste la source de vérité
+des effets de calibration (synthèse audio et écriture WPM), tandis que Node
+sert de proxy et ne conserve qu’une projection locale de l’état. L’ancien appel
+direct `calibrate_voice` ou la CLI Python peut donc contourner le gate dans le
+MVP ; ces surfaces ne doivent pas être exposées comme une frontière de sécurité
+sans un durcissement ultérieur.
 
 ## Commands
 

@@ -128,6 +128,80 @@ export function fakeBridge(options = {}) {
   };
 }
 
+function coreGateBridge() {
+  const state = { calls: [], current: null };
+  const schema = { type: "object", additionalProperties: false, properties: {} };
+  const makeRecord = (request, status, requestDigest, approval = null, result = null) => ({
+    runId: "core-run-1",
+    workspaceId: "local-default",
+    revision: status === "dry_run_ready" ? 0 : status === "approved" ? 1 : 2,
+    status,
+    context: {
+      corpus_version_id: request.corpusVersionId,
+      corpus_digest: request.corpusDigest,
+      contract_digest: request.contractDigest,
+      core_digest: request.coreDigest,
+    },
+    request: { ...request.params, voice: request.voiceRef, postproc: request.postproc, dry_run: false },
+    requestDigest,
+    proposal: { status: "dry_run_success", requests_planned: 3 },
+    approval,
+    result,
+    createdAt: "2026-09-03T10:00:00.000Z",
+    updatedAt: "2026-09-03T10:00:00.000Z",
+    raw: { status },
+    requestSnapshot: structuredClone(request),
+  });
+  return {
+    state,
+    async getSchema() { return schema; },
+    async propose(inputValue) {
+      state.calls.push({ operation: "propose", input: structuredClone(inputValue) });
+      state.current = makeRecord(inputValue.request, "dry_run_ready", "v1:sha256:core-request");
+      return {
+        accepted: true,
+        plan: [],
+        raw: { status: "dry_run_success", requests_planned: 3 },
+        status: state.current.status,
+        runId: state.current.runId,
+        requestDigest: state.current.requestDigest,
+        proposal: state.current.proposal,
+        approval: null,
+      };
+    },
+    async approve(inputValue) {
+      state.calls.push({ operation: "approve", input: structuredClone(inputValue) });
+      state.current = makeRecord(
+        state.current.requestSnapshot,
+        "approved",
+        state.current.requestDigest,
+        { approvedAt: "2026-09-03T10:00:00.000Z", expiresAt: "2026-09-03T10:15:00.000Z", consumedAt: null },
+      );
+      return state.current;
+    },
+    async getRun() {
+      return state.current;
+    },
+    async execute(inputValue) {
+      state.calls.push({ operation: "execute", input: structuredClone(inputValue) });
+      state.current = {
+        ...state.current,
+        status: "succeeded",
+        approval: { ...state.current.approval, consumedAt: "2026-09-03T10:00:00.000Z" },
+        result: { status: "ok", precision_stats: { median: 168, n: 3 } },
+      };
+      return {
+        status: "succeeded",
+        metrics: { precision_stats: { median: 168, n: 3 } },
+        artifacts: [],
+        raw: state.current.result,
+        coreRun: state.current,
+      };
+    },
+    async reconcile() { return state.current; },
+  };
+}
+
 export function fakeCanonicalProfilePort(options = {}) {
   const calls = [];
   return {
@@ -181,6 +255,45 @@ test("bootstrap reloads recent runs from persistent storage after an application
     });
     const bootstrap = await restarted.getBootstrap();
     strictEqual(bootstrap.recentRuns.some((candidate) => candidate.id === run.id), true);
+  } finally {
+    rmSync(dataDir, { recursive: true, force: true });
+  }
+});
+
+test("persists the accepted proposal preview across an application restart", async () => {
+  const dataDir = mkdtempSync(join(tmpdir(), "calibration-proposal-"));
+  try {
+    const repositories = createLocalStore(dataDir);
+    await publishCorpus(repositories);
+    const bridge = fakeBridge({
+      dryRun: {
+        accepted: true,
+        plan: [{ slug: "precision-01", characters: 42 }],
+        raw: { status: "dry_run_success", billable_characters: 126, estimated_cost_usd: 0.0126 },
+      },
+    });
+    const run = await makeApplication({
+      repositories,
+      bridge,
+      canonical: fakeCanonicalProfilePort(),
+    }).prepareDryRun(input);
+
+    strictEqual(run.status, "dry_run_ready");
+    deepStrictEqual(run.proposal, {
+      accepted: true,
+      plan: [{ slug: "precision-01", characters: 42 }],
+      raw: { status: "dry_run_success", billable_characters: 126, estimated_cost_usd: 0.0126 },
+    });
+
+    const restarted = makeApplication({
+      repositories: createLocalStore(dataDir),
+      bridge: fakeBridge(),
+      canonical: fakeCanonicalProfilePort(),
+    });
+    const persisted = await restarted.getRun(run.id);
+    deepStrictEqual(persisted?.proposal, run.proposal);
+    strictEqual(persisted?.status, "dry_run_ready");
+    await rejects(restarted.execute(run.id), /approval required/);
   } finally {
     rmSync(dataDir, { recursive: true, force: true });
   }
@@ -260,6 +373,29 @@ test("prepareDryRun refuses calibration without an active published corpus", asy
   const app = makeApplication({ repositories: memoryRepositories(), bridge, canonical: fakeCanonicalProfilePort() });
   await rejects(app.prepareDryRun(input), /active published corpus/);
   strictEqual(bridge.state.dryRuns.length, 0);
+});
+
+test("the application projects the persistent core gate and never runs a second local workflow", async () => {
+  const repositories = memoryRepositories();
+  await publishCorpus(repositories);
+  const bridge = coreGateBridge();
+  const app = makeApplication({ repositories, bridge, canonical: fakeCanonicalProfilePort() });
+
+  const run = await app.prepareDryRun(input);
+  strictEqual(run.id, "core-run-1");
+  strictEqual(run.status, "dry_run_ready");
+  strictEqual(run.requestDigest, "v1:sha256:core-request");
+  strictEqual(bridge.state.calls[0].operation, "propose");
+
+  const approved = await app.approve(run.id, { requestDigest: run.requestDigest });
+  strictEqual(approved.status, "approved");
+  strictEqual(bridge.state.calls[1].operation, "approve");
+
+  const executed = await app.execute(run.id);
+  strictEqual(executed.status, "succeeded");
+  strictEqual(bridge.state.calls[2].operation, "execute");
+  strictEqual(bridge.state.calls[2].input.coreRunId, "core-run-1");
+  strictEqual(bridge.state.calls[2].input.workspaceId, "local-default");
 });
 
 test("the application preserves the resolved snapshot through approval, execution and explicit profile publication", async () => {

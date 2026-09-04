@@ -39,6 +39,12 @@ export interface ResolvedCalibrationRequest {
   postproc: unknown;
 }
 
+export interface CalibrationProposal {
+  accepted: true;
+  plan: unknown[];
+  raw: unknown;
+}
+
 export interface CalibrationRun {
   id: string;
   workspaceId: string;
@@ -46,6 +52,7 @@ export interface CalibrationRun {
   idempotencyKey: string;
   request: ResolvedCalibrationRequest;
   requestDigest: string;
+  proposal: CalibrationProposal;
   approval: { approvedAt: string; expiresAt: string; consumedAt: string | null } | null;
   reportId: string | null;
   createdAt: string;

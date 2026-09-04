@@ -178,7 +178,7 @@ function renderRun(): void {
     ? `État : ${String(run.status)} — empreinte : ${String(run.requestDigest ?? "")}`
     : "Aucun dry-run préparé.";
   element<HTMLElement>("request-preview").textContent = run
-    ? json({ request: run.request, requestDigest: run.requestDigest, approval: run.approval })
+    ? json({ request: run.request, requestDigest: run.requestDigest, proposal: run.proposal, approval: run.approval })
     : "";
   element<HTMLButtonElement>("approve").disabled = !run || run.status !== "dry_run_ready";
   element<HTMLButtonElement>("execute").disabled = !run || run.status !== "approved";

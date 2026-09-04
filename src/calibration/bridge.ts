@@ -15,13 +15,39 @@ export interface DryRunResult {
   accepted: boolean;
   plan: unknown[];
   raw: unknown;
+  status?: string;
+  runId?: string;
+  workspaceId?: string;
+  requestDigest?: string;
+  proposal?: unknown;
+  approval?: unknown;
 }
 export interface ExecutionResult {
   status: "succeeded" | "failed" | "unknown";
   metrics: Record<string, unknown>;
   artifacts: string[];
   raw: unknown;
+  coreRun?: CoreRunRecord;
   error?: { code: string; message: string };
+}
+export interface CoreRunRecord {
+  runId: string;
+  workspaceId: string;
+  revision: number;
+  status: string;
+  context: Record<string, unknown>;
+  request: Record<string, unknown>;
+  requestDigest: string;
+  proposal: unknown;
+  approval: {
+    approvedAt: string;
+    expiresAt: string;
+    consumedAt: string | null;
+  } | null;
+  result: unknown;
+  createdAt: string;
+  updatedAt: string;
+  raw: unknown;
 }
 export interface CanonicalProfilePort {
   ensurePublished(input: {
@@ -35,12 +61,22 @@ export interface CanonicalProfilePort {
 export interface CalibrationBridge {
   getSchema(): Promise<unknown>;
   dryRun(input: { runId: string; request: ResolvedCalibrationRequest }): Promise<DryRunResult>;
+  propose?(input: { workspaceId: string; request: ResolvedCalibrationRequest }): Promise<DryRunResult>;
+  approve?(input: { workspaceId: string; runId: string; requestDigest: string }): Promise<CoreRunRecord>;
+  getRun?(input: { workspaceId: string; runId: string }): Promise<CoreRunRecord>;
   execute(input: {
     runId: string;
     idempotencyKey: string;
     snapshot: ResolvedCalibrationRequest;
+    workspaceId?: string;
+    coreRunId?: string;
   }): Promise<ExecutionResult>;
-  reconcile(input: { runId: string; idempotencyKey: string }): Promise<ExecutionResult | { status: "unknown" }>;
+  reconcile(input: {
+    runId: string;
+    idempotencyKey: string;
+    workspaceId?: string;
+    coreRunId?: string;
+  }): Promise<ExecutionResult | CoreRunRecord | { status: "unknown" }>;
   close?(): Promise<void>;
 }
 
@@ -52,11 +88,13 @@ interface TransportCall {
   response: unknown;
   emitted: boolean;
   stderr: string;
+  toolError?: boolean;
   remoteError?: { code?: number; message?: string; data?: unknown };
 }
 interface CalibrationTransport {
   schema(secret: string, timeoutMs: number): Promise<unknown>;
   call(args: Record<string, unknown>, secret: string, timeoutMs: number): Promise<TransportCall>;
+  callTool?(name: string, args: Record<string, unknown>, secret: string, timeoutMs: number): Promise<TransportCall>;
   close(): Promise<void>;
 }
 
@@ -111,6 +149,10 @@ function makeRequest(snapshot: ResolvedCalibrationRequest, dryRun: boolean): Rec
     postproc: snapshot.postproc,
     dry_run: dryRun,
   };
+}
+
+function makeGateRequest(snapshot: ResolvedCalibrationRequest): Record<string, unknown> {
+  return makeRequest(snapshot, false);
 }
 
 class NodeMcpStdioTransport implements CalibrationTransport {
@@ -274,7 +316,12 @@ class NodeMcpStdioTransport implements CalibrationTransport {
       : undefined;
   }
 
-  async call(args: Record<string, unknown>, secret: string, timeoutMs: number): Promise<TransportCall> {
+  async callTool(
+    name: string,
+    args: Record<string, unknown>,
+    secret: string,
+    timeoutMs: number,
+  ): Promise<TransportCall> {
     this.ensureChild(secret);
     try {
       await this.initialize(timeoutMs);
@@ -285,14 +332,24 @@ class NodeMcpStdioTransport implements CalibrationTransport {
       throw error;
     }
     try {
-      const response = await this.request("tools/call", { name: "calibrate_voice", arguments: args }, timeoutMs);
+      const response = await this.request("tools/call", { name, arguments: args }, timeoutMs);
       if (response.error)
         return { response: undefined, emitted: true, stderr: this.diagnostic(), remoteError: response.error };
-      return { response: unwrapToolResult(response.result), emitted: true, stderr: this.diagnostic() };
+      const toolResult = resultObject(response.result);
+      return {
+        response: unwrapToolResult(response.result),
+        emitted: true,
+        stderr: this.diagnostic(),
+        toolError: toolResult.isError === true,
+      };
     } catch (error) {
       if (error instanceof BridgeTransportError) throw error;
       throw new BridgeTransportError((error as Error).message, true, this.diagnostic());
     }
+  }
+
+  async call(args: Record<string, unknown>, secret: string, timeoutMs: number): Promise<TransportCall> {
+    return this.callTool("calibrate_voice", args, secret, timeoutMs);
   }
 
   async close(): Promise<void> {
@@ -314,6 +371,85 @@ class NodeMcpStdioTransport implements CalibrationTransport {
   }
 }
 
+function parseCoreRun(value: unknown): CoreRunRecord {
+  const raw = resultObject(value);
+  const approval = raw.approval;
+  const approvalObject = approval && typeof approval === "object" ? resultObject(approval) : null;
+  if (
+    typeof raw.run_id !== "string" ||
+    typeof raw.workspace_id !== "string" ||
+    typeof raw.revision !== "number" ||
+    typeof raw.status !== "string" ||
+    typeof raw.request_digest !== "string" ||
+    typeof raw.created_at !== "string" ||
+    typeof raw.updated_at !== "string"
+  ) {
+    throw new Error("invalid calibration core run response");
+  }
+  return {
+    runId: raw.run_id,
+    workspaceId: raw.workspace_id,
+    revision: raw.revision,
+    status: raw.status,
+    context: resultObject(raw.context),
+    request: resultObject(raw.request),
+    requestDigest: raw.request_digest,
+    proposal: raw.proposal ?? null,
+    approval:
+      approvalObject && typeof approvalObject.approved_at === "string" && typeof approvalObject.expires_at === "string"
+        ? {
+            approvedAt: approvalObject.approved_at,
+            expiresAt: approvalObject.expires_at,
+            consumedAt: typeof approvalObject.consumed_at === "string" ? approvalObject.consumed_at : null,
+          }
+        : null,
+    result: raw.result ?? null,
+    createdAt: raw.created_at,
+    updatedAt: raw.updated_at,
+    raw: value,
+  };
+}
+
+function coreExecutionResult(run: CoreRunRecord): ExecutionResult {
+  const raw = resultObject(run.result);
+  if (run.status === "execution_unknown") {
+    return {
+      status: "unknown",
+      metrics: {},
+      artifacts: [],
+      raw: run.result,
+      coreRun: run,
+      error: { code: "execution_unknown", message: "execution outcome is unknown" },
+    };
+  }
+  if (run.status === "succeeded") {
+    const metrics = Object.fromEntries(
+      Object.entries(raw).filter(([key]) => !["status", "error", "reason", "details"].includes(key)),
+    );
+    return {
+      status: "succeeded",
+      metrics,
+      artifacts: Array.isArray(raw.artifacts) ? [...raw.artifacts] : [],
+      raw: run.result,
+      coreRun: run,
+    };
+  }
+  if (run.status === "failed") {
+    return {
+      status: "failed",
+      metrics: {},
+      artifacts: [],
+      raw: run.result,
+      coreRun: run,
+      error: {
+        code: String(raw.reason ?? raw.status ?? "calibration_failed"),
+        message: String(raw.details ?? raw.error ?? "calibration failed"),
+      },
+    };
+  }
+  throw new Error(`calibration core returned non-terminal state: ${run.status}`);
+}
+
 export function createCalibrationBridge(options: {
   transport?: CalibrationTransport;
   credentials: CredentialProvider;
@@ -321,9 +457,9 @@ export function createCalibrationBridge(options: {
 }): CalibrationBridge {
   const transport = options.transport ?? new NodeMcpStdioTransport();
   const timeoutMs = options.timeoutMs ?? 120_000;
-  const call = async (
-    request: ResolvedCalibrationRequest,
-    dryRun: boolean,
+  const invokeTool = async (
+    name: string,
+    args: Record<string, unknown>,
   ): Promise<TransportCall & { secret: string }> => {
     let credential: { provider: string; secret: string };
     try {
@@ -334,10 +470,18 @@ export function createCalibrationBridge(options: {
     if (credential.provider !== "elevenlabs")
       throw new Error(`unsupported credential provider: ${credential.provider}`);
     try {
-      return {
-        ...(await transport.call(makeRequest(request, dryRun), credential.secret, timeoutMs)),
-        secret: credential.secret,
-      };
+      const response = transport.callTool
+        ? await transport.callTool(name, args, credential.secret, timeoutMs)
+        : name === "calibrate_voice"
+          ? await transport.call(args, credential.secret, timeoutMs)
+          : (() => {
+              throw new Error("calibration transport does not support named MCP tools");
+            })();
+      if (response.toolError) {
+        const safeResponse = redact(response.response, credential.secret);
+        throw new Error(typeof safeResponse === "string" ? safeResponse : "MCP tool call failed");
+      }
+      return { ...response, secret: credential.secret };
     } catch (error) {
       if (error instanceof BridgeTransportError) {
         throw new BridgeTransportError(
@@ -348,6 +492,12 @@ export function createCalibrationBridge(options: {
       }
       throw new Error(String(redact((error as Error).message, credential.secret)));
     }
+  };
+  const call = async (
+    request: ResolvedCalibrationRequest,
+    dryRun: boolean,
+  ): Promise<TransportCall & { secret: string }> => {
+    return invokeTool("calibrate_voice", makeRequest(request, dryRun));
   };
 
   return {
@@ -378,25 +528,80 @@ export function createCalibrationBridge(options: {
           accepted: raw.status === "dry_run_success" || raw.accepted === true,
           plan: Array.isArray(raw.plan) ? raw.plan : [],
           raw: safeResponse,
+          status: typeof raw.status === "string" ? raw.status : undefined,
         };
       } catch (error) {
         const message = error instanceof BridgeTransportError ? error.message : (error as Error).message;
         throw new Error(message);
       }
     },
-    async execute(input) {
-      let credential: { provider: string; secret: string };
-      try {
-        credential = await options.credentials.forRun();
-      } catch {
-        throw new Error("calibration credentials unavailable");
+    async propose(input) {
+      const result = await invokeTool("propose_calibration", {
+        workspace_id: input.workspaceId,
+        ...makeGateRequest(input.request),
+        corpus_version_id: input.request.corpusVersionId,
+        corpus_digest: input.request.corpusDigest,
+        contract_digest: input.request.contractDigest,
+        core_digest: input.request.coreDigest,
+      });
+      if (result.remoteError) {
+        const safeError = redact(result.remoteError, result.secret) as Record<string, unknown>;
+        throw new Error(String(safeError.message ?? "MCP tools/call failed"));
       }
-      if (credential.provider !== "elevenlabs")
-        throw new Error(`unsupported credential provider: ${credential.provider}`);
-      try {
-        const result = await transport.call(makeRequest(input.snapshot, false), credential.secret, timeoutMs);
+      const safeResponse = redact(result.response, result.secret);
+      const coreRun = parseCoreRun(safeResponse);
+      const proposal = resultObject(coreRun.proposal);
+      return {
+        accepted: coreRun.status === "dry_run_ready",
+        plan: Array.isArray(proposal.plan) ? proposal.plan : [],
+        raw: safeResponse,
+        status: coreRun.status,
+        runId: coreRun.runId,
+        workspaceId: coreRun.workspaceId,
+        requestDigest: coreRun.requestDigest,
+        proposal: coreRun.proposal,
+        approval: coreRun.approval,
+      };
+    },
+    async approve(input) {
+      const result = await invokeTool("approve_calibration", {
+        workspace_id: input.workspaceId,
+        run_id: input.runId,
+        request_digest: input.requestDigest,
+      });
+      if (result.remoteError) {
+        const safeError = redact(result.remoteError, result.secret) as Record<string, unknown>;
+        throw new Error(String(safeError.message ?? "MCP tools/call failed"));
+      }
+      return parseCoreRun(redact(result.response, result.secret));
+    },
+    async getRun(input) {
+      const result = await invokeTool("get_calibration_run", {
+        workspace_id: input.workspaceId,
+        run_id: input.runId,
+      });
+      if (result.remoteError) {
+        const safeError = redact(result.remoteError, result.secret) as Record<string, unknown>;
+        throw new Error(String(safeError.message ?? "MCP tools/call failed"));
+      }
+      return parseCoreRun(redact(result.response, result.secret));
+    },
+    async execute(input) {
+      if (input.workspaceId && input.coreRunId) {
+        const result = await invokeTool("execute_calibration", {
+          workspace_id: input.workspaceId,
+          run_id: input.coreRunId,
+        });
         if (result.remoteError) {
-          const safeError = redact(result.remoteError, credential.secret) as Record<string, unknown>;
+          const safeError = redact(result.remoteError, result.secret) as Record<string, unknown>;
+          throw new Error(String(safeError.message ?? "MCP tools/call failed"));
+        }
+        return coreExecutionResult(parseCoreRun(redact(result.response, result.secret)));
+      }
+      try {
+        const result = await invokeTool("calibrate_voice", makeRequest(input.snapshot, false));
+        if (result.remoteError) {
+          const safeError = redact(result.remoteError, result.secret) as Record<string, unknown>;
           return {
             status: "failed",
             metrics: {},
@@ -408,7 +613,7 @@ export function createCalibrationBridge(options: {
             },
           };
         }
-        const safeResponse = redact(result.response, credential.secret);
+        const safeResponse = redact(result.response, result.secret);
         const raw = resultObject(safeResponse);
         if (raw.status === "ok") {
           const metrics = Object.fromEntries(
@@ -428,13 +633,21 @@ export function createCalibrationBridge(options: {
         };
       } catch (error) {
         if (error instanceof BridgeTransportError && error.emitted) throw new Error("execution_unknown");
-        if (error instanceof BridgeTransportError) throw new Error(String(redact(error.message, credential.secret)));
-        throw new Error(String(redact((error as Error).message, credential.secret)));
+        throw new Error(error instanceof BridgeTransportError ? error.message : (error as Error).message);
       }
     },
-    // The source contract has no run/idempotency field and no reconciliation
-    // operation. Local run identifiers remain application metadata only.
-    async reconcile() {
+    async reconcile(input) {
+      if (input.workspaceId && input.coreRunId) {
+        const result = await invokeTool("reconcile_calibration", {
+          workspace_id: input.workspaceId,
+          run_id: input.coreRunId,
+        });
+        if (result.remoteError) {
+          const safeError = redact(result.remoteError, result.secret) as Record<string, unknown>;
+          throw new Error(String(safeError.message ?? "MCP tools/call failed"));
+        }
+        return parseCoreRun(redact(result.response, result.secret));
+      }
       return { status: "unknown" };
     },
     close: () => transport.close(),

@@ -68,6 +68,120 @@ test("bridge forwards the resolved request and keeps credentials out of argument
   strictEqual(JSON.stringify(transport.calls).includes("secret"), false);
 });
 
+test("bridge proposes through the core gate with the complete snapshot context", async () => {
+  const calls = [];
+  const transport = {
+    schemaValue: { type: "object", additionalProperties: false },
+    async schema() { return this.schemaValue; },
+    async callTool(name, args, secret) {
+      calls.push({ name, args, credentialWasPassed: Boolean(secret) });
+      return {
+        response: {
+          run_id: "core-run-1",
+          workspace_id: "local-default",
+          revision: 0,
+          status: "dry_run_ready",
+          context: {
+            corpus_version_id: "standard-v1",
+            corpus_digest: "corpus-sha",
+            contract_digest: "contract-sha",
+            core_digest: "core-sha",
+          },
+          request: { ...resolvedRequest.params, voice: resolvedRequest.voiceRef, postproc: resolvedRequest.postproc, dry_run: false },
+          request_digest: "v1:sha256:core-digest",
+          proposal: { status: "dry_run_success", requests_planned: 3, diagnostic: secret },
+          approval: null,
+          result: null,
+          created_at: "2026-09-03T10:00:00Z",
+          updated_at: "2026-09-03T10:00:00Z",
+        },
+        emitted: true,
+        stderr: `diagnostic ${secret}`,
+      };
+    },
+    async close() {},
+  };
+  const bridge = createCalibrationBridge({
+    transport,
+    credentials: createCredentialProvider({ env: { ELEVENLABS_API_KEY: "secret" } }),
+  });
+
+  const result = await bridge.propose({ workspaceId: "local-default", request: resolvedRequest });
+
+  strictEqual(result.accepted, true);
+  strictEqual(result.runId, "core-run-1");
+  strictEqual(result.requestDigest, "v1:sha256:core-digest");
+  strictEqual(result.raw.proposal.diagnostic, "[REDACTED]");
+  strictEqual(JSON.stringify(result).includes("secret"), false);
+  strictEqual(calls[0].name, "propose_calibration");
+  strictEqual(calls[0].args.workspace_id, "local-default");
+  strictEqual(calls[0].args.corpus_version_id, "standard-v1");
+  strictEqual(calls[0].args.corpus_digest, "corpus-sha");
+  deepStrictEqual(calls[0].args.text_source, resolvedRequest.params.text_source);
+  strictEqual(JSON.stringify(calls).includes("secret"), false);
+});
+
+test("bridge routes core approval and execution without resending the provider snapshot", async () => {
+  const calls = [];
+  const base = {
+    run_id: "core-run-1",
+    workspace_id: "local-default",
+    revision: 1,
+    status: "approved",
+    context: { corpus_version_id: "standard-v1", corpus_digest: "corpus-sha", contract_digest: "contract-sha", core_digest: "core-sha" },
+    request: { ...resolvedRequest.params, voice: resolvedRequest.voiceRef, postproc: resolvedRequest.postproc, dry_run: false },
+    request_digest: "v1:sha256:core-digest",
+    proposal: { status: "dry_run_success", requests_planned: 3 },
+    approval: { approved_at: "2026-09-03T10:00:00Z", expires_at: "2026-09-03T10:15:00Z", consumed_at: null },
+    result: null,
+    created_at: "2026-09-03T10:00:00Z",
+    updated_at: "2026-09-03T10:00:00Z",
+  };
+  const transport = {
+    async schema() { return { type: "object" }; },
+    async callTool(name, args, secret) {
+      calls.push({ name, args, credentialWasPassed: Boolean(secret) });
+      if (name === "approve_calibration") return { response: base, emitted: true, stderr: "" };
+      if (name === "get_calibration_run" || name === "reconcile_calibration")
+        return { response: base, emitted: true, stderr: "" };
+      return {
+        response: {
+          ...base,
+          status: "succeeded",
+          revision: 2,
+          approval: { ...base.approval, consumed_at: "2026-09-03T10:00:01Z" },
+          result: { status: "ok", precision_stats: { median: 168, n: 3 } },
+        },
+        emitted: true,
+        stderr: "",
+      };
+    },
+    async close() {},
+  };
+  const bridge = createCalibrationBridge({
+    transport,
+    credentials: createCredentialProvider({ env: { ELEVENLABS_API_KEY: "secret" } }),
+  });
+
+  const approved = await bridge.approve({ workspaceId: "local-default", runId: "core-run-1", requestDigest: base.request_digest });
+  strictEqual(approved.status, "approved");
+  strictEqual(approved.approval.consumedAt, null);
+  const executed = await bridge.execute({
+    runId: "core-run-1",
+    idempotencyKey: "core-run-1",
+    snapshot: resolvedRequest,
+    workspaceId: "local-default",
+    coreRunId: "core-run-1",
+  });
+  strictEqual(executed.status, "succeeded");
+  strictEqual(executed.coreRun.status, "succeeded");
+  deepStrictEqual(executed.metrics, { precision_stats: { median: 168, n: 3 } });
+  strictEqual(calls[0].name, "approve_calibration");
+  strictEqual(calls[1].name, "execute_calibration");
+  strictEqual(calls[1].args.run_id, "core-run-1");
+  strictEqual(Object.hasOwn(calls[1].args, "text_source"), false);
+});
+
 test("lost execution response becomes execution_unknown without replay", async () => {
   const transport = fakeTransport({ dropExecutionResponse: true });
   const bridge = createCalibrationBridge({ transport, credentials: createCredentialProvider({ env: { ELEVENLABS_API_KEY: "secret" } }), timeoutMs: 20 });

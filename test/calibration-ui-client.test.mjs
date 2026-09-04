@@ -146,6 +146,11 @@ test("client resynchronizes the run after execute returns an HTTP failure", asyn
     status: "dry_run_ready",
     requestDigest: "digest-1",
     request: { params: { postproc: "cut" } },
+    proposal: {
+      accepted: true,
+      plan: [{ slug: "precision-01" }],
+      raw: { status: "dry_run_success", estimated_cost_usd: 0.0126 },
+    },
     approval: null,
   };
   const approved = { ...run, status: "approved", approval: { approvedAt: "now" } };
@@ -216,6 +221,10 @@ test("client resynchronizes the run after execute returns an HTTP failure", asyn
   strictEqual(saveCall?.init.headers.get("if-match"), 'W/"server-draft-42"');
   form.dispatch("submit", { currentTarget: form });
   await flush();
+  ok(
+    elements.get("request-preview").textContent.includes("estimated_cost_usd"),
+    "the persisted dry-run proposal must remain visible before approval",
+  );
   elements.get("approve").dispatch("click");
   await flush();
   elements.get("execute").dispatch("click");

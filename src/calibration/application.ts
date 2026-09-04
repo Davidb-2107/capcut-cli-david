@@ -1,6 +1,13 @@
 import { randomUUID } from "node:crypto";
 
-import type { CalibrationBridge, CanonicalProfilePort, CredentialProvider, ExecutionResult } from "./bridge.js";
+import type {
+  CalibrationBridge,
+  CanonicalProfilePort,
+  CoreRunRecord,
+  CredentialProvider,
+  DryRunResult,
+  ExecutionResult,
+} from "./bridge.js";
 import type {
   CalibrationReport,
   CalibrationRun,
@@ -200,6 +207,66 @@ function executionEvent(result: ExecutionResult): "succeeded" | "failed" | "exec
   return result.status === "succeeded" ? "succeeded" : "failed";
 }
 
+function isCoreBackedRun(run: CalibrationRun): boolean {
+  return /^v\d+:sha256:/u.test(run.requestDigest);
+}
+
+function isCoreRunRecord(value: unknown): value is CoreRunRecord {
+  return isRecord(value) && typeof value.runId === "string" && typeof value.requestDigest === "string";
+}
+
+function coreRequestToResolved(core: CoreRunRecord, fallback?: ResolvedCalibrationRequest): ResolvedCalibrationRequest {
+  const providerRequest = core.request;
+  const params = {
+    ...(fallback?.params ?? {}),
+    ...Object.fromEntries(
+      Object.entries(providerRequest).filter(([key]) => !["voice", "postproc", "dry_run"].includes(key)),
+    ),
+  };
+  const context = core.context;
+  const contextString = (key: string, fallbackValue: string): string =>
+    typeof context[key] === "string" ? (context[key] as string) : fallbackValue;
+  return {
+    contractDigest: contextString("contract_digest", fallback?.contractDigest ?? "contract-unavailable"),
+    coreDigest: contextString("core_digest", fallback?.coreDigest ?? "core-unavailable"),
+    corpusVersionId: contextString("corpus_version_id", fallback?.corpusVersionId ?? "corpus-unavailable"),
+    corpusDigest: contextString("corpus_digest", fallback?.corpusDigest ?? "corpus-unavailable"),
+    voiceRef: typeof providerRequest.voice === "string" ? providerRequest.voice : (fallback?.voiceRef ?? ""),
+    params,
+    postproc: providerRequest.postproc ?? fallback?.postproc,
+  };
+}
+
+function projectCoreRun(core: CoreRunRecord, previous?: CalibrationRun): CalibrationRun {
+  const proposalObject = isRecord(core.proposal) ? core.proposal : {};
+  const proposal = {
+    accepted: true as const,
+    plan: Array.isArray(proposalObject.plan) ? clone(proposalObject.plan) : [],
+    raw: clone(core.proposal),
+  };
+  return {
+    id: core.runId,
+    workspaceId: core.workspaceId,
+    status: core.status as CalibrationRun["status"],
+    idempotencyKey: core.runId,
+    request: coreRequestToResolved(core, previous?.request),
+    requestDigest: core.requestDigest,
+    proposal,
+    approval: core.approval ? clone(core.approval) : null,
+    reportId: previous?.reportId ?? null,
+    createdAt: core.createdAt,
+    updatedAt: core.updatedAt,
+  };
+}
+
+function normalizeCoreWorkflowError(error: unknown): Error {
+  const message = errorMessage(error);
+  if (/not found/i.test(message)) return new NotFoundError(message);
+  if (/revision|approval|required|expired|digest|state|execution_unknown|reconcile|consumed/i.test(message))
+    return new ConflictError(message);
+  return error instanceof Error ? error : new Error(message);
+}
+
 export class CalibrationApplication {
   private readonly repositories: LocalStore;
   private readonly bridge: CalibrationBridge;
@@ -291,8 +358,7 @@ export class CalibrationApplication {
   }
 
   private async getRunOrThrow(runId: string): Promise<CalibrationRun> {
-    await this.ensureRecovered(DEFAULT_WORKSPACE);
-    const run = await this.repositories.runs.get(runId);
+    const run = await this.getRun(runId);
     if (!run) throw new NotFoundError(`calibration run not found: ${runId}`);
     return run;
   }
@@ -394,11 +460,16 @@ export class CalibrationApplication {
       params,
       postproc,
     };
-    const requestDigest = fingerprintRequest(request);
-    const id = randomUUID();
+    let requestDigest = fingerprintRequest(request);
+    let id: string = randomUUID();
+    let dryRun: DryRunResult;
     try {
-      const dryRun = await this.bridge.dryRun({ runId: id, request: clone(request) });
+      dryRun = this.bridge.propose
+        ? await this.bridge.propose({ workspaceId: input.workspaceId, request: clone(request) })
+        : await this.bridge.dryRun({ runId: id, request: clone(request) });
       if (!dryRun.accepted) throw new ContractValidationError("calibration dry-run was not accepted");
+      if (dryRun.runId) id = dryRun.runId;
+      if (dryRun.requestDigest) requestDigest = dryRun.requestDigest;
     } catch (error) {
       if (error instanceof ContractValidationError || error instanceof UnavailableError) throw error;
       const message = errorMessage(error);
@@ -413,6 +484,11 @@ export class CalibrationApplication {
       idempotencyKey: id,
       request,
       requestDigest,
+      proposal: {
+        accepted: true,
+        plan: clone(dryRun.plan),
+        raw: clone(dryRun.proposal ?? dryRun.raw),
+      },
       approval: null,
       reportId: null,
       createdAt: timestamp,
@@ -427,6 +503,21 @@ export class CalibrationApplication {
   async approve(runId: string, input: { requestDigest: string }): Promise<CalibrationRun> {
     return this.withRunLock(runId, async () => {
       const run = await this.getRunOrThrow(runId);
+      if (isCoreBackedRun(run) && this.bridge.approve) {
+        let core: CoreRunRecord;
+        try {
+          core = await this.bridge.approve({
+            workspaceId: run.workspaceId,
+            runId: run.id,
+            requestDigest: input.requestDigest,
+          });
+        } catch (error) {
+          throw normalizeCoreWorkflowError(error);
+        }
+        const approved = projectCoreRun(core, run);
+        await this.repositories.runs.save(approved);
+        return approved;
+      }
       if (run.status !== "dry_run_ready")
         throw new ConflictError(`approval requires dry_run_ready state, got ${run.status}`);
       if (input.requestDigest !== run.requestDigest) throw new ConflictError("request digest mismatch");
@@ -442,6 +533,52 @@ export class CalibrationApplication {
   async execute(runId: string): Promise<CalibrationRun> {
     return this.withRunLock(runId, async () => {
       const run = await this.getRunOrThrow(runId);
+      if (isCoreBackedRun(run) && this.bridge.execute) {
+        let result: ExecutionResult;
+        try {
+          result = await this.bridge.execute({
+            runId: run.id,
+            idempotencyKey: run.idempotencyKey,
+            snapshot: clone(run.request),
+            workspaceId: run.workspaceId,
+            coreRunId: run.id,
+          });
+        } catch (error) {
+          if (!isExecutionUnknown(error)) throw normalizeCoreWorkflowError(error);
+          let recovered: CoreRunRecord | null = null;
+          if (this.bridge.getRun) {
+            try {
+              recovered = await this.bridge.getRun({ workspaceId: run.workspaceId, runId: run.id });
+            } catch {
+              recovered = null;
+            }
+          }
+          result = {
+            status: "unknown",
+            metrics: {},
+            artifacts: [],
+            raw: null,
+            coreRun: recovered ?? undefined,
+            error: { code: "execution_unknown", message: "execution outcome is unknown" },
+          };
+        }
+        const authoritative = result.coreRun;
+        const projected = authoritative
+          ? projectCoreRun(authoritative, run)
+          : {
+              ...run,
+              status: executionEvent(result),
+              approval: run.approval
+                ? { ...run.approval, consumedAt: run.approval.consumedAt ?? nowIso(this.clock) }
+                : run.approval,
+              updatedAt: nowIso(this.clock),
+            };
+        const reportId = await this.persistReport(projected, result);
+        projected.reportId = reportId;
+        projected.updatedAt = nowIso(this.clock);
+        await this.repositories.runs.save(projected);
+        return projected;
+      }
       if (run.status === "execution_unknown")
         throw new ConflictError("execution_unknown cannot be retried; retry is forbidden; reconcile required");
       if (run.status !== "approved") throw new ConflictError(`approval required; got ${run.status}`);
@@ -496,6 +633,24 @@ export class CalibrationApplication {
   async reconcile(runId: string): Promise<CalibrationRun> {
     return this.withRunLock(runId, async () => {
       const run = await this.getRunOrThrow(runId);
+      if (isCoreBackedRun(run) && this.bridge.reconcile) {
+        let reconciled: ExecutionResult | CoreRunRecord | { status: "unknown" };
+        try {
+          reconciled = await this.bridge.reconcile({
+            runId: run.id,
+            idempotencyKey: run.idempotencyKey,
+            workspaceId: run.workspaceId,
+            coreRunId: run.id,
+          });
+        } catch (error) {
+          throw normalizeCoreWorkflowError(error);
+        }
+        if (isCoreRunRecord(reconciled)) {
+          const projected = projectCoreRun(reconciled, run);
+          await this.repositories.runs.save(projected);
+          return projected;
+        }
+      }
       if (run.status !== "execution_unknown") throw new ConflictError("reconcile requires execution_unknown state");
       const result = await this.bridge.reconcile({ runId: run.id, idempotencyKey: run.idempotencyKey });
       if (result.status !== "unknown")
@@ -506,12 +661,23 @@ export class CalibrationApplication {
 
   async getRun(runId: string): Promise<CalibrationRun | null> {
     await this.ensureRecovered(DEFAULT_WORKSPACE);
-    return this.repositories.runs.get(runId);
+    const local = await this.repositories.runs.get(runId);
+    if (!local || !isCoreBackedRun(local) || !this.bridge.getRun) return local;
+    let core: CoreRunRecord;
+    try {
+      core = await this.bridge.getRun({ workspaceId: local.workspaceId, runId: local.id });
+    } catch (error) {
+      const normalized = normalizeCoreWorkflowError(error);
+      if (normalized instanceof NotFoundError) return null;
+      throw normalized;
+    }
+    const projected = projectCoreRun(core, local);
+    await this.repositories.runs.save(projected);
+    return projected;
   }
 
   async getReport(runId: string): Promise<CalibrationReport | null> {
-    await this.ensureRecovered(DEFAULT_WORKSPACE);
-    const run = await this.repositories.runs.get(runId);
+    const run = await this.getRun(runId);
     if (!run?.reportId) return null;
     return this.loadReport(run);
   }
