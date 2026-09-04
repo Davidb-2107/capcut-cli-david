@@ -20,7 +20,7 @@ import type {
 import { transitionRun } from "./domain.js";
 import { fingerprintRequest } from "./fingerprint.js";
 import type { LocalStore } from "./ports.js";
-import { ConflictError } from "./ports.js";
+import { ConflictError, type VoiceDirectoryPort } from "./ports.js";
 import { redactSensitive } from "./redaction.js";
 
 export interface Clock {
@@ -53,6 +53,7 @@ export interface CalibrationApplicationOptions {
   bridge: CalibrationBridge;
   canonical: CanonicalProfilePort;
   credentials?: CredentialProvider;
+  voiceDirectory?: VoiceDirectoryPort;
   clock?: Clock;
   contractDigest?: string;
   coreDigest?: string;
@@ -272,6 +273,7 @@ export class CalibrationApplication {
   private readonly bridge: CalibrationBridge;
   private readonly canonical: CanonicalProfilePort;
   private readonly credentials?: CredentialProvider;
+  private readonly voiceDirectory?: VoiceDirectoryPort;
   private readonly clock: Clock;
   private readonly contractDigestOverride?: string;
   private readonly coreDigestOverride?: string;
@@ -283,6 +285,7 @@ export class CalibrationApplication {
     this.bridge = options.bridge;
     this.canonical = options.canonical;
     this.credentials = options.credentials;
+    this.voiceDirectory = options.voiceDirectory;
     this.clock = options.clock ?? systemClock;
     this.contractDigestOverride = options.contractDigest;
     this.coreDigestOverride = options.coreDigest;
@@ -434,6 +437,16 @@ export class CalibrationApplication {
 
   async getCalibrationSchema(): Promise<unknown> {
     return this.bridge.getSchema();
+  }
+
+  async getVoiceName(voiceRef: string): Promise<{ voiceRef: string; name: string | null }> {
+    const normalized = voiceRef.trim();
+    if (!/^[A-Za-z0-9_-]{1,128}$/u.test(normalized)) {
+      throw new ContractValidationError("invalid ElevenLabs voice ID");
+    }
+    if (!this.voiceDirectory) throw new UnavailableError("ElevenLabs voice lookup is not configured");
+    await this.assertConfigured();
+    return { voiceRef: normalized, name: await this.voiceDirectory.getName(normalized) };
   }
 
   async prepareDryRun(input: CalibrationInput): Promise<CalibrationRun> {
@@ -690,15 +703,28 @@ export class CalibrationApplication {
     const report = await this.loadReport(run);
     const wpm = wpmFromReport(report);
     if (wpm === null) throw new ContractValidationError("successful calibration result has no WPM");
+    let publishedWpm = wpm;
     let canonical: { canonicalRef: string };
     try {
-      canonical = await this.canonical.ensurePublished({
-        voiceRef: run.request.voiceRef,
-        wpm,
-        runId: run.id,
-        corpusVersionId: run.request.corpusVersionId,
-        language: run.request.params.language === "en" ? "en" : "fr",
-      });
+      if (this.bridge.publish) {
+        const publication = await this.bridge.publish({ workspaceId: run.workspaceId, runId: run.id });
+        publishedWpm = publication.wpm;
+        canonical = await this.canonical.ensurePublished({
+          voiceRef: run.request.voiceRef,
+          wpm: publishedWpm,
+          runId: run.id,
+          corpusVersionId: run.request.corpusVersionId,
+          language: run.request.params.language === "en" ? "en" : "fr",
+        });
+      } else {
+        canonical = await this.canonical.ensurePublished({
+          voiceRef: run.request.voiceRef,
+          wpm,
+          runId: run.id,
+          corpusVersionId: run.request.corpusVersionId,
+          language: run.request.params.language === "en" ? "en" : "fr",
+        });
+      }
     } catch (error) {
       const message = errorMessage(error);
       if (isUnavailableMessage(message)) throw new UnavailableError(message);
@@ -708,7 +734,7 @@ export class CalibrationApplication {
       id: randomUUID(),
       workspaceId: run.workspaceId,
       voiceRef: run.request.voiceRef,
-      wpmSnapshot: wpm,
+      wpmSnapshot: publishedWpm,
       wpmAuthority: "python-voice-wpm",
       canonicalRef: canonical.canonicalRef,
       sourceRunId: run.id,

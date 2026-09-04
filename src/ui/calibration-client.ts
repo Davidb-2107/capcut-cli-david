@@ -1,13 +1,27 @@
 type JsonRecord = Record<string, unknown>;
 
+const CALIBRATION_VOICE_SETTINGS: JsonRecord = {
+  stability: 0.5,
+  similarity_boost: 0.85,
+  style: 0,
+  use_speaker_boost: true,
+};
+const CALIBRATION_PARAMS: JsonRecord = {
+  model_id: "eleven_multilingual_v2",
+  mode: "precision",
+  language: "fr",
+  runs: 3,
+};
+const CALIBRATION_POSTPROC = "cut";
+
 const state: {
   nonce: string | null;
   bootstrap: JsonRecord | null;
-  schema: JsonRecord | null;
   corpus: JsonRecord | null;
-  etag: string | null;
   run: JsonRecord | null;
-} = { nonce: null, bootstrap: null, schema: null, corpus: null, etag: null, run: null };
+  voiceName: string | null;
+  voiceNameStatus: "idle" | "loading" | "loaded" | "unavailable";
+} = { nonce: null, bootstrap: null, corpus: null, run: null, voiceName: null, voiceNameStatus: "idle" };
 
 const element = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
@@ -19,6 +33,131 @@ function showStatus(message: string, error = false): void {
 
 function json(value: unknown): string {
   return JSON.stringify(value, null, 2);
+}
+
+function appendResultDetail(target: HTMLElement, label: string, value: unknown, suffix = ""): void {
+  if (value === undefined || value === null || value === "") return;
+  const name = document.createElement("dt");
+  name.textContent = label;
+  const detail = document.createElement("dd");
+  detail.textContent = `${String(value)}${suffix}`;
+  target.append(name, detail);
+}
+
+function voiceRefFromRun(run: JsonRecord | null): string | null {
+  const request = run?.request;
+  if (!request || typeof request !== "object" || Array.isArray(request)) return null;
+  const voiceRef = (request as JsonRecord).voiceRef;
+  return typeof voiceRef === "string" && voiceRef.trim() ? voiceRef.trim() : null;
+}
+
+function profilePublishedForRun(run: JsonRecord | null): boolean {
+  if (!run || !state.bootstrap || !Array.isArray(state.bootstrap.profiles)) return false;
+  return state.bootstrap.profiles.some(
+    (profile) => profile && typeof profile === "object" && (profile as JsonRecord).sourceRunId === run.id,
+  );
+}
+
+function renderResult(): void {
+  const target = element<HTMLElement>("result-preview");
+  target.replaceChildren();
+  const run = state.run;
+  const status = run ? String(run.status) : "";
+  if (!run || !["succeeded", "failed", "execution_unknown"].includes(status)) {
+    target.textContent = "Aucun calibrage terminé.";
+    return;
+  }
+
+  const heading = document.createElement("p");
+  heading.className = status === "succeeded" ? "result-status" : "danger";
+  const profilePublished = profilePublishedForRun(run);
+  heading.textContent = status === "succeeded"
+    ? profilePublished
+      ? "Voix prête à être utilisée dans les projets."
+      : "Résultat validé."
+    : status === "failed"
+      ? "Le calibrage réel a échoué."
+      : "Le résultat du calibrage doit être vérifié.";
+  target.append(heading);
+
+  if (status === "succeeded") {
+    const nextStep = document.createElement("p");
+    nextStep.className = "muted";
+    nextStep.textContent = profilePublished
+      ? "Le profil WPM canonique est publié pour cette voix."
+      : "Le résultat est exploitable. Rendez la voix disponible dans les projets pour l’utiliser ensuite.";
+    target.append(nextStep);
+  }
+
+  const report = run.report && typeof run.report === "object" ? run.report as JsonRecord : null;
+  const metrics = report?.metrics && typeof report.metrics === "object"
+    ? report.metrics as JsonRecord
+    : {};
+  const precision = metrics.precision_stats && typeof metrics.precision_stats === "object"
+    ? metrics.precision_stats as JsonRecord
+    : {};
+  const identity = document.createElement("dl");
+  const voiceRef = voiceRefFromRun(run);
+  appendResultDetail(identity, "ID de voix", voiceRef);
+  if (state.voiceNameStatus === "loading") {
+    appendResultDetail(identity, "Nom de la voix", "Recherche en cours…");
+  } else if (state.voiceNameStatus === "loaded") {
+    appendResultDetail(identity, "Nom de la voix", state.voiceName);
+  } else if (state.voiceNameStatus === "unavailable") {
+    appendResultDetail(identity, "Nom de la voix", "Indisponible pour cet ID");
+  }
+  if (identity.children.length > 0) target.append(identity);
+
+  const details = document.createElement("dl");
+  appendResultDetail(details, "Audios synthétisés", metrics.runs_synthesized);
+  appendResultDetail(details, "Audios en échec", metrics.runs_failed);
+  appendResultDetail(details, "WPM médian", precision.median);
+  appendResultDetail(details, "WPM minimum", precision.min);
+  appendResultDetail(details, "WPM maximum", precision.max);
+  appendResultDetail(details, "Dispersion", precision.spread_pct, "%");
+  appendResultDetail(details, "Crédits utilisés", metrics.actual_credits_used);
+  appendResultDetail(details, "Coût estimé", metrics.estimated_cost_usd, " USD");
+  if (details.children.length > 0) {
+    const technical = document.createElement("details");
+    const technicalSummary = document.createElement("summary");
+    technicalSummary.textContent = "Détails techniques";
+    technical.append(technicalSummary, details);
+    target.append(technical);
+  }
+
+  if (!report) {
+    const note = document.createElement("p");
+    note.className = "muted";
+    note.textContent = "Le rapport détaillé n’est pas encore disponible.";
+    target.append(note);
+  }
+}
+
+async function loadVoiceName(): Promise<void> {
+  const run = state.run;
+  const terminal = Boolean(run && ["succeeded", "failed", "execution_unknown"].includes(String(run.status)));
+  const voiceRef = voiceRefFromRun(run);
+  if (!terminal || !voiceRef) {
+    state.voiceName = null;
+    state.voiceNameStatus = "idle";
+    renderResult();
+    return;
+  }
+
+  state.voiceName = null;
+  state.voiceNameStatus = "loading";
+  renderResult();
+  try {
+    const result = await api(`/voices/${encodeURIComponent(voiceRef)}`);
+    const body = result.body && typeof result.body === "object" ? result.body as JsonRecord : {};
+    const name = body.name;
+    state.voiceName = typeof name === "string" && name.trim() ? name.trim() : null;
+    state.voiceNameStatus = state.voiceName ? "loaded" : "unavailable";
+  } catch {
+    state.voiceName = null;
+    state.voiceNameStatus = "unavailable";
+  }
+  renderResult();
 }
 
 async function api(path: string, init: RequestInit = {}): Promise<{ response: Response; body: JsonRecord | unknown }> {
@@ -48,204 +187,154 @@ function activateView(view: string): void {
   });
 }
 
-function valueFromField(field: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): unknown {
-  if (field.dataset.kind === "object" || field.dataset.kind === "array") {
-    try {
-      return JSON.parse(field.value);
-    } catch {
-      throw new Error(`${field.name} doit contenir du JSON valide`);
-    }
-  }
-  if (field.dataset.kind === "number") return field.value === "" ? undefined : Number(field.value);
-  if (field.dataset.kind === "boolean") return (field as HTMLInputElement).checked;
-  return field.value;
-}
-
-function renderSchema(): void {
-  const target = element<HTMLElement>("schema-fields");
-  target.replaceChildren();
-  const properties = state.schema?.properties;
-  if (!properties || typeof properties !== "object") {
-    target.textContent = "Schéma indisponible.";
-    return;
-  }
-  const required = Array.isArray(state.schema?.required) ? state.schema.required : [];
-  const postprocField = element<HTMLSelectElement>("postproc");
-  postprocField.replaceChildren();
-  for (const [name, rawSchema] of Object.entries(properties as JsonRecord)) {
-    if (name === "text_source") continue;
-    const schema = (rawSchema && typeof rawSchema === "object" ? rawSchema : {}) as JsonRecord;
-    if (name === "postproc") {
-      const enumValues = Array.isArray(schema.enum) ? schema.enum : [];
-      for (const option of enumValues) {
-        const item = document.createElement("option");
-        item.value = String(option);
-        item.textContent = String(option);
-        postprocField.append(item);
-      }
-      if (schema.default !== undefined) postprocField.value = String(schema.default);
-      continue;
-    }
-    const label = document.createElement("label");
-    label.textContent = `${name}${required.includes(name) ? " *" : ""}`;
-    let field: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-    const enumValues = Array.isArray(schema.enum) ? schema.enum : [];
-    if (enumValues.length > 0) {
-      field = document.createElement("select");
-      for (const option of enumValues) {
-        const item = document.createElement("option");
-        item.value = String(option);
-        item.textContent = String(option);
-        field.append(item);
-      }
-    } else if (schema.type === "object" || schema.type === "array") {
-      field = document.createElement("textarea");
-      field.dataset.kind = schema.type;
-      field.value = schema.default === undefined ? "{}" : json(schema.default);
-    } else {
-      field = document.createElement("input");
-      field.type = schema.type === "number" || schema.type === "integer" ? "number" : "text";
-      field.dataset.kind =
-        schema.type === "number" || schema.type === "integer"
-          ? "number"
-          : schema.type === "boolean"
-            ? "boolean"
-            : "string";
-      if (schema.default !== undefined) field.value = String(schema.default);
-      if (field.dataset.kind === "boolean") {
-        field.type = "checkbox";
-        field.checked = schema.default === true;
-      }
-    }
-    field.name = name;
-    field.dataset.param = name;
-    label.append(field);
-    target.append(label);
-  }
-}
-
 function renderCorpus(): void {
   const target = element<HTMLElement>("corpus-items");
   target.replaceChildren();
-  const draft = (state.corpus?.draft ?? {}) as JsonRecord;
-  const items = Array.isArray(draft.items) ? draft.items : [];
-  for (const raw of items) {
-    const item = (raw && typeof raw === "object" ? raw : {}) as JsonRecord;
+  const versionTarget = element<HTMLElement>("corpus-version");
+  const activeVersion = state.corpus?.activeVersion;
+  if (!activeVersion || typeof activeVersion !== "object") {
+    versionTarget.textContent = "Aucune version publiée n’est disponible.";
+    target.textContent = "Publiez une version du corpus avant de préparer une calibration.";
+    return;
+  }
+  const version = activeVersion as JsonRecord;
+  const revision = version.revision === undefined ? "inconnue" : String(version.revision);
+  const digest = version.contentDigest ? ` · empreinte ${String(version.contentDigest)}` : "";
+  versionTarget.textContent = `Version publiée · révision ${revision}${digest}`;
+  const rawItems = Array.isArray(version.items) ? version.items : [];
+  const items = rawItems.map((raw) => (raw && typeof raw === "object" ? raw : {}) as JsonRecord);
+  items.sort((left, right) => {
+    const order = Number(left.order ?? 0) - Number(right.order ?? 0);
+    return order || String(left.id ?? "").localeCompare(String(right.id ?? ""));
+  });
+  if (items.length === 0) {
+    target.textContent = "La version publiée ne contient aucun texte.";
+    return;
+  }
+  for (const [index, item] of items.entries()) {
     const row = document.createElement("div");
     row.className = "item";
-    const order = document.createElement("input");
-    order.type = "number";
-    order.value = String(item.order ?? 0);
-    order.setAttribute("aria-label", "Ordre");
-    order.dataset.field = "order";
-    const text = document.createElement("textarea");
-    text.value = String(item.text ?? "");
-    text.setAttribute("aria-label", "Texte");
-    text.dataset.field = "text";
-    const remove = document.createElement("button");
-    remove.type = "button";
-    remove.textContent = "Supprimer";
-    remove.addEventListener("click", () => row.remove());
+    const heading = document.createElement("h3");
+    heading.textContent = `Texte ${index + 1}`;
+    const text = document.createElement("p");
+    text.className = "corpus-text";
+    text.textContent = String(item.text ?? "");
     row.dataset.id = String(item.id ?? crypto.randomUUID());
-    row.append(order, text, remove);
+    row.dataset.order = String(item.order ?? 0);
+    row.append(heading, text);
     target.append(row);
   }
 }
 
-function draftFromUi(): JsonRecord {
-  const items = [...document.querySelectorAll<HTMLElement>("#corpus-items .item")].map((row) => ({
-    id: row.dataset.id,
-    order: Number((row.querySelector('[data-field="order"]') as HTMLInputElement).value),
-    text: (row.querySelector('[data-field="text"]') as HTMLTextAreaElement).value,
-  }));
-  const draft = (state.corpus?.draft ?? {}) as JsonRecord;
-  return { ...draft, items };
-}
-
-function addCorpusItem(): void {
-  const draft = (state.corpus?.draft ?? { workspaceId: "local-default", revision: 0 }) as JsonRecord;
-  const items = Array.isArray(draft.items) ? draft.items : [];
-  state.corpus = {
-    ...(state.corpus ?? {}),
-    draft: { ...draft, items: [...items, { id: crypto.randomUUID(), order: items.length, text: "" }] },
-  };
-  renderCorpus();
-}
-
 function renderRun(): void {
   const run = state.run;
+  const status = run ? String(run.status) : "";
+  const stateMessage = {
+    dry_run_ready: "Simulation prête à être approuvée.",
+    approved: "Simulation approuvée. Le calibrage réel n’est pas encore lancé.",
+    succeeded: "Calibrage réel terminé.",
+    failed: "Le calibrage réel a échoué.",
+    execution_unknown: "L’état du calibrage réel doit être vérifié.",
+  }[status];
   element<HTMLElement>("dry-run-state").textContent = run
-    ? `État : ${String(run.status)} — empreinte : ${String(run.requestDigest ?? "")}`
-    : "Aucun dry-run préparé.";
-  element<HTMLElement>("request-preview").textContent = run
-    ? json({ request: run.request, requestDigest: run.requestDigest, proposal: run.proposal, approval: run.approval })
-    : "";
+    ? stateMessage ?? `État : ${status}`
+    : "Aucune simulation préparée. Retournez dans « Préparer » pour commencer.";
+  const summary = element<HTMLElement>("dry-run-summary");
+  if (!run) {
+    summary.textContent = "";
+  } else {
+    const proposal = (run.proposal && typeof run.proposal === "object" ? run.proposal : {}) as JsonRecord;
+    const raw = (proposal.raw && typeof proposal.raw === "object" ? proposal.raw : {}) as JsonRecord;
+    const planCount = Array.isArray(proposal.plan) ? proposal.plan.length : undefined;
+    const requestsPlanned = raw.requests_planned ?? planCount;
+    const details = [
+      requestsPlanned === undefined ? "" : `${String(requestsPlanned)} requête(s) planifiée(s)`,
+      raw.billable_characters === undefined ? "" : `${String(raw.billable_characters)} caractères facturables`,
+      raw.estimated_cost_usd === undefined ? "" : `coût estimé : ${String(raw.estimated_cost_usd)} USD`,
+    ].filter(Boolean);
+    const nextStep = status === "approved"
+      ? "Le calibrage réel n’est pas encore lancé."
+      : status === "succeeded"
+        ? "Le calibrage réel est terminé. Consultez l’onglet Résultat."
+        : status === "failed"
+          ? "Le calibrage réel a échoué. Consultez l’onglet Résultat."
+          : "Vérifiez le récapitulatif puis approuvez la simulation.";
+    summary.textContent = `Simulation préparée${details.length ? ` · ${details.join(" · ")}` : ""}. ${nextStep}`;
+  }
   element<HTMLButtonElement>("approve").disabled = !run || run.status !== "dry_run_ready";
   element<HTMLButtonElement>("execute").disabled = !run || run.status !== "approved";
-  const report = run && "report" in run ? run.report : null;
-  element<HTMLElement>("result-preview").textContent = report
-    ? json(report)
-    : run && ["succeeded", "failed", "execution_unknown"].includes(String(run.status))
-      ? json(run)
-      : "";
-  element<HTMLButtonElement>("publish-profile").disabled = !run || run.status !== "succeeded";
+  renderResult();
+  const publishButton = element<HTMLButtonElement>("publish-profile");
+  const profilePublished = profilePublishedForRun(run);
+  publishButton.disabled = !run || run.status !== "succeeded" || profilePublished;
+  publishButton.textContent = profilePublished
+    ? "Voix déjà disponible dans les projets"
+    : "Rendre la voix disponible dans les projets";
 }
 
 async function refresh(): Promise<void> {
+  const hadRun = state.run !== null;
   const bootstrap = await api("/bootstrap");
   state.bootstrap = bootstrap.body as JsonRecord;
   state.nonce = state.bootstrap.sessionNonce as string;
+  const recentRuns = Array.isArray(state.bootstrap.recentRuns) ? state.bootstrap.recentRuns : [];
+  const latestRun =
+    recentRuns.find(
+      (candidate): candidate is JsonRecord =>
+        Boolean(candidate) && typeof candidate === "object" && typeof (candidate as JsonRecord).id === "string",
+    ) ?? null;
+  state.run = latestRun;
+  state.voiceName = null;
+  state.voiceNameStatus = "idle";
+  if (latestRun && ["succeeded", "failed", "execution_unknown"].includes(String(latestRun.status))) {
+    try {
+      state.run = (await api(`/calibration-runs/${latestRun.id}`)).body as JsonRecord;
+    } catch {
+      // Keep the summary from bootstrap when the detailed report is temporarily unavailable.
+    }
+  }
   const config = state.bootstrap.config as JsonRecord | undefined;
   element<HTMLElement>("config-status").textContent = config?.configured
     ? "Clé ElevenLabs configurée côté backend."
     : "Clé ElevenLabs absente côté backend.";
   const corpus = await api("/corpus");
   state.corpus = corpus.body as JsonRecord;
-  state.etag = corpus.response.headers.get("etag");
-  if (!state.etag) state.etag = `W/"corpus-draft-${(state.corpus.draft as JsonRecord).revision}"`;
   renderCorpus();
-  const schema = await api("/calibration/schema");
-  state.schema = schema.body as JsonRecord;
-  renderSchema();
   element<HTMLElement>("profiles-list").textContent = json(state.bootstrap.profiles ?? []);
-  showStatus("Prêt.");
-}
-
-async function saveCorpus(): Promise<void> {
-  if (!state.etag) throw new Error("ETag absent");
-  const result = await api("/corpus/draft", {
-    method: "PUT",
-    headers: { "If-Match": state.etag },
-    body: JSON.stringify(draftFromUi()),
-  });
-  state.etag = result.response.headers.get("etag");
-  state.corpus = { ...(state.corpus ?? {}), draft: result.body };
-  showStatus("Corpus enregistré.");
+  renderRun();
+  if (!hadRun && state.run) {
+    activateView(["succeeded", "failed", "execution_unknown"].includes(String(state.run.status)) ? "result" : "dry-run");
+    showStatus(
+      state.run.status === "succeeded" ? "Dernier calibrage chargé." : "Dernière simulation chargée.",
+    );
+  } else {
+    showStatus("Prêt.");
+  }
+  await loadVoiceName();
 }
 
 async function prepare(event: SubmitEvent): Promise<void> {
   event.preventDefault();
   const form = event.currentTarget as HTMLFormElement;
-  const params: JsonRecord = {};
-  for (const field of form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
-    "[data-param]",
-  )) {
-    const value = valueFromField(field);
-    if (value !== undefined) params[field.name] = value;
-  }
+  const params: JsonRecord = {
+    ...CALIBRATION_PARAMS,
+    voice_settings: { ...CALIBRATION_VOICE_SETTINGS },
+  };
   const result = await api("/calibration-runs/dry-run", {
     method: "POST",
     body: JSON.stringify({
       workspaceId: "local-default",
       voiceRef: (form.elements.namedItem("voiceRef") as HTMLInputElement).value,
       params,
-      postproc: (form.elements.namedItem("postproc") as HTMLSelectElement).value,
+      postproc: CALIBRATION_POSTPROC,
     }),
   });
   state.run = result.body as JsonRecord;
+  state.voiceName = null;
+  state.voiceNameStatus = "idle";
   renderRun();
   activateView("dry-run");
-  showStatus("Dry-run accepté. Approbation explicite requise.");
+  showStatus("Simulation préparée. Aucun audio n’a été généré ; approbation explicite requise.");
 }
 
 async function approve(): Promise<void> {
@@ -257,7 +346,7 @@ async function approve(): Promise<void> {
     })
   ).body as JsonRecord;
   renderRun();
-  showStatus("Approbation enregistrée.");
+  showStatus("Simulation approuvée. Le calibrage réel n’est pas encore lancé.");
 }
 
 async function execute(): Promise<void> {
@@ -265,14 +354,27 @@ async function execute(): Promise<void> {
   const runId = String(state.run.id);
   try {
     state.run = (await api(`/calibration-runs/${runId}/execute`, { method: "POST", body: "{}" })).body as JsonRecord;
+    if (["succeeded", "failed", "execution_unknown"].includes(String(state.run.status))) {
+      try {
+        state.run = (await api(`/calibration-runs/${runId}`)).body as JsonRecord;
+      } catch {
+        // Keep the execution response when the detailed report is temporarily unavailable.
+      }
+    }
     renderRun();
     activateView("result");
+    await loadVoiceName();
     showStatus("Run terminé ; le profil WPM reste une publication séparée.");
   } catch (error) {
     try {
       state.run = (await api(`/calibration-runs/${runId}`)).body as JsonRecord;
       renderRun();
       activateView("result");
+      await loadVoiceName();
+      if (state.run.status === "succeeded") {
+        showStatus("Calibrage réel terminé ; le profil WPM reste une publication séparée.");
+        return;
+      }
     } catch {
       // Keep the original execute error visible when the recovery read also fails.
     }
@@ -284,8 +386,8 @@ async function publishProfile(): Promise<void> {
   if (!state.run) return;
   await api("/voice-profiles", { method: "POST", body: JSON.stringify({ runId: state.run.id }) });
   await refresh();
-  activateView("profiles");
-  showStatus("Profil publié après vérification de la source Python.");
+  activateView("result");
+  showStatus("Voix prête à être utilisée dans les projets.");
 }
 
 function bind(): void {
@@ -295,11 +397,6 @@ function bind(): void {
   element("refresh").addEventListener(
     "click",
     () => void refresh().catch((error) => showStatus(String(error.message), true)),
-  );
-  element("add-item").addEventListener("click", addCorpusItem);
-  element("save-corpus").addEventListener(
-    "click",
-    () => void saveCorpus().catch((error) => showStatus(String(error.message), true)),
   );
   element("prepare-form").addEventListener(
     "submit",
@@ -316,16 +413,6 @@ function bind(): void {
   element("publish-profile").addEventListener(
     "click",
     () => void publishProfile().catch((error) => showStatus(String(error.message), true)),
-  );
-  element("publish-corpus").addEventListener(
-    "click",
-    () =>
-      void (async () => {
-        const revision = (state.corpus?.draft as JsonRecord)?.revision;
-        await api("/corpus/versions", { method: "POST", body: JSON.stringify({ expectedRevision: revision }) });
-        await refresh();
-        showStatus("Version du corpus publiée.");
-      })().catch((error) => showStatus(String(error.message), true)),
   );
 }
 

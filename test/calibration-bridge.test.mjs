@@ -9,7 +9,7 @@ import {
   createCalibrationBridge,
   createCanonicalProfilePort,
 } from "../dist/calibration/bridge.js";
-import { createCredentialProvider, parseDotEnv } from "../dist/calibration/credentials.js";
+import { createCredentialProvider, createVoiceDirectoryProvider, parseDotEnv } from "../dist/calibration/credentials.js";
 
 const resolvedRequest = {
   contractDigest: "contract-sha",
@@ -182,6 +182,61 @@ test("bridge routes core approval and execution without resending the provider s
   strictEqual(Object.hasOwn(calls[1].args, "text_source"), false);
 });
 
+test("bridge routes explicit publication through the core gate", async () => {
+  const calls = [];
+  const transport = {
+    async schema() { return { type: "object" }; },
+    async callTool(name, args, secret) {
+      calls.push({ name, args, credentialWasPassed: Boolean(secret) });
+      return {
+        response: {
+          run_id: "core-run-1",
+          workspace_id: "local-default",
+          revision: 3,
+          status: "succeeded",
+          context: {},
+          request: {},
+          request_digest: "v1:sha256:core-digest",
+          proposal: {},
+          approval: null,
+          result: {
+            status: "ok",
+            publication: {
+              status: "published",
+              canonical_ref: "Shared/voice-calibration/voice_wpm.json#voice-1.wpm_calibrated",
+              wpm: 179,
+              runs_published: 3,
+            },
+          },
+          created_at: "2026-09-03T10:00:00Z",
+          updated_at: "2026-09-03T10:01:00Z",
+        },
+        emitted: true,
+        stderr: "",
+      };
+    },
+    async close() {},
+  };
+  const bridge = createCalibrationBridge({
+    transport,
+    credentials: createCredentialProvider({ env: { ELEVENLABS_API_KEY: "secret" } }),
+  });
+
+  deepStrictEqual(
+    await bridge.publish({ workspaceId: "local-default", runId: "core-run-1" }),
+    {
+      canonicalRef: "Shared/voice-calibration/voice_wpm.json#voice-1.wpm_calibrated",
+      wpm: 179,
+      runsPublished: 3,
+    },
+  );
+  strictEqual(calls.length, 1);
+  strictEqual(calls[0].name, "publish_calibration");
+  strictEqual(calls[0].args.workspace_id, "local-default");
+  strictEqual(calls[0].args.run_id, "core-run-1");
+  strictEqual(JSON.stringify(calls).includes("secret"), false);
+});
+
 test("lost execution response becomes execution_unknown without replay", async () => {
   const transport = fakeTransport({ dropExecutionResponse: true });
   const bridge = createCalibrationBridge({ transport, credentials: createCredentialProvider({ env: { ELEVENLABS_API_KEY: "secret" } }), timeoutMs: 20 });
@@ -251,6 +306,26 @@ test("credential provider honors an explicit env file without exposing it", asyn
 
   const explicitFileWins = createCredentialProvider({ env: { ELEVENLABS_API_KEY: "from-process" }, cwd: dataDir, envFile: ".env" });
   strictEqual((await explicitFileWins.forRun()).secret, "from-file");
+});
+
+test("voice directory resolves a voice name with the server-side ElevenLabs credential", async () => {
+  const calls = [];
+  const credentials = createCredentialProvider({ env: { ELEVENLABS_API_KEY: "secret" } });
+  const directory = createVoiceDirectoryProvider({
+    credentials,
+    fetcher: async (url, init) => {
+      calls.push({ url, init });
+      return {
+        ok: true,
+        status: 200,
+        async json() { return { voice_id: "voice-1", name: "Voix française" }; },
+      };
+    },
+  });
+
+  strictEqual(await directory.getName("voice-1"), "Voix française");
+  strictEqual(calls[0].url, "https://api.elevenlabs.io/v1/voices/voice-1");
+  strictEqual(calls[0].init.headers["xi-api-key"], "secret");
 });
 
 test("profile publication verifies the canonical Python WPM source", async () => {

@@ -30,6 +30,11 @@ export interface ExecutionResult {
   coreRun?: CoreRunRecord;
   error?: { code: string; message: string };
 }
+export interface PublicationResult {
+  canonicalRef: string;
+  wpm: number;
+  runsPublished?: number;
+}
 export interface CoreRunRecord {
   runId: string;
   workspaceId: string;
@@ -64,6 +69,7 @@ export interface CalibrationBridge {
   propose?(input: { workspaceId: string; request: ResolvedCalibrationRequest }): Promise<DryRunResult>;
   approve?(input: { workspaceId: string; runId: string; requestDigest: string }): Promise<CoreRunRecord>;
   getRun?(input: { workspaceId: string; runId: string }): Promise<CoreRunRecord>;
+  publish?(input: { workspaceId: string; runId: string }): Promise<PublicationResult>;
   execute(input: {
     runId: string;
     idempotencyKey: string;
@@ -585,6 +591,33 @@ export function createCalibrationBridge(options: {
         throw new Error(String(safeError.message ?? "MCP tools/call failed"));
       }
       return parseCoreRun(redact(result.response, result.secret));
+    },
+    async publish(input) {
+      const result = await invokeTool("publish_calibration", {
+        workspace_id: input.workspaceId,
+        run_id: input.runId,
+      });
+      if (result.remoteError) {
+        const safeError = redact(result.remoteError, result.secret) as Record<string, unknown>;
+        throw new Error(String(safeError.message ?? "MCP tools/call failed"));
+      }
+      const safeResponse = redact(result.response, result.secret);
+      const run = parseCoreRun(safeResponse);
+      const publication = resultObject(run.result).publication;
+      const publicationObject = resultObject(publication);
+      if (
+        publicationObject.status !== "published" ||
+        typeof publicationObject.canonical_ref !== "string" ||
+        typeof publicationObject.wpm !== "number"
+      ) {
+        throw new Error("calibration publication was not confirmed");
+      }
+      return {
+        canonicalRef: publicationObject.canonical_ref,
+        wpm: publicationObject.wpm,
+        runsPublished:
+          typeof publicationObject.runs_published === "number" ? publicationObject.runs_published : undefined,
+      };
     },
     async execute(input) {
       if (input.workspaceId && input.coreRunId) {

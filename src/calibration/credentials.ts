@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 
 import type { ConfigStatus, CredentialProvider } from "./bridge.js";
+import type { VoiceDirectoryPort } from "./ports.js";
 import { redactSensitive } from "./redaction.js";
 
 const KEY_NAME = "ELEVENLABS_API_KEY";
@@ -10,6 +11,12 @@ export interface CredentialOptions {
   env?: Record<string, string | undefined>;
   cwd?: string;
   envFile?: string;
+}
+
+export interface VoiceDirectoryOptions {
+  credentials: CredentialProvider;
+  fetcher?: typeof fetch;
+  baseUrl?: string;
 }
 
 function parseDotEnv(source: string): Record<string, string> {
@@ -94,6 +101,28 @@ export function createCredentialProvider(options: CredentialOptions = {}): Crede
     redact(input: unknown) {
       const secret = value();
       return redactSensitive(input, secret ? [secret] : []);
+    },
+  };
+}
+
+export function createVoiceDirectoryProvider(options: VoiceDirectoryOptions): VoiceDirectoryPort {
+  const fetcher = options.fetcher ?? globalThis.fetch;
+  if (!fetcher) throw new Error("fetch is not available for ElevenLabs voice lookup");
+  const baseUrl = (options.baseUrl ?? "https://api.elevenlabs.io/v1").replace(/\/$/u, "");
+  return {
+    async getName(voiceRef) {
+      const credential = await options.credentials.forRun();
+      const response = await fetcher(`${baseUrl}/voices/${encodeURIComponent(voiceRef)}`, {
+        headers: {
+          accept: "application/json",
+          "xi-api-key": credential.secret,
+        },
+      });
+      if (!response.ok) throw new Error(`ElevenLabs voice lookup failed (${response.status})`);
+      const body = (await response.json()) as unknown;
+      if (!body || typeof body !== "object" || Array.isArray(body)) return null;
+      const name = (body as Record<string, unknown>).name;
+      return typeof name === "string" && name.trim() ? name.trim() : null;
     },
   };
 }

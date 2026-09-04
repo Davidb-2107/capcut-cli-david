@@ -227,6 +227,17 @@ async function dispatch(
       sendJson(response, 200, await application.getCalibrationSchema());
       return;
     }
+    const voiceMatch = /^\/api\/v1\/voices\/([^/]+)$/.exec(url.pathname);
+    if (method === "GET" && voiceMatch) {
+      let voiceRef: string;
+      try {
+        voiceRef = decodeURIComponent(voiceMatch[1]);
+      } catch {
+        throw new HttpError(422, "invalid_voice_id", "invalid ElevenLabs voice ID");
+      }
+      sendJson(response, 200, await application.getVoiceName(voiceRef));
+      return;
+    }
     if (method === "POST" && url.pathname === "/api/v1/calibration-runs/dry-run") {
       requireNonce(request, application);
       const body = await parseBody(request);

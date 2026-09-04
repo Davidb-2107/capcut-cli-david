@@ -22,6 +22,10 @@ export interface VoiceProfileRepository {
   publish(profile: VoiceProfile): Promise<void>;
 }
 
+export interface VoiceDirectoryPort {
+  getName(voiceRef: string): Promise<string | null>;
+}
+
 export interface ArtifactStore {
   put(runId: string, name: string, bytes: Uint8Array): Promise<string>;
   get(ref: string): Promise<Uint8Array>;

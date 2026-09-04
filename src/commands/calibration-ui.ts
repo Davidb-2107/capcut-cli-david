@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { createCalibrationApplication } from "../calibration/application.js";
 import { createCalibrationBridge, createCanonicalProfilePort } from "../calibration/bridge.js";
-import { createCredentialProvider } from "../calibration/credentials.js";
+import { createCredentialProvider, createVoiceDirectoryProvider } from "../calibration/credentials.js";
 import { startCalibrationUi } from "../calibration/http-server.js";
 import { createLocalStore } from "../calibration/ports.js";
 import type { Flags } from "../utils/cli.js";
@@ -20,6 +20,7 @@ export async function cmdCalibrationUi(flags: Flags): Promise<void> {
     bridge: createCalibrationBridge({ credentials }),
     canonical: createCanonicalProfilePort({ wpmPath, language }),
     credentials,
+    voiceDirectory: createVoiceDirectoryProvider({ credentials }),
   });
   const ui = await startCalibrationUi({
     application,

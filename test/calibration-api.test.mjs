@@ -214,8 +214,8 @@ export function fakeCanonicalProfilePort(options = {}) {
   };
 }
 
-export function makeApplication({ repositories, bridge, canonical, clock, credentials } = {}) {
-  return createCalibrationApplication({ repositories, bridge, canonical, clock, credentials });
+export function makeApplication({ repositories, bridge, canonical, clock, credentials, voiceDirectory } = {}) {
+  return createCalibrationApplication({ repositories, bridge, canonical, clock, credentials, voiceDirectory });
 }
 
 async function publishCorpus(repositories) {
@@ -432,6 +432,30 @@ test("the application preserves the resolved snapshot through approval, executio
   now = new Date("2026-09-02T10:01:00.000Z");
 });
 
+test("core publication commits the canonical corpus before the local profile", async () => {
+  const repositories = memoryRepositories();
+  await publishCorpus(repositories);
+  const bridge = fakeBridge();
+  const publicationCalls = [];
+  bridge.publish = async (inputValue) => {
+    publicationCalls.push(structuredClone(inputValue));
+    return { canonicalRef: "python://voice_wpm/voice-1", wpm: 149, runsPublished: 3 };
+  };
+  const canonical = fakeCanonicalProfilePort();
+  const app = makeApplication({ repositories, bridge, canonical });
+  const run = await app.prepareDryRun(input);
+  await app.approve(run.id, { requestDigest: run.requestDigest });
+  await app.execute(run.id);
+
+  const profile = await app.publishProfile(run.id);
+
+  strictEqual(publicationCalls.length, 1);
+  strictEqual(publicationCalls[0].workspaceId, "local-default");
+  strictEqual(publicationCalls[0].runId, run.id);
+  strictEqual(canonical.calls[0].wpm, 149);
+  strictEqual(profile.wpmSnapshot, 149);
+});
+
 test("execution consumes approval before a lost response and never retries execution_unknown", async () => {
   const repositories = memoryRepositories();
   await publishCorpus(repositories);
@@ -500,4 +524,28 @@ test("the HTTP API enforces nonce, ETag, same-origin and safe static paths", asy
   strictEqual(crossOrigin.status, 403);
   strictEqual((await fetch(`${ui.url}/unknown.js`)).status, 404);
   strictEqual((await fetch(`${ui.url}/../package.json`)).status, 404);
+});
+
+test("the HTTP API returns only the requested voice reference and name", async (t) => {
+  const repositories = memoryRepositories();
+  await publishCorpus(repositories);
+  const calls = [];
+  const app = makeApplication({
+    repositories,
+    bridge: fakeBridge(),
+    canonical: fakeCanonicalProfilePort(),
+    voiceDirectory: {
+      async getName(voiceRef) {
+        calls.push(voiceRef);
+        return "Voix française";
+      },
+    },
+  });
+  const ui = await startCalibrationUi({ application: app, host: "127.0.0.1", port: 0 });
+  t.after(async () => ui.close());
+
+  const response = await fetch(`${ui.url}/api/v1/voices/voice-1`);
+  strictEqual(response.status, 200);
+  deepStrictEqual(await response.json(), { voiceRef: "voice-1", name: "Voix française" });
+  deepStrictEqual(calls, ["voice-1"]);
 });
