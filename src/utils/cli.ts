@@ -59,6 +59,11 @@ export interface Flags {
   width?: number;
   height?: number;
   batch?: string;
+  dataDir?: string;
+  host?: string;
+  port?: number;
+  open?: boolean;
+  allowNetwork?: boolean;
 }
 
 export class CliError extends Error {

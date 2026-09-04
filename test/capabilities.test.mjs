@@ -50,6 +50,10 @@ test("cohérence: un verbe read-only n'exige pas CapCut fermé", () => {
   }
 });
 
+test("calibration-ui est introduite dans la version actuelle du CLI", () => {
+  strictEqual(CAPABILITIES.find((capability) => capability.verb === "calibration-ui")?.since, "2.7.0");
+});
+
 test("chains: chaque étape référence une carte existante", () => {
   const carded = new Set(CAPABILITIES.map((c) => c.verb));
   ok(CHAINS.length >= 3, "au moins Stickman, Repost, psycho-build");

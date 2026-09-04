@@ -696,6 +696,24 @@ export const CAPABILITIES: Capability[] = [
     since: "0.1.0",
   },
   {
+    verb: "calibration-ui",
+    category: "decouvrir",
+    summary:
+      "Ouvre l'interface locale de calibration ElevenLabs : corpus standard, dry-run, approbation explicite et publication du profil WPM.",
+    signature: "calibration-ui [--data-dir <dir>] [--host <host>] [--port <n>] [--open] [--allow-network]",
+    flags: [
+      { flag: "--data-dir <dir>", desc: "stockage local du corpus et des rapports" },
+      { flag: "--host <host>", desc: "adresse d'écoute (loopback par défaut)" },
+      { flag: "--port <n>", desc: "port HTTP local (0 pour choisir un port libre)" },
+      { flag: "--open", desc: "ouvre l'interface dans le navigateur" },
+      { flag: "--allow-network", desc: "autorise explicitement une écoute hors loopback" },
+    ],
+    example: "capcut-david calibration-ui --open",
+    readOnly: false,
+    capcutClosed: false,
+    since: "2.7.0",
+  },
+  {
     verb: "ui",
     category: "decouvrir",
     summary:

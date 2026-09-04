@@ -2,6 +2,7 @@
 
 import { writeSync } from "node:fs";
 import { cmdBatch } from "./commands/batch.js";
+import { cmdCalibrationUi } from "./commands/calibration-ui.js";
 import { cmdCascadeWords } from "./commands/cascade-words.js";
 import { cmdCatalogue } from "./commands/catalogue.js";
 import {
@@ -272,7 +273,13 @@ Catalogue:
 
   ui         [--print-path]                     Ouvre la carte des capacités du moteur dans le navigateur
              (page embarquée dans le paquet). --print-path affiche le chemin
-             absolu de la page sans l'ouvrir (headless/tests).
+             absolu de la page sans l’ouvrir (headless/tests).
+
+  calibration-ui [--data-dir <dir>] [--host <host>] [--port <port>] [--open]
+                 [--allow-network]
+                 Lance l’interface locale de calibration ElevenLabs. Le bind
+                 réseau est refusé sans --allow-network ; cette option expose
+                 un consommateur de credentials local non authentifié.
 
 Project:
   cut        <project> <start> <end> --out <path>
@@ -462,6 +469,18 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.preset = args[++i];
     } else if (a === "--batch" && i + 1 < args.length) {
       flags.batch = args[++i];
+    } else if (a === "--data-dir" && i + 1 < args.length) {
+      flags.dataDir = args[++i];
+    } else if (a === "--host" && i + 1 < args.length) {
+      flags.host = args[++i];
+    } else if (a === "--port" && i + 1 < args.length) {
+      const port = Number(args[++i]);
+      if (!Number.isInteger(port)) die("--port requires an integer");
+      flags.port = port;
+    } else if (a === "--open") {
+      flags.open = true;
+    } else if (a === "--allow-network") {
+      flags.allowNetwork = true;
     } else {
       positional.push(a);
     }
@@ -469,7 +488,7 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
   return { positional, flags };
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const raw = process.argv.slice(2);
   if (raw.length === 0 || raw[0] === "--help" || raw[0] === "-h") {
     // writeSync, pas console.log : sur macOS un pipe est asynchrone, et le
@@ -525,6 +544,11 @@ function main(): void {
   if (cmd === "ui") {
     cmdUi(positional.includes("--print-path"));
     process.exit(0);
+  }
+
+  if (cmd === "calibration-ui") {
+    await cmdCalibrationUi(flags);
+    return;
   }
 
   if (!projectPath) die("Missing project path. Run 'capcut-david --help' for usage.");
@@ -691,7 +715,7 @@ function main(): void {
 }
 
 try {
-  main();
+  await main();
 } catch (e) {
   const msg = e instanceof Error ? e.message : String(e);
   if (!(e instanceof CliError)) {

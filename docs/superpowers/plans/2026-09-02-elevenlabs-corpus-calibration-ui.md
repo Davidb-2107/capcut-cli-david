@@ -13,19 +13,21 @@
 ## Global Constraints
 
 - La gate d’inventaire de `voice-calibration/` et des contrats MCP est bloquante avant tout type provider-specific ou toute route de calibration.
-- La source à inventorier est `Shared/voice-calibration/` dans le vault ; son `README.md`, le serveur MCP câblé dans `.mcp.json` et le skill `calibrate-voice` décrivent le contrat effectif.
+- La source à inventorier est `Shared/voice-calibration/` dans le vault ; son `README.md`, le serveur MCP câblé dans `Shared/.mcp.json` et le skill `calibrate-voice` décrivent le contrat effectif.
 - Le transport Node ↔ Python est encapsulé dans `CalibrationBridge`; l’UI ne connaît ni MCP, ni Python, ni ElevenLabs.
 - Le corpus canonique est unique, utilisé en entier et versionné par snapshots immuables ; une seule version publiée est active.
 - `run_calibration` et les contrats MCP restent la source de vérité des paramètres, défauts, validations, dry-run et métriques.
 - Le MCP actuel expose `calibrate_voice`, qui délègue à `core.calibration.run_calibration`; le parcours WPM utilise `mode = "precision"` et conserve `precision_stats` comme résultat source.
 - Le parcours WPM MVP utilise le mode de calibration qui retourne directement les statistiques WPM (`mode = "precision"` dans le contrat actuel) ; le mode batterie, qui ne retourne pas de WPM agrégé, est hors périmètre.
+- Le contrat actuel accepte un seul `text_source` ; le backend sérialise donc tous les items ordonnés de la `CorpusVersion` active en un texte `inline` stable, séparé par `\n\n`, avant résolution de la requête. Le corpus doit rester sous la limite de caractères du modèle ; aucun découpage en plusieurs requêtes n’est ajouté au MVP.
+- `corpus_key` désigne l’alias du bucket Python `voice_wpm.json` et ne doit jamais être confondu avec l’identifiant local `CorpusVersion.id`. Par défaut, il vaut `voiceRef` ; `corpusVersionId` reste une métadonnée locale de snapshot et d’empreinte.
 - `postproc` est transmis explicitement dans chaque requête de calibration.
 - Le dry-run est obligatoire ; l’exécution réelle exige une approbation explicite liée au snapshot approuvé.
 - L’empreinte SHA-256 inclut le digest du contrat, le digest du cœur, le corpus, la voix, tous les paramètres et `postproc`.
 - Un timeout après émission d’une requête passe en `execution_unknown` et ne déclenche pas de retry automatique.
 - `run_id` et la clé d’idempotence sont conservés pour toute reprise autorisée ; un nouveau run est une action explicite.
-- Le rapport est immuable et ne publie jamais automatiquement un profil ; le WPM est publié séparément dans `VoiceProfile`.
-- Le WPM canonique reste dans la source Python `voice_wpm`/`Shared/voice-calibration`. Le `VoiceProfile` local est une projection traçable et ne doit jamais être lu par les gates de durée à la place de cette source.
+- Le rapport est immuable et ne publie jamais automatiquement un profil. Le WPM canonique est écrit et validé par Python dans `voice_wpm`/`Shared/voice-calibration/voice_wpm.json`, seule source consommée par les gates de durée ; Node ne possède ni n’écrit une autorité WPM concurrente.
+- Le `VoiceProfile` local Node est uniquement une projection traçable pour l’affichage et l’historique. Son `wpmSnapshot` ne remplace jamais le record Python canonique et ne doit jamais être lu par les gates de durée.
 - La clé locale est lue côté backend depuis `.env`, ne passe jamais au navigateur et n’apparaît ni dans les logs ni dans les artefacts.
 - L’API et l’UI locales sont same-origin, liées à `127.0.0.1` par défaut, sans CORS large et avec nonce de session sur les mutations.
 - L’approbation expire par défaut après 15 minutes, valeur calculée par le backend et affichée dans le dry-run ; l’exécution consomme l’approbation une seule fois.
@@ -72,15 +74,15 @@ Tests created by the plan:
 
 **Files:**
 - Create: `docs/elevenlabs-calibration-contract-inventory.md`
-- Read-only source: `Shared/voice-calibration/` in the vault, its authoritative `README.md`, the MCP wiring in `.mcp.json` and the `calibrate-voice` skill
+- Read-only source: `Shared/voice-calibration/` in the vault, its authoritative `README.md`, the MCP wiring in `Shared/.mcp.json` and the `calibrate-voice` skill
 
 **Interfaces:**
 - Consumes: the actual Python source, its package metadata, its MCP definitions and its existing `.env` loading convention.
-- Produces: a committed inventory containing the source revision, entrypoint, transport, framing, schema, defaults, dry-run semantics, result shape, error mapping, timeout behavior and idempotency guarantee. Tasks 2–6 must use this inventory and must not invent a provider field.
+- Produces: a committed inventory containing the source revision, entrypoint, transport, framing, schema, defaults, dry-run semantics, result shape, error mapping, timeout behavior and idempotency guarantee. Tasks 2–7 must use this inventory and must not invent a provider field.
 
 - [ ] **Step 1: Locate and fingerprint the source checkout**
 
-  Resolve `Shared/voice-calibration/` from the vault root. Record in the inventory the repository/package identifier and the output of `git rev-parse HEAD` run from that checkout when it is a Git repository. Confirm the `.mcp.json` entry that wires the `voice-calibration` server and the command/environment it uses. If the source checkout or its MCP wiring is not available, stop the implementation sequence at this task and request it; do not create a replacement implementation in `capcut-cli-david`.
+  Resolve `Shared/voice-calibration/` from the vault root. Record in the inventory the repository/package identifier and the output of `git rev-parse HEAD` run from that checkout when it is a Git repository. Confirm the `Shared/.mcp.json` entry that wires the `voice-calibration` server and the command/environment it uses. If the source checkout or its MCP wiring is not available, stop the implementation sequence at this task and request it; do not create a replacement implementation in `capcut-cli-david`.
 
 - [ ] **Step 2: Record the callable contract**
 
@@ -88,7 +90,7 @@ Tests created by the plan:
 
 - [ ] **Step 3: Decide and document the bridge transport from evidence**
 
-  Record exactly one transport selected from the `.mcp.json` wiring: expected current path is an MCP server over stdio, but the inventory must confirm the launch command and protocol rather than assume it. Document process lifecycle, message framing, stderr/exit-code behavior, cancellation, timeout boundary, Python executable/environment resolution and whether the runner/provider guarantees idempotency. Document the canonical write/read path for the WPM source. The later `CalibrationBridge` must implement this documented protocol rather than guessing from the UI.
+  Record exactly one transport selected from the `Shared/.mcp.json` wiring: expected current path is an MCP server over stdio, but the inventory must confirm the launch command and protocol rather than assume it. Document process lifecycle, message framing, stderr/exit-code behavior, cancellation, timeout boundary, Python executable/environment resolution and whether the runner/provider guarantees idempotency. Document the canonical write/read path for the WPM source. The later `CalibrationBridge` must implement this documented protocol rather than guessing from the UI.
 
 - [ ] **Step 4: Verify the inventory is sufficient**
 
@@ -139,12 +141,14 @@ missing integration instead of creating a competing local WPM authority.
     corpusDigest: "corpus-sha",
     voiceRef: "voice-1",
     params: {
-      model_id: "model-x",
-      voice_settings: { stability: 0.5 },
-      text_source: "standard",
+      model_id: "eleven_v3",
+      voice_settings: { stability: 0.5, similarity_boost: 0.85, style: 0, use_speaker_boost: true },
+      text_source: { kind: "inline", text: "Bonjour le monde." },
       mode: "precision",
       language: "fr",
-      corpus_key: "standard-v1",
+      runs: 3,
+      dry_run: false,
+      corpus_key: "voice-1",
     },
     postproc: "cut",
   };
@@ -154,12 +158,14 @@ missing integration instead of creating a competing local WPM authority.
       canonicalizeRequest({
         ...request,
         params: {
-          corpus_key: "standard-v1",
+          corpus_key: "voice-1",
           mode: "precision",
-          text_source: "standard",
-          voice_settings: { stability: 0.5 },
-          model_id: "model-x",
+          text_source: { kind: "inline", text: "Bonjour le monde." },
+          voice_settings: { use_speaker_boost: true, style: 0, similarity_boost: 0.85, stability: 0.5 },
+          model_id: "eleven_v3",
           language: "fr",
+          runs: 3,
+          dry_run: false,
         },
       }),
       canonicalizeRequest(request),
@@ -430,8 +436,8 @@ account while verifying the canonical WPM write/read boundary.
   });
 
   test("profile publication delegates to the canonical Python WPM source", async () => {
-    const canonical = makeCanonicalProfilePort({ canonicalRef: "voice_wpm:voice-1" });
-    deepStrictEqual(await canonical.ensurePublished({ voiceRef: "voice-1", wpm: 148, runId: "r1", corpusVersionId: "standard-v1" }), { canonicalRef: "voice_wpm:voice-1" });
+    const canonical = makeCanonicalProfilePort({ canonicalRef: "Shared/voice-calibration/voice_wpm.json#voice-1.wpm_calibrated" });
+    deepStrictEqual(await canonical.ensurePublished({ voiceRef: "voice-1", wpm: 148, runId: "r1", corpusVersionId: "standard-v1" }), { canonicalRef: "Shared/voice-calibration/voice_wpm.json#voice-1.wpm_calibrated" });
   });
   ```
 
@@ -616,12 +622,14 @@ export interface CorpusView {
       workspaceId: "local-default",
       voiceRef: "voice-1",
       params: {
-        model_id: "m",
-        voice_settings: { stability: 0.5 },
-        text_source: "standard",
+        model_id: "eleven_v3",
+        voice_settings: { stability: 0.5, similarity_boost: 0.85, style: 0, use_speaker_boost: true },
+        text_source: { kind: "inline", text: "Bonjour le monde." },
         mode: "precision",
         language: "fr",
-        corpus_key: "standard-v1",
+        runs: 3,
+        dry_run: false,
+        corpus_key: "voice-1",
       },
       postproc: "cut",
     });
