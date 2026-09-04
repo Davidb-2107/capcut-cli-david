@@ -236,9 +236,9 @@ export const CAPABILITIES: Capability[] = [
     verb: "cascade-words",
     category: "peupler",
     summary:
-      "Révélation phrase mot-par-mot (PAS karaoké — les mots restent affichés jusqu'à la phrase complète). Par ligne : une piste BASE (guide de placement uniquement, masquée immédiatement) + une piste par mot en surlignage (seule couche visible), décalée en x pour se superposer au mot correspondant dans le guide. Chaque mot démarre à son timestamp et reste jusqu'à la fin de sa ligne. Le wrapping et le placement utilisent les largeurs OpenType mesurées de la police résolue, avec --font requis sauf --clone-style exploitable.",
+      "Révélation phrase mot-par-mot (PAS karaoké — les mots restent affichés jusqu'à la phrase complète). Par défaut, une piste par mot est décalée en x à partir des largeurs OpenType mesurées ; --alpha-lines offre un mode expérimental qui garde la ligne complète dans chaque piste et rend les autres mots transparents. Avec ou sans --alpha-lines, le wrapping utilise la police résolue, avec --font requis sauf --clone-style exploitable.",
     signature:
-      "cascade-words <project> <cards.json> --guide-track <name> (--font <name|resource_id> | --clone-style) [--drafts <dir>] [--track-prefix <name>] [--line-prefix <name>] [--font-size <n>] [--color <hex>] [--highlight-color <hex>] [--align <0|1|2>]",
+      "cascade-words <project> <cards.json> --guide-track <name> (--font <name|resource_id> | --clone-style) [--drafts <dir>] [--font-calibration <file>] [--allow-candidate-calibration] [--track-prefix <name>] [--line-prefix <name>] [--font-size <n>] [--color <hex>] [--highlight-color <hex>] [--align <0|1|2>] [--alpha-lines]",
     flags: [
       { flag: "--guide-track <name>", desc: "piste texte tenant la phrase complète (import-captions) — requis" },
       { flag: "--track-prefix <name>", desc: "préfixe des pistes MOT (défaut: word -> word-000, word-001...)" },
@@ -252,11 +252,23 @@ export const CAPABILITIES: Capability[] = [
       },
       { flag: "--drafts <dir>", desc: "racine des drafts servant de repli à la résolution de --font" },
       {
+        flag: "--font-calibration <file>",
+        desc: "table JSON des profils CapCut validés par police ; les profils absents ou candidats sont refusés",
+      },
+      {
+        flag: "--allow-candidate-calibration",
+        desc: "opt-in expérimental pour tester un profil candidate ; jamais implicite",
+      },
+      {
         flag: "--font-size <n>",
         desc: "taille effective ; priorité à cette valeur, puis style cloné, puis material.font_size, puis 15",
       },
       { flag: "--color <hex>", desc: "couleur de la piste base — invisible (guide de placement masqué)" },
       { flag: "--highlight-color <hex>", desc: "couleur des mots (défaut #FFD600) — seule couche visible" },
+      {
+        flag: "--alpha-lines",
+        desc: "mode expérimental : chaque piste mot contient la ligne complète, alpha 0 hors du mot actif ; supprime le placement x. Les cartes peuvent fournir line:0,1,... pour conserver des coupures déjà choisies",
+      },
       {
         flag: "--clone-style",
         desc: "hérite du style linéaire lisible de la caption guide ; --font remplace seulement son identité de police",

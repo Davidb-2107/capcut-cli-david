@@ -2,6 +2,11 @@ import { existsSync, readFileSync } from "node:fs";
 import { type Draft, type Segment, saveDraft, type Track } from "../draft.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { baseSegment, createCompanionMaterials, hexToRgb, registerCompanions, uuid } from "../utils/companion.js";
+import {
+  type FontCalibrationProfile,
+  parseFontCalibrationProfiles,
+  resolveFontCalibration,
+} from "../utils/font-calibration.js";
 import { type FontMeasureStyle, fontMetrics } from "../utils/font-metrics.js";
 import { type ResolvedFont, resolveFontReference } from "../utils/font-resolver.js";
 import {
@@ -56,6 +61,12 @@ export interface CascadeWordsOptions {
   alignment?: number;
   cloneStyle?: boolean;
   font?: ResolvedFont;
+  /** Render each word as an alpha-revealed span over its complete line. */
+  alphaLines?: boolean;
+  /** Validated CapCut scale profiles used by the production Fontkit adapter. */
+  fontCalibrationProfiles?: readonly FontCalibrationProfile[];
+  /** Explicitly permits candidate profiles for calibration experiments only. */
+  allowCandidateCalibration?: boolean;
   /** Test seam; production callers use the OpenType FontMetrics adapter. */
   widthOf?: WidthOf;
 }
@@ -74,6 +85,21 @@ function padWidth(n: number): number {
 }
 
 export type WidthOf = (text: string) => number;
+
+function buildAlphaRevealContent(
+  lineText: string,
+  range: [number, number],
+  fontSize: number,
+  color: [number, number, number],
+  baseStyle?: Record<string, unknown>,
+): string {
+  const [start, end] = range;
+  const spans = [];
+  if (start > 0) spans.push({ range: [0, start] as [number, number], color, alpha: 0 });
+  spans.push({ range, color, alpha: 1 });
+  if (end < lineText.length) spans.push({ range: [end, lineText.length] as [number, number], color, alpha: 0 });
+  return buildRichTextContent(lineText, fontSize, color, spans, baseStyle);
+}
 
 export interface CascadeLayout {
   lineOf: number[];
@@ -95,10 +121,35 @@ export function planCascadeLayout(cards: CaptionCard[], canvasWidth: number, wid
   }
   if (typeof widthOf !== "function") throw new Error("cascade-words: widthOf must be a function");
 
+  for (const card of cards) {
+    if (typeof card.text !== "string") throw new Error('cascade-words: card "text" must be a string');
+  }
+  const hasLineHints = cards.some((card) => card.line !== undefined);
+  if (hasLineHints) {
+    let previous = 0;
+    cards.forEach((card, index) => {
+      if (!Number.isInteger(card.line) || (card.line as number) < 0) {
+        throw new Error(`cascade-words: cards[${index}] "line" must be a zero-based integer`);
+      }
+      const line = card.line as number;
+      if ((index === 0 && line !== 0) || (index > 0 && (line < previous || line > previous + 1))) {
+        throw new Error("cascade-words: card line hints must be contiguous, ordered, and start at 0");
+      }
+      previous = line;
+    });
+  }
+
   const lineOf: number[] = [];
   const lineTexts: string[] = [];
   for (const card of cards) {
-    if (typeof card.text !== "string") throw new Error('cascade-words: card "text" must be a string');
+    if (hasLineHints) {
+      const line = card.line as number;
+      const currentLine = lineTexts[line] ?? "";
+      lineTexts[line] = currentLine === "" ? card.text : `${currentLine} ${card.text}`;
+      lineOf.push(line);
+      continue;
+    }
+
     const currentLine = lineTexts.length > 0 ? lineTexts[lineTexts.length - 1] : "";
     const candidate = currentLine === "" ? card.text : `${currentLine} ${card.text}`;
     if (currentLine !== "" && widthOf(candidate) > canvasWidth) {
@@ -211,16 +262,19 @@ function ensureCloneIsMeasurable(
 }
 
 function fontIdentityFromResolved(font: ResolvedFont): TextFontIdentity {
+  const fontEntryId = uuid();
   return {
     path: font.fontPath,
     id: font.resourceId ?? "",
     title: font.title,
     resourceId: font.resourceId,
     sourcePlatform: font.resourceId ? 1 : 0,
+    materialFontId: "",
+    fontEntryId,
     fontsEntry: {
       title: font.title,
       path: font.fontPath,
-      id: font.resourceId ?? "",
+      id: fontEntryId,
       resource_id: font.resourceId ?? "",
       source_platform: font.resourceId ? 1 : 0,
       effect_id: font.resourceId ?? "",
@@ -245,7 +299,22 @@ function fontIdentityFromClone(
     resourceId,
     sourcePlatform: num(material.font_source_platform) ?? num(fontsEntry?.source_platform) ?? 0,
     fontsEntry,
+    materialFontId: str(material.font_id) ?? "",
+    fontEntryId: str(fontsEntry?.id),
   };
+}
+
+function synchronizeGuideFont(
+  texts: Array<Record<string, unknown>>,
+  guideTrack: Track,
+  identity: TextFontIdentity,
+): void {
+  const guideMaterialIds = new Set(guideTrack.segments.map((segment) => segment.material_id));
+  for (const material of texts) {
+    if (typeof material.id === "string" && guideMaterialIds.has(material.id)) {
+      applyTextFontIdentity(material, identity);
+    }
+  }
 }
 
 function resolveEffectiveTextStyle(
@@ -343,16 +412,33 @@ export function cascadeWords(
     }
   });
 
+  const calibration = opts.widthOf
+    ? undefined
+    : resolveFontCalibration(
+        {
+          title: effectiveStyle.fontTitle,
+          resourceId: effectiveStyle.font.resourceId ?? null,
+          fontPath: effectiveStyle.fontPath,
+        },
+        opts.fontCalibrationProfiles ?? [],
+        { allowCandidate: opts.allowCandidateCalibration },
+      );
   const measuredStyle: FontMeasureStyle = {
     fontPath: effectiveStyle.fontPath,
     capcutFontSize: effectiveStyle.fontSize,
     letterSpacing: effectiveStyle.letterSpacing,
+    capcutScale: calibration?.scale,
   };
   const widthOf = opts.widthOf ?? ((text: string) => fontMetrics.measure(text, measuredStyle));
   const layout = planCascadeLayout(opts.cards, canvasWidth as number, widthOf);
   const lineOf = layout.lineOf;
   const { lineTexts } = layout;
   const { starts: lineStarts, ends: lineEnds } = computeLineBounds(opts.cards, lineOf, guideEnd);
+
+  // The guide is hidden at render time, but it remains selectable in CapCut. Keep its
+  // material bound to the explicit font too, otherwise the inspector reports "System"
+  // when the user selects the source caption instead of a visible cascade track.
+  if (opts.font) synchronizeGuideFont(texts, guideTrack, effectiveStyle.font);
 
   const wordWidth = padWidth(opts.cards.length);
   const lineWidth = padWidth(lineTexts.length);
@@ -404,6 +490,10 @@ export function cascadeWords(
         buildTextMaterial(baseMatId, lineTexts[line], fontSize, baseRgb, baseHex, alignment, [], effectiveStyle.font),
       );
     }
+    if (opts.alphaLines) {
+      const baseMat = texts[texts.length - 1];
+      baseMat.text_size = 30;
+    }
     const baseCompanions = createCompanionMaterials("text");
     registerCompanions(draft, baseCompanions);
     const baseSeg: Segment = baseSegment(
@@ -448,25 +538,45 @@ export function cascadeWords(
       if (cloneTpl) {
         const mat = JSON.parse(JSON.stringify(cloneTpl.material)) as Record<string, unknown>;
         mat.id = matId;
-        mat.content = buildRichTextContent(card.text, fontSize, highlightRgb, [], effectiveStyle.spanStyle);
-        mat.base_content = card.text;
-        if ("recognize_text" in mat) mat.recognize_text = card.text;
+        mat.content = opts.alphaLines
+          ? buildAlphaRevealContent(lineTexts[line], layout.charRanges[i], fontSize, highlightRgb, effectiveStyle.spanStyle)
+          : buildRichTextContent(card.text, fontSize, highlightRgb, [], effectiveStyle.spanStyle);
+        mat.base_content = opts.alphaLines ? lineTexts[line] : card.text;
+        if (opts.alphaLines) mat.recognize_text = lineTexts[line];
+        else if ("recognize_text" in mat) mat.recognize_text = card.text;
         mat.is_rich_text = true;
         mat.font_size = fontSize;
         mat.letter_spacing = effectiveStyle.letterSpacing;
         applyTextFontIdentity(mat, effectiveStyle.font);
+        if (opts.alphaLines) mat.text_size = 30;
         texts.push(mat);
       } else {
-        texts.push(
-          buildTextMaterial(matId, card.text, fontSize, highlightRgb, highlightHex, alignment, [], effectiveStyle.font),
+        const mat = buildTextMaterial(
+          matId,
+          opts.alphaLines ? lineTexts[line] : card.text,
+          fontSize,
+          highlightRgb,
+          highlightHex,
+          alignment,
+          [],
+          effectiveStyle.font,
         );
+        if (opts.alphaLines) {
+          mat.content = buildAlphaRevealContent(lineTexts[line], layout.charRanges[i], fontSize, highlightRgb);
+          mat.base_content = lineTexts[line];
+          mat.recognize_text = lineTexts[line];
+          mat.is_rich_text = true;
+          mat.text_size = 30;
+          applyTextFontIdentity(mat, effectiveStyle.font);
+        }
+        texts.push(mat);
       }
 
       const companions = createCompanionMaterials("text");
       registerCompanions(draft, companions);
       const duration = lineEnd - card.start;
       const seg: Segment = baseSegment(uuid(), matId, track.id, { start: card.start, duration }, companions.ids, 15000);
-      if (seg.clip) seg.clip.transform.x = x;
+      if (seg.clip) seg.clip.transform.x = opts.alphaLines ? 0 : x;
       track.segments.push(seg);
       draft.tracks.push(track);
       trackIds.push(track.id);
@@ -492,7 +602,7 @@ export function cmdCascadeWords(draft: Draft, filePath: string, positional: stri
   const jsonPath = positional[2];
   if (!jsonPath) {
     die(
-      "Missing <cards.json>. Usage: capcut-david cascade-words <project> <cards.json> --guide-track <name> (--font <name|rid> | --clone-style) [--track-prefix <name>] [--line-prefix <name>] [--font-size <n>] [--color <hex>] [--highlight-color <hex>] [--align <0|1|2>] [--drafts <dir>]",
+      "Missing <cards.json>. Usage: capcut-david cascade-words <project> <cards.json> --guide-track <name> (--font <name|rid> | --clone-style) [--track-prefix <name>] [--line-prefix <name>] [--font-size <n>] [--color <hex>] [--highlight-color <hex>] [--align <0|1|2>] [--drafts <dir>] [--font-calibration <file>]",
     );
   }
   if (!existsSync(jsonPath)) die(`Cards file not found: ${jsonPath}`);
@@ -505,6 +615,18 @@ export function cmdCascadeWords(draft: Draft, filePath: string, positional: stri
   if (!Array.isArray(cards)) die("Cards file must be a JSON array of {text,start,end}");
   if (!flags.guideTrack) die("--guide-track <name> is required");
 
+  let fontCalibrationProfiles: FontCalibrationProfile[] | undefined;
+  if (flags.fontCalibration) {
+    if (!existsSync(flags.fontCalibration)) die(`Font calibration file not found: ${flags.fontCalibration}`);
+    try {
+      fontCalibrationProfiles = parseFontCalibrationProfiles(
+        JSON.parse(readFileSync(flags.fontCalibration, "utf-8")) as unknown,
+      );
+    } catch (e) {
+      die(`Invalid font calibration file ${flags.fontCalibration}: ${(e as Error).message}`);
+    }
+  }
+
   const result = cascadeWords(draft, filePath, {
     cards,
     guideTrackName: flags.guideTrack,
@@ -515,6 +637,9 @@ export function cmdCascadeWords(draft: Draft, filePath: string, positional: stri
     highlightColor: flags.highlightColor,
     alignment: flags.align,
     cloneStyle: flags.cloneStyle,
+    alphaLines: flags.alphaLines,
+    fontCalibrationProfiles,
+    allowCandidateCalibration: flags.allowCandidateCalibration,
     font: flags.font ? resolveFontReference(flags.font, { draftsRoot: flags.drafts }) : undefined,
   });
   saveDraft(filePath, draft);

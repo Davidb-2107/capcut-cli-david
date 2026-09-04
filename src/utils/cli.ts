@@ -35,6 +35,9 @@ export interface Flags {
   guideTrack?: string;
   trackPrefix?: string;
   linePrefix?: string;
+  alphaLines?: boolean;
+  fontCalibration?: string;
+  allowCandidateCalibration?: boolean;
   preset?: string;
   force?: boolean;
   strict?: boolean;

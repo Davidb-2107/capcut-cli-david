@@ -49,6 +49,8 @@ export interface TextHighlight {
   range: [number, number];
   /** RGB in 0..1; fround()ed to float32 internally to match CapCut. */
   color: [number, number, number];
+  /** Optional opacity for the span, written to both CapCut alpha fields. */
+  alpha?: number;
   /** Optional font size (points) for this span; overrides the base/cloned size. */
   size?: number;
 }
@@ -74,6 +76,10 @@ export interface TextFontIdentity {
   resourceId?: string | null;
   sourcePlatform?: number;
   fontsEntry?: Record<string, unknown>;
+  /** CapCut's material-level font_id is separate from the style resource id. */
+  materialFontId?: string;
+  /** Internal id used by materials.texts[].fonts[].id. */
+  fontEntryId?: string;
 }
 
 export function applyTextFontIdentity(material: Record<string, unknown>, identity: TextFontIdentity): void {
@@ -94,12 +100,18 @@ export function applyTextFontIdentity(material: Record<string, unknown>, identit
   }
 
   material.font_path = identity.path;
-  material.font_id = identity.id;
+  material.font_id = identity.materialFontId ?? "";
   material.font_title = identity.title ?? "";
-  material.font_resource_id = identity.resourceId ?? identity.id;
+  const resourceId = identity.resourceId ?? "";
+  material.font_resource_id = resourceId;
   material.font_source_platform = identity.sourcePlatform ?? 0;
   const fontsEntry = identity.fontsEntry ? { ...identity.fontsEntry } : {};
-  material.fonts = [{ ...fontsEntry, path: identity.path, id: identity.id, resource_id: identity.resourceId ?? identity.id }];
+  material.fonts = [{
+    ...fontsEntry,
+    path: identity.path,
+    id: identity.fontEntryId ?? uuid(),
+    resource_id: resourceId,
+  }];
 }
 
 function buildTextContent(text: string, fontSize: number, color: [number, number, number]): string {
@@ -129,7 +141,8 @@ function buildTextContent(text: string, fontSize: number, color: [number, number
  * CapCut rich-text content: N contiguous, non-overlapping style spans covering
  * [0, text.length] in UTF-16 code units. Gaps use `baseColor`; each highlight
  * uses its own color. Colors are fround()ed to float32 to match CapCut's native
- * encoding. Functional/patcher shape: solid fill, no `alpha`, no `useLetterColor`.
+ * encoding. Functional/patcher shape: solid fill, with optional alpha and no
+ * `useLetterColor`.
  * (`buildTextContent` is left frozen for the single-span path → byte-identity.)
  */
 export function buildRichTextContent(
@@ -151,28 +164,38 @@ export function buildRichTextContent(
     if (s < prevEnd) die(`Overlapping highlight ranges near [${s}, ${e}]`);
     prevEnd = e;
   }
-  const solidFill = (color: [number, number, number]) => ({
-    content: { render_type: "solid", solid: { color: [f(color[0]), f(color[1]), f(color[2])] } },
+  const solidFill = (color: [number, number, number], alpha?: number) => ({
+    ...(alpha !== undefined ? { alpha } : {}),
+    content: {
+      render_type: "solid",
+      solid: { ...(alpha !== undefined ? { alpha } : {}), color: [f(color[0]), f(color[1]), f(color[2])] },
+    },
   });
   // baseStyle = a cloned style block from an existing caption (font/strokes/shadows/size/bold…):
   // each span photocopies it and overrides only range + fill (CapCut keyword-highlight encoding)
   // — plus size, but ONLY when the highlight explicitly carries one (byte-identity otherwise).
   // Without baseStyle, the lean default span shape (frozen for byte-identity tests) is used.
-  const span = (a: number, b: number, color: [number, number, number], size?: number): Record<string, unknown> =>
+  const span = (
+    a: number,
+    b: number,
+    color: [number, number, number],
+    size?: number,
+    alpha?: number,
+  ): Record<string, unknown> =>
     baseStyle
       ? {
           ...JSON.parse(JSON.stringify(baseStyle)),
           range: [a, b],
-          fill: solidFill(color),
+          fill: solidFill(color, alpha),
           ...(size !== undefined ? { size } : {}),
         }
-      : { fill: solidFill(color), size: size ?? fontSize, range: [a, b] };
+      : { fill: solidFill(color, alpha), size: size ?? fontSize, range: [a, b] };
   const styles: Array<Record<string, unknown>> = [];
   let cursor = 0;
   for (const h of sorted) {
     const [s, e] = h.range;
     if (s > cursor) styles.push(span(cursor, s, baseColor));
-    styles.push(span(s, e, h.color, h.size));
+    styles.push(span(s, e, h.color, h.size, h.alpha));
     cursor = e;
   }
   if (cursor < n) styles.push(span(cursor, n, baseColor));
@@ -1036,6 +1059,8 @@ export interface CaptionCard {
   text: string;
   start: number; // microseconds
   end: number; // microseconds
+  /** Optional zero-based line chosen by the caller (used by cascade-words). */
+  line?: number;
   /** Optional keyword highlight range [start, end) in UTF-16 code units. */
   hl?: [number, number];
   /** Optional per-card highlight color (hex); falls back to opts.highlightColor. */

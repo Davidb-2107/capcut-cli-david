@@ -108,7 +108,8 @@ Add:
   cascade-words <project> <cards.json> --guide-track <name> (--font <name|resource_id> | --clone-style)
               [--track-prefix <name>] [--line-prefix <name>] [--font-size <n>]
               [--color <hex>] [--highlight-color <hex>] [--align <0|1|2>]
-              [--drafts <dir>]
+              [--alpha-lines]
+              [--drafts <dir>] [--font-calibration <file>] [--allow-candidate-calibration]
               Word-by-word sentence build-up (NOT karaoke — words stay on screen once
               revealed, until the full sentence shows). Lines are packed from measured
               font widths: a BASE track (full line text, --color, default
@@ -122,6 +123,14 @@ Add:
               --font resolves a measured font from the catalogue/drafts and writes the
               same font into content.styles[*].font and material mirrors. Without
               --font, --clone-style must clone a readable guide font.
+              --alpha-lines is experimental: each word track keeps the complete line,
+              sets alpha=0 outside the active word, and leaves transform.x at zero.
+              Cards may include an optional zero-based line field to preserve
+              pre-chosen line breaks; without it, measured wrapping is used.
+              --font-calibration loads a JSON array of validated per-font CapCut
+              scales; missing or candidate profiles are rejected before mutation.
+              --allow-candidate-calibration is an explicit experimental opt-in for
+              testing a candidate profile; it is never implied by --font-calibration.
               --guide-track names the text track already holding the full sentence
               (created via import-captions); its segment is likewise hidden once
               processed — a guide track may hold several sentence segments (repeated
@@ -388,6 +397,16 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
       flags.trackPrefix = args[++i];
     } else if (a === "--line-prefix" && i + 1 < args.length) {
       flags.linePrefix = args[++i];
+    } else if (a === "--alpha-lines") {
+      flags.alphaLines = true;
+    } else if (a === "--font-calibration" || a.startsWith("--font-calibration=")) {
+      if (a !== "--font-calibration")
+        die(`--font-calibration takes a space-separated value (use --font-calibration <file>), got "${a}"`);
+      if (i + 1 >= args.length || args[i + 1].startsWith("--"))
+        die("--font-calibration requires a value (e.g. --font-calibration profiles.json)");
+      flags.fontCalibration = args[++i];
+    } else if (a === "--allow-candidate-calibration") {
+      flags.allowCandidateCalibration = true;
     } else if (a === "--max-chars") {
       die("--max-chars was removed; cascade-words now wraps from the resolved font metrics.");
     } else if (a === "--force") {

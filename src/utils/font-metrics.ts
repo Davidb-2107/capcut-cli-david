@@ -5,6 +5,8 @@ export interface FontMeasureStyle {
   fontPath: string;
   capcutFontSize: number;
   letterSpacing: number;
+  /** Empirical units-to-rendered-pixels scale for the selected CapCut font. */
+  capcutScale?: number;
 }
 
 export interface FontMetrics {
@@ -43,6 +45,9 @@ function validateStyle(style: FontMeasureStyle): void {
   }
   if (!Number.isFinite(style.letterSpacing)) {
     throw new Error(`Letter spacing must be finite, got ${style.letterSpacing}.`);
+  }
+  if (style.capcutScale !== undefined && (!Number.isFinite(style.capcutScale) || style.capcutScale <= 0)) {
+    throw new Error(`CapCut font scale must be a positive finite number, got ${style.capcutScale}.`);
   }
   // The CapCut letter-spacing conversion is deliberately gated on the real
   // calibration probe. Until that probe is available, silently applying a
@@ -83,10 +88,11 @@ export function measureTextWidthPx(
   if (!Number.isFinite(font.unitsPerEm) || font.unitsPerEm <= 0) {
     throw new Error(`Font ${style.fontPath} has invalid unitsPerEm: ${font.unitsPerEm}.`);
   }
-  // This is the canonical OpenType em-to-size conversion. The pending CapCut
-  // probe may later document an additional engine scale, but no empirical
-  // factor is introduced until that value is measured and recorded.
-  return (advanceUnits / font.unitsPerEm) * style.capcutFontSize;
+  // This is the canonical OpenType em-to-size conversion. A measured CapCut
+  // profile may then convert those logical pixels to the engine's rendered
+  // width; absent a profile the scale remains 1 for the raw OpenType value.
+  const openTypeWidth = (advanceUnits / font.unitsPerEm) * style.capcutFontSize;
+  return openTypeWidth * (style.capcutScale ?? 1);
 }
 
 export const fontMetrics: FontMetrics = {

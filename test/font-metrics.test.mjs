@@ -22,6 +22,13 @@ test("empty text has zero width and size scales proportionally", () => {
   strictEqual(large, small * 2);
 });
 
+test("applies the explicit CapCut calibration scale after OpenType measurement", () => {
+  const openTypeWidth = measureTextWidthPx("dix secondes de trop", style);
+  const capcutWidth = measureTextWidthPx("dix secondes de trop", { ...style, capcutScale: 5.200473 });
+
+  strictEqual(capcutWidth, openTypeWidth * 5.200473);
+});
+
 test("same path can be measured repeatedly through the cache", () => {
   const first = fontMetrics.measure("AV", style);
   const second = fontMetrics.measure("AV", style);

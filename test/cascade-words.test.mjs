@@ -21,6 +21,15 @@ const WORDS = [
   { text: "the", start: 400000, end: 700000 },
   { text: "second", start: 700000, end: 1100000 },
 ];
+const POC_WORDS = [
+  { text: "this", start: 0, end: 200000, line: 0 },
+  { text: "is", start: 200000, end: 400000, line: 0 },
+  { text: "the", start: 400000, end: 700000, line: 0 },
+  { text: "second", start: 700000, end: 1100000, line: 1 },
+  { text: "type", start: 1100000, end: 1300000, line: 1 },
+  { text: "of", start: 1300000, end: 1500000, line: 1 },
+  { text: "text", start: 1500000, end: 1866666, line: 2 },
+];
 const GUIDE_END = 2000000; // padded guide segment — always > WORDS' natural end
 const LAST_END = WORDS[WORDS.length - 1].end; // 1100000 — last card's own end (guideEnd padding must NOT extend past this)
 const WHITE = [1, 1, 1];
@@ -29,6 +38,12 @@ const MEASURED_FONT = {
   title: "Measured Font",
   resourceId: "font-rid",
   fontPath: "C:/fonts/measured.ttf",
+  source: "catalogue",
+};
+const RUBIK_FONT = {
+  title: "Rubik",
+  resourceId: "rubik-resource",
+  fontPath: join(process.cwd(), "test-fixtures", "fonts", "Rubik-Bold.ttf"),
   source: "catalogue",
 };
 const TEST_WIDTH_OF = (text) => text.length;
@@ -78,8 +93,11 @@ function assertTextFontConsistency(mat, expected) {
   strictEqual(mat.letter_spacing ?? 0, 0);
   if (expected.id !== undefined) {
     strictEqual(style.font.id, expected.id);
-    strictEqual(mat.font_id, expected.id);
   }
+  strictEqual(mat.font_id, expected.materialFontId ?? "");
+  strictEqual(mat.font_resource_id, expected.resourceId ?? "");
+  strictEqual(mat.fonts[0].resource_id, expected.resourceId ?? "");
+  ok(mat.fonts[0].id && mat.fonts[0].id !== (expected.resourceId ?? ""));
 }
 
 function makeFontLibrary(filePath) {
@@ -128,6 +146,50 @@ test("planCascadeLayout can split equal-length phrases differently and positions
   const positioned = planCascadeLayout([{ text: "i" }, { text: "W" }], 20, prefixWidth);
   strictEqual(positioned.wordX[0], (0.5 - positioned.lineWidthsPx[0] / 2) / 10);
   strictEqual(positioned.wordX[1], (1 + 2 + 5 - positioned.lineWidthsPx[0] / 2) / 10);
+});
+
+test("planCascadeLayout honors explicit line hints when a POC already chose the breaks", () => {
+  const cards = [
+    { text: "this", line: 0 },
+    { text: "is", line: 0 },
+    { text: "the", line: 0 },
+    { text: "second", line: 1 },
+    { text: "type", line: 1 },
+    { text: "of", line: 1 },
+    { text: "text", line: 2 },
+  ];
+  const layout = planCascadeLayout(cards, 1000, (text) => text.length);
+  deepStrictEqual(layout.lineTexts, ["this is the", "second type of", "text"]);
+  deepStrictEqual(layout.lineOf, [0, 0, 0, 1, 1, 1, 2]);
+});
+
+test("cascadeWords applies the selected font calibration before wrapping", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const { draft } = loadDraft(filePath);
+  buildGuide(draft, filePath);
+  draft.canvas_config.width = 500;
+
+  const res = cascadeWords(draft, filePath, {
+    cards: WORDS,
+    guideTrackName: "sentence",
+    font: RUBIK_FONT,
+    allowCandidateCalibration: true,
+    fontCalibrationProfiles: [
+      {
+        key: "resource:rubik-resource",
+        scale: 5.200473,
+        status: "candidate",
+      },
+    ],
+  });
+
+  strictEqual(res.lineCount, 2);
+  deepStrictEqual(
+    draft.tracks
+      .filter((track) => track.name.startsWith("line-"))
+      .map((track) => JSON.parse(draft.materials.texts.find((material) => material.id === track.segments[0].material_id).content).text),
+    ["this is the", "second"],
+  );
 });
 
 test("cascadeWords: measurement failure leaves draft unchanged in memory", (t) => {
@@ -220,6 +282,60 @@ test("cascadeWords: word x-offset sign matches position in line (before/after ce
   strictEqual(typeof xOf("word-001"), "number");
 });
 
+test("cascadeWords --alpha-lines: reveals one word in a full transparent line without x-offset", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const { draft } = loadDraft(filePath);
+  buildGuide(draft, filePath);
+
+  const res = cascadeWords(
+    draft,
+    filePath,
+    withFont({ cards: WORDS, guideTrackName: "sentence", alphaLines: true }),
+  );
+  strictEqual(res.lineCount, 1);
+  strictEqual(res.wordCount, WORDS.length);
+
+  const lineText = "this is the second";
+  const alphaOf = (style) => style.fill.alpha ?? style.fill.content?.solid?.alpha;
+  WORDS.forEach((card, index) => {
+    const track = draft.tracks.find((candidate) => candidate.name === `word-${String(index).padStart(3, "0")}`);
+    const segment = track.segments[0];
+    const material = draft.materials.texts.find((candidate) => candidate.id === segment.material_id);
+    const content = JSON.parse(material.content);
+    strictEqual(content.text, lineText);
+    strictEqual(material.is_rich_text, true);
+    strictEqual(material.base_content, lineText);
+    strictEqual(material.recognize_text, lineText);
+    strictEqual(material.text_size, 30);
+    strictEqual(segment.clip.transform.x, 0);
+    strictEqual(content.styles[0].font.path, MEASURED_FONT.fontPath);
+    strictEqual(content.styles[0].font.id, MEASURED_FONT.resourceId);
+    strictEqual(content.styles[0].size, 15);
+
+    const start = WORDS.slice(0, index).reduce((offset, previous) => offset + previous.text.length + 1, 0);
+    const end = start + card.text.length;
+    const active = styles(material.content).find((style) => style.range[0] === start && style.range[1] === end);
+    strictEqual(alphaOf(active), 1);
+    for (const style of styles(material.content)) {
+      if (style.range[0] !== start || style.range[1] !== end) strictEqual(alphaOf(style), 0);
+    }
+  });
+});
+
+test("cascadeWords --alpha-lines: explicit line hints reproduce the three POC lines", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const { draft } = loadDraft(filePath);
+  buildGuide(draft, filePath);
+
+  const res = cascadeWords(draft, filePath, withFont({ cards: POC_WORDS, guideTrackName: "sentence", alphaLines: true }));
+  strictEqual(res.lineCount, 3);
+  strictEqual(res.wordCount, POC_WORDS.length);
+  deepStrictEqual(
+    draft.tracks.filter((track) => track.name.startsWith("line-")).map((track) => JSON.parse(draft.materials.texts.find((material) => material.id === track.segments[0].material_id).content).text),
+    ["this is the", "second type of", "text"],
+  );
+});
+
 test("cascadeWords: base track pushed before its line's word tracks (z-order)", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
   const { draft } = loadDraft(filePath);
@@ -293,6 +409,25 @@ test("cascadeWords: guide track is hidden via attribute (not segment.visible), s
     "all other fields unchanged",
   );
   ok(guideTrackAfter.attribute & 2, "guide track's hidden bit set — this is what CapCut's eye icon actually reads");
+});
+
+test("cascadeWords: explicit font also synchronizes the hidden guide material", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const { draft } = loadDraft(filePath);
+  const guide = buildGuide(draft, filePath);
+  const guideMat = draft.materials.texts.find((m) => m.id === guide.segments[0].material_id);
+
+  cascadeWords(draft, filePath, withFont({ cards: WORDS, guideTrackName: "sentence" }));
+
+  const style = styles(guideMat.content)[0];
+  strictEqual(style.font.path, MEASURED_FONT.fontPath);
+  strictEqual(style.font.id, MEASURED_FONT.resourceId);
+  strictEqual(guideMat.font_path, MEASURED_FONT.fontPath);
+  strictEqual(guideMat.font_title, MEASURED_FONT.title);
+  strictEqual(guideMat.font_resource_id, MEASURED_FONT.resourceId);
+  strictEqual(guideMat.font_id, "");
+  strictEqual(guideMat.fonts[0].resource_id, MEASURED_FONT.resourceId);
+  ok(guideMat.fonts[0].id && guideMat.fonts[0].id !== MEASURED_FONT.resourceId);
 });
 
 test("cascadeWords: guide track with multiple segments — each call anchors to and hides its OWN (first unconsumed) one", (t) => {
@@ -423,7 +558,12 @@ test("cascadeWords --font without --clone-style: generated materials bind the me
 
   const res = cascadeWords(draft, filePath, withFont({ cards: WORDS, guideTrackName: "sentence", fontSize: 24 }));
   for (const id of res.trackIds) {
-    assertTextFontConsistency(materialForTrack(draft, id), { path: MEASURED_FONT.fontPath, id: "font-rid", size: 24 });
+    assertTextFontConsistency(materialForTrack(draft, id), {
+      path: MEASURED_FONT.fontPath,
+      id: "font-rid",
+      resourceId: "font-rid",
+      size: 24,
+    });
   }
 });
 
@@ -435,7 +575,13 @@ test("cascadeWords --clone-style: cloned materials keep font path/id and size mi
 
   const res = cascadeWords(draft, filePath, { cards: WORDS, guideTrackName: "sentence", cloneStyle: true, widthOf: TEST_WIDTH_OF });
   for (const id of res.trackIds) {
-    assertTextFontConsistency(materialForTrack(draft, id), { path: fontPath, id: "fake", size: 22 });
+    assertTextFontConsistency(materialForTrack(draft, id), {
+      path: fontPath,
+      id: "fake",
+      resourceId: "fake-rid",
+      materialFontId: "fake",
+      size: 22,
+    });
   }
 });
 
@@ -447,7 +593,12 @@ test("cascadeWords --font + --clone-style: explicit font replaces cloned font wh
 
   const res = cascadeWords(draft, filePath, withFont({ cards: WORDS, guideTrackName: "sentence", cloneStyle: true }));
   for (const id of res.trackIds) {
-    assertTextFontConsistency(materialForTrack(draft, id), { path: MEASURED_FONT.fontPath, id: "font-rid", size: 22 });
+    assertTextFontConsistency(materialForTrack(draft, id), {
+      path: MEASURED_FONT.fontPath,
+      id: "font-rid",
+      resourceId: "font-rid",
+      size: 22,
+    });
   }
 });
 
@@ -505,7 +656,26 @@ test("cascade-words (CLI happy): reads JSON, creates base+word tracks, returns c
   const jsonPath = join(dirname(filePath), "words.json");
   writeFileSync(jsonPath, JSON.stringify(WORDS), "utf-8");
   const { root } = makeFontLibrary(filePath);
-  const r = runCli(["cascade-words", filePath, jsonPath, "--guide-track", "sentence", "--font", "Measured", "--drafts", root]);
+  const calibrationPath = join(dirname(filePath), "font-calibration.json");
+  writeFileSync(
+    calibrationPath,
+    JSON.stringify([{ key: "resource:font-rid", scale: 1, status: "candidate" }]),
+    "utf-8",
+  );
+  const r = runCli([
+    "cascade-words",
+    filePath,
+    jsonPath,
+    "--guide-track",
+    "sentence",
+    "--font",
+    "Measured",
+    "--drafts",
+    root,
+    "--font-calibration",
+    calibrationPath,
+    "--allow-candidate-calibration",
+  ]);
   strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
   strictEqual(r.json.ok, true);
   strictEqual(r.json.word_count, 4);
@@ -535,4 +705,10 @@ test("cascade-words (CLI): removed --max-chars is rejected explicitly", () => {
   const r = runCli(["cascade-words", "missing-project", "missing-cards.json", "--max-chars", "12"]);
   strictEqual(r.status, 1);
   match(r.errorJson.error, /--max-chars was removed.*font metrics/);
+});
+
+test("cascade-words (CLI): --font-calibration requires a file path", () => {
+  const r = runCli(["cascade-words", "missing-project", "missing-cards.json", "--font-calibration"]);
+  strictEqual(r.status, 1);
+  match(r.errorJson.error, /--font-calibration requires a value/);
 });

@@ -82,6 +82,8 @@ test("cascade-words: help, capability card and generated UI share the measured-f
   const cardText = `${card.summary} ${card.signature} ${card.flags.map((f) => `${f.flag} ${f.desc}`).join(" ")}`;
   ok(cardText.includes("--font <name|resource_id>"), "la carte doit documenter --font");
   ok(cardText.includes("--clone-style"), "la carte doit documenter le repli clone-style");
+  ok(cardText.includes("--font-calibration <file>"), "la carte doit documenter les profils de calibration");
+  ok(cardText.includes("--allow-candidate-calibration"), "la carte doit documenter l'opt-in expérimental");
   ok(/largeurs OpenType mesurées|largeur.*mesur/i.test(cardText), "la carte doit documenter la mesure de largeur");
   ok(!cardText.includes("--max-chars"), "la carte ne doit plus documenter --max-chars");
   strictEqual(card.readOnly, false);
@@ -90,6 +92,8 @@ test("cascade-words: help, capability card and generated UI share the measured-f
   const help = runCli(["--help"]);
   strictEqual(help.status, 0);
   ok(help.stdout.includes("--font <name|resource_id>"), "--help doit documenter --font");
+  ok(help.stdout.includes("--font-calibration <file>"), "--help doit documenter les profils de calibration");
+  ok(help.stdout.includes("--allow-candidate-calibration"), "--help doit documenter l'opt-in expérimental");
   ok(/measured\s+font widths/.test(help.stdout), "--help doit documenter les largeurs mesurées");
   ok(!help.stdout.includes("--max-chars"), "--help ne doit plus contenir --max-chars");
 

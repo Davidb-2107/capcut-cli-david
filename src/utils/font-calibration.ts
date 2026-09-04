@@ -12,6 +12,33 @@ export interface FontCalibrationProfile {
   status: FontCalibrationStatus;
 }
 
+function record(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+}
+
+/** Parse the persisted profile table without allowing malformed entries through. */
+export function parseFontCalibrationProfiles(value: unknown): FontCalibrationProfile[] {
+  if (!Array.isArray(value)) throw new Error("Font calibration file must contain a JSON array.");
+
+  return value.map((entry, index) => {
+    const profile = record(entry);
+    if (!profile || typeof profile.key !== "string" || profile.key.trim() === "") {
+      throw new Error(`Font calibration profile at index ${index} must have a non-empty string key.`);
+    }
+    if (typeof profile.scale !== "number" || !Number.isFinite(profile.scale) || profile.scale <= 0) {
+      throw new Error(`Font calibration profile at index ${index} must have a positive finite numeric scale.`);
+    }
+    if (profile.status !== "candidate" && profile.status !== "validated") {
+      throw new Error(`Font calibration profile at index ${index} must have status candidate or validated.`);
+    }
+    return {
+      key: profile.key.trim(),
+      scale: profile.scale,
+      status: profile.status,
+    };
+  });
+}
+
 function normalizeFontPath(fontPath: string): string {
   return fontPath.trim().replaceAll("\\", "/").toLowerCase();
 }
@@ -38,9 +65,10 @@ function describeIdentity(identity: FontCalibrationIdentity): string {
     : `font "${identity.title}" (path=${identity.fontPath})`;
 }
 
-export function resolveValidatedFontCalibration(
+export function resolveFontCalibration(
   identity: FontCalibrationIdentity,
   profiles: readonly FontCalibrationProfile[],
+  options: { allowCandidate?: boolean } = {},
 ): FontCalibrationProfile {
   const profile = calibrationKeys(identity)
     .map((key) => profiles.find((candidate) => candidate.key === key))
@@ -50,7 +78,7 @@ export function resolveValidatedFontCalibration(
     throw new Error(`No validated CapCut calibration profile for ${describeIdentity(identity)}.`);
   }
 
-  if (profile.status !== "validated") {
+  if (profile.status !== "validated" && !options.allowCandidate) {
     throw new Error(`Calibration profile for ${describeIdentity(identity)} is a candidate and is not validated.`);
   }
 
@@ -59,4 +87,11 @@ export function resolveValidatedFontCalibration(
   }
 
   return profile;
+}
+
+export function resolveValidatedFontCalibration(
+  identity: FontCalibrationIdentity,
+  profiles: readonly FontCalibrationProfile[],
+): FontCalibrationProfile {
+  return resolveFontCalibration(identity, profiles);
 }

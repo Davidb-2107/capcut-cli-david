@@ -3,6 +3,8 @@ import test from "node:test";
 
 import {
   calibrationKey,
+  parseFontCalibrationProfiles,
+  resolveFontCalibration,
   resolveValidatedFontCalibration,
 } from "../dist/utils/font-calibration.js";
 
@@ -78,5 +80,29 @@ test("fails explicitly when no profile is available", () => {
   assert.throws(
     () => resolveValidatedFontCalibration(rubik, []),
     /No validated CapCut calibration profile for font "Rubik"/,
+  );
+});
+
+test("allows a candidate profile only with explicit opt-in", () => {
+  const profile = resolveFontCalibration(
+    rubik,
+    [{ key: "resource:rubik-resource", scale: 5.22, status: "candidate" }],
+    { allowCandidate: true },
+  );
+
+  assert.equal(profile.scale, 5.22);
+});
+
+test("parses a persisted profile table and trims its keys", () => {
+  assert.deepEqual(
+    parseFontCalibrationProfiles([{ key: " resource:rubik-resource ", scale: 5.2, status: "validated" }]),
+    [{ key: "resource:rubik-resource", scale: 5.2, status: "validated" }],
+  );
+});
+
+test("rejects malformed persisted profile entries", () => {
+  assert.throws(
+    () => parseFontCalibrationProfiles([{ key: "resource:rubik-resource", scale: 0, status: "validated" }]),
+    /positive finite numeric scale/,
   );
 });

@@ -300,7 +300,7 @@ test("add-text: addText writes text material w/ #FF0000 color and parseable cont
   ok(reloaded.materials.texts.some((m) => m.id === result.materialId));
 });
 
-test("buildTextMaterial: applies the same font identity in content and material mirrors", () => {
+test("buildTextMaterial: emits CapCut font identity in content and material mirrors", () => {
   const font = {
     path: "C:/fonts/Measured.ttf",
     id: "font-id",
@@ -314,11 +314,13 @@ test("buildTextMaterial: applies the same font identity in content and material 
   strictEqual(style.font.path, font.path);
   strictEqual(style.font.id, font.id);
   strictEqual(mat.font_path, font.path);
-  strictEqual(mat.font_id, font.id);
+  strictEqual(mat.font_id, "");
   strictEqual(mat.font_title, font.title);
   strictEqual(mat.font_resource_id, font.resourceId);
   strictEqual(mat.font_source_platform, 1);
   strictEqual(mat.fonts[0].path, font.path);
+  strictEqual(mat.fonts[0].resource_id, font.resourceId);
+  ok(mat.fonts[0].id && mat.fonts[0].id !== font.resourceId);
 });
 
 test("applyTextFontIdentity: updates every rich-text span plus external mirrors", () => {
@@ -332,8 +334,27 @@ test("applyTextFontIdentity: updates every rich-text span plus external mirrors"
     strictEqual(style.font.id, "span-id");
   }
   strictEqual(mat.font_path, "C:/fonts/Span.ttf");
-  strictEqual(mat.font_id, "span-id");
+  strictEqual(mat.font_id, "");
   strictEqual(mat.font_title, "Span");
+  strictEqual(mat.font_resource_id, "");
+  ok(mat.fonts[0].id && mat.fonts[0].id !== "span-id");
+});
+
+test("applyTextFontIdentity: keeps CapCut's internal font registration id separate from the resource id", () => {
+  const mat = {
+    content: JSON.stringify({ text: "Rubik", styles: [{ range: [0, 5] }] }),
+  };
+  applyTextFontIdentity(mat, {
+    path: "C:/cache/effect/resource-id/Rubik-Bold.ttf",
+    id: "resource-id",
+    title: "Rubik-Bold",
+    resourceId: "resource-id",
+    sourcePlatform: 1,
+  });
+  strictEqual(mat.font_id, "", "CapCut's material-level font_id is not the resource id");
+  strictEqual(mat.font_resource_id, "resource-id");
+  strictEqual(mat.fonts[0].resource_id, "resource-id");
+  ok(mat.fonts[0].id && mat.fonts[0].id !== "resource-id", "fonts[].id must be an internal id");
 });
 
 test("add-text: addText with custom trackName creates a new text track", (t) => {
