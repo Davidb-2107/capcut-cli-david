@@ -291,7 +291,11 @@ class NodeMcpStdioTransport implements CalibrationTransport {
     this.initialized = (async () => {
       const response = await this.request(
         "initialize",
-        { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "voice-calibration", version: "1.0.0" } },
+        {
+          protocolVersion: "2025-11-25",
+          capabilities: {},
+          clientInfo: { name: "voice-calibration", version: "1.0.0" },
+        },
         timeoutMs,
       );
       if (response.error)

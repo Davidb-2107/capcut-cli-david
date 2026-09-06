@@ -257,7 +257,9 @@ function ensureCloneIsMeasurable(
   const font = styleBlock.font;
   const fontPath = font && typeof font === "object" ? str((font as Record<string, unknown>).path) : undefined;
   if (!fontPath || !existsSync(fontPath)) {
-    die(`cascade-words: --clone-style requires a readable content.styles[0].font.path on guide track "${guideTrackName}"`);
+    die(
+      `cascade-words: --clone-style requires a readable content.styles[0].font.path on guide track "${guideTrackName}"`,
+    );
   }
 }
 
@@ -290,7 +292,8 @@ function fontIdentityFromClone(
   const font = styleBlock.font as Record<string, unknown>;
   const fontsEntry = firstFontEntry(material);
   const path = str(font.path) as string;
-  const id = str(font.id) ?? str(material.font_id) ?? str(material.font_resource_id) ?? str(fontsEntry?.resource_id) ?? "";
+  const id =
+    str(font.id) ?? str(material.font_id) ?? str(material.font_resource_id) ?? str(fontsEntry?.resource_id) ?? "";
   const resourceId = str(material.font_resource_id) ?? str(fontsEntry?.resource_id) ?? id;
   return {
     path,
@@ -333,7 +336,9 @@ function resolveEffectiveTextStyle(
       letterSpacing,
       clonedStyle: cloneTpl?.styleBlock,
       font,
-      spanStyle: cloneTpl ? { ...cloneTpl.styleBlock, size: fontSize, font: { path: font.path, id: font.id } } : undefined,
+      spanStyle: cloneTpl
+        ? { ...cloneTpl.styleBlock, size: fontSize, font: { path: font.path, id: font.id } }
+        : undefined,
     };
   }
 
@@ -539,7 +544,13 @@ export function cascadeWords(
         const mat = JSON.parse(JSON.stringify(cloneTpl.material)) as Record<string, unknown>;
         mat.id = matId;
         mat.content = opts.alphaLines
-          ? buildAlphaRevealContent(lineTexts[line], layout.charRanges[i], fontSize, highlightRgb, effectiveStyle.spanStyle)
+          ? buildAlphaRevealContent(
+              lineTexts[line],
+              layout.charRanges[i],
+              fontSize,
+              highlightRgb,
+              effectiveStyle.spanStyle,
+            )
           : buildRichTextContent(card.text, fontSize, highlightRgb, [], effectiveStyle.spanStyle);
         mat.base_content = opts.alphaLines ? lineTexts[line] : card.text;
         if (opts.alphaLines) mat.recognize_text = lineTexts[line];

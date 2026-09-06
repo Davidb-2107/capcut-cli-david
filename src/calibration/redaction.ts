@@ -13,9 +13,7 @@ function redactString(value: string, secrets: readonly string[]): string {
   for (const secret of secrets) {
     if (secret) result = result.split(secret).join("[REDACTED]");
   }
-  return result
-    .replace(QUOTED_ASSIGNMENT, "$1$2[REDACTED]$2")
-    .replace(UNQUOTED_ASSIGNMENT, "$1[REDACTED]");
+  return result.replace(QUOTED_ASSIGNMENT, "$1$2[REDACTED]$2").replace(UNQUOTED_ASSIGNMENT, "$1[REDACTED]");
 }
 
 export function redactSensitive(value: unknown, secrets: readonly string[] = []): unknown {

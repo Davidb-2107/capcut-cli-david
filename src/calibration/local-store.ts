@@ -196,40 +196,48 @@ function makeCorpusRepository(dataDir: string, lockTimeoutMs: number): CorpusRep
 
     saveDraft(workspaceId, draft, expectedRevision) {
       return queueFor(corpusQueues, `${resolve(dataDir)}:${workspaceId}`, () =>
-        withFileLock(join(workspaceRoot(dataDir, workspaceId), "corpus", "draft.json"), async () => {
-          const current = await loadDraft(workspaceId);
-          if (current.revision !== expectedRevision) throw new ConflictError();
-          if (draft.workspaceId !== workspaceId) throw new Error("draft workspace mismatch");
-          const saved: CorpusDraft = {
-            workspaceId,
-            revision: current.revision + 1,
-            items: draft.items.map((item) => ({ ...item })),
-          };
-          await writeJson(draftPath(workspaceId), saved);
-          return cloneDraft(saved);
-        }, lockTimeoutMs),
+        withFileLock(
+          join(workspaceRoot(dataDir, workspaceId), "corpus", "draft.json"),
+          async () => {
+            const current = await loadDraft(workspaceId);
+            if (current.revision !== expectedRevision) throw new ConflictError();
+            if (draft.workspaceId !== workspaceId) throw new Error("draft workspace mismatch");
+            const saved: CorpusDraft = {
+              workspaceId,
+              revision: current.revision + 1,
+              items: draft.items.map((item) => ({ ...item })),
+            };
+            await writeJson(draftPath(workspaceId), saved);
+            return cloneDraft(saved);
+          },
+          lockTimeoutMs,
+        ),
       );
     },
 
     publishDraft(workspaceId, expectedRevision) {
       return queueFor(corpusQueues, `${resolve(dataDir)}:${workspaceId}`, () =>
-        withFileLock(join(workspaceRoot(dataDir, workspaceId), "corpus", "draft.json"), async () => {
-          const draft = await loadDraft(workspaceId);
-          if (draft.revision !== expectedRevision) throw new ConflictError();
-          const publishedAt = new Date().toISOString();
-          const version: CorpusVersion = {
-            id: randomUUID(),
-            workspaceId,
-            revision: draft.revision,
-            items: draft.items.map((item) => ({ ...item })),
-            contentDigest: itemsDigest(draft.items),
-            status: "active",
-            publishedAt,
-          };
-          await writeJson(join(versionsRoot(workspaceId), `${version.id}.json`), version);
-          await writeJson(activePath(workspaceId), { versionId: version.id });
-          return cloneVersion(version);
-        }, lockTimeoutMs),
+        withFileLock(
+          join(workspaceRoot(dataDir, workspaceId), "corpus", "draft.json"),
+          async () => {
+            const draft = await loadDraft(workspaceId);
+            if (draft.revision !== expectedRevision) throw new ConflictError();
+            const publishedAt = new Date().toISOString();
+            const version: CorpusVersion = {
+              id: randomUUID(),
+              workspaceId,
+              revision: draft.revision,
+              items: draft.items.map((item) => ({ ...item })),
+              contentDigest: itemsDigest(draft.items),
+              status: "active",
+              publishedAt,
+            };
+            await writeJson(join(versionsRoot(workspaceId), `${version.id}.json`), version);
+            await writeJson(activePath(workspaceId), { versionId: version.id });
+            return cloneVersion(version);
+          },
+          lockTimeoutMs,
+        ),
       );
     },
 
@@ -264,10 +272,14 @@ function makeRunRepository(dataDir: string, lockTimeoutMs: number): CalibrationR
   return {
     async create(run) {
       const path = pathFor(run.id);
-      await withFileLock(path, async () => {
-        if (await exists(path)) throw new ConflictError("run already exists");
-        await writeJson(path, run);
-      }, lockTimeoutMs);
+      await withFileLock(
+        path,
+        async () => {
+          if (await exists(path)) throw new ConflictError("run already exists");
+          await writeJson(path, run);
+        },
+        lockTimeoutMs,
+      );
     },
     async get(id) {
       const path = pathFor(id);
@@ -300,19 +312,23 @@ function makeRunRepository(dataDir: string, lockTimeoutMs: number): CalibrationR
     },
     async consumeApproval(runId, consumedAt) {
       const path = pathFor(runId);
-      return withFileLock(path, async () => {
-        if (!(await exists(path))) throw new ConflictError("calibration run not found");
-        const run = await readJson<CalibrationRun>(path);
-        if (run.status !== "approved" || !run.approval || run.approval.consumedAt) {
-          throw new ConflictError("approval already consumed or run is no longer approved");
-        }
-        if (Date.parse(consumedAt) >= Date.parse(run.approval.expiresAt)) throw new ConflictError("approval expired");
-        const running = transitionRun(run, { type: "execute" });
-        if (running.approval) running.approval.consumedAt = consumedAt;
-        running.updatedAt = consumedAt;
-        await writeJson(path, running);
-        return running;
-      }, lockTimeoutMs);
+      return withFileLock(
+        path,
+        async () => {
+          if (!(await exists(path))) throw new ConflictError("calibration run not found");
+          const run = await readJson<CalibrationRun>(path);
+          if (run.status !== "approved" || !run.approval || run.approval.consumedAt) {
+            throw new ConflictError("approval already consumed or run is no longer approved");
+          }
+          if (Date.parse(consumedAt) >= Date.parse(run.approval.expiresAt)) throw new ConflictError("approval expired");
+          const running = transitionRun(run, { type: "execute" });
+          if (running.approval) running.approval.consumedAt = consumedAt;
+          running.updatedAt = consumedAt;
+          await writeJson(path, running);
+          return running;
+        },
+        lockTimeoutMs,
+      );
     },
   };
 }

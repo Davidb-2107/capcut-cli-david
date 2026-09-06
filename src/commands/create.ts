@@ -106,12 +106,14 @@ export function applyTextFontIdentity(material: Record<string, unknown>, identit
   material.font_resource_id = resourceId;
   material.font_source_platform = identity.sourcePlatform ?? 0;
   const fontsEntry = identity.fontsEntry ? { ...identity.fontsEntry } : {};
-  material.fonts = [{
-    ...fontsEntry,
-    path: identity.path,
-    id: identity.fontEntryId ?? uuid(),
-    resource_id: resourceId,
-  }];
+  material.fonts = [
+    {
+      ...fontsEntry,
+      path: identity.path,
+      id: identity.fontEntryId ?? uuid(),
+      resource_id: resourceId,
+    },
+  ];
 }
 
 function buildTextContent(text: string, fontSize: number, color: [number, number, number]): string {

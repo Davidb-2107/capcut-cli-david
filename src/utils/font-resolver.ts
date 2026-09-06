@@ -135,7 +135,8 @@ export function planFontCandidates(drafts: Array<{ name: string; draft: unknown 
   const list: FontCandidate[] = [];
   for (const candidate of matches) {
     const existing = list.find(
-      (current) => current.title.toLowerCase() === candidate.title.toLowerCase() && sameFontIdentity(current, candidate),
+      (current) =>
+        current.title.toLowerCase() === candidate.title.toLowerCase() && sameFontIdentity(current, candidate),
     );
     if (!existing) {
       list.push(candidate);
@@ -179,7 +180,9 @@ function formatReference(reference: string): string {
 }
 
 function ambiguous(reference: string, candidates: Array<{ title: string; resourceId: string | null }>): never {
-  const detail = candidates.map((candidate) => `${candidate.title} (${candidate.resourceId ?? "no resource_id"})`).join(", ");
+  const detail = candidates
+    .map((candidate) => `${candidate.title} (${candidate.resourceId ?? "no resource_id"})`)
+    .join(", ");
   throw new Error(`Font reference ${formatReference(reference)} is ambiguous: ${detail}.`);
 }
 
@@ -189,15 +192,15 @@ function resolveCatalogueFont(entries: CatalogueEntry[], reference: string): Res
 
   const usable = matches.flatMap((entry) => {
     const path = entry.font_paths.find(isReadableFile);
-    return path
-      ? [{ entry, path }]
-      : [];
+    return path ? [{ entry, path }] : [];
   });
   if (usable.length === 0) {
     const details = matches
       .map((entry) => `${entry.names.join(" / ") || entry.id}: ${entry.font_paths.join(", ") || "no font_paths"}`)
       .join("; ");
-    throw new Error(`Font reference ${formatReference(reference)} matched the catalogue, but no font file is readable: ${details}.`);
+    throw new Error(
+      `Font reference ${formatReference(reference)} matched the catalogue, but no font file is readable: ${details}.`,
+    );
   }
   if (usable.length > 1) {
     ambiguous(

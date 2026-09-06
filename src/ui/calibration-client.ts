@@ -71,13 +71,14 @@ function renderResult(): void {
   const heading = document.createElement("p");
   heading.className = status === "succeeded" ? "result-status" : "danger";
   const profilePublished = profilePublishedForRun(run);
-  heading.textContent = status === "succeeded"
-    ? profilePublished
-      ? "Voix prête à être utilisée dans les projets."
-      : "Résultat validé."
-    : status === "failed"
-      ? "Le calibrage réel a échoué."
-      : "Le résultat du calibrage doit être vérifié.";
+  heading.textContent =
+    status === "succeeded"
+      ? profilePublished
+        ? "Voix prête à être utilisée dans les projets."
+        : "Résultat validé."
+      : status === "failed"
+        ? "Le calibrage réel a échoué."
+        : "Le résultat du calibrage doit être vérifié.";
   target.append(heading);
 
   if (status === "succeeded") {
@@ -89,13 +90,12 @@ function renderResult(): void {
     target.append(nextStep);
   }
 
-  const report = run.report && typeof run.report === "object" ? run.report as JsonRecord : null;
-  const metrics = report?.metrics && typeof report.metrics === "object"
-    ? report.metrics as JsonRecord
-    : {};
-  const precision = metrics.precision_stats && typeof metrics.precision_stats === "object"
-    ? metrics.precision_stats as JsonRecord
-    : {};
+  const report = run.report && typeof run.report === "object" ? (run.report as JsonRecord) : null;
+  const metrics = report?.metrics && typeof report.metrics === "object" ? (report.metrics as JsonRecord) : {};
+  const precision =
+    metrics.precision_stats && typeof metrics.precision_stats === "object"
+      ? (metrics.precision_stats as JsonRecord)
+      : {};
   const identity = document.createElement("dl");
   const voiceRef = voiceRefFromRun(run);
   appendResultDetail(identity, "ID de voix", voiceRef);
@@ -149,7 +149,7 @@ async function loadVoiceName(): Promise<void> {
   renderResult();
   try {
     const result = await api(`/voices/${encodeURIComponent(voiceRef)}`);
-    const body = result.body && typeof result.body === "object" ? result.body as JsonRecord : {};
+    const body = result.body && typeof result.body === "object" ? (result.body as JsonRecord) : {};
     const name = body.name;
     state.voiceName = typeof name === "string" && name.trim() ? name.trim() : null;
     state.voiceNameStatus = state.voiceName ? "loaded" : "unavailable";
@@ -237,7 +237,7 @@ function renderRun(): void {
     execution_unknown: "L’état du calibrage réel doit être vérifié.",
   }[status];
   element<HTMLElement>("dry-run-state").textContent = run
-    ? stateMessage ?? `État : ${status}`
+    ? (stateMessage ?? `État : ${status}`)
     : "Aucune simulation préparée. Retournez dans « Préparer » pour commencer.";
   const summary = element<HTMLElement>("dry-run-summary");
   if (!run) {
@@ -252,13 +252,14 @@ function renderRun(): void {
       raw.billable_characters === undefined ? "" : `${String(raw.billable_characters)} caractères facturables`,
       raw.estimated_cost_usd === undefined ? "" : `coût estimé : ${String(raw.estimated_cost_usd)} USD`,
     ].filter(Boolean);
-    const nextStep = status === "approved"
-      ? "Le calibrage réel n’est pas encore lancé."
-      : status === "succeeded"
-        ? "Le calibrage réel est terminé. Consultez l’onglet Résultat."
-        : status === "failed"
-          ? "Le calibrage réel a échoué. Consultez l’onglet Résultat."
-          : "Vérifiez le récapitulatif puis approuvez la simulation.";
+    const nextStep =
+      status === "approved"
+        ? "Le calibrage réel n’est pas encore lancé."
+        : status === "succeeded"
+          ? "Le calibrage réel est terminé. Consultez l’onglet Résultat."
+          : status === "failed"
+            ? "Le calibrage réel a échoué. Consultez l’onglet Résultat."
+            : "Vérifiez le récapitulatif puis approuvez la simulation.";
     summary.textContent = `Simulation préparée${details.length ? ` · ${details.join(" · ")}` : ""}. ${nextStep}`;
   }
   element<HTMLButtonElement>("approve").disabled = !run || run.status !== "dry_run_ready";
@@ -303,10 +304,10 @@ async function refresh(): Promise<void> {
   element<HTMLElement>("profiles-list").textContent = json(state.bootstrap.profiles ?? []);
   renderRun();
   if (!hadRun && state.run) {
-    activateView(["succeeded", "failed", "execution_unknown"].includes(String(state.run.status)) ? "result" : "dry-run");
-    showStatus(
-      state.run.status === "succeeded" ? "Dernier calibrage chargé." : "Dernière simulation chargée.",
+    activateView(
+      ["succeeded", "failed", "execution_unknown"].includes(String(state.run.status)) ? "result" : "dry-run",
     );
+    showStatus(state.run.status === "succeeded" ? "Dernier calibrage chargé." : "Dernière simulation chargée.");
   } else {
     showStatus("Prêt.");
   }

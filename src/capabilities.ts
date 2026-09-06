@@ -274,7 +274,8 @@ export const CAPABILITIES: Capability[] = [
         desc: "hérite du style linéaire lisible de la caption guide ; --font remplace seulement son identité de police",
       },
     ],
-    example: 'capcut-david cascade-words "<draft-dir>" cards.json --guide-track sentence --font Rubik --drafts "<drafts-dir>"',
+    example:
+      'capcut-david cascade-words "<draft-dir>" cards.json --guide-track sentence --font Rubik --drafts "<drafts-dir>"',
     readOnly: false,
     capcutClosed: true,
     since: "2.8.0",

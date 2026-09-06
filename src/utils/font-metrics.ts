@@ -72,9 +72,7 @@ export function measureTextWidthPx(
 ): number {
   const text = typeof second === "string" ? second : first;
   const style: FontMeasureStyle =
-    typeof second === "string"
-      ? { fontPath: first, capcutFontSize: capcutFontSize as number, letterSpacing }
-      : second;
+    typeof second === "string" ? { fontPath: first, capcutFontSize: capcutFontSize as number, letterSpacing } : second;
   if (typeof text !== "string") throw new Error("Text to measure must be a string.");
   validateStyle(style);
   if (text.length === 0) return 0;
