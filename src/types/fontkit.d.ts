@@ -6,7 +6,12 @@ declare module "fontkit" {
     yOffset: number;
   }
 
+  export interface Glyph {
+    advanceWidth: number;
+  }
+
   export interface GlyphRun {
+    glyphs: Glyph[];
     positions: GlyphPosition[];
   }
 

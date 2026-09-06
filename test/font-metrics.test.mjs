@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import { deepStrictEqual, ok, strictEqual, throws } from "node:assert";
 import { join } from "node:path";
+import { openSync } from "fontkit";
 
 import { clearFontMetricsCache, fontMetrics, measureTextWidthPx } from "../dist/utils/font-metrics.js";
 
@@ -25,6 +26,15 @@ test("same path can be measured repeatedly through the cache", () => {
   const first = fontMetrics.measure("AV", style);
   const second = fontMetrics.measure("AV", style);
   strictEqual(first, second);
+});
+
+test("ignores pair kerning while preserving shaped glyph substitutions", () => {
+  const font = openSync(fontPath);
+  const run = font.layout("AV");
+  const unkernedAdvance = run.glyphs.reduce((sum, glyph) => sum + glyph.advanceWidth, 0);
+  const expected = (unkernedAdvance / font.unitsPerEm) * style.capcutFontSize;
+
+  strictEqual(measureTextWidthPx("AV", style), expected);
 });
 
 test("layout shaping is used for ligatures rather than independent word sums", () => {
