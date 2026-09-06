@@ -286,6 +286,13 @@ Les tests doivent couvrir :
 - parcours API complet avec un faux `CalibrationRunner` ;
 - bridge Node/Python testé avec un faux processus ou transport, incluant
   framing, timeout, stderr et codes de sortie.
+- **SaaS hardening — obligatoire avant mise en production :** avec un provider
+  et une `Approval/Execution Gate` espionnés, le test exerce chacun des points
+  d’entrée UI, API, CLI, worker et automation. Sans approbation valide, chacun
+  est refusé et le provider n’est jamais appelé ; avec un snapshot approuvé,
+  l’événement de gate précède l’unique appel provider. Le test vérifie aussi
+  qu’aucun adaptateur ElevenLabs direct n’est exposé aux couches applicatives
+  et que la gate est la seule voie autorisée.
 
 Le parcours MVP est accepté lorsque l’on peut créer une version du corpus,
 préparer un run, voir un dry-run complet, l’approuver, l’exécuter une seule
@@ -304,6 +311,21 @@ Les entités portent déjà un `workspace_id`. Le contexte d’exécution prévo
 en local mais renseignés en SaaS. Les événements de facturation seront liés au
 run et au résultat confirmé par le runner, jamais à un clic ou à un retry du
 navigateur.
+
+### SaaS hardening — obligatoire avant mise en production
+
+L’invariant de sécurité de la migration SaaS est le suivant : tout appel au
+provider susceptible d’entraîner un coût ElevenLabs doit obligatoirement
+traverser l’`Approval/Execution Gate`, quel que soit le point d’entrée (UI,
+API, CLI, worker ou automation). Aucun chemin direct vers l’adaptateur
+ElevenLabs ne doit être exposé aux couches applicatives. La gate est la seule
+voie autorisée entre ces couches et l’adaptateur provider ; un worker ou une
+automation ne peut exécuter que le snapshot approuvé par cette gate.
+
+Cette exigence constitue un hardening SaaS préalable à la mise en production.
+Elle ne change pas le parcours ni l’architecture validés du MVP local : elle
+fixe la frontière de sécurité à préserver lorsque les mêmes services sont
+exposés par de nouveaux points d’entrée.
 
 Ces champs et garde-fous sont conservés dès le local parce qu’ils stabilisent
 la migration, mais leur implémentation locale reste minimale : un

@@ -23,6 +23,7 @@
 - `corpus_key` désigne l’alias du bucket Python `voice_wpm.json` et ne doit jamais être confondu avec l’identifiant local `CorpusVersion.id`. Par défaut, il vaut `voiceRef` ; `corpusVersionId` reste une métadonnée locale de snapshot et d’empreinte.
 - `postproc` est transmis explicitement dans chaque requête de calibration.
 - Le dry-run est obligatoire ; l’exécution réelle exige une approbation explicite liée au snapshot approuvé.
+- **SaaS hardening — obligatoire avant mise en production :** tout appel provider susceptible d’entraîner un coût ElevenLabs doit obligatoirement traverser l’`Approval/Execution Gate`, quel que soit le point d’entrée (UI, API, CLI, worker ou automation). Aucun chemin direct vers l’adaptateur ElevenLabs ne doit être exposé aux couches applicatives ; la gate est la seule voie autorisée.
 - L’empreinte SHA-256 inclut le digest du contrat, le digest du cœur, le corpus, la voix, tous les paramètres et `postproc`.
 - Un timeout après émission d’une requête passe en `execution_unknown` et ne déclenche pas de retry automatique.
 - `run_id` et la clé d’idempotence sont conservés pour toute reprise autorisée ; un nouveau run est une action explicite.
@@ -913,6 +914,32 @@ be self-contained and may call only relative `/api/v1` URLs.
   git commit -m "docs: validate local ElevenLabs calibration MVP"
   ```
 
+## SaaS hardening — obligatoire avant mise en production
+
+Cette exigence s’applique à la migration SaaS et ne modifie pas le MVP local
+ni l’architecture validée. Les points d’entrée supplémentaires peuvent
+soumettre ou planifier une demande auprès du service d’application, mais aucun
+d’entre eux ne peut appeler directement l’adaptateur ElevenLabs. Un worker ou
+une automation n’exécute qu’un snapshot déjà approuvé par la gate.
+
+**Invariant :** tout appel provider susceptible d’entraîner un coût ElevenLabs
+doit obligatoirement traverser l’`Approval/Execution Gate`, quel que soit le
+point d’entrée (UI, API, CLI, worker ou automation). Aucun chemin direct vers
+l’adaptateur ElevenLabs ne doit être exposé aux couches applicatives. La gate
+est la seule voie autorisée entre ces couches et l’adaptateur provider.
+
+**Critère d’acceptation testable, préalable à la mise en production SaaS :**
+
+- Le test utilise un provider et une gate espionnés, puis exerce chacun des
+  chemins UI, API, CLI, worker et automation.
+- Pour chaque chemin, une demande sans approbation valide est refusée et le
+  compteur d’appels provider reste à zéro.
+- Pour chaque chemin, un snapshot approuvé produit au plus un appel provider,
+  et l’ordre observé est `Approval/Execution Gate` puis adaptateur ElevenLabs.
+- Le test vérifie par inspection des exports/du graphe de dépendances que les
+  couches applicatives n’exposent aucun accès direct à l’adaptateur ; la gate
+  est la seule voie autorisée.
+
 ## Plan Self-Review
 
 - **Spec coverage:** contract/bridge gate and canonical Python WPM ownership are
@@ -920,7 +947,9 @@ be self-contained and may call only relative `/api/v1` URLs.
   approval, fingerprint and idempotence are Tasks 2, 4 and 5; API and UI are
   Tasks 5–6; security and nonce bootstrap are Task 5; browser module isolation
   is Task 6; acceptance and skill coexistence are Task 7; SaaS-compatible ports
-  and workspace scope are Tasks 2–3.
+  and workspace scope are Tasks 2–3; the pre-production SaaS hardening
+  invariant and its five-entry-point acceptance test are specified explicitly
+  in the dedicated hardening section.
 - **Placeholder scan:** the plan contains no unresolved marker or invented
   provider field. The only source-dependent choice is intentionally confined to
   Task 1 and is recorded before any implementation task begins.

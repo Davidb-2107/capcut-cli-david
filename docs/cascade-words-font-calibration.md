@@ -559,3 +559,210 @@ positionner une taille CapCut. Le facteur `≈ 5,2` est maintenant confirmé à 
 fois par les glyphes isolés et par une phrase réelle, mais reste un facteur
 empirique de Rubik et ne doit pas encore être généralisé aux autres polices.
 Cette analyse n’a modifié aucun code de production.
+
+## POC full-text avec masquage alpha — Rubik, taille 20 — 2026-09-03
+
+Pour tester une autre stratégie sans modifier `cascade-words`, un prototype
+jetable a créé le draft :
+
+`C:/Users/dbele/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft/cascade-words-rubik-full-text-mask-poc-2026-09-03`
+
+Le draft contient six pistes texte sur un canvas `1080×1920`. Chaque piste
+porte la phrase complète (`this is the second` ou `fi office`) et conserve la
+même mise en page CapCut. Une seule plage de mots est opaque par piste ; les
+autres plages ont `fill.alpha = 0` et `fill.content.solid.alpha = 0`. Les mots
+visibles héritent ainsi de la position calculée pour la phrase complète, au
+lieu d’être recentrés ou positionnés indépendamment.
+
+L’export contrôlé est :
+
+`C:/Users/dbele/AppData/Local/CapCut/Videos/cascade-words-rubik-full-text-mask-poc-2026-0.mp4`
+
+`ffprobe` confirme une vidéo H.264 `1080×1920`, `30 fps`, de `3,500 s` de
+vidéo et `3,506 s` de conteneur. Les frames ont été extraites avec le binaire
+local `ffmpeg` à `4 fps` ; les boîtes ci-dessous sont les bounding boxes des
+pixels jaunes visibles sur fond noir.
+
+| Texte visible | Position exportée | Encre exportée | Fontkit à 20 (avances façonnées non kernées) | Encre / Fontkit |
+|---|---:|---:|---:|---:|
+| `this` | `x=74` | `204 px` | `39,52 px` | `5,164` |
+| `this is` | `x=74` | `317 px` | `60,92 px` | `5,205` |
+| `this is the` | `x=74` | `521 px` | `99,66 px` | `5,228` |
+| `this is the second` | `x=74` | `927 px` | `177,20 px` | `5,232` |
+| `fi` | `x=340` | `67 px` | `14,30 px` | `4,685` |
+| `fi office` | `x=340` | `399 px` | `76,78 px` | `5,199` |
+
+Les frames montrent que `this`, `this is`, `this is the`, puis la phrase
+complète s’étendent vers la droite sans chevauchement. `fi` conserve également
+la position correspondant au début de `fi office`, et la ligature reste
+rendue. Les phrases complètes sont centrées à environ `x=540` (`x=74` avec
+`927 px` de largeur et `x=340` avec `399 px` de largeur), sans offset mot-par-
+mot empirique.
+
+**Résultat du POC :** la stratégie « full text comme autorité de layout,
+plages non ciblées transparentes » résout le défaut de superposition observé
+dans la sonde précédente. Elle ne valide pas encore le wrapping sur une phrase
+qui franchit réellement `line_max_width`, ni la compatibilité avec contour,
+ombre et autres styles. Les rapports `encre / Fontkit` restent une observation
+de rasterisation et ne doivent pas devenir un facteur de production.
+
+**Prochaine validation :** refaire le même POC avec une phrase assez longue
+pour forcer une coupure de ligne, puis vérifier que tous les mots ciblés
+héritent de la même coupure et du même centrage. Cette passe doit rester
+isolée ; aucun code de production n’a été modifié.
+
+## Sonde de wrapping contraint — résultat négatif — 2026-09-03
+
+La validation suivante a utilisé le draft :
+
+`C:/Users/dbele/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft/cascade-words-rubik-full-text-wrap-poc-2026-09-03`
+
+La phrase longue était : `this is a deliberately long caption that should
+wrap cleanly`. Pour forcer le retour à la ligne, chaque matériau a reçu
+`line_max_width = 0.42` et `force_apply_line_max_width = true`, tout en
+conservant le texte complet et le masquage alpha par mot.
+
+L’export contrôlé est :
+
+`C:/Users/dbele/AppData/Local/CapCut/Videos/cascade-words-rubik-full-text-wrap-poc-2026-0.mp4`
+
+Le rendu confirme que le full-text masking reste actif, mais le résultat
+typographique n’est pas acceptable : CapCut centre les lignes et coupe les
+mots lorsque la largeur est insuffisante. Le dernier frame affiche notamment
+`deliber` / `ately` et `captio` / `n that`, au lieu de conserver les mots
+entiers. La contrainte automatique produit donc une dizaine de lignes très
+étroites, et non un wrapping naturel par mots.
+
+**Diagnostic :** ce n’est pas un défaut du masquage alpha. Tous les mots
+restent issus de la même phrase complète, mais CapCut applique sa propre
+politique de découpe de ligne à cette phrase. Avec une largeur trop petite,
+cette politique autorise la coupure intra-mot ; le prototype ne peut donc pas
+garantir le contrat `un mot = une unité de wrapping` en déléguant directement
+le wrapping à CapCut.
+
+**Décision :** ne pas porter `line_max_width = 0.42` ni cette configuration
+automatique en production. La prochaine sonde doit soit donner une largeur au
+moins supérieure au mot le plus long, soit fournir à CapCut des retours à la
+ligne explicites calculés par le wrapper Fontkit. Elle devra vérifier que les
+plages alpha ciblent correctement les caractères malgré les `\n`, et que le
+centrage est identique sur toutes les pistes. Le code de production reste
+inchangé.
+
+## Correction de la cible visuelle après comparaison avec `cascade-words-demo-v7`
+
+Le fichier de référence fourni ensuite est :
+
+`C:/Users/dbele/AppData/Local/CapCut/Videos/cascade-words-demo-v7.mp4`
+
+Il s’agit d’un export paysage `1920×1080` d’environ `1,9 s`. Les frames de
+contrôle montrent une succession de mots autonomes — par exemple `this`, puis
+`second`, puis un petit groupe `second type`, puis `text` — et non une phrase
+complète dont les mots suivants seraient simplement transparents. La largeur
+et la boîte visibles correspondent donc au mot ou au petit groupe actuellement
+affiché ; elles ne réservent pas la largeur de toute la phrase.
+
+Cette référence change la décision de conception : le POC full-text avec
+masquage alpha a démontré une technique de placement cohérent, mais il ne
+correspond pas à l’effet visuel recherché. Il faut l’écarter comme base du
+prochain prototype. La prochaine sonde doit créer une caption autonome par mot
+ou par groupe réellement visible, avec une durée explicite et sans plages
+transparentes. Les métriques Fontkit ne seront nécessaires que pour calculer la
+largeur d’un groupe de plusieurs mots ou décider d’un éventuel découpage ; un
+mot seul doit rester dans sa propre boîte CapCut.
+
+### Inspection structurelle du draft de référence — 2026-09-03
+
+L’inspection en lecture seule du draft CapCut
+`cascade-words-demo-v7` corrige l’interprétation visuelle précédente. Le draft
+fait `1920×1080`, dure `1,9 s`, utilise CapCut `8.5.0` et contient onze
+segments texte actifs répartis entre pistes guides cachées et pistes de mots
+visibles.
+
+La structure exacte est :
+
+| Type | Piste(s) | Texte | Début | Durée |
+|---|---|---|---:|---:|
+| phrase guide cachée | `sentence` | `this is the second type of text` | 0,000 s | 1,900 s |
+| ligne guide cachée | `line-000` | `this is the` | 0,000 s | 0,667 s |
+| mots visibles | `word-000`, `word-001`, `word-002` | `this`, `is`, `the` | 0,000 / 0,267 / 0,467 s | 0,667 / 0,400 / 0,200 s |
+| ligne guide cachée | `line-001` | `second type of` | 0,667 s | 0,833 s |
+| mots visibles | `word-003`, `word-004`, `word-005` | `second`, `type`, `of` | 0,667 / 1,067 / 1,367 s | 0,833 / 0,433 / 0,133 s |
+| ligne guide cachée | `line-002` | `text` | 1,500 s | 0,367 s |
+| mot visible | `word-006` | `text` | 1,500 s | 0,367 s |
+
+Les pistes `line-*` ne sont pas rendues : elles servent de référence de
+composition. Chaque piste `word-*` contient uniquement son propre mot, mais
+conserve la position horizontale calculée pour la ligne complète. Les mots
+apparaissent donc progressivement sans se recentrer ni se superposer. Le draft
+n’utilise pas un texte complet rendu avec des plages alpha transparentes.
+
+Les offsets horizontaux observés sur les pistes visibles sont notamment :
+
+- `this` : `x = -0,3276618614` ;
+- `is` : `x = 0` ;
+- `second` : `x = -0,4440566515` ;
+- `type` : `x = 0,2880374305` ;
+- `text` : `x = 0`.
+
+Les matériaux utilisent `font_size = 20`, `content.styles[0].size = 20` et
+`text_size = 30`. La police persistée est la police système CapCut
+(`SystemFont/en.ttf`), pas `Rubik-Bold`. Le draft est donc une référence de
+structure et de comportement, mais pas une preuve que Rubik doit être la
+police de production.
+
+**Conséquence pour la suite :** le modèle de production actuel
+« ligne guide cachée + mots visibles positionnés selon la ligne » est le bon
+modèle conceptuel. Le POC full-text et le POC de cartes autonomes doivent être
+considérés comme des sondes diagnostiques, pas comme la cible. La prochaine
+validation doit reproduire exactement cette structure, ses timings et sa
+police système ; une variante Rubik pourra ensuite conserver la même structure
+et mesurer uniquement l’écart de métriques et d’offsets. Aucun code de
+production n’a été modifié pendant cette inspection.
+
+## POC full-line avec spans transparents — résultat corrigé — 2026-09-03
+
+Pour tester la stratégie « CapCut est l’autorité de positionnement », un draft
+isolé a été créé :
+
+`C:/Users/dbele/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft/cascade-words-alpha-lines-poc-2026-09-03-v2`
+
+Le POC reprend les trois lignes de la référence (`this is the`,
+`second type of`, `text`). Pour chaque mot visible, le matériau contient toute
+la ligne ; le span du mot actif a `alpha = 1`, les autres spans ont
+`alpha = 0`. Les offsets horizontaux des segments sont à zéro. Les guides de
+lignes restent cachés et les timings reprennent ceux du draft de référence.
+
+L’export contrôlé est :
+
+`C:/Users/dbele/AppData/Local/CapCut/Videos/cascade-words-alpha-lines-poc-2026-09-03-v2.mp4`
+
+`ffprobe` confirme un flux H.264 `1920×1080` à `30 fps`, pour `1,866667 s` de
+vidéo et `1,880998 s` de conteneur. Les frames ont été extraites avec le
+`ffmpeg` local à `10 fps`.
+
+### Résultat visuel
+
+Le rendu exporté montre la séquence attendue sans superposition :
+
+- `this` seul au début ;
+- `this is` vers `0,5 s` ;
+- `this is the` vers `0,7 s` ;
+- `second`, puis `second type`, dans la deuxième ligne ;
+- `text` dans la dernière ligne.
+
+Le mot `is` est maintenant visible et sa position est calculée par le moteur de
+composition de CapCut, sans offset Fontkit converti empiriquement. La stratégie
+full-line transparente est donc validée visuellement sur cette structure de
+référence.
+
+Le défaut de la première version du POC ne venait pas de CapCut : le helper
+cherchait `is` avec `indexOf("is")`, ce qui sélectionnait le substring situé
+dans `this` (`[2,4]`) au lieu du mot séparé (`[5,7]`). Le calcul corrigé utilise
+la position cumulée des mots.
+
+**Limites :** ce POC fournit explicitement les trois lignes pour isoler le
+positionnement. Il ne valide pas encore l’intégration de la génération des
+spans transparents dans `cascade-words`, ni le wrapping automatique de phrases
+arbitraires. Fontkit reste donc nécessaire pour décider des coupures de lignes,
+mais plus pour calculer la position horizontale de chaque mot. Aucun code de
+production n’a été modifié.
