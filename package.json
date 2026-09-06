@@ -1,66 +1,36 @@
 {
-  "name": "capcut-cli-david",
+  "name": "voice-calibration",
   "version": "2.7.0",
-  "description": "Fork of capcut-cli — CapCut/JianYing draft CLI extended with creation primitives (keyframes, Ken Burns) and the psycho-build pipeline for the TikTok paranoia niche.",
+  "description": "Local ElevenLabs voice calibration UI with dry-run, approval, idempotence and canonical WPM publication.",
   "type": "module",
   "bin": {
-    "capcut-david": "dist/index.js"
+    "voice-calibration": "dist/calibration-cli.js"
   },
   "files": [
     "dist",
-    "templates",
-    "skills",
     "docs",
-    "release-notes",
     "README.md",
-    "CHANGELOG.md",
-    "COMPATIBILITY.md",
-    "UPSTREAM.md",
-    "RELEASE.md",
-    "LICENSE",
-    "NOTICE"
+    "LICENSE"
   ],
   "scripts": {
-    "lint": "biome ci .",
+    "lint": "biome ci --formatter-enabled=false .",
     "lint:fix": "biome check --write .",
     "typecheck": "tsc --noEmit",
-    "build": "tsc && node scripts/build-ui.mjs && node scripts/build-calibration-ui.mjs && node scripts/build-catalogue-ui.mjs",
-    "test": "node --test --test-reporter=spec",
-    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=dist/commands/**/*.js --test-coverage-include=dist/draft.js --test-coverage-lines=80 --test-coverage-functions=80 --test-reporter=spec",
-    "dev": "node --import tsx src/index.ts",
+    "build": "node scripts/clean-dist.mjs && tsc && node scripts/build-calibration-ui.mjs",
+    "test": "node --test --test-reporter=spec test/calibration-*.test.mjs",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=dist/calibration/**/*.js --test-coverage-lines=80 --test-coverage-functions=80 --test-reporter=spec",
+    "dev": "node --import tsx src/calibration-cli.ts",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
-    "capcut",
-    "capcut-cli",
-    "capcut-draft",
-    "capcut-srt",
-    "capcut-subtitles",
-    "capcut-template",
-    "capcut-automation",
-    "jianying",
-    "draft_content",
-    "keyframes",
-    "ken-burns",
-    "psycho-build",
-    "tiktok",
-    "video-automation",
-    "ai-video-editor",
+    "voice-calibration",
+    "elevenlabs",
+    "calibration",
+    "wpm",
     "cli"
   ],
   "author": "David Beles <davidb-2107@users.noreply.github.com>",
-  "contributors": [
-    "Rene Zander <renezander030@gmail.com> (https://renezander.com) — original capcut-cli author"
-  ],
   "license": "MIT",
-  "homepage": "https://github.com/Davidb-2107/capcut-cli-david#readme",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Davidb-2107/capcut-cli-david.git"
-  },
-  "bugs": {
-    "url": "https://github.com/Davidb-2107/capcut-cli-david/issues"
-  },
   "engines": {
     "node": ">=18"
   },

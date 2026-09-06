@@ -1,5 +1,5 @@
 import { deepStrictEqual, rejects, strictEqual } from "node:assert";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { test } from "node:test";
@@ -306,6 +306,18 @@ test("credential provider honors an explicit env file without exposing it", asyn
 
   const explicitFileWins = createCredentialProvider({ env: { ELEVENLABS_API_KEY: "from-process" }, cwd: dataDir, envFile: ".env" });
   strictEqual((await explicitFileWins.forRun()).secret, "from-file");
+});
+
+test("credential provider discovers the central Projects env from a Shared project", (t) => {
+  const root = mkdtempSync(join(tmpdir(), "calibration-shared-vault-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const sharedProject = join(root, "Shared", "calibration-ui-mvp");
+  mkdirSync(sharedProject, { recursive: true });
+  mkdirSync(join(root, "Projects"), { recursive: true });
+  writeFileSync(join(root, "Projects", ".env"), "ELEVENLABS_API_KEY=from-projects\n");
+
+  const provider = createCredentialProvider({ cwd: sharedProject });
+  return provider.status().then((status) => deepStrictEqual(status, { configured: true }));
 });
 
 test("voice directory resolves a voice name with the server-side ElevenLabs credential", async () => {

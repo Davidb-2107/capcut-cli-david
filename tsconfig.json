@@ -15,5 +15,9 @@
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*"]
+  "include": [
+    "src/calibration/**/*.ts",
+    "src/calibration-cli.ts",
+    "src/ui/calibration-client.ts"
+  ]
 }

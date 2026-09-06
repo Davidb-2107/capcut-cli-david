@@ -51,21 +51,25 @@ function ancestorDirectories(start: string): string[] {
 function discoverEnvFiles(cwd: string): string[] {
   const ancestors = ancestorDirectories(cwd);
   const projectsDirectory = ancestors.find((directory) => basename(directory) === "Projects");
-  if (!projectsDirectory)
+  const vaultRoot = ancestors.find(
+    (directory) => existsSync(join(directory, "Projects")) && existsSync(join(directory, "Shared")),
+  );
+  const resolvedProjectsDirectory = projectsDirectory ?? (vaultRoot ? join(vaultRoot, "Projects") : undefined);
+  if (!resolvedProjectsDirectory)
     return ancestors.flatMap((directory) => [
       join(directory, ".env"),
       join(directory, "elevenlabs-mcp-server", ".env"),
     ]);
 
-  const projectFiles = readdirSync(projectsDirectory, { withFileTypes: true })
+  const projectFiles = readdirSync(resolvedProjectsDirectory, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort((left, right) => left.localeCompare(right))
     .flatMap((name) => [
-      join(projectsDirectory, name, ".env"),
-      join(projectsDirectory, name, "elevenlabs-mcp-server", ".env"),
+      join(resolvedProjectsDirectory, name, ".env"),
+      join(resolvedProjectsDirectory, name, "elevenlabs-mcp-server", ".env"),
     ]);
-  return [join(projectsDirectory, ".env"), ...projectFiles];
+  return [join(resolvedProjectsDirectory, ".env"), ...projectFiles];
 }
 
 function readDiscoveredEnv(options: CredentialOptions): Record<string, string> {
