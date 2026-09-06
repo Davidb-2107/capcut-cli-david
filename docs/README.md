@@ -16,11 +16,15 @@ In-repo documentation for the `capcut-david` CLI. Start with
 
 ## Voice calibration (ElevenLabs)
 
+The calibration subsystem lives in its own npm workspace —
+[`packages/voice-calibration/`](../packages/voice-calibration/) — including its docs:
+
 | Path | What it covers |
 |------|----------------|
-| [`calibration-mvp.md`](./calibration-mvp.md) | User journey, protocol and guarantees of the local calibration MVP |
-| [`calibration-architecture.md`](./calibration-architecture.md) | Architecture (ports & adapters), HTTP API, storage, execution invariants; what a SaaS evolution replaces |
-| [`elevenlabs-calibration-contract-inventory.md`](./elevenlabs-calibration-contract-inventory.md) | Observed contract of the Python calibration core (with SHA256 digests of `Shared/voice-calibration/` files) |
+| [`packages/voice-calibration/README.md`](../packages/voice-calibration/README.md) | Launch, guarantees, architecture overview |
+| [`packages/voice-calibration/docs/calibration-mvp.md`](../packages/voice-calibration/docs/calibration-mvp.md) | User journey, protocol and guarantees of the local calibration MVP |
+| [`packages/voice-calibration/docs/calibration-architecture.md`](../packages/voice-calibration/docs/calibration-architecture.md) | Architecture (ports & adapters), HTTP API, storage, execution invariants; what a SaaS evolution replaces |
+| [`packages/voice-calibration/docs/elevenlabs-calibration-contract-inventory.md`](../packages/voice-calibration/docs/elevenlabs-calibration-contract-inventory.md) | Observed contract of the Python calibration core (with SHA256 digests of `Shared/voice-calibration/` files) |
 
 ## Cascade words & font metrics
 

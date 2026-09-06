@@ -1,0 +1,41 @@
+{
+  "name": "voice-calibration",
+  "version": "2.7.0",
+  "description": "Local ElevenLabs voice calibration UI with dry-run, approval, idempotence and canonical WPM publication.",
+  "type": "module",
+  "bin": {
+    "voice-calibration": "dist/calibration-cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node scripts/clean-dist.mjs && tsc && node scripts/build-calibration-ui.mjs",
+    "test": "node --test --test-reporter=spec",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome ci --formatter-enabled=false .",
+    "dev": "node --import tsx src/calibration-cli.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "voice-calibration",
+    "elevenlabs",
+    "calibration",
+    "wpm",
+    "cli"
+  ],
+  "author": "David Beles <davidb-2107@users.noreply.github.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

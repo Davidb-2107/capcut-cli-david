@@ -1,15 +1,16 @@
 # Architecture du MVP de calibration ElevenLabs
 
 **Statut :** architecture implémentée
-**Dernière vérification :** 2026-09-05
+**Dernière vérification :** 2026-09-06
 **Périmètre de production :** `src/calibration/`, `src/ui/calibration-client.ts`,
-`src/calibration-cli.ts` et `src/calibration/entrypoint.ts`
+`src/calibration-cli.ts` et `src/calibration/entrypoint.ts` (relatifs à ce paquet)
 
-Le paquet est autonome : son identité est `voice-calibration` et son point
-d’entrée est `dist/calibration-cli.js`. L’ancien mode intégré au projet vidéo
-n’est plus le chemin documenté ni le chemin compilé par défaut ; l’adaptateur
-conservé dans `src/commands/` sert seulement à préserver une transition locale
-pendant le nettoyage de l’ancien dépôt.
+Le paquet est autonome : son identité est `voice-calibration`, son point
+d’entrée est `dist/calibration-cli.js` et son API publique est exportée depuis
+la racine du paquet. Il vit dans le workspace npm `packages/voice-calibration`
+du dépôt `capcut-cli-david` ; le verbe `capcut-david calibration-ui`
+(`src/commands/calibration-ui.ts` du paquet racine) est l’adaptateur officiel
+du moteur et ne consomme que cette API publique.
 
 Ce document décrit les composants réellement utilisés par le MVP local. Il
 sert de référence pour comprendre le flux, remplacer une dépendance ou

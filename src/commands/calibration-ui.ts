@@ -1,4 +1,4 @@
-import { openInBrowser, startVoiceCalibrationUi } from "../calibration/entrypoint.js";
+import { openInBrowser, startVoiceCalibrationUi } from "voice-calibration";
 import type { Flags } from "../utils/cli.js";
 
 export async function cmdCalibrationUi(flags: Flags): Promise<void> {

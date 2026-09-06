@@ -23,8 +23,8 @@
   "scripts": {
     "lint": "biome ci .",
     "lint:fix": "biome check --write .",
-    "typecheck": "tsc --noEmit",
-    "build": "tsc && node scripts/build-ui.mjs && node scripts/build-calibration-ui.mjs && node scripts/build-catalogue-ui.mjs",
+    "typecheck": "npm run build -w voice-calibration && tsc --noEmit",
+    "build": "npm run build -w voice-calibration && tsc && node scripts/build-ui.mjs && node scripts/build-catalogue-ui.mjs",
     "test": "node --test --test-reporter=spec",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=dist/commands/**/*.js --test-coverage-include=dist/draft.js --test-coverage-lines=80 --test-coverage-functions=80 --test-reporter=spec",
     "dev": "node --import tsx src/index.ts",
@@ -71,6 +71,10 @@
     "typescript": "^5.6.0"
   },
   "dependencies": {
-    "fontkit": "^2.0.4"
-  }
+    "fontkit": "^2.0.4",
+    "voice-calibration": "*"
+  },
+  "workspaces": [
+    "packages/voice-calibration"
+  ]
 }
