@@ -1,9 +1,9 @@
 ---
 name: capcut-david
-version: "0.5.0"
+version: "2.7.0"
 status: published
 created: 2026-05-11
-updated: 2026-06-12
+updated: 2026-09-06
 description: >-
   Create, edit, inspect, and assemble CapCut draft_content.json projects via the
   capcut-david CLI. Single binary that combines cutcli's creation power (keyframes,
@@ -34,12 +34,17 @@ deprecation_gate: "capcut-cli-david v0.5.0 shipped 2026-05-12 (Phase E)"
 `draft_content.json` projects. It is the Node.js fork of `renezander030/capcut-cli`
 extended with cutcli-style creation commands (keyframes, Ken Burns, animations).
 
-> **Status:** Published with capcut-cli-david **v0.5.0** (Phase E, 2026-05-12).
+> **Status:** Published with capcut-cli-david **v0.5.0** (Phase E, 2026-05-12);
+> skill metadata tracks the CLI since **v2.7.0** (2026-09-06).
 > This skill supersedes the 5 legacy `cut-*` skills — see §Migration for the
 > cutover plan. `query` shipped in v1.13.0 and `catalogue` in v2.6.0 — see
 > §Retrouver un resource_id. The name tables in
 > [`docs/draft-schema/04-effects-filters-stickers.md`](../../docs/draft-schema/04-effects-filters-stickers.md)
 > remain the fallback for a resource no draft has ever used.
+>
+> **Authoritative verb list:** the CLI dispatches 43 verbs — the tables below are
+> recipes, not an exhaustive index. For the complete, test-enforced map see
+> [`docs/FEATURES.md`](../../docs/FEATURES.md) or run `capcut-david ui`.
 
 ---
 
