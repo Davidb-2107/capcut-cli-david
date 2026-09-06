@@ -1,7 +1,7 @@
 # MVP de calibration ElevenLabs
 
 **Statut :** implémenté localement
-**Dernière vérification :** 2026-09-05
+**Dernière vérification :** 2026-09-06
 **Entrée principale :** `voice-calibration --open`
 
 Ce document décrit le comportement du MVP tel qu’il existe dans le code. Les
@@ -45,7 +45,14 @@ nécessite un corpus conçu pour les balises d’émotion et un protocole dédi�
 3. Une clé `ELEVENLABS_API_KEY` dans le `.env` déjà utilisé par le projet.
 4. Une version active du corpus standard.
 
-Lancer l’interface depuis le projet :
+Après compilation, lancer l’interface depuis un checkout local :
+
+```bash
+node dist/calibration-cli.js --open
+```
+
+Lorsque le package est installé ou lié avec `npm link`, l’entrée CLI publique
+équivalente est :
 
 ```bash
 voice-calibration --open
