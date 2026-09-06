@@ -16,3 +16,6 @@ temp/
 
 # pnpm local store (package-manager cache, not source)
 .pnpm-store/
+
+# graft local graph cache — regenerable, not committed (run `graft build`)
+/graft/
