@@ -2,7 +2,7 @@ import { copyFileSync, existsSync, readFileSync, rmSync, writeFileSync } from "n
 import { dirname, join } from "node:path";
 import type { Draft } from "../draft.js";
 import { CliError, type Flags, out } from "../utils/cli.js";
-import { listTimelineDirs } from "../utils/timelines.js";
+import { listTimelineDirs, normalizeTimelineIdentity } from "../utils/timelines.js";
 
 // sync-timelines — the WRITE verb that repairs the divergence validate's
 // read-only `timelines.divergence` detects. CapCut, once it opens a draft,
@@ -84,6 +84,16 @@ export function syncTimelines(filePath: string, opts: SyncOptions = {}): SyncRep
   const epoch = opts.nowMs ?? Date.now();
   const draftDir = dirname(filePath);
   const rootBytes = readFileSync(filePath, "utf-8");
+  let rootDraftId: string | null = null;
+  try {
+    const parsed = JSON.parse(rootBytes) as { id?: unknown };
+    if (typeof parsed.id === "string" && parsed.id) rootDraftId = parsed.id;
+  } catch {
+    // The normal command dispatch already parses the draft. Keep this utility
+    // focused on raw mirror bytes if a direct library caller supplies malformed
+    // JSON; its existing sync behavior remains unchanged.
+  }
+  if (rootDraftId) normalizeTimelineIdentity(draftDir, rootDraftId);
 
   const synced: SyncGuidResult[] = [];
   const alreadyInSync: Array<{ guid: string; reason: string }> = [];

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { CliError } from "./utils/cli.js";
+import { normalizeTimelineIdentity, syncTimelineRootBytes } from "./utils/timelines.js";
 
 export interface Timerange {
   start: number;
@@ -117,6 +118,8 @@ export function loadDraft(path: string): { draft: Draft; filePath: string } {
 }
 
 export function saveDraft(filePath: string, draft: Draft): void {
+  const draftDir = dirname(filePath);
+  const identity = normalizeTimelineIdentity(draftDir, draft.id);
   const bakPath = `${filePath}.bak`;
   if (existsSync(filePath)) {
     const original = rawOriginal ?? readFileSync(filePath, "utf-8");
@@ -124,7 +127,9 @@ export function saveDraft(filePath: string, draft: Draft): void {
   }
   // Detect original indent: if first line after { starts with tab use tab, else count spaces
   const indent = detectIndent(rawOriginal);
-  writeFileSync(filePath, JSON.stringify(draft, null, indent), "utf-8");
+  const serialized = JSON.stringify(draft, null, indent);
+  writeFileSync(filePath, serialized, "utf-8");
+  if (identity.renamed) syncTimelineRootBytes(draftDir, serialized);
 }
 
 function detectIndent(raw: string | null): string | number {

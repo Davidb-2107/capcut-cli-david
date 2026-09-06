@@ -508,6 +508,28 @@ function checkTimelinesDivergence(ctx: ValidateCtx): Finding[] {
   return findings;
 }
 
+function checkTimelineIdentity(ctx: ValidateCtx): Finding[] {
+  if (!ctx.draftDir || typeof ctx.draft.id !== "string" || !ctx.draft.id) return [];
+  const timelinesRoot = join(ctx.draftDir, "Timelines");
+  // Do not reinterpret the lightweight legacy mirror shape as a broken full
+  // CapCut project. Full projects carry at least one of these identity files.
+  if (!existsSync(join(timelinesRoot, "project.json")) && !existsSync(join(ctx.draftDir, "timeline_layout.json"))) {
+    return [];
+  }
+  const dirs = listTimelineDirs(ctx.draftDir);
+  if (dirs.length === 0 || dirs.some(({ guid }) => guid.toLowerCase() === ctx.draft.id.toLowerCase())) return [];
+  return [
+    {
+      id: "timelines.identity",
+      severity: "error",
+      message: `Timelines primary directory does not match draft_content.id ${ctx.draft.id} — the draft may be visible but cannot be opened safely`,
+      location: { kind: "file", ref: timelinesRoot },
+      fixable: true,
+      fix_hint: "run `capcut-david sync-timelines <project>` with CapCut closed",
+    },
+  ];
+}
+
 interface CheckDef {
   id: string;
   run: (ctx: ValidateCtx) => Finding[];
@@ -532,6 +554,11 @@ export const CHECKS: CheckDef[] = [
   { id: "meta.unregistered", run: checkMetaUnregistered, gate: hasDir },
   { id: "meta.duplicate_draft_id", run: checkMetaDuplicateDraftId, gate: hasDir },
   { id: "assets.missing_file", run: checkAssetsMissingFile, gate: (ctx) => ctx.opts.checkAssets === true },
+  {
+    id: "timelines.identity",
+    run: checkTimelineIdentity,
+    gate: (ctx) => ctx.draftDir !== null && ctx.opts.checkTimelines === true,
+  },
   {
     id: "timelines.divergence",
     run: checkTimelinesDivergence,

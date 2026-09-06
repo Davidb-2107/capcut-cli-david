@@ -33,7 +33,7 @@ const FIXER_FINDINGS: Record<FixerName, string[]> = {
   gc: ["materials.orphan_text", "materials.orphan_media"],
   "init-meta": ["meta.missing"],
   register: ["meta.unregistered"],
-  "sync-timelines": ["timelines.divergence"],
+  "sync-timelines": ["timelines.identity", "timelines.divergence"],
 };
 
 // fixable:true but no dedicated fixer command (D2) — reported, never auto-fixed.
@@ -324,12 +324,13 @@ export function cmdValidateFix(draft: Draft, filePath: string, projectInput: str
   if (selected("sync-timelines")) {
     const sr = syncTimelines(filePath, { dryRun: false });
     const baks = sr.synced.flatMap((g) => g.backups);
+    const syncFindingIds = findingsForFixer(report.findings, "sync-timelines").map((f) => f.id);
     if (sr.errors.length > 0) {
       const detail = sr.errors.map((e) => `${e.guid}: ${e.message}`).join("; ");
       results.push({
         fixer: "sync-timelines",
         status: "error",
-        finding_ids: ["timelines.divergence"],
+        finding_ids: syncFindingIds,
         wrote: false,
         bak: baks,
         detail: null,
@@ -342,7 +343,7 @@ export function cmdValidateFix(draft: Draft, filePath: string, projectInput: str
     results.push({
       fixer: "sync-timelines",
       status: wrote ? "wrote" : "skipped",
-      finding_ids: ["timelines.divergence"],
+      finding_ids: syncFindingIds,
       wrote,
       bak: baks,
       detail: `synced ${sr.summary.guids_synced} guid(s), ${sr.summary.files_written} file(s)`,
