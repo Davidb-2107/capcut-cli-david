@@ -13,3 +13,6 @@ AGENTS.md
 
 # throwaway scratch/debug scripts
 temp/
+
+# pnpm local store (package-manager cache, not source)
+.pnpm-store/
