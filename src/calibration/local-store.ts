@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { constants } from "node:fs";
+import { constants, existsSync } from "node:fs";
 import { access, link, lstat, mkdir, open, readdir, readFile, rename, rm } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join, relative, resolve, sep } from "node:path";
@@ -15,7 +15,9 @@ import type {
 } from "./ports.js";
 import { ConflictError } from "./ports.js";
 
-const DEFAULT_DATA_DIR = join(homedir(), ".capcut-david", "elevenlabs-calibration");
+const DATA_DIR = join(homedir(), ".voice-calibration", "elevenlabs-calibration");
+const LEGACY_DATA_DIR = join(homedir(), ".capcut-david", "elevenlabs-calibration");
+const DEFAULT_DATA_DIR = !existsSync(DATA_DIR) && existsSync(LEGACY_DATA_DIR) ? LEGACY_DATA_DIR : DATA_DIR;
 const corpusQueues = new Map<string, Promise<unknown>>();
 
 function workspaceRoot(dataDir: string, workspaceId: string): string {
