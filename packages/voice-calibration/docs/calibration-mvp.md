@@ -1,7 +1,7 @@
 # MVP de calibration ElevenLabs
 
 **Statut :** implémenté localement
-**Dernière vérification :** 2026-09-06
+**Dernière vérification :** 2026-09-07
 **Entrée principale :** `voice-calibration --open`
 
 Ce document décrit le comportement du MVP tel qu’il existe dans le code. Les
@@ -27,7 +27,7 @@ Le parcours local applique automatiquement :
 | Modèle | `eleven_multilingual_v2` |
 | Langue | `fr` |
 | Mode | `precision` |
-| Répétitions | `3` |
+| Répétitions | `5` |
 | Post-traitement | `cut` |
 | `stability` | `0.5` |
 | `similarity_boost` | `0.85` |
@@ -36,6 +36,12 @@ Le parcours local applique automatiquement :
 
 Le modèle Eleven v3 n’est pas proposé par cette interface : son calibrage
 nécessite un corpus conçu pour les balises d’émotion et un protocole dédié.
+
+Le backend de cette interface impose cinq répétitions en mode `precision` ; le
+navigateur ne transmet ni ne permet d’éditer ce nombre. Le cœur de calibration conserve
+une plage générique de `3` à `10` pour ses autres adaptateurs, mais ce MVP
+utilise toujours `5` et le dry-run en affiche le nombre ainsi que le coût
+estimé avant approbation.
 
 ## Prérequis
 

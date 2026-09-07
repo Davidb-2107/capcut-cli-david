@@ -148,7 +148,7 @@ test("client resynchronizes the run after execute returns an HTTP failure", asyn
     proposal: {
       accepted: true,
       plan: [{ slug: "precision-01" }],
-      raw: { status: "dry_run_success", estimated_cost_usd: 0.0126 },
+      raw: { status: "dry_run_success", requests_planned: 5, estimated_cost_usd: 0.0126 },
     },
     approval: null,
   };
@@ -240,7 +240,6 @@ test("client resynchronizes the run after execute returns an HTTP failure", asyn
     model_id: "eleven_multilingual_v2",
     mode: "precision",
     language: "fr",
-    runs: 3,
     voice_settings: {
       stability: 0.5,
       similarity_boost: 0.85,
@@ -255,6 +254,10 @@ test("client resynchronizes the run after execute returns an HTTP failure", asyn
   ok(
     elements.get("dry-run-summary").textContent.includes("0.0126 USD"),
     "the estimated cost must remain visible before approval",
+  );
+  ok(
+    elements.get("dry-run-summary").textContent.includes("5 requête(s) planifiée(s)"),
+    "the planned run count must come from the backend dry-run",
   );
   ok(
     elements.get("dry-run-summary").textContent.includes("Vérifiez le récapitulatif"),

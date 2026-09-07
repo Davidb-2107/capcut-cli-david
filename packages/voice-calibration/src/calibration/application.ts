@@ -8,6 +8,7 @@ import type {
   DryRunResult,
   ExecutionResult,
 } from "./bridge.js";
+import { MVP_PRECISION_RUNS } from "./constants.js";
 import type {
   CalibrationReport,
   CalibrationRun,
@@ -457,6 +458,7 @@ export class CalibrationApplication {
     const schema = await this.bridge.getSchema();
     const defaults = isRecord(schema) && isRecord(schema.properties) ? schema : undefined;
     const params = applySchemaDefaults(input.params, defaults);
+    if (params.mode === "precision") params.runs = MVP_PRECISION_RUNS;
     params.text_source = { kind: "inline", text: corpusText(activeCorpus.items) };
     params.corpus_key = params.corpus_key ?? input.voiceRef;
     params.dry_run = false;
