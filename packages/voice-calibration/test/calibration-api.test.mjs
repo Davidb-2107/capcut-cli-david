@@ -375,6 +375,18 @@ test("prepareDryRun refuses calibration without an active published corpus", asy
   strictEqual(bridge.state.dryRuns.length, 0);
 });
 
+test("the backend fixes MVP precision calibration to five runs", async () => {
+  const repositories = memoryRepositories();
+  await publishCorpus(repositories);
+  const bridge = fakeBridge();
+  const app = makeApplication({ repositories, bridge, canonical: fakeCanonicalProfilePort() });
+
+  const run = await app.prepareDryRun(input);
+
+  strictEqual(run.request.params.runs, 5);
+  strictEqual(bridge.state.dryRuns[0].request.params.runs, 5);
+});
+
 test("the application projects the persistent core gate and never runs a second local workflow", async () => {
   const repositories = memoryRepositories();
   await publishCorpus(repositories);

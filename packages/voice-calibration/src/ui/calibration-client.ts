@@ -10,7 +10,6 @@ const CALIBRATION_PARAMS: JsonRecord = {
   model_id: "eleven_multilingual_v2",
   mode: "precision",
   language: "fr",
-  runs: 3,
 };
 const CALIBRATION_POSTPROC = "cut";
 

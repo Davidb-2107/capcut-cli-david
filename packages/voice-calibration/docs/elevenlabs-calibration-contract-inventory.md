@@ -220,7 +220,8 @@ has this shape:
 
 The UI must generate the inline text from the active corpus mapping above; the
 literal text here is only a contract fixture. `voice_id` may be omitted when
-the display name should be resolved by the core.
+the display name should be resolved by the core. The generic core contract
+accepts 3–10 precision runs; the local MVP backend fixes this UI workflow at 5.
 
 ## Standard corpus mapping for this MVP
 
