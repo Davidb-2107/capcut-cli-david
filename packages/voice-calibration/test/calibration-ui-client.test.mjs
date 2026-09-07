@@ -1,10 +1,11 @@
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { test } from "node:test";
 import { deepStrictEqual, strictEqual, ok } from "node:assert";
 import vm from "node:vm";
+import { fileURLToPath } from "node:url";
 
-const ROOT = resolve(import.meta.dirname, "..");
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CLIENT = readFileSync(resolve(ROOT, "dist/ui/calibration-client.js"), "utf8");
 
 class FakeHeaders {
