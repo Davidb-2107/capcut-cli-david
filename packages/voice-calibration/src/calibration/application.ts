@@ -92,11 +92,22 @@ const DEFAULT_WORKSPACE = "local-default";
 const APPROVAL_TTL_MS = 15 * 60 * 1000;
 const REPORT_NAME = "report.json";
 const INVENTORY_SOURCE_REVISION = "2eedac32fd3f4275e58ca8510d0d49be0b589f96";
+const BLOCKING_RUN_STATUSES = new Set<CalibrationRun["status"]>([
+  "dry_run_ready",
+  "approved",
+  "running",
+  "execution_unknown",
+  "succeeded",
+]);
 const sessionNonces = new WeakMap<object, string>();
 const runLocks = new WeakMap<object, Map<string, Promise<unknown>>>();
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function languageFromParams(params: Record<string, unknown>): "fr" | "en" {
+  return params.language === "en" ? "en" : "fr";
 }
 
 function clone<T>(value: T): T {
@@ -348,6 +359,59 @@ export class CalibrationApplication {
     return safeError(error, redact ? (value) => redact(value) : undefined);
   }
 
+  private async assertVoiceNotCalibrated(
+    workspaceId: string,
+    voiceRef: string,
+    language: "fr" | "en",
+  ): Promise<void> {
+    if (this.canonical.findPublished) {
+      try {
+        const published = await this.canonical.findPublished({ voiceRef, language });
+        if (published) {
+          throw new ConflictError(
+            `La voix ${JSON.stringify(voiceRef)} possède déjà un calibrage publié. ` +
+              "Aucune nouvelle synthèse ne sera lancée.",
+          );
+        }
+      } catch (error) {
+        if (error instanceof ConflictError) throw error;
+        const message = errorMessage(error);
+        if (isUnavailableMessage(message)) throw new UnavailableError(message);
+        throw error;
+      }
+    }
+
+    const profiles = await this.repositories.profiles.list(workspaceId);
+    if (profiles.some((profile) => profile.voiceRef === voiceRef)) {
+      throw new ConflictError(
+        `La voix ${JSON.stringify(voiceRef)} possède déjà un profil de calibrage publié. ` +
+          "Aucune nouvelle synthèse ne sera lancée.",
+      );
+    }
+  }
+
+  private async assertNoConflictingRun(
+    workspaceId: string,
+    voiceRef: string,
+    excludeRunId?: string,
+  ): Promise<void> {
+    const runs = await this.repositories.runs.list(workspaceId);
+    const existing = runs.find(
+      (run) =>
+        run.id !== excludeRunId &&
+        run.request.voiceRef === voiceRef &&
+        BLOCKING_RUN_STATUSES.has(run.status),
+    );
+    if (!existing) return;
+
+    const message =
+      existing.status === "succeeded"
+        ? `Un calibrage existe déjà pour la voix ${JSON.stringify(voiceRef)}. Consultez le résultat ou publiez le profil.`
+        : `Un calibrage est déjà en cours pour la voix ${JSON.stringify(voiceRef)} (état ${existing.status}). ` +
+          "Terminez ou réconciliez ce run avant d'en créer un autre.";
+    throw new ConflictError(message);
+  }
+
   private async currentDigests(schema?: unknown): Promise<{ contractDigest: string; coreDigest: string }> {
     const currentSchema = schema ?? (await this.bridge.getSchema());
     const digest = schemaDigest(currentSchema);
@@ -458,6 +522,9 @@ export class CalibrationApplication {
     const schema = await this.bridge.getSchema();
     const defaults = isRecord(schema) && isRecord(schema.properties) ? schema : undefined;
     const params = applySchemaDefaults(input.params, defaults);
+    const language = languageFromParams(params);
+    await this.assertVoiceNotCalibrated(input.workspaceId, input.voiceRef, language);
+    await this.assertNoConflictingRun(input.workspaceId, input.voiceRef);
     if (params.mode === "precision") params.runs = MVP_PRECISION_RUNS;
     params.text_source = { kind: "inline", text: corpusText(activeCorpus.items) };
     params.corpus_key = params.corpus_key ?? input.voiceRef;
@@ -518,6 +585,12 @@ export class CalibrationApplication {
   async approve(runId: string, input: { requestDigest: string }): Promise<CalibrationRun> {
     return this.withRunLock(runId, async () => {
       const run = await this.getRunOrThrow(runId);
+      await this.assertVoiceNotCalibrated(
+        run.workspaceId,
+        run.request.voiceRef,
+        languageFromParams(run.request.params),
+      );
+      await this.assertNoConflictingRun(run.workspaceId, run.request.voiceRef, run.id);
       if (isCoreBackedRun(run) && this.bridge.approve) {
         let core: CoreRunRecord;
         try {
@@ -548,6 +621,12 @@ export class CalibrationApplication {
   async execute(runId: string): Promise<CalibrationRun> {
     return this.withRunLock(runId, async () => {
       const run = await this.getRunOrThrow(runId);
+      await this.assertVoiceNotCalibrated(
+        run.workspaceId,
+        run.request.voiceRef,
+        languageFromParams(run.request.params),
+      );
+      await this.assertNoConflictingRun(run.workspaceId, run.request.voiceRef, run.id);
       if (isCoreBackedRun(run) && this.bridge.execute) {
         let result: ExecutionResult;
         try {

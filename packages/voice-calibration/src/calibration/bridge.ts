@@ -62,6 +62,10 @@ export interface CanonicalProfilePort {
     corpusVersionId: string;
     language?: "fr" | "en";
   }): Promise<{ canonicalRef: string }>;
+  findPublished?(input: {
+    voiceRef: string;
+    language?: "fr" | "en";
+  }): Promise<{ canonicalRef: string; wpm: number } | null>;
 }
 export interface CalibrationBridge {
   getSchema(): Promise<unknown>;
@@ -705,6 +709,9 @@ export function createCanonicalProfilePort(
   } = {},
 ): CanonicalProfilePort {
   return {
+    async findPublished(input) {
+      return readPublishedWpm(input, options.wpmPath, options.language ?? "fr");
+    },
     async ensurePublished(input) {
       const result = options.verify
         ? await options.verify(input)
@@ -720,13 +727,26 @@ async function verifyWpmFile(
   wpmPath = process.env.VOICE_WPM_PATH,
   language: "fr" | "en",
 ): Promise<{ canonicalRef: string; wpm: number }> {
+  const published = await readPublishedWpm(input, wpmPath, language);
+  if (!published) throw new Error("canonical_wpm_unavailable");
+  return published;
+}
+
+async function readPublishedWpm(
+  input: { voiceRef: string; language?: "fr" | "en" },
+  wpmPath = process.env.VOICE_WPM_PATH,
+  language: "fr" | "en",
+): Promise<{ canonicalRef: string; wpm: number } | null> {
   if (!wpmPath) throw new Error("canonical_wpm_unavailable");
   language = input.language ?? language;
   const data = JSON.parse(await readFile(wpmPath, "utf8")) as Record<string, Record<string, unknown>>;
   const record = data[input.voiceRef];
+  if (!record || typeof record !== "object") return null;
+  const profile = language === "en" ? resultObject(resultObject(record.profiles_by_lang).en) : resultObject(record.profile);
+  if (Object.keys(profile).length === 0) return null;
   const key = language === "en" ? "wpm_calibrated_by_lang" : "wpm_calibrated";
   const wpm = language === "en" ? resultObject(record?.[key]).en : record?.[key];
-  if (typeof wpm !== "number") throw new Error("canonical_wpm_unavailable");
+  if (typeof wpm !== "number") return null;
   const suffix = language === "en" ? "wpm_calibrated_by_lang.en" : "wpm_calibrated";
   return { canonicalRef: `Shared/voice-calibration/voice_wpm.json#${input.voiceRef}.${suffix}`, wpm };
 }

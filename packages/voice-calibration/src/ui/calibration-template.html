@@ -32,6 +32,11 @@
       .item { display: grid; gap: 8px; align-items: start; margin-bottom: 12px; }
       .item h3 { margin: 0; font-size: 1rem; }
       .corpus-text { margin: 0; white-space: pre-wrap; }
+      .progress-note { display: flex; align-items: center; gap: 8px; color: #bfdbfe; }
+      .progress-note[hidden] { display: none; }
+      .progress-note::before { content: ""; width: .7rem; height: .7rem; border: 2px solid #60a5fa; border-top-color: transparent; border-radius: 50%; animation: calibration-spin .8s linear infinite; }
+      @keyframes calibration-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { .progress-note::before { animation: none; } }
       #status { min-height: 1.5em; }
     </style>
     <script type="module">/*__CALIBRATION_TEMPLATE__*/</script>
@@ -47,7 +52,6 @@
         <button data-view="prepare">Préparer</button>
         <button data-view="dry-run">Simulation (dry-run)</button>
         <button data-view="result">Résultat</button>
-        <button data-view="profiles">Profils</button>
       </nav>
 
       <section id="view-home" class="view active">
@@ -83,6 +87,7 @@
         <p id="dry-run-summary" class="muted"></p>
         <button id="approve" disabled>Approuver la simulation</button>
         <button id="execute" disabled>Lancer le calibrage réel</button>
+        <p id="execution-progress" class="progress-note" role="status" aria-live="polite" hidden></p>
         <p class="muted">Le calibrage réel ne démarre qu’après l’approbation et peut entraîner le coût estimé ci-dessus.</p>
       </section>
 
@@ -93,10 +98,6 @@
         <button id="publish-profile" disabled>Rendre la voix disponible dans les projets</button>
       </section>
 
-      <section id="view-profiles" class="view">
-        <h2>Profils</h2>
-        <div id="profiles-list" class="muted">Aucun profil chargé.</div>
-      </section>
     </main>
   </body>
 </html>

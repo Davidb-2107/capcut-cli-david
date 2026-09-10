@@ -37,6 +37,7 @@ class FakeElement {
     this.textContent = "";
     this.value = "";
     this.disabled = false;
+    this.hidden = false;
     this.checked = false;
     this.elements = { namedItem: () => null };
     this.classList = {
@@ -120,9 +121,9 @@ test("client resynchronizes the run after execute returns an HTTP failure", asyn
     "config-status",
     "corpus-items",
     "corpus-version",
-    "profiles-list",
     "dry-run-state",
     "dry-run-summary",
+    "execution-progress",
     "result-preview",
     "refresh",
     "prepare-form",
@@ -131,7 +132,7 @@ test("client resynchronizes the run after execute returns an HTTP failure", asyn
     "publish-profile",
   ];
   const elements = new Map(ids.map((id) => [id, new FakeElement(id)]));
-  const views = ["home", "corpus", "prepare", "dry-run", "result", "profiles"].map(
+  const views = ["home", "corpus", "prepare", "dry-run", "result"].map(
     (view) => new FakeElement(`view-${view}`),
   );
   const form = elements.get("prepare-form");
@@ -165,6 +166,11 @@ test("client resynchronizes the run after execute returns an HTTP failure", asyn
     report: { metrics: { runs_synthesized: 3 } },
   };
   let terminalRecovery = false;
+  let holdExecution = true;
+  let releaseExecution = () => {};
+  const executionGate = new Promise((resolve) => {
+    releaseExecution = resolve;
+  });
   const fetch = async (url, init = {}) => {
     calls.push({ url, method: init.method ?? "GET", init });
     if (url === "/api/v1/bootstrap") {
@@ -190,6 +196,7 @@ test("client resynchronizes the run after execute returns an HTTP failure", asyn
     if (url === "/api/v1/calibration-runs/dry-run") return response(run, 201);
     if (url === "/api/v1/calibration-runs/run-1/approve") return response(approved);
     if (url === "/api/v1/calibration-runs/run-1/execute") {
+      if (!terminalRecovery && holdExecution) await executionGate;
       return terminalRecovery
         ? response({ error: { code: "approval_required", message: "approval required; got succeeded" } }, 409)
         : response({ error: { code: "provider_unavailable", message: "Provider unavailable" } }, 503);
@@ -273,6 +280,19 @@ test("client resynchronizes the run after execute returns an HTTP failure", asyn
   );
   elements.get("execute").dispatch("click");
   await flush();
+
+  strictEqual(
+    elements.get("status").textContent,
+    "Calibrage réel en cours… Les audios sont en cours de génération. Ne fermez pas cette page.",
+    "the UI must immediately explain that real calibration is running",
+  );
+  strictEqual(elements.get("dry-run-state").textContent, "Calibrage réel en cours…");
+  strictEqual(elements.get("execution-progress").hidden, false);
+  strictEqual(elements.get("execute").textContent, "Calibrage en cours…");
+  strictEqual(elements.get("execute").disabled, true);
+
+  holdExecution = false;
+  releaseExecution();
   await flush();
 
   ok(calls.some((call) => call.url === "/api/v1/calibration-runs/run-1"), "execute failure must reload the run");
@@ -312,9 +332,9 @@ test("client restores the latest run and report after a page reload", async () =
     "config-status",
     "corpus-items",
     "corpus-version",
-    "profiles-list",
     "dry-run-state",
     "dry-run-summary",
+    "execution-progress",
     "result-preview",
     "refresh",
     "prepare-form",
@@ -323,7 +343,7 @@ test("client restores the latest run and report after a page reload", async () =
     "publish-profile",
   ];
   const elements = new Map(ids.map((id) => [id, new FakeElement(id)]));
-  const views = ["home", "corpus", "prepare", "dry-run", "result", "profiles"].map(
+  const views = ["home", "corpus", "prepare", "dry-run", "result"].map(
     (view) => new FakeElement(`view-${view}`),
   );
   const latest = {

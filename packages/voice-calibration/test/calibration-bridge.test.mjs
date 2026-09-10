@@ -350,6 +350,33 @@ test("profile publication verifies the canonical Python WPM source", async () =>
   );
 });
 
+test("canonical profile port detects an existing published voice before calibration", async () => {
+  const root = mkdtempSync(join(tmpdir(), "canonical-profile-"));
+  try {
+    const wpmPath = join(root, "voice_wpm.json");
+    writeFileSync(
+      wpmPath,
+      JSON.stringify({
+        "voice-1": {
+          profile: { voice_id: "voice-1", model_id: "eleven_multilingual_v2", voice_settings: {} },
+          wpm_calibrated: 172.5,
+        },
+      }),
+    );
+    const canonical = createCanonicalProfilePort({ wpmPath, language: "fr" });
+    deepStrictEqual(
+      await canonical.findPublished?.({ voiceRef: "voice-1", language: "fr" }),
+      {
+        canonicalRef: "Shared/voice-calibration/voice_wpm.json#voice-1.wpm_calibrated",
+        wpm: 172.5,
+      },
+    );
+    strictEqual(await canonical.findPublished?.({ voiceRef: "voice-2", language: "fr" }), null);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("profile publication fails closed on a missing or mismatched canonical record", async () => {
   const missing = createCanonicalProfilePort({ verify: async () => { throw new Error("canonical_wpm_unavailable"); } });
   await rejects(missing.ensurePublished({ voiceRef: "voice-1", wpm: 148, runId: "r1", corpusVersionId: "v1" }), /canonical_wpm_unavailable/);

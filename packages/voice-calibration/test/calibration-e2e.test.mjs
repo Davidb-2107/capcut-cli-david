@@ -111,7 +111,13 @@ test("local calibration MVP runs the standard corpus once and keeps WPM canonica
   strictEqual(canonical.calls.length, 1);
   strictEqual((await body(await fetch(`${ui.url}/api/v1/voice-profiles`))).length, 1);
 
-  const secondRun = await body(await fetch(`${ui.url}/api/v1/calibration-runs/dry-run`, { method: "POST", headers: nonceHeaders, body: JSON.stringify({ workspaceId: "local-default", voiceRef: "voice-1", params: { model_id: "eleven_v3", voice_settings: { stability: 0.5, similarity_boost: 0.85 }, mode: "precision", language: "fr", runs: 3 }, postproc: "cut" }) }));
+  const blockedResponse = await fetch(`${ui.url}/api/v1/calibration-runs/dry-run`, { method: "POST", headers: nonceHeaders, body: JSON.stringify({ workspaceId: "local-default", voiceRef: "voice-1", params: { model_id: "eleven_v3", voice_settings: { stability: 0.5, similarity_boost: 0.85 }, mode: "precision", language: "fr", runs: 3 }, postproc: "cut" }) });
+  strictEqual(blockedResponse.status, 409);
+  match((await body(blockedResponse)).error.message, /déjà un profil de calibrage publié/i);
+
+  const secondRunResponse = await fetch(`${ui.url}/api/v1/calibration-runs/dry-run`, { method: "POST", headers: nonceHeaders, body: JSON.stringify({ workspaceId: "local-default", voiceRef: "voice-2", params: { model_id: "eleven_v3", voice_settings: { stability: 0.5, similarity_boost: 0.85 }, mode: "precision", language: "fr", runs: 3 }, postproc: "cut" }) });
+  strictEqual(secondRunResponse.status, 201);
+  const secondRun = await body(secondRunResponse);
   await body(await fetch(`${ui.url}/api/v1/calibration-runs/${secondRun.id}/approve`, { method: "POST", headers: nonceHeaders, body: JSON.stringify({ requestDigest: secondRun.requestDigest }) }));
   const originalExecutionCount = bridge.state.executions.length;
   const duplicate = await fetch(`${ui.url}/api/v1/calibration-runs/${run.id}/execute`, { method: "POST", headers: nonceHeaders, body: "{}" });

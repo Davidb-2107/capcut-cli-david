@@ -15,7 +15,6 @@ test("calibration UI is built and same-origin", () => {
     "Préparer",
     "Simulation (dry-run)",
     "Résultat",
-    "Profils",
     "ID de voix ElevenLabs",
     "Collez l’identifiant unique de la voix",
     "pas le nom affiché",
@@ -33,6 +32,9 @@ test("calibration UI is built and same-origin", () => {
     "Protocole standard appliqué automatiquement",
     "garantir la comparabilité",
   ]) ok(html.includes(label));
+  ok(!html.includes('data-view="profiles"'), "calibration UI must not expose the backend profiles view");
+  ok(!html.includes('id="view-profiles"'), "calibration UI must not expose the backend profiles view");
+  ok(!html.includes('id="profiles-list"'), "calibration UI must not expose the raw profiles list");
   for (const id of ["add-item", "save-corpus", "publish-corpus", "schema-fields", "postproc", "model_id"])
     ok(!html.includes(`id="${id}"`), `calibration UI must not expose ${id}`);
   ok(!html.includes('name="voice_id"'), "calibration UI must not expose a redundant voice_id field");

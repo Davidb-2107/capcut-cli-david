@@ -20,7 +20,16 @@ const state: {
   run: JsonRecord | null;
   voiceName: string | null;
   voiceNameStatus: "idle" | "loading" | "loaded" | "unavailable";
-} = { nonce: null, bootstrap: null, corpus: null, run: null, voiceName: null, voiceNameStatus: "idle" };
+  executionInProgress: boolean;
+} = {
+  nonce: null,
+  bootstrap: null,
+  corpus: null,
+  run: null,
+  voiceName: null,
+  voiceNameStatus: "idle",
+  executionInProgress: false,
+};
 
 const element = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
@@ -28,10 +37,6 @@ function showStatus(message: string, error = false): void {
   const target = element<HTMLElement>("status");
   target.textContent = message;
   target.className = error ? "danger" : "muted";
-}
-
-function json(value: unknown): string {
-  return JSON.stringify(value, null, 2);
 }
 
 function appendResultDetail(target: HTMLElement, label: string, value: unknown, suffix = ""): void {
@@ -228,13 +233,15 @@ function renderCorpus(): void {
 function renderRun(): void {
   const run = state.run;
   const status = run ? String(run.status) : "";
-  const stateMessage = {
-    dry_run_ready: "Simulation prête à être approuvée.",
-    approved: "Simulation approuvée. Le calibrage réel n’est pas encore lancé.",
-    succeeded: "Calibrage réel terminé.",
-    failed: "Le calibrage réel a échoué.",
-    execution_unknown: "L’état du calibrage réel doit être vérifié.",
-  }[status];
+  const stateMessage = state.executionInProgress
+    ? "Calibrage réel en cours…"
+    : {
+        dry_run_ready: "Simulation prête à être approuvée.",
+        approved: "Simulation approuvée. Le calibrage réel n’est pas encore lancé.",
+        succeeded: "Calibrage réel terminé.",
+        failed: "Le calibrage réel a échoué.",
+        execution_unknown: "L’état du calibrage réel doit être vérifié.",
+      }[status];
   element<HTMLElement>("dry-run-state").textContent = run
     ? (stateMessage ?? `État : ${status}`)
     : "Aucune simulation préparée. Retournez dans « Préparer » pour commencer.";
@@ -252,7 +259,9 @@ function renderRun(): void {
       raw.estimated_cost_usd === undefined ? "" : `coût estimé : ${String(raw.estimated_cost_usd)} USD`,
     ].filter(Boolean);
     const nextStep =
-      status === "approved"
+      state.executionInProgress
+        ? "Le calibrage réel est en cours. Ne fermez pas cette page."
+        : status === "approved"
         ? "Le calibrage réel n’est pas encore lancé."
         : status === "succeeded"
           ? "Le calibrage réel est terminé. Consultez l’onglet Résultat."
@@ -261,8 +270,17 @@ function renderRun(): void {
             : "Vérifiez le récapitulatif puis approuvez la simulation.";
     summary.textContent = `Simulation préparée${details.length ? ` · ${details.join(" · ")}` : ""}. ${nextStep}`;
   }
-  element<HTMLButtonElement>("approve").disabled = !run || run.status !== "dry_run_ready";
-  element<HTMLButtonElement>("execute").disabled = !run || run.status !== "approved";
+  const approveButton = element<HTMLButtonElement>("approve");
+  approveButton.disabled = state.executionInProgress || !run || run.status !== "dry_run_ready";
+  const executeButton = element<HTMLButtonElement>("execute");
+  executeButton.disabled = state.executionInProgress || !run || run.status !== "approved";
+  executeButton.textContent = state.executionInProgress ? "Calibrage en cours…" : "Lancer le calibrage réel";
+  executeButton.setAttribute("aria-busy", String(state.executionInProgress));
+  const executionProgress = element<HTMLElement>("execution-progress");
+  executionProgress.hidden = !state.executionInProgress;
+  executionProgress.textContent = state.executionInProgress
+    ? "Les audios sont en cours de génération par ElevenLabs. Ne fermez pas cette page."
+    : "";
   renderResult();
   const publishButton = element<HTMLButtonElement>("publish-profile");
   const profilePublished = profilePublishedForRun(run);
@@ -300,7 +318,6 @@ async function refresh(): Promise<void> {
   const corpus = await api("/corpus");
   state.corpus = corpus.body as JsonRecord;
   renderCorpus();
-  element<HTMLElement>("profiles-list").textContent = json(state.bootstrap.profiles ?? []);
   renderRun();
   if (!hadRun && state.run) {
     activateView(
@@ -350,8 +367,11 @@ async function approve(): Promise<void> {
 }
 
 async function execute(): Promise<void> {
-  if (!state.run) return;
+  if (!state.run || state.executionInProgress) return;
   const runId = String(state.run.id);
+  state.executionInProgress = true;
+  renderRun();
+  showStatus("Calibrage réel en cours… Les audios sont en cours de génération. Ne fermez pas cette page.");
   try {
     state.run = (await api(`/calibration-runs/${runId}/execute`, { method: "POST", body: "{}" })).body as JsonRecord;
     if (["succeeded", "failed", "execution_unknown"].includes(String(state.run.status))) {
@@ -379,6 +399,9 @@ async function execute(): Promise<void> {
       // Keep the original execute error visible when the recovery read also fails.
     }
     throw error;
+  } finally {
+    state.executionInProgress = false;
+    renderRun();
   }
 }
 

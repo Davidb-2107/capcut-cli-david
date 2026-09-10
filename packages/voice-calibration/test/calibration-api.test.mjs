@@ -206,6 +206,7 @@ export function fakeCanonicalProfilePort(options = {}) {
   const calls = [];
   return {
     calls,
+    async findPublished() { return options.published ?? null; },
     async ensurePublished(inputValue) {
       calls.push(structuredClone(inputValue));
       if (options.error) throw new Error(options.error);
@@ -373,6 +374,33 @@ test("prepareDryRun refuses calibration without an active published corpus", asy
   const app = makeApplication({ repositories: memoryRepositories(), bridge, canonical: fakeCanonicalProfilePort() });
   await rejects(app.prepareDryRun(input), /active published corpus/);
   strictEqual(bridge.state.dryRuns.length, 0);
+});
+
+test("prepareDryRun refuses a voice with an existing canonical calibration before any provider proposal", async () => {
+  const repositories = memoryRepositories();
+  await publishCorpus(repositories);
+  const bridge = fakeBridge();
+  const app = makeApplication({
+    repositories,
+    bridge,
+    canonical: fakeCanonicalProfilePort({
+      published: { canonicalRef: "python://voice_wpm/voice-1", wpm: 172.5 },
+    }),
+  });
+
+  await rejects(app.prepareDryRun(input), /déjà un calibrage publié/i);
+  strictEqual(bridge.state.dryRuns.length, 0);
+});
+
+test("prepareDryRun refuses a second pending calibration for the same voice", async () => {
+  const repositories = memoryRepositories();
+  await publishCorpus(repositories);
+  const bridge = fakeBridge();
+  const app = makeApplication({ repositories, bridge, canonical: fakeCanonicalProfilePort() });
+
+  await app.prepareDryRun(input);
+  await rejects(app.prepareDryRun(input), /calibrage est déjà en cours/i);
+  strictEqual(bridge.state.dryRuns.length, 1);
 });
 
 test("the backend fixes MVP precision calibration to five runs", async () => {
