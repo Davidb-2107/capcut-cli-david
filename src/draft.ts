@@ -105,32 +105,83 @@ export function findDraft(input: string): string {
   throw new Error(`No draft found at: ${input}\nExpected draft_content.json or draft_info.json`);
 }
 
-let rawOriginal: string | null = null;
+// --- DraftStore port -------------------------------------------------------
+//
+// The seam between draft domain logic and persistence. `LoadedDraft` carries
+// everything save() needs (path, original bytes) so no module-global state is
+// required — two drafts loaded in parallel no longer interfere. The legacy
+// loadDraft/saveDraft functions below delegate to a process-wide default store
+// so existing call sites keep working unchanged while commands migrate to
+// injected stores (see D2+D3).
 
+export interface LoadedDraft {
+  draft: Draft;
+  filePath: string;
+  /** Original file bytes (BOM stripped) as loaded — preserved for .bak and indent fidelity. */
+  raw: string;
+}
+
+export interface DraftStore {
+  load(path: string): LoadedDraft;
+  save(loaded: LoadedDraft): void;
+}
+
+export class LocalDraftStore implements DraftStore {
+  load(path: string): LoadedDraft {
+    const filePath = findDraft(path);
+    // Tolerate a UTF-8 BOM: external Windows tools (PowerShell Set-Content) add
+    // one and JSON.parse rejects it. save() re-serializes, so it never persists.
+    let raw = readFileSync(filePath, "utf-8");
+    if (raw.charCodeAt(0) === 0xfeff) raw = raw.slice(1);
+    return { draft: JSON.parse(raw) as Draft, filePath, raw };
+  }
+
+  save(loaded: LoadedDraft): void {
+    const { draft, filePath, raw } = loaded;
+    const draftDir = dirname(filePath);
+    const identity = normalizeTimelineIdentity(draftDir, draft.id);
+    const bakPath = `${filePath}.bak`;
+    if (existsSync(filePath)) {
+      writeFileSync(bakPath, raw, "utf-8");
+    }
+    // Detect original indent: if first line after { starts with tab use tab, else count spaces
+    const serialized = JSON.stringify(draft, null, detectIndent(raw));
+    writeFileSync(filePath, serialized, "utf-8");
+    if (identity.renamed) syncTimelineRootBytes(draftDir, serialized);
+  }
+}
+
+/**
+ * Serialize + persist a loaded draft with full fidelity (.bak backup, original
+ * indent, timeline-dir rename + root-bytes sync). Pass the raw bytes captured
+ * at load time when available; pass "" when the draft was created in-memory
+ * (initDraft) — indent then falls back to 0 and no meaningful .bak diff exists.
+ */
+export function persistDraft(store: DraftStore, filePath: string, draft: Draft, raw = ""): void {
+  store.save({ draft, filePath, raw });
+}
+
+const defaultStore = new LocalDraftStore();
+
+/** @deprecated Prefer an injected DraftStore. Kept as a thin facade over the default LocalDraftStore. */
 export function loadDraft(path: string): { draft: Draft; filePath: string } {
-  const filePath = findDraft(path);
-  // Tolerate a UTF-8 BOM: external Windows tools (PowerShell Set-Content) add
-  // one and JSON.parse rejects it. saveDraft re-serializes, so it never persists.
-  rawOriginal = readFileSync(filePath, "utf-8");
-  if (rawOriginal.charCodeAt(0) === 0xfeff) rawOriginal = rawOriginal.slice(1);
-  const draft = JSON.parse(rawOriginal) as Draft;
+  const { draft, filePath, raw } = defaultStore.load(path);
+  loadedByPath.set(filePath, raw);
   return { draft, filePath };
 }
 
+/** @deprecated Prefer an injected DraftStore. Kept as a thin facade over the default LocalDraftStore. */
 export function saveDraft(filePath: string, draft: Draft): void {
-  const draftDir = dirname(filePath);
-  const identity = normalizeTimelineIdentity(draftDir, draft.id);
-  const bakPath = `${filePath}.bak`;
-  if (existsSync(filePath)) {
-    const original = rawOriginal ?? readFileSync(filePath, "utf-8");
-    writeFileSync(bakPath, original, "utf-8");
-  }
-  // Detect original indent: if first line after { starts with tab use tab, else count spaces
-  const indent = detectIndent(rawOriginal);
-  const serialized = JSON.stringify(draft, null, indent);
-  writeFileSync(filePath, serialized, "utf-8");
-  if (identity.renamed) syncTimelineRootBytes(draftDir, serialized);
+  // Facade path: recover the raw bytes captured by the matching loadDraft so
+  // behaviour (backup + indent fidelity) is identical to the store path.
+  const raw = loadedByPath.get(filePath) ?? (existsSync(filePath) ? readFileSync(filePath, "utf-8") : "");
+  defaultStore.save({ draft, filePath, raw });
+  loadedByPath.delete(filePath);
 }
+
+// Facade bookkeeping only: maps filePath -> raw bytes captured by loadDraft.
+// Not semantically load-bearing — the store itself holds no state.
+const loadedByPath = new Map<string, string>();
 
 function detectIndent(raw: string | null): string | number {
   if (!raw) return 0;
