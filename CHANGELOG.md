@@ -16,15 +16,15 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 #### Added
 - `cascade-words` resolves a readable font from the catalogue/drafts and measures OpenType layout for line wrapping and word placement. `--clone-style` remains a supported fallback when its guide style is readable and linear.
 - `fontkit` is now the first production runtime dependency, and generated text materials receive a consistent font identity and effective size.
-- **`packages/voice-calibration`** — the ElevenLabs calibration subsystem (dry-run → approval → execute → WPM publication) now lives in its own npm workspace with its own package identity (`voice-calibration`, bin `voice-calibration`, public API exported from the package root). The calibration docs moved with it (`packages/voice-calibration/docs/`).
 
 #### Changed
 - `cascade-words` uses measured widths and measured prefixes; the effective size priority is explicit `--font-size`, cloned style, `material.font_size`, then `15`.
 - Font parsing, validation and layout planning happen before draft mutation, so malformed or unreadable font inputs fail without partially writing the draft.
-- `capcut-david calibration-ui` is now a thin adapter delegating to the `voice-calibration` workspace package; `npm run build` builds the package first. The CLI keeps a single bin (`capcut-david`); the standalone `voice-calibration` bin ships via the workspace (`npm link` inside `packages/voice-calibration`).
+- **`voice-calibration` moved out of this repo** into its own repository at [`Davidb-2107/voice-calibration`](https://github.com/Davidb-2107/voice-calibration) (`C:\Users\dbele\src\voice-calibration` locally). `capcut-david calibration-ui` remains a thin adapter that imports the `voice-calibration` package (linked via `npm link` for development, `file:../voice-calibration` in `package.json`). The CLI no longer builds the package; it consumes its built `dist/`. The CLI keeps a single bin (`capcut-david`); the standalone `voice-calibration` bin ships from its own repo.
 
 #### Removed
 - `--max-chars` was removed. Existing invocations must select a font (or use a valid `--clone-style`) and rely on measured wrapping instead of character counts.
+- The `packages/voice-calibration` npm workspace and the `npm run build -w voice-calibration` build step (moved to the standalone repository).
 
 #### Compatibility gate
 - The OpenType-to-CapCut scale still requires a real CapCut/cutcli calibration and visual render check; no empirical scale factor is claimed until [`docs/cascade-words-font-calibration.md`](./docs/cascade-words-font-calibration.md) records that result.

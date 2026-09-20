@@ -16,15 +16,16 @@ In-repo documentation for the `capcut-david` CLI. Start with
 
 ## Voice calibration (ElevenLabs)
 
-The calibration subsystem lives in its own npm workspace —
-[`packages/voice-calibration/`](../packages/voice-calibration/) — including its docs:
+The calibration subsystem lives in its own repository —
+[`Davidb-2107/voice-calibration`](https://github.com/Davidb-2107/voice-calibration)
+(locally `C:\Users\dbele\src\voice-calibration`) — including its docs:
 
 | Path | What it covers |
 |------|----------------|
-| [`packages/voice-calibration/README.md`](../packages/voice-calibration/README.md) | Launch, guarantees, architecture overview |
-| [`packages/voice-calibration/docs/calibration-mvp.md`](../packages/voice-calibration/docs/calibration-mvp.md) | User journey, protocol and guarantees of the local calibration MVP |
-| [`packages/voice-calibration/docs/calibration-architecture.md`](../packages/voice-calibration/docs/calibration-architecture.md) | Architecture (ports & adapters), HTTP API, storage, execution invariants; what a SaaS evolution replaces |
-| [`packages/voice-calibration/docs/elevenlabs-calibration-contract-inventory.md`](../packages/voice-calibration/docs/elevenlabs-calibration-contract-inventory.md) | Observed contract of the Python calibration core (with SHA256 digests of `Shared/voice-calibration/` files) |
+| [`voice-calibration/README.md`](https://github.com/Davidb-2107/voice-calibration/blob/main/README.md) | Launch, guarantees, architecture overview |
+| [`voice-calibration/docs/calibration-mvp.md`](https://github.com/Davidb-2107/voice-calibration/blob/main/docs/calibration-mvp.md) | User journey, protocol and guarantees of the local calibration MVP |
+| [`voice-calibration/docs/calibration-architecture.md`](https://github.com/Davidb-2107/voice-calibration/blob/main/docs/calibration-architecture.md) | Architecture (ports & adapters), HTTP API, storage, execution invariants; what a SaaS evolution replaces |
+| [`voice-calibration/docs/elevenlabs-calibration-contract-inventory.md`](https://github.com/Davidb-2107/voice-calibration/blob/main/docs/elevenlabs-calibration-contract-inventory.md) | Observed contract of the Python calibration core (with SHA256 digests of `Shared/voice-calibration/` files) |
 
 ## Cascade words & font metrics
 

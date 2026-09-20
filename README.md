@@ -121,8 +121,8 @@ localement est une projection traçable, pas une seconde source de vérité. L�
 ou skill `calibrate-voice` reste
 l’entrée manuelle/agent et appelle le même outil MCP `calibrate_voice` ; cette
 interface est un client supplémentaire, pas un remplacement. Le contrat
-effectif est inventorié dans
-[`packages/voice-calibration/docs/elevenlabs-calibration-contract-inventory.md`](./packages/voice-calibration/docs/elevenlabs-calibration-contract-inventory.md).
+effectif est inventorié dans le dépôt autonome `voice-calibration`
+([`docs/elevenlabs-calibration-contract-inventory.md`](https://github.com/Davidb-2107/voice-calibration/blob/main/docs/elevenlabs-calibration-contract-inventory.md)).
 
 Le gate d’approbation persistant est porté par le cœur Python : il expose les
 opérations `propose`, `approve`, `execute`, `get` et `reconcile`, en figeant le
