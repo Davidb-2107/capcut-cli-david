@@ -3,6 +3,7 @@ import { copyFileSync, existsSync, writeFileSync } from "node:fs";
 import { basename, dirname, resolve } from "node:path";
 import type { Draft } from "../draft.js";
 import { buildDraftMetaInfo } from "../utils/draft-meta.js";
+import { writeFileAtomic } from "../utils/atomic-write.js";
 
 // init-meta — generates the missing draft_meta_info.json that validate's
 // meta.missing detects (without it a draft is invisible in CapCut and register
@@ -50,5 +51,6 @@ export function applyInitMeta(plan: InitMetaPlan, metaPath: string): void {
     copyFileSync(metaPath, `${metaPath}.bak`);
     process.stderr.write(`WARNING init-meta overwrote an existing draft_meta_info.json (backup: ${metaPath}.bak).\n`);
   }
-  writeFileSync(metaPath, JSON.stringify(plan.meta, null, 0), "utf-8");
+  // Audit CLI-M3: atomic final write (the .bak above stays the recovery path).
+  writeFileAtomic(metaPath, JSON.stringify(plan.meta, null, 0));
 }

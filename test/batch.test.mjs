@@ -205,14 +205,14 @@ test("batch: whitespace and empty lines are skipped, only valid op counted", (t)
 
 // --- Test 7: unknown cmd → failed=1, op error in stderr --------------------
 
-test("batch: unknown op cmd is counted as failed (status=0, stderr error)", (t) => {
+test("batch: unknown op cmd is counted as failed (ok:false, exit 1)", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
 
   const jsonl = `${JSON.stringify({ cmd: "nonexistent", id: "x" })}\n`;
   const r = runCli(["batch", filePath], { input: jsonl });
 
-  strictEqual(r.status, 0, `expected exit 0, stderr: ${r.stderr}`);
-  deepStrictEqual(r.json, { ok: true, succeeded: 0, failed: 1 });
+  strictEqual(r.status, 1, `expected exit 1, stderr: ${r.stderr}`);
+  deepStrictEqual(r.json, { ok: false, succeeded: 0, failed: 1 });
   ok(
     r.stderr.includes("Unknown batch command: nonexistent"),
     `stderr should mention unknown cmd, got: ${r.stderr}`,
@@ -228,8 +228,8 @@ test("batch: set-text without text is failed with descriptive error", (t) => {
   const jsonl = `${JSON.stringify({ cmd: "set-text", id: seg.id })}\n`;
   const r = runCli(["batch", filePath], { input: jsonl });
 
-  strictEqual(r.status, 0, `expected exit 0, stderr: ${r.stderr}`);
-  deepStrictEqual(r.json, { ok: true, succeeded: 0, failed: 1 });
+  strictEqual(r.status, 1, `expected exit 1, stderr: ${r.stderr}`);
+  deepStrictEqual(r.json, { ok: false, succeeded: 0, failed: 1 });
   ok(
     r.stderr.includes("batch set-text requires id and text"),
     `stderr should mention missing text, got: ${r.stderr}`,
@@ -256,8 +256,8 @@ test("batch: malformed JSON line is counted as failed", (t) => {
   const jsonl = "not json\n";
   const r = runCli(["batch", filePath], { input: jsonl });
 
-  strictEqual(r.status, 0, `expected exit 0, stderr: ${r.stderr}`);
-  deepStrictEqual(r.json, { ok: true, succeeded: 0, failed: 1 });
+  strictEqual(r.status, 1, `expected exit 1, stderr: ${r.stderr}`);
+  deepStrictEqual(r.json, { ok: false, succeeded: 0, failed: 1 });
   // stderr line is `{"error":"<JSON parse msg>","line":"not json"}`
   ok(
     r.stderr.includes(`"line":"not json"`),
@@ -276,8 +276,8 @@ test("batch: mixed valid + invalid ops yields succeeded=1, failed=1", (t) => {
     `${JSON.stringify({ cmd: "shift-all" })}\n`; // missing offset → die() in op
 
   const r = runCli(["batch", filePath], { input: jsonl });
-  strictEqual(r.status, 0, `expected exit 0, stderr: ${r.stderr}`);
-  deepStrictEqual(r.json, { ok: true, succeeded: 1, failed: 1 });
+  strictEqual(r.status, 1, `expected exit 1, stderr: ${r.stderr}`);
+  deepStrictEqual(r.json, { ok: false, succeeded: 1, failed: 1 });
 
   // Valid op still applied.
   const after = reloadDraft(filePath);

@@ -133,6 +133,23 @@ jobs:
         run: python test-fixtures/_final_integrity.py
 
   # ---------------------------------------------------------------------------
+  # Secrets scan (audit CLI-M1) - fail the build if a credential is committed.
+  # ---------------------------------------------------------------------------
+  secrets-scan:
+    name: Secrets scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for committed secrets
+        shell: bash
+        run: |
+          if git grep -nI -E "(ELEVENLABS_API_KEY[[:space:]]*=[[:space:]]*[^\"$(]|sk-[A-Za-z0-9]{20,}|xi-api-key[[:space:]]*:[[:space:]]*[^\"$(])" -- . ":!package-lock.json" ":!*.md"; then
+            echo "::error::Secret-like pattern found in tracked files"
+            exit 1
+          fi
+          echo "No secrets detected."
+  # ---------------------------------------------------------------------------
   # CI gate — single required check for branch protection rules.
   # Aggregates the three job groups; if any fails the gate fails.
   # ---------------------------------------------------------------------------

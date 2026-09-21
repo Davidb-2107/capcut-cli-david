@@ -5,6 +5,7 @@ import { assertCapCutClosed } from "../utils/capcut-guard.js";
 import { CliError, die, type Flags, out } from "../utils/cli.js";
 import { applyInitMeta, planInitMeta } from "./init-meta.js";
 import { registerDraft } from "./register.js";
+import { readFileCapped } from "../utils/safe-io.js";
 
 export function cmdInitMeta(positional: string[], flags: Flags): void {
   const input = positional[1];
@@ -22,7 +23,7 @@ export function cmdInitMeta(positional: string[], flags: Flags): void {
 
   let draft: Draft;
   try {
-    draft = JSON.parse(readFileSync(draftFile, "utf-8")) as Draft;
+    draft = JSON.parse(readFileCapped(draftFile)) as Draft;
   } catch (e) {
     throw new CliError(`unreadable draft_content.json: ${e instanceof Error ? e.message : String(e)}`);
   }

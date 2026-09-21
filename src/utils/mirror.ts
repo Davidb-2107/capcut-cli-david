@@ -6,6 +6,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { listTimelineDirs } from "./timelines.js";
+import { writeFileAtomic } from "./atomic-write.js";
 
 export interface FontMirror {
   /** Absolute path to the .ttf, as written into font_path + content.styles[].font.path. */
@@ -153,7 +154,7 @@ export function mirrorFont(
 
   // Runtime mirrors of the primary draft — Python writes the NEW content here.
   for (const sib of ["template-2.tmp", "draft_content.json.bak"]) {
-    writeFileSync(join(draftDir, sib), newJson, "utf-8");
+    writeFileAtomic(join(draftDir, sib), newJson);
     written.push(sib);
   }
 
@@ -176,7 +177,7 @@ export function mirrorFont(
         continue;
       }
       if (walkPatch(data, font)) {
-        writeFileSync(p, JSON.stringify(data), "utf-8");
+        writeFileAtomic(p, JSON.stringify(data));
         written.push(`Timelines/${uuid}/${rel.replace(/\\/g, "/")}`);
       }
     }
@@ -193,7 +194,7 @@ export function mirrorFont(
     }
     if (data && typeof data === "object") {
       (data as Record<string, unknown>)[font.resourceId] = kvEntry;
-      writeFileSync(kvPath, JSON.stringify(data), "utf-8");
+      writeFileAtomic(kvPath, JSON.stringify(data));
       written.push("key_value.json");
     }
   }

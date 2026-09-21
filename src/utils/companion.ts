@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { CliError } from "./cli.js";
 import type { Draft, Segment, Timerange } from "../draft.js";
 
 let uuidProvider: (() => string) | null = null;
@@ -15,6 +16,9 @@ export function uuid(): string {
 
 export function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace("#", "");
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) {
+    throw new CliError(`Invalid hex color: ${hex}. Expected format: #RRGGBB (e.g. #FFD700).`);
+  }
   return [parseInt(h.slice(0, 2), 16) / 255, parseInt(h.slice(2, 4), 16) / 255, parseInt(h.slice(4, 6), 16) / 255];
 }
 

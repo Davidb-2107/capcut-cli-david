@@ -9,6 +9,7 @@ import { secondsToUs } from "../utils/time.js";
 import { addAudio, addText, addVideo, initDraft } from "./create.js";
 import { applyKenBurns } from "./keyframe.js";
 import { registerDraft } from "./register.js";
+import { readFileCapped } from "../utils/safe-io.js";
 
 // =============================================================
 // YAML (subset) parser
@@ -641,7 +642,7 @@ export function psychoBuild(
   if (!existsSync(manifestPath)) die(`Manifest not found: ${manifestPath}`);
   const manifestAbs = resolve(manifestPath);
   const manifestDir = dirname(manifestAbs);
-  const raw = readFileSync(manifestAbs, "utf-8");
+  const raw = readFileCapped(manifestAbs);
   const parsed = parseYaml(raw);
   const manifest = validateManifest(parsed);
 
@@ -712,7 +713,7 @@ export function psychoBuild(
     if (manifest.captions) {
       const srtPath = resolveAsset(manifest.captions.srt, manifestDir);
       if (!existsSync(srtPath)) die(`Captions SRT not found: ${srtPath}`);
-      const srtText = readFileSync(srtPath, "utf-8");
+      const srtText = readFileCapped(srtPath);
       const entries = parseSrt(srtText);
       const style = manifest.captions.style ?? {};
       for (const e of entries) {

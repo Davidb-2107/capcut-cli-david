@@ -47,6 +47,7 @@ export function parseTimeInput(input: string): number {
     } else {
       totalSec = parseInt(parts[0], 10) * 60 + parseFloat(parts[1]);
     }
+    if (Number.isNaN(totalSec)) throw new Error(`Invalid time: ${input}`);
     return (negative ? -1 : 1) * secondsToUs(totalSec);
   }
   const val = parseFloat(clean);

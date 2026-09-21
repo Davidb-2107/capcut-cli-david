@@ -654,7 +654,9 @@ async function main(): Promise<void> {
       cmdApplyTemplate(draft, filePath, positional, flags);
       break;
     case "batch":
-      cmdBatch(draft, filePath, flags);
+      // Audit CLI-M6: partial save is by design, but the exit code must not
+      // claim success when ops failed (ok:false + exit 1 keeps report honest).
+      process.exit(cmdBatch(draft, filePath, flags));
       break;
     case "add-keyframe":
       if (flags.batch !== undefined) {

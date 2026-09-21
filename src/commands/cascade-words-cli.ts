@@ -5,6 +5,7 @@ import { type FontCalibrationProfile, parseFontCalibrationProfiles } from "../ut
 import { resolveFontReference } from "../utils/font-resolver.js";
 import { cascadeWords } from "./cascade-words.js";
 import type { CaptionCard } from "./create.js";
+import { readFileCapped } from "../utils/safe-io.js";
 
 export function cmdCascadeWords(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
   const jsonPath = positional[2];
@@ -16,7 +17,7 @@ export function cmdCascadeWords(draft: Draft, filePath: string, positional: stri
   if (!existsSync(jsonPath)) die(`Cards file not found: ${jsonPath}`);
   let cards: CaptionCard[];
   try {
-    cards = JSON.parse(readFileSync(jsonPath, "utf-8")) as CaptionCard[];
+    cards = JSON.parse(readFileCapped(jsonPath)) as CaptionCard[];
   } catch (e) {
     die(`Invalid JSON in ${jsonPath}: ${(e as Error).message}`);
   }

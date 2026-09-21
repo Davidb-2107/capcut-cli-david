@@ -5,6 +5,7 @@ import { defaultProjectsRoot, resolveTemplateDir } from "../utils/capcut-paths.j
 import { die, type Flags, out } from "../utils/cli.js";
 import { hexToRgb } from "../utils/companion.js";
 import { parseTimeInput } from "../utils/time.js";
+import { readFileCapped } from "../utils/safe-io.js";
 import {
   type AddAudioOptions,
   addAudio,
@@ -134,7 +135,7 @@ export function readBatchItems(spec: string, verb: string): MediaBatchItem[] {
   if (!existsSync(p)) die(`--batch file not found: ${p}`);
   let parsed: unknown;
   try {
-    parsed = JSON.parse(readFileSync(p, "utf-8"));
+    parsed = JSON.parse(readFileCapped(p));
   } catch (e) {
     die(`--batch file is not valid JSON (${p}): ${e instanceof Error ? e.message : String(e)}`);
   }
@@ -275,7 +276,7 @@ export function cmdImportCaptions(draft: Draft, filePath: string, positional: st
   if (!existsSync(jsonPath)) die(`Captions file not found: ${jsonPath}`);
   let cards: CaptionCard[];
   try {
-    cards = JSON.parse(readFileSync(jsonPath, "utf-8")) as CaptionCard[];
+    cards = JSON.parse(readFileCapped(jsonPath)) as CaptionCard[];
   } catch (e) {
     die(`Invalid JSON in ${jsonPath}: ${(e as Error).message}`);
   }
