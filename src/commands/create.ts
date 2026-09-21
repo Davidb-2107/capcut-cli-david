@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync, cpSync } from "node:fs";
+import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, resolve } from "node:path";
 import { type Draft, findSegment, type Segment, type Timerange, type Track } from "../draft.js";
 import { die } from "../utils/cli.js";
