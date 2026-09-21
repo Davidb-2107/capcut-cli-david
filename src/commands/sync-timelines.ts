@@ -1,7 +1,7 @@
-import { copyFileSync, existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, readFileSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { listTimelineDirs, normalizeTimelineIdentity } from "../utils/timelines.js";
 import { writeFileAtomic } from "../utils/atomic-write.js";
+import { listTimelineDirs, normalizeTimelineIdentity } from "../utils/timelines.js";
 
 // sync-timelines — the WRITE verb that repairs the divergence validate's
 // read-only `timelines.divergence` detects. CapCut, once it opens a draft,

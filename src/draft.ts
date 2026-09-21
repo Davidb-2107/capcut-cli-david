@@ -1,8 +1,8 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { writeFileAtomic } from "./utils/atomic-write.js";
 import { CliError } from "./utils/cli.js";
 import { normalizeTimelineIdentity, syncTimelineRootBytes } from "./utils/timelines.js";
-import { writeFileAtomic } from "./utils/atomic-write.js";
 
 export interface Timerange {
   start: number;
@@ -290,9 +290,7 @@ export function findMaterialGlobal(
   }
   if (matches.length > 1) {
     // Audit CLI-N8: refuse to guess between ambiguous material matches.
-    throw new CliError(
-      `Ambiguous material prefix: ${id} matches ${matches.length} materials. Use a longer id.`,
-    );
+    throw new CliError(`Ambiguous material prefix: ${id} matches ${matches.length} materials. Use a longer id.`);
   }
   return matches[0] ?? null;
 }

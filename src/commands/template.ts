@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { type Draft, findMaterialGlobal, type Segment, type Track } from "../draft.js";
 import { CliError } from "../utils/cli.js";
 import { createCompanionMaterials, registerCompanions, uuid } from "../utils/companion.js";
@@ -32,9 +32,7 @@ export function saveTemplate(draft: Draft, segId: string, name: string, outPath:
   }
   if (matches.length > 1) {
     // Audit CLI-N8: refuse ambiguous prefix for a destructive save.
-    throw new CliError(
-      `Ambiguous segment prefix: ${segId} matches ${matches.length} segments. Use a longer id.`,
-    );
+    throw new CliError(`Ambiguous segment prefix: ${segId} matches ${matches.length} segments. Use a longer id.`);
   }
   const foundSeg = matches[0]?.seg ?? null;
   const foundTrack = matches[0]?.track ?? null;

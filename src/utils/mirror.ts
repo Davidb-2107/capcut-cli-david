@@ -3,10 +3,10 @@
 // registry) + restyle.py's template-2.tmp/.bak mirror. All targets are
 // skip-if-absent; key_value.json is never fabricated (parity with the Python
 // preflight that requires it to pre-exist).
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { listTimelineDirs } from "./timelines.js";
 import { writeFileAtomic } from "./atomic-write.js";
+import { listTimelineDirs } from "./timelines.js";
 
 export interface FontMirror {
   /** Absolute path to the .ttf, as written into font_path + content.styles[].font.path. */

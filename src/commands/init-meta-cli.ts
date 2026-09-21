@@ -1,11 +1,11 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { type Draft, findDraft } from "../draft.js";
 import { assertCapCutClosed } from "../utils/capcut-guard.js";
 import { CliError, die, type Flags, out } from "../utils/cli.js";
+import { readFileCapped } from "../utils/safe-io.js";
 import { applyInitMeta, planInitMeta } from "./init-meta.js";
 import { registerDraft } from "./register.js";
-import { readFileCapped } from "../utils/safe-io.js";
 
 export function cmdInitMeta(positional: string[], flags: Flags): void {
   const input = positional[1];

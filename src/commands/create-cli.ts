@@ -1,26 +1,26 @@
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { type Draft, saveDraft } from "../draft.js";
 import { defaultProjectsRoot, resolveTemplateDir } from "../utils/capcut-paths.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { hexToRgb } from "../utils/companion.js";
-import { parseTimeInput } from "../utils/time.js";
 import { readFileCapped } from "../utils/safe-io.js";
+import { parseTimeInput } from "../utils/time.js";
 import {
   type AddAudioOptions,
-  addAudio,
   type AddEffectOptions,
+  type AddTextOptions,
+  type AddVideoOptions,
+  addAudio,
   addEffect,
   addFilter,
   addText,
-  type AddTextOptions,
   addTransition,
-  type AddVideoOptions,
   addVideo,
+  type CaptionCard,
   DEFAULT_HIGHLIGHT_COLOR,
   importCaptions,
   initDraft,
-  type CaptionCard,
   type TextHighlight,
 } from "./create.js";
 

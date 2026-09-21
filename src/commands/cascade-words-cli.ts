@@ -3,9 +3,9 @@ import { type Draft, saveDraft } from "../draft.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { type FontCalibrationProfile, parseFontCalibrationProfiles } from "../utils/font-calibration.js";
 import { resolveFontReference } from "../utils/font-resolver.js";
+import { readFileCapped } from "../utils/safe-io.js";
 import { cascadeWords } from "./cascade-words.js";
 import type { CaptionCard } from "./create.js";
-import { readFileCapped } from "../utils/safe-io.js";
 
 export function cmdCascadeWords(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
   const jsonPath = positional[2];

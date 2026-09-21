@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, resolve } from "node:path";
+import { writeFileAtomic } from "../utils/atomic-write.js";
 import { defaultProjectsRoot, nowUs } from "../utils/capcut-paths.js";
 import { die } from "../utils/cli.js";
-import { writeFileAtomic } from "../utils/atomic-write.js";
 import { readFileCapped } from "../utils/safe-io.js";
 
 // =============================================================

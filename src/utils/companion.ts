@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { CliError } from "./cli.js";
 import type { Draft, Segment, Timerange } from "../draft.js";
+import { CliError } from "./cli.js";
 
 let uuidProvider: (() => string) | null = null;
 

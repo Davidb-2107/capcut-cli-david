@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import { copyFileSync, existsSync, writeFileSync } from "node:fs";
 import { basename, dirname, resolve } from "node:path";
 import type { Draft } from "../draft.js";
-import { buildDraftMetaInfo } from "../utils/draft-meta.js";
 import { writeFileAtomic } from "../utils/atomic-write.js";
+import { buildDraftMetaInfo } from "../utils/draft-meta.js";
 
 // init-meta — generates the missing draft_meta_info.json that validate's
 // meta.missing detects (without it a draft is invisible in CapCut and register

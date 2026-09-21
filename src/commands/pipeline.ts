@@ -1,15 +1,15 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, writeFileSync } from "node:fs";
 import { basename, dirname, isAbsolute, resolve } from "node:path";
 import { loadDraft, saveDraft } from "../draft.js";
 import { resolveTemplateDir as resolveSharedTemplateDir } from "../utils/capcut-paths.js";
 import { die } from "../utils/cli.js";
 import { setUuidProvider } from "../utils/companion.js";
 import { buildDraftMetaInfo } from "../utils/draft-meta.js";
+import { readFileCapped } from "../utils/safe-io.js";
 import { secondsToUs } from "../utils/time.js";
 import { addAudio, addText, addVideo, initDraft } from "./create.js";
 import { applyKenBurns } from "./keyframe.js";
 import { registerDraft } from "./register.js";
-import { readFileCapped } from "../utils/safe-io.js";
 
 // =============================================================
 // YAML (subset) parser
