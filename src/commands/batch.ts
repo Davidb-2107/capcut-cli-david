@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { type Draft, saveDraft } from "../draft.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { readStdinCapped } from "../utils/safe-io.js";

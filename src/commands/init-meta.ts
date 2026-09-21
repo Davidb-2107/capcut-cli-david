@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { copyFileSync, existsSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync } from "node:fs";
 import { basename, dirname, resolve } from "node:path";
 import type { Draft } from "../draft.js";
 import { writeFileAtomic } from "../utils/atomic-write.js";

@@ -17,7 +17,6 @@ import { isCapCutRunning } from "../utils/capcut-guard.js";
 import { defaultProjectsRoot } from "../utils/capcut-paths.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { resolveCataloguePath } from "../utils/vault.js";
-import { extractItems, KINDS, KINDS_LIST, KINDS_SPACED, stripBom } from "./query.js";
 import {
   blank,
   type CatalogueEntry,
@@ -30,6 +29,7 @@ import {
   sortedSet,
   todayUtc,
 } from "./catalogue.js";
+import { extractItems, KINDS, KINDS_LIST, KINDS_SPACED, stripBom } from "./query.js";
 
 /**
  * Same-directory tmp + rename: the rename is atomic on one volume, so a crash
