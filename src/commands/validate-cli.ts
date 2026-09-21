@@ -2,8 +2,8 @@ import { statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type { Draft } from "../draft.js";
 import { type Flags, out } from "../utils/cli.js";
-import { reportExitCode, runValidate, type Severity } from "./validate.js";
 import type { Report } from "./validate.js";
+import { reportExitCode, runValidate, type Severity } from "./validate.js";
 
 interface Envelope extends Report {
   project: string;

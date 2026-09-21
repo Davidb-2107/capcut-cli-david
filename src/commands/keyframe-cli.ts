@@ -4,12 +4,12 @@ import { parseTimeInput } from "../utils/time.js";
 import { readBatchItems } from "./create-cli.js";
 import {
   applyKenBurns,
-  computeKfHandlesAndRetroUpdates,
   type CurveName,
+  computeKfHandlesAndRetroUpdates,
   getOrCreateContainer,
   makeKeyframe,
-  parseValue,
   PROPERTY_MAP,
+  parseValue,
   VALID_CURVES,
 } from "./keyframe.js";
 
