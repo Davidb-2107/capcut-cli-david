@@ -1,6 +1,15 @@
 // I/O + CLI shell for catalogue.ts's pure merge/parse/serialize logic:
 // atomic disk writes, drafts-library scanning, flag parsing, human rendering.
-import { existsSync, readdirSync, readFileSync, realpathSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  renameSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
 import { regenerateCatalogueMirror } from "../ui/catalogue-ui.js";

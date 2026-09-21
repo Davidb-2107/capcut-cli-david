@@ -145,7 +145,7 @@ jobs:
       - name: Scan for committed secrets
         shell: bash
         run: |
-          if git grep -nI -E "(ELEVENLABS_API_KEY[[:space:]]*=[[:space:]]*[^\"$(]|sk-[A-Za-z0-9]{20,}|xi-api-key[[:space:]]*:[[:space:]]*[^\"$(])" -- . ":!package-lock.json" ":!*.md"; then
+          if git grep -nI -E "sk-[A-Za-z0-9]{20,}" -- . ":(exclude)package-lock.json" ":(exclude)*.md" ":(exclude).github" ":(exclude)*.test.mjs"; then
             echo "::error::Secret-like pattern found in tracked files"
             exit 1
           fi

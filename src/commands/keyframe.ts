@@ -119,7 +119,12 @@ export function getOrCreateContainer(segment: Segment, propertyType: string): KF
   return container;
 }
 
-export function makeKeyframe(timeOffset: number, value: number, leftCtrl: ControlPoint, rightCtrl: ControlPoint): Keyframe {
+export function makeKeyframe(
+  timeOffset: number,
+  value: number,
+  leftCtrl: ControlPoint,
+  rightCtrl: ControlPoint,
+): Keyframe {
   return {
     id: uuid().toUpperCase(),
     curveType: "FreeCurveInOut",
