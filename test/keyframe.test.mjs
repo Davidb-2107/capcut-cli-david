@@ -9,7 +9,8 @@ import { readFileSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
-import { cmdAddKeyframe, cmdKenBurns, PROPERTY_MAP, VALID_CURVES } from "../dist/commands/keyframe.js";
+import { cmdAddKeyframe, cmdKenBurns } from "../dist/commands/keyframe-cli.js";
+import { PROPERTY_MAP, VALID_CURVES } from "../dist/commands/keyframe.js";
 import { loadDraft } from "../dist/draft.js";
 
 import { FIXTURES, fixturePath, loadFixture } from "./helpers/load-fixture.mjs";

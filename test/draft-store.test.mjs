@@ -13,7 +13,8 @@ import { tmpDraft } from "./helpers/tmp-draft.mjs";
 import { FIXTURES } from "./helpers/load-fixture.mjs";
 
 const { LocalDraftStore, persistDraft } = await import("../dist/draft.js");
-const { applySetText, applyShiftAll, cmdSetText } = await import("../dist/commands/edit.js");
+const { applySetText, applyShiftAll } = await import("../dist/commands/edit.js");
+const { cmdSetText } = await import("../dist/commands/edit-cli.js");
 
 const noopStore = { load() { throw new Error("not used"); }, save() { /* noop */ } };
 

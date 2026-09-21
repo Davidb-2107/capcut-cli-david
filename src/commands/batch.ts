@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { type Draft, saveDraft } from "../draft.js";
 import { die, type Flags, out } from "../utils/cli.js";
-import { cmdOpacity, cmdSetText, cmdShift, cmdShiftAll, cmdSpeed, cmdTrim, cmdVolume } from "./edit.js";
+import { cmdOpacity, cmdSetText, cmdShift, cmdShiftAll, cmdSpeed, cmdTrim, cmdVolume } from "./edit-cli.js";
 
 interface BatchOp {
   cmd: string;

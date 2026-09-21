@@ -2,12 +2,12 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, isAbsolute, resolve } from "node:path";
 import { loadDraft, saveDraft } from "../draft.js";
 import { resolveTemplateDir as resolveSharedTemplateDir } from "../utils/capcut-paths.js";
-import { die, type Flags, out } from "../utils/cli.js";
+import { die } from "../utils/cli.js";
 import { setUuidProvider } from "../utils/companion.js";
 import { buildDraftMetaInfo } from "../utils/draft-meta.js";
 import { secondsToUs } from "../utils/time.js";
 import { addAudio, addText, addVideo, initDraft } from "./create.js";
-import { cmdKenBurns } from "./keyframe.js";
+import { applyKenBurns } from "./keyframe.js";
 import { registerDraft } from "./register.js";
 
 // =============================================================
@@ -662,8 +662,6 @@ export function psychoBuild(
     draft.canvas_config.height = manifest.resolution.height;
     draft.fps = manifest.fps;
 
-    const silent: Flags = { human: false, quiet: true };
-
     let cursor = 0;
     let imageCount = 0;
     for (const img of manifest.images) {
@@ -673,16 +671,12 @@ export function psychoBuild(
       const dur = parseDurationToUs(img.duration);
       const r = addVideo(draft, filePath, { path: assetPath, start: cursor, duration: dur });
       if (img.ken_burns) {
-        cmdKenBurns(
-          draft,
-          filePath,
-          r.segmentId,
-          String(img.ken_burns.from),
-          String(img.ken_burns.to),
-          img.ken_burns.curve,
-          silent,
-          false,
-        );
+        applyKenBurns(draft, {
+          segmentId: r.segmentId,
+          from: img.ken_burns.from,
+          to: img.ken_burns.to,
+          curve: img.ken_burns.curve,
+        });
       }
       cursor += dur;
       imageCount++;
@@ -783,34 +777,4 @@ export function psychoBuild(
   } finally {
     setUuidProvider(null);
   }
-}
-
-export function cmdPsychoBuild(positional: string[], flags: Flags): void {
-  const manifestPath = positional[1];
-  if (!manifestPath)
-    die(
-      "Usage: capcut-david psycho-build <manifest.yaml> [--out <dir>] [--seed <n>] [--register] [--projects-root <dir>]",
-    );
-  const registerOpt: PsychoBuildRegisterOpts | undefined = flags.register
-    ? { register: true, projectsRoot: flags.projectsRoot }
-    : undefined;
-  const result = psychoBuild(manifestPath, flags.out, flags.seed, registerOpt);
-  out(
-    {
-      ok: true,
-      draft_path: result.draftPath,
-      file_path: result.filePath,
-      meta_info_path: result.metaInfoPath,
-      draft_info_path: result.draftInfoPath,
-      total_duration_us: result.total_duration_us,
-      images: result.images,
-      voice: result.voice,
-      music: result.music,
-      captions: result.captions,
-      seeded: result.seeded,
-      registered: result.registered,
-      register_root_meta_path: result.registerRootMetaPath,
-    },
-    flags,
-  );
 }

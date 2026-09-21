@@ -4,12 +4,8 @@ import { mkdtempSync, readdirSync, readFileSync, writeFileSync, rmSync } from "n
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import {
-  CatalogueFormatError,
-  parseCatalogue,
-  serializeCatalogue,
-  writeCatalogueAtomic,
-} from "../dist/commands/catalogue.js";
+import { CatalogueFormatError, parseCatalogue, serializeCatalogue } from "../dist/commands/catalogue.js";
+import { writeCatalogueAtomic } from "../dist/commands/catalogue-cli.js";
 
 const entry = (over = {}) => ({
   id: "739",

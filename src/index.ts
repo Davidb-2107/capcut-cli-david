@@ -3,8 +3,8 @@
 import { writeSync } from "node:fs";
 import { cmdBatch } from "./commands/batch.js";
 import { cmdCalibrationUi } from "./commands/calibration-ui.js";
-import { cmdCascadeWords } from "./commands/cascade-words.js";
-import { cmdCatalogue } from "./commands/catalogue.js";
+import { cmdCascadeWords } from "./commands/cascade-words-cli.js";
+import { cmdCatalogue } from "./commands/catalogue-cli.js";
 import {
   cmdAddAudio,
   cmdAddAudioBatch,
@@ -16,11 +16,11 @@ import {
   cmdAddVideoBatch,
   cmdImportCaptions,
   cmdInit,
-} from "./commands/create.js";
-import { cmdCut } from "./commands/cut.js";
-import { cmdOpacity, cmdSetText, cmdShift, cmdShiftAll, cmdSpeed, cmdTrim, cmdVolume } from "./commands/edit.js";
-import { cmdGc } from "./commands/gc.js";
-import { cmdInitMeta } from "./commands/init-meta.js";
+} from "./commands/create-cli.js";
+import { cmdCut } from "./commands/cut-cli.js";
+import { cmdOpacity, cmdSetText, cmdShift, cmdShiftAll, cmdSpeed, cmdTrim, cmdVolume } from "./commands/edit-cli.js";
+import { cmdGc } from "./commands/gc-cli.js";
+import { cmdInitMeta } from "./commands/init-meta-cli.js";
 import {
   cmdExportSrt,
   cmdInfo,
@@ -31,17 +31,18 @@ import {
   cmdTexts,
   cmdTracks,
 } from "./commands/inspect.js";
-import { cmdAddKeyframe, cmdAddKeyframeBatch, cmdKenBurns } from "./commands/keyframe.js";
-import { cmdMakePreset } from "./commands/make-preset.js";
-import { cmdPsychoBuild } from "./commands/pipeline.js";
-import { cmdQuery, KINDS_PIPE } from "./commands/query.js";
-import { cmdRegister } from "./commands/register.js";
+import { cmdAddKeyframe, cmdAddKeyframeBatch, cmdKenBurns } from "./commands/keyframe-cli.js";
+import { cmdMakePreset } from "./commands/make-preset-cli.js";
+import { cmdPsychoBuild } from "./commands/pipeline-cli.js";
+import { cmdQuery } from "./commands/query-cli.js";
+import { KINDS_PIPE } from "./commands/query.js";
+import { cmdRegister } from "./commands/register-cli.js";
 import { cmdRemoveSegment } from "./commands/remove-segment.js";
-import { cmdRestyle } from "./commands/restyle.js";
-import { cmdSyncTimelines } from "./commands/sync-timelines.js";
-import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template.js";
+import { cmdRestyle } from "./commands/restyle-cli.js";
+import { cmdSyncTimelines } from "./commands/sync-timelines-cli.js";
+import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template-cli.js";
 import { cmdUi } from "./commands/ui.js";
-import { cmdValidate } from "./commands/validate.js";
+import { cmdValidate } from "./commands/validate-cli.js";
 import { cmdValidateFix } from "./commands/validate-fix.js";
 import { loadDraft } from "./draft.js";
 import { assertCapCutClosed, WRITE_COMMANDS } from "./utils/capcut-guard.js";

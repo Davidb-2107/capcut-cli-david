@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, resolve } from "node:path";
 import { defaultProjectsRoot, nowUs } from "../utils/capcut-paths.js";
-import { die, type Flags, out } from "../utils/cli.js";
+import { die } from "../utils/cli.js";
 
 // =============================================================
 // CapCut indexes drafts by scanning <projects-root>/root_meta_info.json
@@ -177,20 +177,4 @@ export function registerDraft(opts: RegisterOptions): RegisterResult {
 
   writeFileSync(rootMetaPath, JSON.stringify(root, null, 0), "utf-8");
   return { draftId, draftName, rootMetaPath, added: true };
-}
-
-export function cmdRegister(positional: string[], flags: Flags): void {
-  const draftDir = positional[1];
-  if (!draftDir) die("Usage: capcut-david register <draft-dir> [--projects-root <dir>]");
-  const result = registerDraft({ draftDir, projectsRoot: flags.projectsRoot });
-  out(
-    {
-      ok: true,
-      draft_id: result.draftId,
-      draft_name: result.draftName,
-      root_meta_path: result.rootMetaPath,
-      added: result.added,
-    },
-    flags,
-  );
 }

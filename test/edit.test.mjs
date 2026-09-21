@@ -18,7 +18,7 @@ import {
   cmdVolume,
   cmdOpacity,
   cmdTrim,
-} from "../dist/commands/edit.js";
+} from "../dist/commands/edit-cli.js";
 import { loadDraft, extractText } from "../dist/draft.js";
 
 import { FIXTURES, fixturePath } from "./helpers/load-fixture.mjs";

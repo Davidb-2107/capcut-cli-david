@@ -1,8 +1,6 @@
-import { type Draft, findSegment, type Segment, saveDraft } from "../draft.js";
-import { die, type Flags, out } from "../utils/cli.js";
+import { type Draft, findSegment, type Segment } from "../draft.js";
+import { die } from "../utils/cli.js";
 import { uuid } from "../utils/companion.js";
-import { parseTimeInput } from "../utils/time.js";
-import { readBatchItems } from "./create.js";
 
 export type CurveName = "linear" | "ease-in" | "ease-out" | "ease-in-out";
 
@@ -111,7 +109,7 @@ function getCommonKeyframes(segment: Segment): KFContainer[] {
   return segment.common_keyframes as KFContainer[];
 }
 
-function getOrCreateContainer(segment: Segment, propertyType: string): KFContainer {
+export function getOrCreateContainer(segment: Segment, propertyType: string): KFContainer {
   const cks = getCommonKeyframes(segment);
   let container = cks.find((c) => c.property_type === propertyType);
   if (!container) {
@@ -121,7 +119,7 @@ function getOrCreateContainer(segment: Segment, propertyType: string): KFContain
   return container;
 }
 
-function makeKeyframe(timeOffset: number, value: number, leftCtrl: ControlPoint, rightCtrl: ControlPoint): Keyframe {
+export function makeKeyframe(timeOffset: number, value: number, leftCtrl: ControlPoint, rightCtrl: ControlPoint): Keyframe {
   return {
     id: uuid().toUpperCase(),
     curveType: "FreeCurveInOut",
@@ -172,7 +170,7 @@ function computeSegmentHandles(
 //   - no prev → newLeft = {0, 0}, no prevRetro.
 //   - no next → newRight = {0, 0}, no nextRetro.
 //   - solitary kf → left = right = {0, 0} (no segment to encode).
-function computeKfHandlesAndRetroUpdates(
+export function computeKfHandlesAndRetroUpdates(
   curve: CurveName,
   timeOffset: number,
   value: number,
@@ -200,7 +198,7 @@ function computeKfHandlesAndRetroUpdates(
   };
 }
 
-function parseValue(property: string, valueStr: string): number {
+export function parseValue(property: string, valueStr: string): number {
   const v = parseFloat(valueStr);
   if (Number.isNaN(v)) die(`Invalid value: ${valueStr}`);
   if (property === "alpha" && (v < 0 || v > 1)) die("alpha must be 0.0-1.0");
@@ -208,145 +206,39 @@ function parseValue(property: string, valueStr: string): number {
   return v;
 }
 
-export function cmdAddKeyframe(
-  draft: Draft,
-  filePath: string,
-  segId: string,
-  timeStr: string,
-  property: string | undefined,
-  valueStr: string | undefined,
-  curveStr: string | undefined,
-  flags: Flags,
-  save = true,
-): void {
-  if (!property) die("--property is required (scale_x|scale_y|position_x|position_y|rotation|alpha)");
-  if (valueStr === undefined) die("--value is required");
-  const kfType = PROPERTY_MAP[property];
-  if (!kfType) {
-    die(`Invalid property "${property}". Valid: ${Object.keys(PROPERTY_MAP).join(", ")}`);
-  }
+export interface KenBurnsOptions {
+  segmentId: string;
+  from: number;
+  to: number;
+  /** Raw curve name, validated here — same string shape as the CLI --curve flag. */
+  curve?: string;
+}
 
-  const result = findSegment(draft, segId);
-  if (!result) die(`Segment not found: ${segId}`);
+export interface KenBurnsResult {
+  segmentId: string;
+  from: number;
+  to: number;
+  durationUs: number;
+  curve: CurveName;
+  keyframesAdded: number;
+}
+
+/**
+ * Apply a Ken Burns zoom (paired scale_x/scale_y keyframes) to a segment.
+ * Pure domain logic: no Flags, no save, no stdout — callers (cmdKenBurns,
+ * pipeline.ts's psychoBuild) own persistence and output.
+ */
+export function applyKenBurns(draft: Draft, opts: KenBurnsOptions): KenBurnsResult {
+  const { segmentId, from, to, curve: curveStr } = opts;
+
+  const result = findSegment(draft, segmentId);
+  if (!result) die(`Segment not found: ${segmentId}`);
   const seg = result.segment;
+  if (!seg.clip) die(`Segment ${segmentId} has no clip (audio segment?)`);
 
-  const value = parseValue(property, valueStr);
-  const timeOffset = parseTimeInput(timeStr);
-  if (timeOffset < 0) die("Time offset must be >= 0");
-
-  const segDuration = (seg.target_timerange?.duration ?? 0) as number;
-  if (timeOffset > segDuration) {
-    die(`Time offset ${timeOffset}μs exceeds segment duration ${segDuration}μs`);
-  }
-
-  let curve: CurveName = "linear";
-  if (curveStr !== undefined) {
-    if (!(VALID_CURVES as readonly string[]).includes(curveStr)) {
-      die(`Invalid curve "${curveStr}". Valid: ${VALID_CURVES.join(", ")}`);
-    }
-    curve = curveStr as CurveName;
-  }
-
-  const container = getOrCreateContainer(seg, kfType);
-  const kfList = container.keyframe_list;
-  const { newLeft, newRight, prevRetro, nextRetro } = computeKfHandlesAndRetroUpdates(curve, timeOffset, value, kfList);
-  // Apply retro-updates in-place on neighbor kfs (by reference through kfList).
-  if (prevRetro) prevRetro.kf.right_control = prevRetro.right;
-  if (nextRetro) nextRetro.kf.left_control = nextRetro.left;
-  const kf = makeKeyframe(timeOffset, value, newLeft, newRight);
-
-  const existingIdx = kfList.findIndex((k) => k.time_offset === timeOffset);
-  if (existingIdx >= 0) {
-    kfList[existingIdx] = kf;
-  } else {
-    kfList.push(kf);
-    kfList.sort((a, b) => a.time_offset - b.time_offset);
-  }
-
-  if (save) {
-    saveDraft(filePath, draft);
-    out(
-      {
-        ok: true,
-        id: seg.id,
-        property: kfType,
-        time_offset_us: timeOffset,
-        value,
-        curve,
-        keyframes: kfList.length,
-      },
-      flags,
-    );
-  }
-}
-
-interface KeyframeBatchEntry {
-  segment_id: string;
-  property: string;
-  keyframes: { time: number | string; value: number | string; curve?: string }[];
-}
-
-export function cmdAddKeyframeBatch(draft: Draft, filePath: string, flags: Flags): void {
-  const raw = readBatchItems(flags.batch as string, "add-keyframe") as unknown as KeyframeBatchEntry[];
-  // all-or-nothing pass 1: structural validation + segment existence (cmdAddKeyframe
-  // dies on bad property/curve/time BEFORE mutating, but only per call — so pre-check
-  // the cheap structural facts here to fail before ANY mutation)
-  raw.forEach((e, i) => {
-    const label = `add-keyframe --batch entry ${i + 1}`;
-    if (typeof e.segment_id !== "string" || !e.segment_id) die(`${label}: "segment_id" is required`);
-    if (typeof e.property !== "string" || !e.property) die(`${label}: "property" is required`);
-    if (!Array.isArray(e.keyframes) || e.keyframes.length === 0) die(`${label}: non-empty "keyframes" array required`);
-    if (!findSegment(draft, e.segment_id)) die(`${label}: Segment not found: ${e.segment_id}`);
-  });
-  let count = 0;
-  for (const e of raw) {
-    for (const kf of e.keyframes) {
-      // Numeric time = raw µs (matches add-video/add-audio batch convention);
-      // string time is a time-expression ("2s", "500ms") fed to parseTimeInput
-      // as-is. cmdAddKeyframe always parses its timeStr as seconds via
-      // parseTimeInput, so a raw-µs number must be rescaled to seconds first.
-      const timeStr = typeof kf.time === "number" ? String(kf.time / 1_000_000) : kf.time;
-      cmdAddKeyframe(
-        draft,
-        filePath,
-        e.segment_id,
-        timeStr,
-        e.property,
-        String(kf.value),
-        kf.curve,
-        { ...flags, quiet: true },
-        /* save */ false,
-      );
-      count++;
-    }
-  }
-  saveDraft(filePath, draft); // ONE save
-  out({ ok: true, count }, flags);
-}
-
-export function cmdKenBurns(
-  draft: Draft,
-  filePath: string,
-  segId: string,
-  fromStr: string | undefined,
-  toStr: string | undefined,
-  curveStr: string | undefined,
-  flags: Flags,
-  save = true,
-): void {
-  if (fromStr === undefined) die("--from is required (starting scale, e.g. 1.0)");
-  if (toStr === undefined) die("--to is required (ending scale, e.g. 1.5)");
-
-  const result = findSegment(draft, segId);
-  if (!result) die(`Segment not found: ${segId}`);
-  const seg = result.segment;
-  if (!seg.clip) die(`Segment ${segId} has no clip (audio segment?)`);
-
-  const fromVal = parseFloat(fromStr);
-  const toVal = parseFloat(toStr);
-  if (Number.isNaN(fromVal) || fromVal <= 0) die("--from must be a positive number (e.g. 1.0 or 1.5)");
-  if (Number.isNaN(toVal) || toVal <= 0) die("--to must be a positive number");
-  if (fromVal === toVal) die("--from and --to must differ (no zoom motion)");
+  if (Number.isNaN(from) || from <= 0) die("--from must be a positive number (e.g. 1.0 or 1.5)");
+  if (Number.isNaN(to) || to <= 0) die("--to must be a positive number");
+  if (from === to) die("--from and --to must differ (no zoom motion)");
 
   const duration = (seg.target_timerange?.duration ?? 0) as number;
   if (!duration || duration <= 0) die("Segment has no positive duration");
@@ -360,7 +252,7 @@ export function cmdKenBurns(
   }
 
   const profile = CURVE_PROFILES[curve];
-  const dv = toVal - fromVal; // validated above: finite, non-zero, fromVal/toVal > 0
+  const dv = to - from; // validated above: finite, non-zero, from/to > 0
   const startRight: ControlPoint = {
     x: Math.round(profile.startRightXRatio * duration),
     // CapCut "Cubic Out": y = ratio × Δvalue, NOT a fixed absolute (Δ=-0.5 → -0.47).
@@ -383,22 +275,10 @@ export function cmdKenBurns(
   for (const propertyType of ["KFTypeScaleX", "KFTypeScaleY"] as const) {
     const container = getOrCreateContainer(seg, propertyType);
     container.keyframe_list.push(
-      makeKeyframe(0, fromVal, { x: 0, y: 0 }, startRight),
-      makeKeyframe(duration, toVal, endLeft, zero),
+      makeKeyframe(0, from, { x: 0, y: 0 }, startRight),
+      makeKeyframe(duration, to, endLeft, zero),
     );
   }
 
-  if (save) saveDraft(filePath, draft);
-  out(
-    {
-      ok: true,
-      id: seg.id,
-      from: fromVal,
-      to: toVal,
-      duration_us: duration,
-      curve,
-      keyframes_added: 4,
-    },
-    flags,
-  );
+  return { segmentId, from, to, durationUs: duration, curve, keyframesAdded: 4 };
 }

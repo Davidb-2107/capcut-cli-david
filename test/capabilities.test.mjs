@@ -74,10 +74,13 @@ test("anti-dérive kinds: chaque kind de KINDS apparaît dans les cartes query e
   }
 });
 
-test("anti-dérive kinds: catalogue.ts consomme KINDS, pas une copie locale", () => {
-  const src = readFileSync(resolve(ROOT, "src/commands/catalogue.ts"), "utf-8");
-  ok(!/"(?:sticker|mask|animation|curve)"\]\)?;/.test(src), "copie en dur de la liste de kinds dans catalogue.ts");
-  ok(/import \{[^}]*KINDS[^}]*\} from "\.\/query\.js"/.test(src), "catalogue.ts doit importer KINDS depuis query.ts");
+test("anti-dérive kinds: catalogue-cli.ts consomme KINDS, pas une copie locale", () => {
+  const src = readFileSync(resolve(ROOT, "src/commands/catalogue-cli.ts"), "utf-8");
+  ok(!/"(?:sticker|mask|animation|curve)"\]\)?;/.test(src), "copie en dur de la liste de kinds dans catalogue-cli.ts");
+  ok(
+    /import \{[^}]*KINDS[^}]*\} from "\.\/query\.js"/.test(src),
+    "catalogue-cli.ts doit importer KINDS depuis query.ts",
+  );
 });
 
 test("cascade-words: help, capability card and generated UI share the measured-font contract", () => {
