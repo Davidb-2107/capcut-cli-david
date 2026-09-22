@@ -2,7 +2,7 @@
 
 ### Issue tracker
 
-Issues live in GitHub Issues (`Davidb-2107/capcut-cli-david`), managed via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Local markdown tracker: one file per ticket under `.scratch/<workstream>/issues/`, blockers-first numbering. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
