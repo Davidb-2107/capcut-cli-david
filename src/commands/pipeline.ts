@@ -1,10 +1,11 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, writeFileSync } from "node:fs";
 import { basename, dirname, isAbsolute, resolve } from "node:path";
 import { loadDraft, saveDraft } from "../draft.js";
 import { resolveTemplateDir as resolveSharedTemplateDir } from "../utils/capcut-paths.js";
 import { die } from "../utils/cli.js";
 import { setUuidProvider } from "../utils/companion.js";
 import { buildDraftMetaInfo } from "../utils/draft-meta.js";
+import { readFileCapped } from "../utils/safe-io.js";
 import { secondsToUs } from "../utils/time.js";
 import { addAudio, addText, addVideo, initDraft } from "./create.js";
 import { applyKenBurns } from "./keyframe.js";
@@ -641,7 +642,7 @@ export function psychoBuild(
   if (!existsSync(manifestPath)) die(`Manifest not found: ${manifestPath}`);
   const manifestAbs = resolve(manifestPath);
   const manifestDir = dirname(manifestAbs);
-  const raw = readFileSync(manifestAbs, "utf-8");
+  const raw = readFileCapped(manifestAbs);
   const parsed = parseYaml(raw);
   const manifest = validateManifest(parsed);
 
@@ -712,7 +713,7 @@ export function psychoBuild(
     if (manifest.captions) {
       const srtPath = resolveAsset(manifest.captions.srt, manifestDir);
       if (!existsSync(srtPath)) die(`Captions SRT not found: ${srtPath}`);
-      const srtText = readFileSync(srtPath, "utf-8");
+      const srtText = readFileCapped(srtPath);
       const entries = parseSrt(srtText);
       const style = manifest.captions.style ?? {};
       for (const e of entries) {

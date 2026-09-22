@@ -1,6 +1,15 @@
 // I/O + CLI shell for catalogue.ts's pure merge/parse/serialize logic:
 // atomic disk writes, drafts-library scanning, flag parsing, human rendering.
-import { existsSync, readdirSync, readFileSync, realpathSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  renameSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
 import { regenerateCatalogueMirror } from "../ui/catalogue-ui.js";
@@ -8,7 +17,6 @@ import { isCapCutRunning } from "../utils/capcut-guard.js";
 import { defaultProjectsRoot } from "../utils/capcut-paths.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { resolveCataloguePath } from "../utils/vault.js";
-import { extractItems, KINDS, KINDS_LIST, KINDS_SPACED, stripBom } from "./query.js";
 import {
   blank,
   type CatalogueEntry,
@@ -21,6 +29,7 @@ import {
   sortedSet,
   todayUtc,
 } from "./catalogue.js";
+import { extractItems, KINDS, KINDS_LIST, KINDS_SPACED, stripBom } from "./query.js";
 
 /**
  * Same-directory tmp + rename: the rename is atomic on one volume, so a crash

@@ -7,6 +7,7 @@ on:
       - upstream-sync
       - "feat/**"
       - "david/**"
+      - "fix/**"
   pull_request:
     branches:
       - master
@@ -132,6 +133,23 @@ jobs:
       - name: Validate all anonymized fixtures
         run: python test-fixtures/_final_integrity.py
 
+  # ---------------------------------------------------------------------------
+  # Secrets scan (audit CLI-M1) - fail the build if a credential is committed.
+  # ---------------------------------------------------------------------------
+  secrets-scan:
+    name: Secrets scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for committed secrets
+        shell: bash
+        run: |
+          if git grep -nI -E "sk-[A-Za-z0-9]{20,}" -- . ":(exclude)package-lock.json" ":(exclude)*.md" ":(exclude).github" ":(exclude)*.test.mjs"; then
+            echo "::error::Secret-like pattern found in tracked files"
+            exit 1
+          fi
+          echo "No secrets detected."
   # ---------------------------------------------------------------------------
   # CI gate — single required check for branch protection rules.
   # Aggregates the three job groups; if any fails the gate fails.

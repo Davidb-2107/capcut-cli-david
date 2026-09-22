@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { type Draft, type Segment, type Track } from "../draft.js";
+import type { Draft, Segment, Track } from "../draft.js";
 import { die } from "../utils/cli.js";
 import { baseSegment, createCompanionMaterials, hexToRgb, registerCompanions, uuid } from "../utils/companion.js";
 import { type FontCalibrationProfile, resolveFontCalibration } from "../utils/font-calibration.js";

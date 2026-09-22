@@ -1,25 +1,26 @@
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { type Draft, saveDraft } from "../draft.js";
 import { defaultProjectsRoot, resolveTemplateDir } from "../utils/capcut-paths.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { hexToRgb } from "../utils/companion.js";
+import { readFileCapped } from "../utils/safe-io.js";
 import { parseTimeInput } from "../utils/time.js";
 import {
   type AddAudioOptions,
-  addAudio,
   type AddEffectOptions,
+  type AddTextOptions,
+  type AddVideoOptions,
+  addAudio,
   addEffect,
   addFilter,
   addText,
-  type AddTextOptions,
   addTransition,
-  type AddVideoOptions,
   addVideo,
+  type CaptionCard,
   DEFAULT_HIGHLIGHT_COLOR,
   importCaptions,
   initDraft,
-  type CaptionCard,
   type TextHighlight,
 } from "./create.js";
 
@@ -134,7 +135,7 @@ export function readBatchItems(spec: string, verb: string): MediaBatchItem[] {
   if (!existsSync(p)) die(`--batch file not found: ${p}`);
   let parsed: unknown;
   try {
-    parsed = JSON.parse(readFileSync(p, "utf-8"));
+    parsed = JSON.parse(readFileCapped(p));
   } catch (e) {
     die(`--batch file is not valid JSON (${p}): ${e instanceof Error ? e.message : String(e)}`);
   }
@@ -275,7 +276,7 @@ export function cmdImportCaptions(draft: Draft, filePath: string, positional: st
   if (!existsSync(jsonPath)) die(`Captions file not found: ${jsonPath}`);
   let cards: CaptionCard[];
   try {
-    cards = JSON.parse(readFileSync(jsonPath, "utf-8")) as CaptionCard[];
+    cards = JSON.parse(readFileCapped(jsonPath)) as CaptionCard[];
   } catch (e) {
     die(`Invalid JSON in ${jsonPath}: ${(e as Error).message}`);
   }

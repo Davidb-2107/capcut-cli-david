@@ -1,8 +1,8 @@
 import { dirname } from "node:path";
 import { type Draft, saveDraft } from "../draft.js";
 import { CliError, type Flags, out } from "../utils/cli.js";
-import { hasBlockingErrors } from "./validate.js";
 import { applyGc, planGc } from "./gc.js";
+import { hasBlockingErrors } from "./validate.js";
 
 export function cmdGc(draft: Draft, filePath: string, _positional: string[], flags: Flags): void {
   // Refuse on an already-broken draft: a dangling ref means it's inconsistent,

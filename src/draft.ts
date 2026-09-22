@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { writeFileAtomic } from "./utils/atomic-write.js";
 import { CliError } from "./utils/cli.js";
 import { normalizeTimelineIdentity, syncTimelineRootBytes } from "./utils/timelines.js";
 
@@ -146,7 +147,8 @@ export class LocalDraftStore implements DraftStore {
     }
     // Detect original indent: if first line after { starts with tab use tab, else count spaces
     const serialized = JSON.stringify(draft, null, detectIndent(raw));
-    writeFileSync(filePath, serialized, "utf-8");
+    // Audit CLI-M3: atomic tmp+rename - a crash mid-write must never truncate the draft.
+    writeFileAtomic(filePath, serialized);
     if (identity.renamed) syncTimelineRootBytes(draftDir, serialized);
   }
 }
@@ -235,15 +237,22 @@ export function updateTextContent(content: string, newText: string): string {
 
 export function findSegment(draft: Draft, id: string): { track: Track; segment: Segment; index: number } | null {
   const shortId = id.toLowerCase();
+  const matches: Array<{ track: Track; segment: Segment; index: number }> = [];
   for (const track of draft.tracks) {
     for (let i = 0; i < track.segments.length; i++) {
       const seg = track.segments[i];
       if (seg.id === id || seg.id.toLowerCase().startsWith(shortId)) {
-        return { track, segment: seg, index: i };
+        matches.push({ track, segment: seg, index: i });
       }
     }
   }
-  return null;
+  if (matches.length > 1) {
+    // Audit CLI-N8: a destructive command must never guess between matches.
+    throw new CliError(
+      `Ambiguous segment prefix: ${id} matches ${matches.length} segments (${matches.map((m) => m.segment.id).join(", ")}). Use a longer id.`,
+    );
+  }
+  return matches[0] ?? null;
 }
 
 export function findMaterial<T extends { id: string }>(arr: T[], id: string): T | undefined {
@@ -266,6 +275,7 @@ export function findMaterialGlobal(
   id: string,
 ): { type: string; material: Record<string, unknown> } | null {
   const shortId = id.toLowerCase();
+  const matches: Array<{ type: string; material: Record<string, unknown> }> = [];
   for (const [type, arr] of Object.entries(draft.materials)) {
     if (!Array.isArray(arr)) continue;
     for (const mat of arr) {
@@ -273,10 +283,14 @@ export function findMaterialGlobal(
         const m = mat as Record<string, unknown>;
         const matId = m.id as string;
         if (matId === id || matId.toLowerCase().startsWith(shortId)) {
-          return { type, material: m };
+          matches.push({ type, material: m });
         }
       }
     }
   }
-  return null;
+  if (matches.length > 1) {
+    // Audit CLI-N8: refuse to guess between ambiguous material matches.
+    throw new CliError(`Ambiguous material prefix: ${id} matches ${matches.length} materials. Use a longer id.`);
+  }
+  return matches[0] ?? null;
 }

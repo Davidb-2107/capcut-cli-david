@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync, cpSync } from "node:fs";
+import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, resolve } from "node:path";
 import { type Draft, findSegment, type Segment, type Timerange, type Track } from "../draft.js";
 import { die } from "../utils/cli.js";
@@ -16,6 +16,13 @@ export interface InitOptions {
 }
 
 export function initDraft(opts: InitOptions): { draftPath: string; filePath: string } {
+  // Audit CLI-M7: the draft name is a user-supplied path segment - reject
+  // path traversal (.., separators) so the draft always lands in draftsDir.
+  if (!opts.name || opts.name !== opts.name.trim() || /[\\/]/.test(opts.name) || opts.name.includes("..")) {
+    throw new Error(
+      `Invalid draft name: ${JSON.stringify(opts.name)}. Use a plain folder name (no /, \\\\, .. or surrounding spaces).`,
+    );
+  }
   const draftPath = resolve(opts.draftsDir, opts.name);
   if (existsSync(draftPath)) {
     throw new Error(`Draft already exists: ${draftPath}. Delete it first or use a different name.`);

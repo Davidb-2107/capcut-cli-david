@@ -1,6 +1,6 @@
-import { readFileSync } from "node:fs";
 import { type Draft, saveDraft } from "../draft.js";
 import { die, type Flags, out } from "../utils/cli.js";
+import { readStdinCapped } from "../utils/safe-io.js";
 import { cmdOpacity, cmdSetText, cmdShift, cmdShiftAll, cmdSpeed, cmdTrim, cmdVolume } from "./edit-cli.js";
 
 interface BatchOp {
@@ -52,9 +52,10 @@ function execBatchOp(draft: Draft, filePath: string, op: BatchOp, flags: Flags):
   }
 }
 
-export function cmdBatch(draft: Draft, filePath: string, flags: Flags): void {
+export function cmdBatch(draft: Draft, filePath: string, flags: Flags): number {
   // fd 0 = stdin, cross-platform (Windows lacks /dev/stdin path).
-  const input = readFileSync(0, "utf-8").trim();
+  // Audit CLI-N10: unbounded stdin freezes the process on a huge payload.
+  const input = readStdinCapped().trim();
   if (!input) die("No input on stdin");
   const lines = input.split("\n");
   let ok = 0;
@@ -73,5 +74,7 @@ export function cmdBatch(draft: Draft, filePath: string, flags: Flags): void {
     }
   }
   saveDraft(filePath, draft);
-  out({ ok: true, succeeded: ok, failed: fail }, flags);
+  // Audit CLI-M6: ok must reflect reality; the caller maps fail>0 to exit 1.
+  out({ ok: fail === 0, succeeded: ok, failed: fail }, flags);
+  return fail;
 }

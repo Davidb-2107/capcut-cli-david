@@ -1,5 +1,6 @@
-import { copyFileSync, existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, readFileSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { writeFileAtomic } from "../utils/atomic-write.js";
 import { listTimelineDirs, normalizeTimelineIdentity } from "../utils/timelines.js";
 
 // sync-timelines — the WRITE verb that repairs the divergence validate's
@@ -64,7 +65,7 @@ function reconcileFile(target: string, rootBytes: string, dryRun: boolean, epoch
   const backup = `${target}.synced-${epoch}.bak`;
   copyFileSync(target, backup);
   try {
-    writeFileSync(target, rootBytes, "utf-8");
+    writeFileAtomic(target, rootBytes);
   } catch (e) {
     // Don't leave an orphan backup behind for a write that never landed.
     try {

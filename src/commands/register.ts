@@ -1,8 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, resolve } from "node:path";
+import { writeFileAtomic } from "../utils/atomic-write.js";
 import { defaultProjectsRoot, nowUs } from "../utils/capcut-paths.js";
 import { die } from "../utils/cli.js";
+import { readFileCapped } from "../utils/safe-io.js";
 
 // =============================================================
 // CapCut indexes drafts by scanning <projects-root>/root_meta_info.json
@@ -114,7 +116,7 @@ export function registerDraft(opts: RegisterOptions): RegisterResult {
       `No draft_meta_info.json in ${draftDir}. Run psycho-build (or another draft generator) first, or pass a valid draft directory.`,
     );
   }
-  const meta = JSON.parse(readFileSync(metaPath, "utf-8")) as Record<string, unknown>;
+  const meta = JSON.parse(readFileCapped(metaPath)) as Record<string, unknown>;
 
   const projectsRoot = resolve(opts.projectsRoot ?? defaultProjectsRoot());
   if (!existsSync(projectsRoot)) mkdirSync(projectsRoot, { recursive: true });
@@ -175,6 +177,7 @@ export function registerDraft(opts: RegisterOptions): RegisterResult {
   root.all_draft_store.push(buildEntry(draftDir, meta, projectsRoot));
   if (!root.draft_ids.includes(draftId)) root.draft_ids.push(draftId);
 
-  writeFileSync(rootMetaPath, JSON.stringify(root, null, 0), "utf-8");
+  // Audit CLI-M3: the global CapCut index must never be truncated by a crash.
+  writeFileAtomic(rootMetaPath, JSON.stringify(root, null, 0));
   return { draftId, draftName, rootMetaPath, added: true };
 }

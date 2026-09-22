@@ -34,8 +34,8 @@ import {
 import { cmdAddKeyframe, cmdAddKeyframeBatch, cmdKenBurns } from "./commands/keyframe-cli.js";
 import { cmdMakePreset } from "./commands/make-preset-cli.js";
 import { cmdPsychoBuild } from "./commands/pipeline-cli.js";
-import { cmdQuery } from "./commands/query-cli.js";
 import { KINDS_PIPE } from "./commands/query.js";
+import { cmdQuery } from "./commands/query-cli.js";
 import { cmdRegister } from "./commands/register-cli.js";
 import { cmdRemoveSegment } from "./commands/remove-segment.js";
 import { cmdRestyle } from "./commands/restyle-cli.js";
@@ -654,7 +654,9 @@ async function main(): Promise<void> {
       cmdApplyTemplate(draft, filePath, positional, flags);
       break;
     case "batch":
-      cmdBatch(draft, filePath, flags);
+      // Audit CLI-M6: partial save is by design, but the exit code must not
+      // claim success when ops failed (ok:false + exit 1 keeps report honest).
+      process.exit(cmdBatch(draft, filePath, flags));
       break;
     case "add-keyframe":
       if (flags.batch !== undefined) {

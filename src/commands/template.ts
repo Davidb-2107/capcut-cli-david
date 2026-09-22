@@ -1,7 +1,8 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { type Draft, findMaterialGlobal, type Segment, type Track } from "../draft.js";
 import { CliError } from "../utils/cli.js";
 import { createCompanionMaterials, registerCompanions, uuid } from "../utils/companion.js";
+import { readFileCapped } from "../utils/safe-io.js";
 
 export interface Template {
   name: string;
@@ -21,19 +22,20 @@ function deepCloneWithIdRemap(obj: Record<string, unknown>, remapId: (old: strin
 
 export function saveTemplate(draft: Draft, segId: string, name: string, outPath: string): Template {
   const shortId = segId.toLowerCase();
-  let foundSeg: Segment | null = null;
-  let foundTrack: Track | null = null;
-
+  const matches: Array<{ seg: Segment; track: Track }> = [];
   for (const track of draft.tracks) {
     for (const seg of track.segments) {
       if (seg.id === segId || seg.id.toLowerCase().startsWith(shortId)) {
-        foundSeg = seg;
-        foundTrack = track;
-        break;
+        matches.push({ seg, track });
       }
     }
-    if (foundSeg) break;
   }
+  if (matches.length > 1) {
+    // Audit CLI-N8: refuse ambiguous prefix for a destructive save.
+    throw new CliError(`Ambiguous segment prefix: ${segId} matches ${matches.length} segments. Use a longer id.`);
+  }
+  const foundSeg = matches[0]?.seg ?? null;
+  const foundTrack = matches[0]?.track ?? null;
 
   if (!foundSeg || !foundTrack) throw new Error(`Segment not found: ${segId}`);
 
@@ -65,7 +67,7 @@ export function applyTemplate(
   duration: number,
   overrides?: { x?: number; y?: number; scaleX?: number; scaleY?: number; text?: string },
 ): { segmentId: string; materialId: string; trackId: string } {
-  const template = JSON.parse(readFileSync(templatePath, "utf-8")) as Template;
+  const template = JSON.parse(readFileCapped(templatePath)) as Template;
 
   const idMap = new Map<string, string>();
   function remapId(oldId: string): string {

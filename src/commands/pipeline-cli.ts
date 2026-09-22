@@ -1,5 +1,5 @@
 import { die, type Flags, out } from "../utils/cli.js";
-import { psychoBuild, type PsychoBuildRegisterOpts } from "./pipeline.js";
+import { type PsychoBuildRegisterOpts, psychoBuild } from "./pipeline.js";
 
 export function cmdPsychoBuild(positional: string[], flags: Flags): void {
   const manifestPath = positional[1];
