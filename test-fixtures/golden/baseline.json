@@ -1056,19 +1056,6 @@
     "text": ""
    }
   },
-  "ui-print-path": {
-   "code": 0,
-   "out": {
-    "sha": "6c5c31e0e228e97e",
-    "len": 55,
-    "text": "C:\\Users\\dbele\\src\\capcut-cli-david\\dist\\ui\\index.html\n"
-   },
-   "err": {
-    "sha": "e3b0c44298fc1c14",
-    "len": 0,
-    "text": ""
-   }
-  },
   "subtitles/set-text": {
    "code": 0,
    "out": {
@@ -1084,9 +1071,9 @@
    "artifact": {
     "draft_canon_sha": "914520cdc5fa5f8e",
     "bak_exists": true,
-    "bak_equals_original": false,
-    "indent_preserved": false,
-    "single_line": true
+    "bak_equals_original": true,
+    "indent_preserved": true,
+    "single_line": false
    }
   },
   "subtitles/shift": {
@@ -1104,9 +1091,9 @@
    "artifact": {
     "draft_canon_sha": "f7af37a32318d1f0",
     "bak_exists": true,
-    "bak_equals_original": false,
-    "indent_preserved": false,
-    "single_line": true
+    "bak_equals_original": true,
+    "indent_preserved": true,
+    "single_line": false
    }
   },
   "subtitles/import-captions": {
@@ -1264,9 +1251,9 @@
    "artifact": {
     "draft_canon_sha": "49095401fac48b66",
     "bak_exists": true,
-    "bak_equals_original": false,
-    "indent_preserved": false,
-    "single_line": true
+    "bak_equals_original": true,
+    "indent_preserved": true,
+    "single_line": false
    }
   },
   "effects/remove-segment": {

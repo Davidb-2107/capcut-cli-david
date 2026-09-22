@@ -96,12 +96,10 @@ cases.push({
   args: ["query", "Fade", "--drafts", FIXTURES_DIR],
   fixture: null,
 });
-cases.push({
-  id: "ui-print-path",
-  kind: "read",
-  args: ["ui", "--print-path"],
-  fixture: null,
-});
+// ui --print-path intentionally excluded: it prints the machine-local
+// install path of dist/ui/index.html, which differs across checkouts and
+// would produce a spurious divergence. The ui page itself is covered by
+// test/ui-html.test.mjs + test/ui-verb.test.mjs.
 
 // Write round-trips (temp copies). `prepare(dir)` may stage side files; the
 // case then runs ONE mutating command. Artifacts frozen: stdout/stderr/exit +
