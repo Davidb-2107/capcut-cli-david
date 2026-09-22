@@ -71,7 +71,6 @@
     "typescript": "^5.6.0"
   },
   "dependencies": {
-    "fontkit": "^2.0.4",
-    "voice-calibration": "file:../voice-calibration"
+    "fontkit": "^2.0.4"
   }
 }
