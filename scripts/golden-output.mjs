@@ -102,6 +102,7 @@ function firstDiffLine(expected, actual) {
  */
 export function diffBaselines(expected, actual) {
   const diffs = [];
+  if (expected.version !== actual.version) diffs.push(`baseline version ${expected.version} vs ${actual.version}`);
   const expCaps = new Map(expected.captures.map((c) => [c.id, c]));
   const actCaps = new Map(actual.captures.map((c) => [c.id, c]));
   for (const [id, exp] of expCaps) {
@@ -110,6 +111,10 @@ export function diffBaselines(expected, actual) {
       diffs.push(`missing capture: ${id}`);
       continue;
     }
+    if (JSON.stringify(exp.argv) !== JSON.stringify(act.argv))
+      diffs.push(`${id}: argv ${JSON.stringify(exp.argv)} vs ${JSON.stringify(act.argv)}`);
+    if ((exp.skipped ?? null) !== (act.skipped ?? null))
+      diffs.push(`${id}: skipped reason "${exp.skipped}" vs "${act.skipped}"`);
     if (exp.exit !== act.exit) diffs.push(`${id}: exit code ${exp.exit} → ${act.exit}`);
     for (const field of ["stdout", "stderr"]) {
       if (exp[field] !== act[field]) diffs.push(`${id}: ${field} diverged — ${firstDiffLine(exp[field], act[field])}`);
@@ -126,6 +131,11 @@ export function diffBaselines(expected, actual) {
       diffs.push(`missing round-trip: ${fixture}`);
       continue;
     }
+    if (exp.matchesOriginal !== act.matchesOriginal)
+      diffs.push(
+        `${fixture}: round-trip matchesOriginal ${exp.matchesOriginal} vs ${act.matchesOriginal}` +
+          " (did persistence start restoring pristine bytes?)",
+      );
     if (exp.stableBytes !== act.stableBytes)
       diffs.push(
         `${fixture}: round-trip stableBytes ${exp.stableBytes} → ${act.stableBytes} (persistence not byte-stable)`,
@@ -314,7 +324,15 @@ function main() {
     console.error(`Golden baseline missing: ${BASELINE_PATH} — run \`node scripts/golden-output.mjs --write\`.`);
     process.exit(2);
   }
-  const expected = JSON.parse(readFileSync(BASELINE_PATH, "utf-8"));
+  let expected;
+  try {
+    expected = JSON.parse(readFileSync(BASELINE_PATH, "utf-8"));
+  } catch (err) {
+    console.error(
+      `Golden baseline is not valid JSON: ${BASELINE_PATH} (${err.message}) — regenerate with \`node scripts/golden-output.mjs --write\`.`,
+    );
+    process.exit(2);
+  }
   const actual = captureAll();
   assertNoHostResidue(actual);
   const diffs = diffBaselines(expected, actual);

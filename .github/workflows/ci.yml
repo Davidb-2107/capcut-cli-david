@@ -138,7 +138,7 @@ jobs:
   # exit codes of the read-only surface across the 9 anonymized fixtures plus
   # a write round-trip on temp copies, canonicalizes (UUIDs + absolute paths
   # → tokens) and diffs against the committed baseline. Any drift fails the
-  # job; regenerate with `npm run golden:write` and justify in the PR.
+  # job; regenerate with `npm run test:golden:write` and justify in the PR.
   # ---------------------------------------------------------------------------
   golden-output:
     name: Golden output (baseline diff)

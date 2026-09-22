@@ -6,10 +6,10 @@
 // precedent as test/batch-media.test.mjs (UUIDs + tmp paths → stable tokens)
 // — and the baseline-diff semantics that decide pass/fail.
 
-import { test } from "node:test";
 import { deepStrictEqual, notStrictEqual, ok, strictEqual } from "node:assert";
+import { test } from "node:test";
 
-import { canonicalize, canonicalHash, diffBaselines } from "../scripts/golden-output.mjs";
+import { canonicalHash, canonicalize, diffBaselines } from "../scripts/golden-output.mjs";
 
 const TOKENS = [
   ["<FIXTURES>", "C:\\repo\\test-fixtures\\fixtures"],
@@ -62,6 +62,19 @@ test('canonicalize: JSON-escaped paths become tokens (validate\'s "project" fiel
   const line =
     '{"project":"C:\\\\repo\\\\test-fixtures\\\\fixtures","draft_file":"C:\\\\repo\\\\test-fixtures\\\\fixtures\\\\a.json"}';
   strictEqual(canonicalize(line, TOKENS), '{"project":"<FIXTURES>","draft_file":"<FIXTURES>/a.json"}');
+});
+
+test("canonicalize: POSIX token paths (CI/ubuntu) become tokens too", () => {
+  const posix = [
+    ["<FIXTURES>", "/home/runner/work/repo/test-fixtures/fixtures"],
+    ["<TMP>", "/tmp/capcut-golden-abc123"],
+    ["<ROOT>", "/home/runner/work/repo"],
+  ];
+  strictEqual(
+    canonicalize("found /home/runner/work/repo/test-fixtures/fixtures/minimal-draft.json ok", posix),
+    "found <FIXTURES>/minimal-draft.json ok",
+  );
+  strictEqual(canonicalize("/home/runner/work/repo/dist/index.js", posix), "<ROOT>/dist/index.js");
 });
 
 // --- canonicalHash ---------------------------------------------------------
