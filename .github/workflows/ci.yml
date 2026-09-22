@@ -190,12 +190,14 @@ golden-output:
           if [ "${{ needs.lint.result }}" != "success" ] || \
              [ "${{ needs.test.result }}" != "success" ] || \
              [ "${{ needs.coverage.result }}" != "success" ] || \
-             [ "${{ needs.fixture-integrity.result }}" != "success" ]; then
+             [ "${{ needs.fixture-integrity.result }}" != "success" ] || \
+             [ "${{ needs.golden-output.result }}" != "success" ]; then
             echo "::error::One or more required jobs failed."
             echo "lint=${{ needs.lint.result }}"
             echo "test=${{ needs.test.result }}"
             echo "coverage=${{ needs.coverage.result }}"
             echo "fixture-integrity=${{ needs.fixture-integrity.result }}"
+            echo "golden-output=${{ needs.golden-output.result }}"
             exit 1
           fi
           echo "All required jobs passed."
