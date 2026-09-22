@@ -13,7 +13,10 @@ AGENTS.md
 
 # throwaway scratch/debug scripts
 temp/
+# throwaway scratch/debug scripts (kept out), except the versioned ARCH tracker
 .scratch*
+!.scratch/arch-workstream/
+!.scratch/arch-workstream/**
 
 # pnpm local store (package-manager cache, not source)
 .pnpm-store/
