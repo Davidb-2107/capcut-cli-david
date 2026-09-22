@@ -281,7 +281,7 @@ test("CLI sync-timelines: a guid write failure → exit 1 with {error}", (t) => 
     strictEqual(r.status, 1);
     ok(r.errorJson?.error, `expected an {error} envelope, got: ${r.stderr}`);
   } finally {
-    chmodSync(badMirror, 0o644);
+    restoreMirrorWrites(lock);
   }
 });
 
