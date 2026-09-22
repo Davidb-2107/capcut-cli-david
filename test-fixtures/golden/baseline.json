@@ -1,0 +1,1356 @@
+{
+  "version": 1,
+  "captures": [
+    {
+      "id": "global/help",
+      "argv": [
+        "--help"
+      ],
+      "exit": 0,
+      "stdout": "capcut-david — CapCut/JianYing draft CLI (fork of capcut-cli)\n\nUsage: capcut-david <command> <project> [options]\n\n  <project> = path to draft_content.json, draft_info.json, or their parent directory\n\nGlobal flags:\n  -H, --human     Human-readable table output (default: JSON)\n  -q, --quiet     No output on success, exit code only (write commands)\n      --force     Write even if CapCut is running (skips the open-CapCut guard;\n                  CapCut overwrites the draft on close — use only for automation).\n                  Env equivalent: CAPCUT_DAVID_FORCE=1\n\nOverview (start here):\n  info       <project>                          Project overview + material summary\n  tracks     <project>                          List all tracks\n  materials  <project>                          List all material types + counts\n  materials  <project> --type <type>            List items of one material type\n\nBrowse:\n  segments   <project> [--track <type>]         List segments with timing\n  texts      <project>                          List all text/subtitle content\n\nDetail (drill into one item):\n  segment    <project> <id>                     Full detail for one segment + its material\n  material   <project> <id>                     Full detail for one material\n\nCreate:\n  init       <name> [--template <dir>] [--drafts <dir>] [--width <n> --height <n>]\n             Create a new empty draft from template.\n\nAdd:\n  add-audio  <project> <file> <start> <duration> [--volume <n>] [--track-name <s>]\n  add-audio  <project> --batch @items.json\n             batch: [{path,start,duration,volume?,trackName?}]\n             — ordered segment_ids out; all-or-nothing, one save.\n  add-video  <project> <file> <start> <duration> [--track-name <s>]\n             Media is copied into <draft>/Resources/ and referenced by a portable\n             draftpath token (rename/duplication-safe — orchestrator version gate).\n  add-video  <project> --batch @items.json\n             batch: [{path,start,duration,width?,height?,volume?,trackName?}]\n             — ordered segment_ids out; all-or-nothing, one save.\n  add-text   <project> <start> <duration> <text>\n              [--font-size <n>] [--color <hex>] [--align <0|1|2>]\n              [--x <n>] [--y <n>] [--track-name <s>]\n              [--keyword <word> | --keyword-range <s,e>] [--keyword-color <hex>]\n              [--keyword-size <n>]\n              Keyword highlight: color one word/range (default #FFD600);\n              --keyword-size sets the highlighted word's font size (points).\n  import-captions <project> <captions.json> [--color <hex>] [--color-cycle <hex,hex,...>]\n              [--highlight-color <hex>] [--highlight-size <n>] [--transform-y <n>]\n              [--track-name <s>] [--clone-style]\n              Batch word/keyword captions from [{text,start,end,hl?,color?,hlSize?}];\n              replaces the text track (start/end in microseconds).\n              --color-cycle: per-card base color, card i uses cycle[i % n] (overrides --color).\n              --highlight-size: default font size for hl spans (per-card hlSize wins).\n              --transform-y: clip.transform.y for every rebuilt caption segment\n              (vertical position; negatives allowed, e.g. -0.4 = mi-bas).\n              --clone-style: keep the target track's existing caption font/stroke/shadow.\n  cascade-words <project> <cards.json> --guide-track <name> (--font <name|resource_id> | --clone-style)\n              [--track-prefix <name>] [--line-prefix <name>] [--font-size <n>]\n              [--color <hex>] [--highlight-color <hex>] [--align <0|1|2>]\n              [--alpha-lines]\n              [--drafts <dir>] [--font-calibration <file>] [--allow-candidate-calibration]\n              Word-by-word sentence build-up (NOT karaoke — words stay on screen once\n              revealed, until the full sentence shows). Lines are packed from measured\n              font widths: a BASE track (full line text, --color, default\n              #FFFFFF) is created as a PLACEMENT GUIDE ONLY and hidden immediately\n              (visible=false — never meant to be seen), plus one WORD track per word\n              (--highlight-color, default #FFD600, the only visible layer) that starts\n              at its own timestamp (cards = [{text,start,end}], microseconds — e.g.\n              Shared/narration-alignment build_captions_cli.py --karaoke output), stays\n              until the line ends, and is x-offset from measured font prefixes to sit\n              over its matching word in the hidden base guide.\n              --font resolves a measured font from the catalogue/drafts and writes the\n              same font into content.styles[*].font and material mirrors. Without\n              --font, --clone-style must clone a readable guide font.\n              --alpha-lines is experimental: each word track keeps the complete line,\n              sets alpha=0 outside the active word, and leaves transform.x at zero.\n              Cards may include an optional zero-based line field to preserve\n              pre-chosen line breaks; without it, measured wrapping is used.\n              --font-calibration loads a JSON array of validated per-font CapCut\n              scales; missing or candidate profiles are rejected before mutation.\n              --allow-candidate-calibration is an explicit experimental opt-in for\n              testing a candidate profile; it is never implied by --font-calibration.\n              --guide-track names the text track already holding the full sentence\n              (created via import-captions); its segment is likewise hidden once\n              processed — a guide track may hold several sentence segments (repeated\n              per-sentence calls), each call consumes and hides the first unhidden one.\n              Base tracks are named <line-prefix>-000, ... (default \"line\"); word tracks\n              <track-prefix>-000, ... (default \"word\", global card index).\n  add-effect <project> <resource-id> <name> (<start> <duration> | --full)\n              [--value <n>] [--bind <segment-id>]\n              Apply a video effect (FX) via its catalogue resource ID.\n              --full: whole timeline (start=0, duration=draft.duration).\n  add-filter <project> <resource-id> <name> (<start> <duration> | --full) [--value <n>]\n              Apply a filter (Filters family, distinct from FX) via its\n              catalogue resource ID. --full: whole timeline.\n  add-transition <project> <segment-id> <resource-id> <name> [--duration <t>]\n              Attach a transition (to the next segment) on a video segment\n              via its catalogue resource ID. Default duration: 0.4s.\n\nStyle:\n  restyle    <project> --preset <preset.json> [--track-name <s>]\n              Apply a caption style preset (font/stroke/shadow/size) to every\n              caption. Span-aware: keyword-highlight colors + ranges survive.\n              Default targets all text tracks; --track-name scopes to one.\n\nEdit:\n  set-text   <project> <id> <text>              Change text content\n  shift      <project> <id> <offset>            Shift segment timing (e.g. +0.5s, -1s)\n  shift-all  <project> <offset> [--track <type>] Shift all segments on a track\n  speed      <project> <id> <multiplier>        Set playback speed\n  volume     <project> <id> <level>             Set volume (0.0-1.0)\n  trim       <project> <id> <start> <duration>  Trim segment (times in seconds)\n  opacity    <project> <id> <alpha>             Set opacity (0.0-1.0)\n  remove-segment <project> <segment-id>         Remove a segment from its track\n              (track dropped when emptied), then sweep the text/video/audio\n              materials the removal orphaned (gc's plan — a material still\n              referenced by another segment is never deleted).\n  export-srt <project>                          Export subtitles to SRT\n  batch      <project>                          Run multiple edits from stdin (JSONL)\n\nKeyframes:\n  add-keyframe <project> <id> <time> --property <p> --value <v> [--curve <c>]\n               Insert/update a keyframe at <time> on <id>.\n               Properties: scale_x, scale_y, position_x, position_y, rotation, alpha\n               Curves:     linear (default), ease-in, ease-out, ease-in-out\n  add-keyframe <project> --batch @entries.json\n               batch: [{segment_id,property,keyframes:[{time,value,curve?}]}]\n               — one call per {segment_id,property,time,value,curve}; all-or-nothing\n               (segment existence checked before any write), one save.\n  ken-burns    <project> <id> --from <scale> --to <scale> [--curve <c>]\n               Apply a Ken Burns zoom — paired scale_x/scale_y keyframes\n               from t=0 to t=segment.duration. Default curve: ease-out.\n\nTemplates:\n  save-template  <project> <id> <name> --out <path>\n  apply-template <project> <template.json> <start> <duration> [text override]\n                 [--x <n>] [--y <n>]\n\nPipeline:\n  psycho-build <manifest.yaml> [--out <dir>] [--seed <n>]\n               [--register] [--projects-root <dir>]\n               Build a complete TikTok-format draft from a YAML manifest\n               (images + ken-burns + voice + music + SRT captions).\n               --register: also index the draft so it appears in CapCut's UI.\n\nRegister:\n  register   <draft-dir> [--projects-root <dir>]\n               Append a built draft to CapCut's root_meta_info.json so it\n               shows up in the CapCut UI. Idempotent.\n  init-meta  <project> [--force] [--register] [--projects-root <dir>] [--dry-run]\n               Generate a MISSING draft_meta_info.json next to draft_content.json\n               (fixes validate's meta.missing). Refuses if one already exists\n               (--force to overwrite, writes a .bak first). --register chains\n               register. Writes only the sidecar; keep CapCut CLOSED.\n\nValidate:\n  validate   <project> [-H] [-q] [--strict] [--id <id>] [--skip <id>]\n             [--check-assets] [--check-timelines] [--projects-root <dir>]\n             Read-only linter — detects dangling refs, orphans, duplicate ids,\n             zero/under/overrun durations, overlaps and canvas sanity BEFORE you\n             open CapCut. Never writes. Exit 0 = clean, 2 = problems found,\n             1 = tool failure. --strict promotes warnings to the failure code.\n             --check-assets/--check-timelines enable the opt-in disk checks.\n  validate   <project> --fix [--apply] [--id <id>] [--skip <id>] [--strict]\n             Aggregate auto-fixer. DRY-RUN BY DEFAULT: --fix alone previews the\n             plan (zero writes); add --apply to write. Maps each fixable finding\n             to its fixer and runs them in dependency order: gc (DESTRUCTIVE:\n             removes orphan materials) → init-meta → register → sync-timelines\n             (always last). Re-validates after applying; exit reflects the\n             residual. Refuses on dangling-ref/duplicate-id drafts. --apply\n             requires CapCut CLOSED. --id/--skip select which findings to fix.\n  sync-timelines <project> [--dry-run] [-H] [-q] [--force]\n             Repair a stale CapCut timeline mirror: copy the root\n             draft_content.json into every Timelines/<guid>/ (+ template-2.tmp).\n             Fixes validate's timelines.divergence. Direction is always\n             root → mirror; timestamped backups (…synced-<epoch>.bak) are kept.\n             --dry-run reports without writing. Keep CapCut CLOSED (write guard).\n\nGarbage-collect:\n  gc         <project> [--dry-run] [-H] [-q] [--force]\n             Remove orphan text/video/audio materials (those validate reports as\n             orphan_text/orphan_media — e.g. import-captions leftovers). JSON-only:\n             never deletes a disk asset. Refuses on a dangling-ref/duplicate-id\n             draft. No-op writes nothing. --dry-run previews. Run sync-timelines\n             after (the root then diverges from any Timelines/ mirrors).\n\nCatalogue:\n  query      <term> [--kind effect|filter|transition|font|sticker|mask|animation|curve] [--drafts <dir>]\n             Search the CapCut drafts library (every draft under the projects\n             root) for effects, filters, transitions, fonts, stickers, masks,\n             animations and keyframe curves. <term> = case-insensitive\n             substring on the item name. Read-only. Results dedupe by\n             resource_id (local fonts by name+path) and list from_drafts[].\n             JSON (or -H table). Exit 0 even on zero matches;\n             2 if the drafts root is missing or all drafts are unreadable.\n\n  catalogue  [--sync] [--add <id> --kind <k> --name <nom>] [--note <texte>]\n             [--dry-run] [--kind effect|filter|transition|font|sticker|mask|animation|curve]\n             [--drafts <dir>] [--catalogue <path>]\n             Persistent memory of every resource seen in a draft: name +\n             resource_id frozen in <vault>/Shared/capcut-catalogue.json (anchor-\n             resolved; cwd outside a vault). Where query reads the drafts that\n             exist right now, an entry here SURVIVES the deletion of its witness\n             draft. Append-only: `note` and `ignored` are hand-written and never\n             rewritten by a sync. Without --sync it only reads. --dry-run reports\n             without writing; --kind filters the listing, never the merge.\n             --add: enter a resource whose witness draft is gone (nothing to\n             harvest, so --sync cannot reach it) — needs --kind and --name;\n             --note adds a human note without ever overwriting an existing one.\n             Exit 0 (incl. nothing new), 1 usage, 2 unreadable catalogue /\n             missing drafts root / write refused.\n\n  make-preset --font <name|resource_id> [--out <file>] [--drafts <dir>]\n             Generate a BARE-FONT restyle preset for a font already used in your\n             drafts library (the generation cousin of query). Reads the font's\n             resource_id / .ttf path / catalogue title from a draft that uses it\n             and emits a preset ready for `restyle --preset`. --out writes the\n             preset file; otherwise it's in the JSON envelope. Read-only. Exit 0\n             (incl. no-match / ambiguous), 2 if the drafts root is missing or the\n             matched font is local-only (no resource_id), 1 on usage error.\n\n  ui         [--print-path]                     Ouvre la carte des capacités du moteur dans le navigateur\n             (page embarquée dans le paquet). --print-path affiche le chemin\n             absolu de la page sans l’ouvrir (headless/tests).\n\n\nProject:\n  cut        <project> <start> <end> --out <path>\n\nNavigation: info → tracks/materials → segments → segment <id>\n            info → materials --type X → material <id>\nTime formats: 1.5s, 500ms, 1:30, +0.5s, -200ms\nIDs: first 6+ chars of segment/material ID (prefix match)\n",
+      "stderr": ""
+    },
+    {
+      "id": "global/version-flag",
+      "argv": [
+        "--version"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "{\"error\":\"Missing project path. Run 'capcut-david --help' for usage.\"}\n"
+    },
+    {
+      "id": "global/capabilities-ui-path",
+      "argv": [
+        "ui",
+        "--print-path"
+      ],
+      "exit": 0,
+      "stdout": "<ROOT>/dist/ui/index.html\n",
+      "stderr": ""
+    },
+    {
+      "id": "global/query-all",
+      "argv": [
+        "query",
+        "--all",
+        "--drafts",
+        "<TMP>/query-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"type\":\"capcut-david/query@1\",\"results\":[{\"kind\":\"animation\",\"name\":\"Bounce Out\",\"resource_id\":\"6887765964515971585\",\"effect_id\":null,\"category_name\":\"Favorites\",\"font_path\":null,\"from_drafts\":[\"full-psycho-draft\"]},{\"kind\":\"animation\",\"name\":\"Fade In\",\"resource_id\":\"6724916044072227332\",\"effect_id\":null,\"category_name\":\"In\",\"font_path\":null,\"from_drafts\":[\"animations-draft\",\"full-psycho-draft\"]},{\"kind\":\"animation\",\"name\":\"Fade Out\",\"resource_id\":\"6724919382104871427\",\"effect_id\":null,\"category_name\":\"Out\",\"font_path\":null,\"from_drafts\":[\"animations-draft\",\"full-psycho-draft\"]},{\"kind\":\"curve\",\"name\":\"Cubic In\",\"resource_id\":\"7034098790596350465\",\"effect_id\":null,\"category_name\":null,\"font_path\":null,\"from_drafts\":[\"effects-draft\"]},{\"kind\":\"curve\",\"name\":\"Cubic Out\",\"resource_id\":\"7034098919583781377\",\"effect_id\":null,\"category_name\":null,\"font_path\":null,\"from_drafts\":[\"effects-draft\",\"full-psycho-draft\",\"ken-burns-draft\"]},{\"kind\":\"curve\",\"name\":\"Ease In\",\"resource_id\":\"7002056185805279746\",\"effect_id\":null,\"category_name\":null,\"font_path\":null,\"from_drafts\":[\"effects-draft\"]},{\"kind\":\"effect\",\"name\":\"VHS Horror\",\"resource_id\":\"7583016187584417032\",\"effect_id\":\"7583016187584417032\",\"category_name\":\"Video effects\",\"font_path\":null,\"from_drafts\":[\"effects-draft\"]},{\"kind\":\"filter\",\"name\":\"Vintage\",\"resource_id\":\"6706773528277946894\",\"effect_id\":\"6706773528277946894\",\"category_name\":\"Filters\",\"font_path\":null,\"from_drafts\":[\"masks-filters-draft\"]},{\"kind\":\"font\",\"name\":\"CC-DerStil\",\"resource_id\":\"7457793217560318481\",\"effect_id\":\"7457793217560318481\",\"category_name\":\"Presets\",\"font_path\":\"/fixtures/cache/effect/7457793217560318481/CC-DerStil.ttf\",\"from_drafts\":[\"full-psycho-draft\",\"ken-burns-draft\"]},{\"kind\":\"font\",\"name\":\"en\",\"resource_id\":null,\"effect_id\":null,\"category_name\":null,\"font_path\":\"/fixtures/assets/en.ttf\",\"from_drafts\":[\"animations-draft\",\"subtitles-draft\"]},{\"kind\":\"font\",\"name\":\"PlayfairDisplay\",\"resource_id\":null,\"effect_id\":null,\"category_name\":null,\"font_path\":\"/fixtures/fonts/PlayfairDisplay-VariableFont_wght.ttf\",\"from_drafts\":[\"full-psycho-draft\"]},{\"kind\":\"mask\",\"name\":\"Circle\",\"resource_id\":\"7374021188315517456\",\"effect_id\":null,\"category_name\":null,\"font_path\":null,\"from_drafts\":[\"masks-filters-draft\"]},{\"kind\":\"sticker\",\"name\":\"Simple Artistic Circle\",\"resource_id\":\"7237287015903972613\",\"effect_id\":null,\"category_name\":\"Trending\",\"font_path\":null,\"from_drafts\":[\"stickers-draft\"]},{\"kind\":\"transition\",\"name\":\"Dissolve\",\"resource_id\":\"6724846004274729480\",\"effect_id\":\"6724846004274729480\",\"category_name\":\"Transitions\",\"font_path\":null,\"from_drafts\":[\"transitions-draft\"]}]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "errors/unknown-verb",
+      "argv": [
+        "definitely-not-a-verb",
+        "<FIXTURES>/minimal-draft.json"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "{\"error\":\"Unknown command: definitely-not-a-verb. Run 'capcut-david --help' for usage.\"}\n"
+    },
+    {
+      "id": "errors/missing-project-path",
+      "argv": [
+        "info"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "{\"error\":\"Missing project path. Run 'capcut-david --help' for usage.\"}\n"
+    },
+    {
+      "id": "minimal-draft/info",
+      "argv": [
+        "info",
+        "<FIXTURES>/minimal-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"id\":\"<UUID>\",\"name\":\"<UUID>\",\"duration_us\":0,\"fps\":30,\"width\":1920,\"height\":1080,\"ratio\":\"original\",\"tracks\":0,\"segments\":0,\"platform\":\"CapCut 8.5.0\",\"material_types\":54,\"materials_with_items\":0,\"material_summary\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "minimal-draft/tracks",
+      "argv": [
+        "tracks",
+        "<FIXTURES>/minimal-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[]\n",
+      "stderr": ""
+    },
+    {
+      "id": "minimal-draft/segments",
+      "argv": [
+        "segments",
+        "<FIXTURES>/minimal-draft.json"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "{\"error\":\"No tracks of type \\\"undefined\\\"\"}\n"
+    },
+    {
+      "id": "minimal-draft/texts",
+      "argv": [
+        "texts",
+        "<FIXTURES>/minimal-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[]\n",
+      "stderr": ""
+    },
+    {
+      "id": "minimal-draft/materials",
+      "argv": [
+        "materials",
+        "<FIXTURES>/minimal-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"type\":\"flowers\",\"count\":0},{\"type\":\"videos\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"audios\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"texts\",\"count\":0},{\"type\":\"effects\",\"count\":0},{\"type\":\"stickers\",\"count\":0},{\"type\":\"canvases\",\"count\":0},{\"type\":\"transitions\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"material_animations\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"placeholder_infos\",\"count\":0},{\"type\":\"speeds\",\"count\":0},{\"type\":\"common_mask\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"video_effects\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"sound_channel_mappings\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"material_colors\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"loudnesses\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"vocal_separations\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "minimal-draft/export-srt",
+      "argv": [
+        "export-srt",
+        "<FIXTURES>/minimal-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "id": "minimal-draft/validate",
+      "argv": [
+        "validate",
+        "<FIXTURES>/minimal-draft.json",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<FIXTURES>\",\"draft_file\":\"<FIXTURES>/minimal-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "minimal-draft/segment",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no segment in fixture"
+    },
+    {
+      "id": "minimal-draft/material",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no material in fixture"
+    },
+    {
+      "id": "ken-burns-draft/info",
+      "argv": [
+        "info",
+        "<FIXTURES>/ken-burns-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"id\":\"<UUID>\",\"name\":\"<UUID>\",\"duration_us\":3533333,\"fps\":30,\"width\":1080,\"height\":1920,\"ratio\":\"original\",\"tracks\":4,\"segments\":9,\"platform\":\"CapCut 8.2.0\",\"material_types\":54,\"materials_with_items\":11,\"material_summary\":[{\"type\":\"placeholder_infos\",\"count\":7},{\"type\":\"speeds\",\"count\":7},{\"type\":\"sound_channel_mappings\",\"count\":7},{\"type\":\"vocal_separations\",\"count\":7},{\"type\":\"videos\",\"count\":5},{\"type\":\"canvases\",\"count\":5},{\"type\":\"material_colors\",\"count\":5},{\"type\":\"loudnesses\",\"count\":5},{\"type\":\"audios\",\"count\":2},{\"type\":\"texts\",\"count\":2},{\"type\":\"material_animations\",\"count\":2}]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "ken-burns-draft/tracks",
+      "argv": [
+        "tracks",
+        "<FIXTURES>/ken-burns-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"index\":0,\"id\":\"<UUID>\",\"type\":\"audio\",\"name\":\"\",\"segments\":1,\"duration_us\":3533333,\"muted\":true,\"hidden\":false,\"locked\":false},{\"index\":1,\"id\":\"<UUID>\",\"type\":\"audio\",\"name\":\"\",\"segments\":1,\"duration_us\":3500000,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":2,\"id\":\"<UUID>\",\"type\":\"video\",\"name\":\"\",\"segments\":5,\"duration_us\":3533333,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":3,\"id\":\"<UUID>\",\"type\":\"text\",\"name\":\"\",\"segments\":2,\"duration_us\":3500000,\"muted\":false,\"hidden\":false,\"locked\":false}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "ken-burns-draft/segments",
+      "argv": [
+        "segments",
+        "<FIXTURES>/ken-burns-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"id\":\"<UUID>\",\"type\":\"audio\",\"start_us\":0,\"duration_us\":3533333,\"speed\":1,\"volume\":0.5,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"audio\",\"start_us\":500000,\"duration_us\":3000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":0,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":766666,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":1533333,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":2266666,\"duration_us\":633334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":2900000,\"duration_us\":633333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":566666,\"duration_us\":1066667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":3033333,\"duration_us\":466667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM\"}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "ken-burns-draft/texts",
+      "argv": [
+        "texts",
+        "<FIXTURES>/ken-burns-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"id\":\"<UUID>\",\"start_us\":566666,\"duration_us\":1066667,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":3033333,\"duration_us\":466667,\"text\":\"LOREM\"}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "ken-burns-draft/materials",
+      "argv": [
+        "materials",
+        "<FIXTURES>/ken-burns-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"type\":\"placeholder_infos\",\"count\":7},{\"type\":\"speeds\",\"count\":7},{\"type\":\"sound_channel_mappings\",\"count\":7},{\"type\":\"vocal_separations\",\"count\":7},{\"type\":\"videos\",\"count\":5},{\"type\":\"canvases\",\"count\":5},{\"type\":\"material_colors\",\"count\":5},{\"type\":\"loudnesses\",\"count\":5},{\"type\":\"audios\",\"count\":2},{\"type\":\"texts\",\"count\":2},{\"type\":\"material_animations\",\"count\":2},{\"type\":\"flowers\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"effects\",\"count\":0},{\"type\":\"stickers\",\"count\":0},{\"type\":\"transitions\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"common_mask\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"video_effects\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "ken-burns-draft/export-srt",
+      "argv": [
+        "export-srt",
+        "<FIXTURES>/ken-burns-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "1\n00:00:00,567 --> 00:00:01,633\nLOREM LOREM LOREM LOREM\n\n2\n00:00:03,033 --> 00:00:03,500\nLOREM\n",
+      "stderr": ""
+    },
+    {
+      "id": "ken-burns-draft/validate",
+      "argv": [
+        "validate",
+        "<FIXTURES>/ken-burns-draft.json",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<FIXTURES>\",\"draft_file\":\"<FIXTURES>/ken-burns-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "ken-burns-draft/segment",
+      "argv": [
+        "segment",
+        "<FIXTURES>/ken-burns-draft.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"id\":\"<UUID>\",\"source_timerange\":{\"start\":0,\"duration\":3533333},\"target_timerange\":{\"start\":0,\"duration\":3533333},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":0.5,\"last_nonzero_volume\":1,\"clip\":null,\"uniform_scale\":null,\"material_id\":\"<UUID>\",\"extra_material_refs\":[\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":false,\"enable_adjust\":false,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":null,\"enable_color_wheels\":true,\"track_attribute\":1,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"audio\",\"_track_name\":\"\",\"_track_id\":\"<UUID>\",\"_material\":{\"_type\":\"audios\",\"id\":\"<UUID>\",\"unique_id\":\"\",\"type\":\"extract_music\",\"name\":\"<UUID>\",\"duration\":60000000,\"path\":\"##_draftpath_placeholder_<UUID>_##\\\\Resources\\\\<UUID>.mp3\",\"category_name\":\"local\",\"wave_points\":[],\"music_id\":\"\",\"app_id\":0,\"text_id\":\"\",\"tone_type\":\"\",\"source_platform\":0,\"video_id\":\"\",\"effect_id\":\"\",\"resource_id\":\"\",\"third_resource_id\":\"\",\"category_id\":\"\",\"intensifies_path\":\"\",\"formula_id\":\"\",\"check_flag\":1,\"team_id\":\"\",\"local_material_id\":\"\",\"tone_speaker\":\"\",\"mock_tone_speaker\":\"\",\"tone_effect_id\":\"\",\"tone_effect_name\":\"\",\"tone_platform\":\"\",\"cloned_model_type\":\"\",\"tone_category_id\":\"\",\"tone_category_name\":\"\",\"tone_second_category_id\":\"\",\"tone_second_category_name\":\"\",\"tone_emotion_name_key\":\"\",\"tone_emotion_style\":\"\",\"tone_emotion_role\":\"\",\"tone_emotion_selection\":\"\",\"tone_emotion_scale\":0,\"moyin_emotion\":\"\",\"request_id\":\"\",\"query\":\"\",\"search_id\":\"\",\"sound_separate_type\":\"\",\"is_text_edit_overdub\":false,\"is_ugc\":false,\"is_ai_clone_tone\":false,\"is_ai_clone_tone_post\":false,\"source_from\":\"\",\"copyright_limit_type\":\"none\",\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"music_source\":\"\",\"pgc_id\":\"\",\"pgc_name\":\"\",\"similiar_music_info\":{\"original_song_id\":\"\",\"original_song_name\":\"\"},\"ai_music_type\":0,\"ai_music_enter_from\":\"\",\"lyric_type\":0,\"tts_task_id\":\"\",\"tts_generate_scene\":\"\",\"ai_music_generate_scene\":0,\"tts_benefit_info\":{\"benefit_type\":\"none\",\"benefit_log_id\":\"\",\"benefit_log_extra\":\"\",\"benefit_amount\":-1}}}\n",
+      "stderr": ""
+    },
+    {
+      "id": "ken-burns-draft/material",
+      "argv": [
+        "material",
+        "<FIXTURES>/ken-burns-draft.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"_type\":\"videos\",\"id\":\"<UUID>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":5000000,\"path\":\"##_draftpath_placeholder_<UUID>_##\\\\Resources\\\\<UUID>.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"<UUID>\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":5000000}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":63487,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "id": "effects-draft/info",
+      "argv": [
+        "info",
+        "<FIXTURES>/effects-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"id\":\"<UUID>\",\"name\":\"<UUID>\",\"duration_us\":62000000,\"fps\":30,\"width\":1080,\"height\":1920,\"ratio\":\"original\",\"tracks\":4,\"segments\":52,\"platform\":\"CapCut 8.2.0\",\"material_types\":54,\"materials_with_items\":10,\"material_summary\":[{\"type\":\"placeholder_infos\",\"count\":51},{\"type\":\"speeds\",\"count\":51},{\"type\":\"sound_channel_mappings\",\"count\":51},{\"type\":\"vocal_separations\",\"count\":51},{\"type\":\"videos\",\"count\":49},{\"type\":\"canvases\",\"count\":49},{\"type\":\"material_colors\",\"count\":49},{\"type\":\"loudnesses\",\"count\":49},{\"type\":\"audios\",\"count\":2},{\"type\":\"video_effects\",\"count\":1}]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "effects-draft/tracks",
+      "argv": [
+        "tracks",
+        "<FIXTURES>/effects-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"index\":0,\"id\":\"<UUID>\",\"type\":\"audio\",\"name\":\"\",\"segments\":1,\"duration_us\":49266666,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":1,\"id\":\"<UUID>\",\"type\":\"audio\",\"name\":\"\",\"segments\":1,\"duration_us\":62000000,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":2,\"id\":\"<UUID>\",\"type\":\"video\",\"name\":\"\",\"segments\":49,\"duration_us\":61566666,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":3,\"id\":\"<UUID>\",\"type\":\"effect\",\"name\":\"\",\"segments\":1,\"duration_us\":61566666,\"muted\":false,\"hidden\":false,\"locked\":false}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "effects-draft/segments",
+      "argv": [
+        "segments",
+        "<FIXTURES>/effects-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"id\":\"<UUID>\",\"type\":\"audio\",\"start_us\":0,\"duration_us\":49266666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"audio\",\"start_us\":0,\"duration_us\":62000000,\"speed\":1,\"volume\":0.15,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":0,\"duration_us\":2733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":2733333,\"duration_us\":900000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":3633333,\"duration_us\":1900000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":5533333,\"duration_us\":1866667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":7400000,\"duration_us\":2633333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":10033333,\"duration_us\":2000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":12033333,\"duration_us\":2000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":14033333,\"duration_us\":1333333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":15366666,\"duration_us\":633334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":16000000,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":17000000,\"duration_us\":1033333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":18033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":19033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":20033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":21033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":22033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":23033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":24033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":25033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":26033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":27033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":28033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":29033333,\"duration_us\":966667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":30000000,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":31000000,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":32000000,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":33000000,\"duration_us\":1033333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":34033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":35033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":36033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":37033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":38033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":39033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":40033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":41033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":42033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":43033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":44033333,\"duration_us\":966667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":45000000,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":46000000,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":47000000,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":48000000,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":49000000,\"duration_us\":1033333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":50033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":51033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":52033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":53033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":54033333,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":55033333,\"duration_us\":6533333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"effect\",\"start_us\":0,\"duration_us\":61566666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"\"}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "effects-draft/texts",
+      "argv": [
+        "texts",
+        "<FIXTURES>/effects-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[]\n",
+      "stderr": ""
+    },
+    {
+      "id": "effects-draft/materials",
+      "argv": [
+        "materials",
+        "<FIXTURES>/effects-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"type\":\"placeholder_infos\",\"count\":51},{\"type\":\"speeds\",\"count\":51},{\"type\":\"sound_channel_mappings\",\"count\":51},{\"type\":\"vocal_separations\",\"count\":51},{\"type\":\"videos\",\"count\":49},{\"type\":\"canvases\",\"count\":49},{\"type\":\"material_colors\",\"count\":49},{\"type\":\"loudnesses\",\"count\":49},{\"type\":\"audios\",\"count\":2},{\"type\":\"video_effects\",\"count\":1},{\"type\":\"flowers\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"texts\",\"count\":0},{\"type\":\"effects\",\"count\":0},{\"type\":\"stickers\",\"count\":0},{\"type\":\"transitions\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"material_animations\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"common_mask\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "effects-draft/export-srt",
+      "argv": [
+        "export-srt",
+        "<FIXTURES>/effects-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "id": "effects-draft/validate",
+      "argv": [
+        "validate",
+        "<FIXTURES>/effects-draft.json",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<FIXTURES>\",\"draft_file\":\"<FIXTURES>/effects-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "effects-draft/segment",
+      "argv": [
+        "segment",
+        "<FIXTURES>/effects-draft.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"id\":\"<UUID>\",\"source_timerange\":{\"start\":0,\"duration\":49266666},\"target_timerange\":{\"start\":0,\"duration\":49266666},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":1,\"last_nonzero_volume\":1,\"clip\":null,\"uniform_scale\":null,\"material_id\":\"<UUID>\",\"extra_material_refs\":[\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":false,\"enable_adjust\":false,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":null,\"enable_color_wheels\":true,\"track_attribute\":0,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"audio\",\"_track_name\":\"\",\"_track_id\":\"<UUID>\",\"_material\":{\"_type\":\"audios\",\"id\":\"<UUID>\",\"unique_id\":\"\",\"type\":\"extract_music\",\"name\":\"<UUID>\",\"duration\":49266666,\"path\":\"##_draftpath_placeholder_<UUID>_##\\\\Resources\\\\<UUID>.mp3\",\"category_name\":\"local\",\"wave_points\":[],\"music_id\":\"\",\"app_id\":0,\"text_id\":\"\",\"tone_type\":\"\",\"source_platform\":0,\"video_id\":\"\",\"effect_id\":\"\",\"resource_id\":\"\",\"third_resource_id\":\"\",\"category_id\":\"\",\"intensifies_path\":\"\",\"formula_id\":\"\",\"check_flag\":1,\"team_id\":\"\",\"local_material_id\":\"\",\"tone_speaker\":\"\",\"mock_tone_speaker\":\"\",\"tone_effect_id\":\"\",\"tone_effect_name\":\"\",\"tone_platform\":\"\",\"cloned_model_type\":\"\",\"tone_category_id\":\"\",\"tone_category_name\":\"\",\"tone_second_category_id\":\"\",\"tone_second_category_name\":\"\",\"tone_emotion_name_key\":\"\",\"tone_emotion_style\":\"\",\"tone_emotion_role\":\"\",\"tone_emotion_selection\":\"\",\"tone_emotion_scale\":0,\"moyin_emotion\":\"\",\"request_id\":\"\",\"query\":\"\",\"search_id\":\"\",\"sound_separate_type\":\"\",\"is_text_edit_overdub\":false,\"is_ugc\":false,\"is_ai_clone_tone\":false,\"is_ai_clone_tone_post\":false,\"source_from\":\"\",\"copyright_limit_type\":\"none\",\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"music_source\":\"\",\"pgc_id\":\"\",\"pgc_name\":\"\",\"similiar_music_info\":{\"original_song_id\":\"\",\"original_song_name\":\"\"},\"ai_music_type\":0,\"ai_music_enter_from\":\"\",\"lyric_type\":0,\"tts_task_id\":\"\",\"tts_generate_scene\":\"\",\"ai_music_generate_scene\":0,\"tts_benefit_info\":{\"benefit_type\":\"none\",\"benefit_log_id\":\"\",\"benefit_log_extra\":\"\",\"benefit_amount\":-1}}}\n",
+      "stderr": ""
+    },
+    {
+      "id": "effects-draft/material",
+      "argv": [
+        "material",
+        "<FIXTURES>/effects-draft.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"_type\":\"videos\",\"id\":\"<UUID>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":5000000,\"path\":\"##_draftpath_placeholder_<UUID>_##\\\\Resources\\\\<UUID>.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":1080,\"height\":1920,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"<UUID>\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":5000000}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false,\"is_clould\":false,\"mask_video_path\":\"\",\"cloud_product_fps\":0},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":63487,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"is_set_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "id": "subtitles-draft/info",
+      "argv": [
+        "info",
+        "<FIXTURES>/subtitles-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"id\":\"<UUID>\",\"name\":\"<UUID>\",\"duration_us\":60033333,\"fps\":30,\"width\":1080,\"height\":1920,\"ratio\":\"original\",\"tracks\":3,\"segments\":30,\"platform\":\"CapCut 8.2.0\",\"material_types\":54,\"materials_with_items\":11,\"material_summary\":[{\"type\":\"texts\",\"count\":28},{\"type\":\"material_animations\",\"count\":28},{\"type\":\"placeholder_infos\",\"count\":2},{\"type\":\"speeds\",\"count\":2},{\"type\":\"sound_channel_mappings\",\"count\":2},{\"type\":\"vocal_separations\",\"count\":2},{\"type\":\"videos\",\"count\":1},{\"type\":\"audios\",\"count\":1},{\"type\":\"canvases\",\"count\":1},{\"type\":\"material_colors\",\"count\":1},{\"type\":\"loudnesses\",\"count\":1}]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "subtitles-draft/tracks",
+      "argv": [
+        "tracks",
+        "<FIXTURES>/subtitles-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"index\":0,\"id\":\"<UUID>\",\"type\":\"audio\",\"name\":\"\",\"segments\":1,\"duration_us\":60033333,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":1,\"id\":\"<UUID>\",\"type\":\"video\",\"name\":\"\",\"segments\":1,\"duration_us\":60033333,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":2,\"id\":\"<UUID>\",\"type\":\"text\",\"name\":\"\",\"segments\":28,\"duration_us\":59766666,\"muted\":false,\"hidden\":false,\"locked\":false}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "subtitles-draft/segments",
+      "argv": [
+        "segments",
+        "<FIXTURES>/subtitles-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"id\":\"<UUID>\",\"type\":\"audio\",\"start_us\":0,\"duration_us\":60033333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":0,\"duration_us\":60033333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":66666,\"duration_us\":1400000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":2533333,\"duration_us\":1800000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":5000000,\"duration_us\":1066666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":6766666,\"duration_us\":900000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":8366666,\"duration_us\":1900000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":10866666,\"duration_us\":1700000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":13333333,\"duration_us\":1366667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":15100000,\"duration_us\":1266666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":16733333,\"duration_us\":1566667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":18700000,\"duration_us\":3200000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":22533333,\"duration_us\":2600000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":25666666,\"duration_us\":800000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":26800000,\"duration_us\":1766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":29400000,\"duration_us\":1333333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":31066666,\"duration_us\":1700000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":33100000,\"duration_us\":1600000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":35200000,\"duration_us\":1600000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":37333333,\"duration_us\":1466667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":39200000,\"duration_us\":1400000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":41300000,\"duration_us\":1866666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":43500000,\"duration_us\":1700000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":45700000,\"duration_us\":1166666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":47200000,\"duration_us\":2300000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":50100000,\"duration_us\":900000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":51900000,\"duration_us\":1633333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":53933333,\"duration_us\":2066667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":57000000,\"duration_us\":1533333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":58966666,\"duration_us\":800000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM\"}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "subtitles-draft/texts",
+      "argv": [
+        "texts",
+        "<FIXTURES>/subtitles-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"id\":\"<UUID>\",\"start_us\":66666,\"duration_us\":1400000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":2533333,\"duration_us\":1800000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":5000000,\"duration_us\":1066666,\"text\":\"LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":6766666,\"duration_us\":900000,\"text\":\"LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":8366666,\"duration_us\":1900000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":10866666,\"duration_us\":1700000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":13333333,\"duration_us\":1366667,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":15100000,\"duration_us\":1266666,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":16733333,\"duration_us\":1566667,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":18700000,\"duration_us\":3200000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":22533333,\"duration_us\":2600000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":25666666,\"duration_us\":800000,\"text\":\"LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":26800000,\"duration_us\":1766666,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":29400000,\"duration_us\":1333333,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":31066666,\"duration_us\":1700000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":33100000,\"duration_us\":1600000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":35200000,\"duration_us\":1600000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":37333333,\"duration_us\":1466667,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":39200000,\"duration_us\":1400000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":41300000,\"duration_us\":1866666,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":43500000,\"duration_us\":1700000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":45700000,\"duration_us\":1166666,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":47200000,\"duration_us\":2300000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":50100000,\"duration_us\":900000,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":51900000,\"duration_us\":1633333,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":53933333,\"duration_us\":2066667,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":57000000,\"duration_us\":1533333,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":58966666,\"duration_us\":800000,\"text\":\"LOREM LOREM LOREM\"}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "subtitles-draft/materials",
+      "argv": [
+        "materials",
+        "<FIXTURES>/subtitles-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"type\":\"texts\",\"count\":28},{\"type\":\"material_animations\",\"count\":28},{\"type\":\"placeholder_infos\",\"count\":2},{\"type\":\"speeds\",\"count\":2},{\"type\":\"sound_channel_mappings\",\"count\":2},{\"type\":\"vocal_separations\",\"count\":2},{\"type\":\"videos\",\"count\":1},{\"type\":\"audios\",\"count\":1},{\"type\":\"canvases\",\"count\":1},{\"type\":\"material_colors\",\"count\":1},{\"type\":\"loudnesses\",\"count\":1},{\"type\":\"flowers\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"effects\",\"count\":0},{\"type\":\"stickers\",\"count\":0},{\"type\":\"transitions\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"common_mask\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"video_effects\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "subtitles-draft/export-srt",
+      "argv": [
+        "export-srt",
+        "<FIXTURES>/subtitles-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "1\n00:00:00,067 --> 00:00:01,467\nLOREM LOREM LOREM LOREM LOREM\n\n2\n00:00:02,533 --> 00:00:04,333\nLOREM LOREM LOREM LOREM LOREM\n\n3\n00:00:05,000 --> 00:00:06,067\nLOREM LOREM LOREM\n\n4\n00:00:06,767 --> 00:00:07,667\nLOREM LOREM\n\n5\n00:00:08,367 --> 00:00:10,267\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n6\n00:00:10,867 --> 00:00:12,567\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n7\n00:00:13,333 --> 00:00:14,700\nLOREM LOREM LOREM LOREM LOREM\n\n8\n00:00:15,100 --> 00:00:16,367\nLOREM LOREM LOREM LOREM\n\n9\n00:00:16,733 --> 00:00:18,300\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n10\n00:00:18,700 --> 00:00:21,900\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n11\n00:00:22,533 --> 00:00:25,133\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n12\n00:00:25,667 --> 00:00:26,467\nLOREM LOREM LOREM\n\n13\n00:00:26,800 --> 00:00:28,567\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n14\n00:00:29,400 --> 00:00:30,733\nLOREM LOREM LOREM LOREM\n\n15\n00:00:31,067 --> 00:00:32,767\nLOREM LOREM LOREM LOREM LOREM\n\n16\n00:00:33,100 --> 00:00:34,700\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n17\n00:00:35,200 --> 00:00:36,800\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n18\n00:00:37,333 --> 00:00:38,800\nLOREM LOREM LOREM LOREM\n\n19\n00:00:39,200 --> 00:00:40,600\nLOREM LOREM LOREM LOREM LOREM\n\n20\n00:00:41,300 --> 00:00:43,167\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n21\n00:00:43,500 --> 00:00:45,200\nLOREM LOREM LOREM LOREM LOREM\n\n22\n00:00:45,700 --> 00:00:46,867\nLOREM LOREM LOREM LOREM\n\n23\n00:00:47,200 --> 00:00:49,500\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n24\n00:00:50,100 --> 00:00:51,000\nLOREM LOREM LOREM LOREM\n\n25\n00:00:51,900 --> 00:00:53,533\nLOREM LOREM LOREM LOREM LOREM\n\n26\n00:00:53,933 --> 00:00:56,000\nLOREM LOREM LOREM LOREM\n\n27\n00:00:57,000 --> 00:00:58,533\nLOREM LOREM LOREM LOREM\n\n28\n00:00:58,967 --> 00:00:59,767\nLOREM LOREM LOREM\n",
+      "stderr": ""
+    },
+    {
+      "id": "subtitles-draft/validate",
+      "argv": [
+        "validate",
+        "<FIXTURES>/subtitles-draft.json",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<FIXTURES>\",\"draft_file\":\"<FIXTURES>/subtitles-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "subtitles-draft/segment",
+      "argv": [
+        "segment",
+        "<FIXTURES>/subtitles-draft.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"id\":\"<UUID>\",\"source_timerange\":{\"start\":0,\"duration\":60033333},\"target_timerange\":{\"start\":0,\"duration\":60033333},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":1,\"last_nonzero_volume\":1,\"clip\":null,\"uniform_scale\":null,\"material_id\":\"<UUID>\",\"extra_material_refs\":[\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":false,\"enable_adjust\":false,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":null,\"enable_color_wheels\":true,\"track_attribute\":0,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"audio\",\"_track_name\":\"\",\"_track_id\":\"<UUID>\",\"_material\":{\"_type\":\"audios\",\"id\":\"<UUID>\",\"unique_id\":\"\",\"type\":\"extract_music\",\"name\":\"<UUID>\",\"duration\":60033333,\"path\":\"##_draftpath_placeholder_<UUID>_##\\\\Resources\\\\<UUID>.mp3\",\"category_name\":\"local\",\"wave_points\":[],\"music_id\":\"\",\"app_id\":0,\"text_id\":\"\",\"tone_type\":\"\",\"source_platform\":0,\"video_id\":\"\",\"effect_id\":\"\",\"resource_id\":\"\",\"third_resource_id\":\"\",\"category_id\":\"\",\"intensifies_path\":\"\",\"formula_id\":\"\",\"check_flag\":1,\"team_id\":\"\",\"local_material_id\":\"\",\"tone_speaker\":\"\",\"mock_tone_speaker\":\"\",\"tone_effect_id\":\"\",\"tone_effect_name\":\"\",\"tone_platform\":\"\",\"cloned_model_type\":\"\",\"tone_category_id\":\"\",\"tone_category_name\":\"\",\"tone_second_category_id\":\"\",\"tone_second_category_name\":\"\",\"tone_emotion_name_key\":\"\",\"tone_emotion_style\":\"\",\"tone_emotion_role\":\"\",\"tone_emotion_selection\":\"\",\"tone_emotion_scale\":0,\"moyin_emotion\":\"\",\"request_id\":\"\",\"query\":\"\",\"search_id\":\"\",\"sound_separate_type\":\"\",\"is_text_edit_overdub\":false,\"is_ugc\":false,\"is_ai_clone_tone\":false,\"is_ai_clone_tone_post\":false,\"source_from\":\"\",\"copyright_limit_type\":\"none\",\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"music_source\":\"\",\"pgc_id\":\"\",\"pgc_name\":\"\",\"similiar_music_info\":{\"original_song_id\":\"\",\"original_song_name\":\"\"},\"ai_music_type\":0,\"ai_music_enter_from\":\"\",\"lyric_type\":0,\"tts_task_id\":\"\",\"tts_generate_scene\":\"\",\"ai_music_generate_scene\":0,\"tts_benefit_info\":{\"benefit_type\":\"none\",\"benefit_log_id\":\"\",\"benefit_log_extra\":\"\",\"benefit_amount\":-1}}}\n",
+      "stderr": ""
+    },
+    {
+      "id": "subtitles-draft/material",
+      "argv": [
+        "material",
+        "<FIXTURES>/subtitles-draft.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"_type\":\"videos\",\"id\":\"<UUID>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":5000000,\"path\":\"##_draftpath_placeholder_<UUID>_##\\\\Resources\\\\<UUID>.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"<UUID>\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":5000000}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":63487,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "id": "full-psycho-draft/info",
+      "argv": [
+        "info",
+        "<FIXTURES>/full-psycho-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"id\":\"<UUID>\",\"name\":\"<UUID>\",\"duration_us\":60000000,\"fps\":30,\"width\":1080,\"height\":1920,\"ratio\":\"original\",\"tracks\":4,\"segments\":111,\"platform\":\"CapCut 8.2.0\",\"material_types\":54,\"materials_with_items\":11,\"material_summary\":[{\"type\":\"placeholder_infos\",\"count\":83},{\"type\":\"speeds\",\"count\":83},{\"type\":\"sound_channel_mappings\",\"count\":83},{\"type\":\"vocal_separations\",\"count\":83},{\"type\":\"videos\",\"count\":81},{\"type\":\"canvases\",\"count\":81},{\"type\":\"material_colors\",\"count\":81},{\"type\":\"loudnesses\",\"count\":81},{\"type\":\"texts\",\"count\":28},{\"type\":\"material_animations\",\"count\":28},{\"type\":\"audios\",\"count\":2}]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "full-psycho-draft/tracks",
+      "argv": [
+        "tracks",
+        "<FIXTURES>/full-psycho-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"index\":0,\"id\":\"<UUID>\",\"type\":\"audio\",\"name\":\"\",\"segments\":1,\"duration_us\":58033333,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":1,\"id\":\"<UUID>\",\"type\":\"audio\",\"name\":\"\",\"segments\":1,\"duration_us\":60000000,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":2,\"id\":\"<UUID>\",\"type\":\"video\",\"name\":\"\",\"segments\":81,\"duration_us\":59966666,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":3,\"id\":\"<UUID>\",\"type\":\"text\",\"name\":\"\",\"segments\":28,\"duration_us\":59766666,\"muted\":false,\"hidden\":false,\"locked\":false}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "full-psycho-draft/segments",
+      "argv": [
+        "segments",
+        "<FIXTURES>/full-psycho-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"id\":\"<UUID>\",\"type\":\"audio\",\"start_us\":0,\"duration_us\":58033333,\"speed\":1.0344629525241984,\"volume\":2.5040502548217773,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"audio\",\"start_us\":0,\"duration_us\":60000000,\"speed\":1,\"volume\":0.09952645003795624,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":0,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":733333,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":1500000,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":2233333,\"duration_us\":600000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":2833333,\"duration_us\":633333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":3466666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":4200000,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":4933333,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":5700000,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":6433333,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":7200000,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":7933333,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":8700000,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":9433333,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":10200000,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":10933333,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":11666666,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":12433333,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":13166666,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":13933333,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":14666666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":15400000,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":16166666,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":16933333,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":17666666,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":18433333,\"duration_us\":700000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":19133333,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":19900000,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":20666666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":21400000,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":22166666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":22900000,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":23666666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":24400000,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":25166666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":25900000,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":26666666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":27400000,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":28166666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":28900000,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":29633333,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":30400000,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":31133333,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":31900000,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":32633333,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":33366666,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":34133333,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":34866666,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":35633333,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":36366666,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":37133333,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":37866666,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":38633333,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":39366666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":40100000,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":40866666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":41600000,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":42366666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":43100000,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":43866666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":44600000,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":45366666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":46100000,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":46866666,\"duration_us\":1000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":47866666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":48600000,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":49366666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":50100000,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":50866666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":51600000,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":52366666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":53100000,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":53866666,\"duration_us\":733334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":54600000,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":55333333,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":56100000,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":56833333,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":57600000,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":58333333,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":59100000,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":59833333,\"duration_us\":133333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID>\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":66666,\"duration_us\":1400000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":2533333,\"duration_us\":1800000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":5000000,\"duration_us\":2666666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":8366666,\"duration_us\":1900000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":10866666,\"duration_us\":1700000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":13333333,\"duration_us\":1366667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":15100000,\"duration_us\":1266666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":16733333,\"duration_us\":1566667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":18700000,\"duration_us\":1300000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":20000000,\"duration_us\":1900000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":22533333,\"duration_us\":2600000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":25666666,\"duration_us\":800000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":26800000,\"duration_us\":1766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":29400000,\"duration_us\":1333333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":31066666,\"duration_us\":1700000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":33100000,\"duration_us\":1600000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":35200000,\"duration_us\":1600000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":37333333,\"duration_us\":1466667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":39200000,\"duration_us\":1400000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":41300000,\"duration_us\":1866666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":43500000,\"duration_us\":1700000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":45700000,\"duration_us\":1166666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":47200000,\"duration_us\":2300000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":50100000,\"duration_us\":900000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":51900000,\"duration_us\":1633333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":53933333,\"duration_us\":2066667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":57000000,\"duration_us\":1533333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":58966666,\"duration_us\":800000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM\"}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "full-psycho-draft/texts",
+      "argv": [
+        "texts",
+        "<FIXTURES>/full-psycho-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"id\":\"<UUID>\",\"start_us\":66666,\"duration_us\":1400000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":2533333,\"duration_us\":1800000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":5000000,\"duration_us\":2666666,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":8366666,\"duration_us\":1900000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":10866666,\"duration_us\":1700000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":13333333,\"duration_us\":1366667,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":15100000,\"duration_us\":1266666,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":16733333,\"duration_us\":1566667,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":18700000,\"duration_us\":1300000,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":20000000,\"duration_us\":1900000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":22533333,\"duration_us\":2600000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":25666666,\"duration_us\":800000,\"text\":\"LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":26800000,\"duration_us\":1766666,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":29400000,\"duration_us\":1333333,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":31066666,\"duration_us\":1700000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":33100000,\"duration_us\":1600000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":35200000,\"duration_us\":1600000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":37333333,\"duration_us\":1466667,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":39200000,\"duration_us\":1400000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":41300000,\"duration_us\":1866666,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":43500000,\"duration_us\":1700000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":45700000,\"duration_us\":1166666,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":47200000,\"duration_us\":2300000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":50100000,\"duration_us\":900000,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":51900000,\"duration_us\":1633333,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":53933333,\"duration_us\":2066667,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":57000000,\"duration_us\":1533333,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID>\",\"start_us\":58966666,\"duration_us\":800000,\"text\":\"LOREM LOREM LOREM\"}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "full-psycho-draft/materials",
+      "argv": [
+        "materials",
+        "<FIXTURES>/full-psycho-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"type\":\"placeholder_infos\",\"count\":83},{\"type\":\"speeds\",\"count\":83},{\"type\":\"sound_channel_mappings\",\"count\":83},{\"type\":\"vocal_separations\",\"count\":83},{\"type\":\"videos\",\"count\":81},{\"type\":\"canvases\",\"count\":81},{\"type\":\"material_colors\",\"count\":81},{\"type\":\"loudnesses\",\"count\":81},{\"type\":\"texts\",\"count\":28},{\"type\":\"material_animations\",\"count\":28},{\"type\":\"audios\",\"count\":2},{\"type\":\"flowers\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"effects\",\"count\":0},{\"type\":\"stickers\",\"count\":0},{\"type\":\"transitions\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"common_mask\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"video_effects\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "full-psycho-draft/export-srt",
+      "argv": [
+        "export-srt",
+        "<FIXTURES>/full-psycho-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "1\n00:00:00,067 --> 00:00:01,467\nLOREM LOREM LOREM LOREM LOREM\n\n2\n00:00:02,533 --> 00:00:04,333\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n3\n00:00:05,000 --> 00:00:07,667\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n4\n00:00:08,367 --> 00:00:10,267\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n5\n00:00:10,867 --> 00:00:12,567\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n6\n00:00:13,333 --> 00:00:14,700\nLOREM LOREM LOREM LOREM LOREM\n\n7\n00:00:15,100 --> 00:00:16,367\nLOREM LOREM LOREM LOREM\n\n8\n00:00:16,733 --> 00:00:18,300\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n9\n00:00:18,700 --> 00:00:20,000\nLOREM LOREM LOREM LOREM\n\n10\n00:00:20,000 --> 00:00:21,900\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n11\n00:00:22,533 --> 00:00:25,133\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n12\n00:00:25,667 --> 00:00:26,467\nLOREM LOREM LOREM\n\n13\n00:00:26,800 --> 00:00:28,567\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n14\n00:00:29,400 --> 00:00:30,733\nLOREM LOREM LOREM LOREM\n\n15\n00:00:31,067 --> 00:00:32,767\nLOREM LOREM LOREM LOREM LOREM\n\n16\n00:00:33,100 --> 00:00:34,700\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n17\n00:00:35,200 --> 00:00:36,800\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n18\n00:00:37,333 --> 00:00:38,800\nLOREM LOREM LOREM LOREM\n\n19\n00:00:39,200 --> 00:00:40,600\nLOREM LOREM LOREM LOREM LOREM\n\n20\n00:00:41,300 --> 00:00:43,167\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n21\n00:00:43,500 --> 00:00:45,200\nLOREM LOREM LOREM LOREM LOREM\n\n22\n00:00:45,700 --> 00:00:46,867\nLOREM LOREM LOREM LOREM\n\n23\n00:00:47,200 --> 00:00:49,500\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n24\n00:00:50,100 --> 00:00:51,000\nLOREM LOREM LOREM LOREM\n\n25\n00:00:51,900 --> 00:00:53,533\nLOREM LOREM LOREM LOREM LOREM\n\n26\n00:00:53,933 --> 00:00:56,000\nLOREM LOREM LOREM LOREM LOREM\n\n27\n00:00:57,000 --> 00:00:58,533\nLOREM LOREM LOREM LOREM\n\n28\n00:00:58,967 --> 00:00:59,767\nLOREM LOREM LOREM\n",
+      "stderr": ""
+    },
+    {
+      "id": "full-psycho-draft/validate",
+      "argv": [
+        "validate",
+        "<FIXTURES>/full-psycho-draft.json",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<FIXTURES>\",\"draft_file\":\"<FIXTURES>/full-psycho-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "full-psycho-draft/segment",
+      "argv": [
+        "segment",
+        "<FIXTURES>/full-psycho-draft.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"id\":\"<UUID>\",\"source_timerange\":{\"start\":0,\"duration\":60033333},\"target_timerange\":{\"start\":0,\"duration\":58033333},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1.0344629525241984,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":2.5040502548217773,\"last_nonzero_volume\":1,\"clip\":null,\"uniform_scale\":null,\"material_id\":\"<UUID>\",\"extra_material_refs\":[\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":false,\"enable_adjust\":false,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":null,\"enable_color_wheels\":true,\"track_attribute\":0,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"audio\",\"_track_name\":\"\",\"_track_id\":\"<UUID>\",\"_material\":{\"_type\":\"audios\",\"id\":\"<UUID>\",\"unique_id\":\"\",\"type\":\"extract_music\",\"name\":\"<UUID>\",\"duration\":60033333,\"path\":\"##_draftpath_placeholder_<UUID>_##\\\\Resources\\\\<UUID>.mp3\",\"category_name\":\"local\",\"wave_points\":[],\"music_id\":\"\",\"app_id\":0,\"text_id\":\"\",\"tone_type\":\"\",\"source_platform\":0,\"video_id\":\"\",\"effect_id\":\"\",\"resource_id\":\"\",\"third_resource_id\":\"\",\"category_id\":\"\",\"intensifies_path\":\"\",\"formula_id\":\"\",\"check_flag\":1,\"team_id\":\"\",\"local_material_id\":\"\",\"tone_speaker\":\"\",\"mock_tone_speaker\":\"\",\"tone_effect_id\":\"\",\"tone_effect_name\":\"\",\"tone_platform\":\"\",\"cloned_model_type\":\"\",\"tone_category_id\":\"\",\"tone_category_name\":\"\",\"tone_second_category_id\":\"\",\"tone_second_category_name\":\"\",\"tone_emotion_name_key\":\"\",\"tone_emotion_style\":\"\",\"tone_emotion_role\":\"\",\"tone_emotion_selection\":\"\",\"tone_emotion_scale\":0,\"moyin_emotion\":\"\",\"request_id\":\"\",\"query\":\"\",\"search_id\":\"\",\"sound_separate_type\":\"\",\"is_text_edit_overdub\":false,\"is_ugc\":false,\"is_ai_clone_tone\":false,\"is_ai_clone_tone_post\":false,\"source_from\":\"\",\"copyright_limit_type\":\"none\",\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"music_source\":\"\",\"pgc_id\":\"\",\"pgc_name\":\"\",\"similiar_music_info\":{\"original_song_id\":\"\",\"original_song_name\":\"\"},\"ai_music_type\":0,\"ai_music_enter_from\":\"\",\"lyric_type\":0,\"tts_task_id\":\"\",\"tts_generate_scene\":\"\",\"ai_music_generate_scene\":0,\"tts_benefit_info\":{\"benefit_type\":\"none\",\"benefit_log_id\":\"\",\"benefit_log_extra\":\"\",\"benefit_amount\":-1}}}\n",
+      "stderr": ""
+    },
+    {
+      "id": "full-psycho-draft/material",
+      "argv": [
+        "material",
+        "<FIXTURES>/full-psycho-draft.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"_type\":\"videos\",\"id\":\"<UUID>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":5000000,\"path\":\"##_draftpath_placeholder_<UUID>_##\\\\Resources\\\\<UUID>.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"<UUID>\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":5000000}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":63487,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "id": "animations-draft/info",
+      "argv": [
+        "info",
+        "<FIXTURES>/animations-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"id\":\"<UUID>\",\"name\":\"<UUID>\",\"duration_us\":5000000,\"fps\":30,\"width\":1072,\"height\":1920,\"ratio\":\"original\",\"tracks\":2,\"segments\":2,\"platform\":\"CapCut 8.6.0\",\"material_types\":54,\"materials_with_items\":9,\"material_summary\":[{\"type\":\"videos\",\"count\":1},{\"type\":\"texts\",\"count\":1},{\"type\":\"canvases\",\"count\":1},{\"type\":\"material_animations\",\"count\":1},{\"type\":\"placeholder_infos\",\"count\":1},{\"type\":\"speeds\",\"count\":1},{\"type\":\"sound_channel_mappings\",\"count\":1},{\"type\":\"material_colors\",\"count\":1},{\"type\":\"vocal_separations\",\"count\":1}]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "animations-draft/tracks",
+      "argv": [
+        "tracks",
+        "<FIXTURES>/animations-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"index\":0,\"id\":\"<UUID>\",\"type\":\"video\",\"name\":\"\",\"segments\":1,\"duration_us\":5000000,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":1,\"id\":\"<UUID>\",\"type\":\"text\",\"name\":\"\",\"segments\":1,\"duration_us\":3000000,\"muted\":false,\"hidden\":false,\"locked\":false}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "animations-draft/segments",
+      "argv": [
+        "segments",
+        "<FIXTURES>/animations-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":0,\"duration_us\":5000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"img_001.png\"},{\"id\":\"<UUID>\",\"type\":\"text\",\"start_us\":0,\"duration_us\":3000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"THE EYES ARE WATCHING ME.\"}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "animations-draft/texts",
+      "argv": [
+        "texts",
+        "<FIXTURES>/animations-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"id\":\"<UUID>\",\"start_us\":0,\"duration_us\":3000000,\"text\":\"THE EYES ARE WATCHING ME.\"}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "animations-draft/materials",
+      "argv": [
+        "materials",
+        "<FIXTURES>/animations-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"type\":\"videos\",\"count\":1},{\"type\":\"texts\",\"count\":1},{\"type\":\"canvases\",\"count\":1},{\"type\":\"material_animations\",\"count\":1},{\"type\":\"placeholder_infos\",\"count\":1},{\"type\":\"speeds\",\"count\":1},{\"type\":\"sound_channel_mappings\",\"count\":1},{\"type\":\"material_colors\",\"count\":1},{\"type\":\"vocal_separations\",\"count\":1},{\"type\":\"flowers\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"audios\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"effects\",\"count\":0},{\"type\":\"stickers\",\"count\":0},{\"type\":\"transitions\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"common_mask\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"video_effects\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"loudnesses\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "animations-draft/export-srt",
+      "argv": [
+        "export-srt",
+        "<FIXTURES>/animations-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "1\n00:00:00,000 --> 00:00:03,000\nTHE EYES ARE WATCHING ME.\n",
+      "stderr": ""
+    },
+    {
+      "id": "animations-draft/validate",
+      "argv": [
+        "validate",
+        "<FIXTURES>/animations-draft.json",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<FIXTURES>\",\"draft_file\":\"<FIXTURES>/animations-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "animations-draft/segment",
+      "argv": [
+        "segment",
+        "<FIXTURES>/animations-draft.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"id\":\"<UUID>\",\"source_timerange\":{\"start\":0,\"duration\":5000000},\"target_timerange\":{\"start\":0,\"duration\":5000000},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":1,\"last_nonzero_volume\":1,\"clip\":{\"scale\":{\"x\":1,\"y\":1},\"rotation\":0,\"transform\":{\"x\":0,\"y\":0},\"flip\":{\"vertical\":false,\"horizontal\":false},\"alpha\":1},\"uniform_scale\":{\"on\":true,\"value\":1},\"material_id\":\"<UUID>\",\"extra_material_refs\":[\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":true,\"enable_adjust\":true,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":{\"mode\":1,\"intensity\":1,\"nits\":1000},\"enable_color_wheels\":true,\"track_attribute\":0,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"video\",\"_track_name\":\"\",\"_track_id\":\"<UUID>\",\"_material\":{\"_type\":\"videos\",\"id\":\"<UUID>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":10800000000,\"path\":\"/fixtures/assets/img_001.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"img_001.png\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":0}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false,\"is_clould\":false,\"mask_video_path\":\"\",\"cloud_product_fps\":0},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":62978047,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"is_set_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}}\n",
+      "stderr": ""
+    },
+    {
+      "id": "animations-draft/material",
+      "argv": [
+        "material",
+        "<FIXTURES>/animations-draft.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"_type\":\"videos\",\"id\":\"<UUID>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":10800000000,\"path\":\"/fixtures/assets/img_001.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"img_001.png\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":0}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false,\"is_clould\":false,\"mask_video_path\":\"\",\"cloud_product_fps\":0},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":62978047,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"is_set_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "id": "stickers-draft/info",
+      "argv": [
+        "info",
+        "<FIXTURES>/stickers-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"id\":\"<UUID>\",\"name\":\"<UUID>\",\"duration_us\":5000000,\"fps\":30,\"width\":1072,\"height\":1920,\"ratio\":\"original\",\"tracks\":2,\"segments\":2,\"platform\":\"CapCut 8.6.0\",\"material_types\":54,\"materials_with_items\":10,\"material_summary\":[{\"type\":\"videos\",\"count\":1},{\"type\":\"stickers\",\"count\":1},{\"type\":\"canvases\",\"count\":1},{\"type\":\"material_animations\",\"count\":1},{\"type\":\"placeholder_infos\",\"count\":1},{\"type\":\"speeds\",\"count\":1},{\"type\":\"sound_channel_mappings\",\"count\":1},{\"type\":\"material_colors\",\"count\":1},{\"type\":\"loudnesses\",\"count\":1},{\"type\":\"vocal_separations\",\"count\":1}]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "stickers-draft/tracks",
+      "argv": [
+        "tracks",
+        "<FIXTURES>/stickers-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"index\":0,\"id\":\"<UUID>\",\"type\":\"video\",\"name\":\"\",\"segments\":1,\"duration_us\":5000000,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":1,\"id\":\"<UUID>\",\"type\":\"sticker\",\"name\":\"\",\"segments\":1,\"duration_us\":3000000,\"muted\":false,\"hidden\":false,\"locked\":false}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "stickers-draft/segments",
+      "argv": [
+        "segments",
+        "<FIXTURES>/stickers-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":0,\"duration_us\":5000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"img_001.png\"},{\"id\":\"<UUID>\",\"type\":\"sticker\",\"start_us\":0,\"duration_us\":3000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"\"}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "stickers-draft/texts",
+      "argv": [
+        "texts",
+        "<FIXTURES>/stickers-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[]\n",
+      "stderr": ""
+    },
+    {
+      "id": "stickers-draft/materials",
+      "argv": [
+        "materials",
+        "<FIXTURES>/stickers-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"type\":\"videos\",\"count\":1},{\"type\":\"stickers\",\"count\":1},{\"type\":\"canvases\",\"count\":1},{\"type\":\"material_animations\",\"count\":1},{\"type\":\"placeholder_infos\",\"count\":1},{\"type\":\"speeds\",\"count\":1},{\"type\":\"sound_channel_mappings\",\"count\":1},{\"type\":\"material_colors\",\"count\":1},{\"type\":\"loudnesses\",\"count\":1},{\"type\":\"vocal_separations\",\"count\":1},{\"type\":\"flowers\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"audios\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"texts\",\"count\":0},{\"type\":\"effects\",\"count\":0},{\"type\":\"transitions\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"common_mask\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"video_effects\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "stickers-draft/export-srt",
+      "argv": [
+        "export-srt",
+        "<FIXTURES>/stickers-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "id": "stickers-draft/validate",
+      "argv": [
+        "validate",
+        "<FIXTURES>/stickers-draft.json",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<FIXTURES>\",\"draft_file\":\"<FIXTURES>/stickers-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "stickers-draft/segment",
+      "argv": [
+        "segment",
+        "<FIXTURES>/stickers-draft.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"id\":\"<UUID>\",\"source_timerange\":{\"start\":0,\"duration\":5000000},\"target_timerange\":{\"start\":0,\"duration\":5000000},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":1,\"last_nonzero_volume\":1,\"clip\":{\"scale\":{\"x\":1,\"y\":1},\"rotation\":0,\"transform\":{\"x\":0,\"y\":0},\"flip\":{\"vertical\":false,\"horizontal\":false},\"alpha\":1},\"uniform_scale\":{\"on\":true,\"value\":1},\"material_id\":\"<UUID>\",\"extra_material_refs\":[\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":true,\"enable_adjust\":true,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":{\"mode\":1,\"intensity\":1,\"nits\":1000},\"enable_color_wheels\":true,\"track_attribute\":0,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"video\",\"_track_name\":\"\",\"_track_id\":\"<UUID>\",\"_material\":{\"_type\":\"videos\",\"id\":\"<UUID>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":10800000000,\"path\":\"/fixtures/assets/img_001.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"img_001.png\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":0}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false,\"is_clould\":false,\"mask_video_path\":\"\",\"cloud_product_fps\":0},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":62978047,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"is_set_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}}\n",
+      "stderr": ""
+    },
+    {
+      "id": "stickers-draft/material",
+      "argv": [
+        "material",
+        "<FIXTURES>/stickers-draft.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"_type\":\"videos\",\"id\":\"<UUID>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":10800000000,\"path\":\"/fixtures/assets/img_001.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"img_001.png\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":0}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false,\"is_clould\":false,\"mask_video_path\":\"\",\"cloud_product_fps\":0},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":62978047,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"is_set_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "id": "transitions-draft/info",
+      "argv": [
+        "info",
+        "<FIXTURES>/transitions-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"id\":\"<UUID>\",\"name\":\"<UUID>\",\"duration_us\":10000000,\"fps\":30,\"width\":1072,\"height\":1920,\"ratio\":\"original\",\"tracks\":1,\"segments\":2,\"platform\":\"CapCut 8.6.0\",\"material_types\":54,\"materials_with_items\":8,\"material_summary\":[{\"type\":\"videos\",\"count\":2},{\"type\":\"canvases\",\"count\":2},{\"type\":\"placeholder_infos\",\"count\":2},{\"type\":\"speeds\",\"count\":2},{\"type\":\"sound_channel_mappings\",\"count\":2},{\"type\":\"material_colors\",\"count\":2},{\"type\":\"vocal_separations\",\"count\":2},{\"type\":\"transitions\",\"count\":1}]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "transitions-draft/tracks",
+      "argv": [
+        "tracks",
+        "<FIXTURES>/transitions-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"index\":0,\"id\":\"<UUID>\",\"type\":\"video\",\"name\":\"\",\"segments\":2,\"duration_us\":10000000,\"muted\":false,\"hidden\":false,\"locked\":false}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "transitions-draft/segments",
+      "argv": [
+        "segments",
+        "<FIXTURES>/transitions-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":0,\"duration_us\":5000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"img_001.png\"},{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":5000000,\"duration_us\":5000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"img_002.png\"}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "transitions-draft/texts",
+      "argv": [
+        "texts",
+        "<FIXTURES>/transitions-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[]\n",
+      "stderr": ""
+    },
+    {
+      "id": "transitions-draft/materials",
+      "argv": [
+        "materials",
+        "<FIXTURES>/transitions-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"type\":\"videos\",\"count\":2},{\"type\":\"canvases\",\"count\":2},{\"type\":\"placeholder_infos\",\"count\":2},{\"type\":\"speeds\",\"count\":2},{\"type\":\"sound_channel_mappings\",\"count\":2},{\"type\":\"material_colors\",\"count\":2},{\"type\":\"vocal_separations\",\"count\":2},{\"type\":\"transitions\",\"count\":1},{\"type\":\"flowers\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"audios\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"texts\",\"count\":0},{\"type\":\"effects\",\"count\":0},{\"type\":\"stickers\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"material_animations\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"common_mask\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"video_effects\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"loudnesses\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "transitions-draft/export-srt",
+      "argv": [
+        "export-srt",
+        "<FIXTURES>/transitions-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "id": "transitions-draft/validate",
+      "argv": [
+        "validate",
+        "<FIXTURES>/transitions-draft.json",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<FIXTURES>\",\"draft_file\":\"<FIXTURES>/transitions-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "transitions-draft/segment",
+      "argv": [
+        "segment",
+        "<FIXTURES>/transitions-draft.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"id\":\"<UUID>\",\"source_timerange\":{\"start\":0,\"duration\":5000000},\"target_timerange\":{\"start\":0,\"duration\":5000000},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":1,\"last_nonzero_volume\":1,\"clip\":{\"scale\":{\"x\":1,\"y\":1},\"rotation\":0,\"transform\":{\"x\":0,\"y\":0},\"flip\":{\"vertical\":false,\"horizontal\":false},\"alpha\":1},\"uniform_scale\":{\"on\":true,\"value\":1},\"material_id\":\"<UUID>\",\"extra_material_refs\":[\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":true,\"enable_adjust\":true,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":{\"mode\":1,\"intensity\":1,\"nits\":1000},\"enable_color_wheels\":true,\"track_attribute\":0,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"video\",\"_track_name\":\"\",\"_track_id\":\"<UUID>\",\"_material\":{\"_type\":\"videos\",\"id\":\"<UUID>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":10800000000,\"path\":\"/fixtures/assets/img_001.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"img_001.png\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":0}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false,\"is_clould\":false,\"mask_video_path\":\"\",\"cloud_product_fps\":0},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":62978047,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"is_set_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}}\n",
+      "stderr": ""
+    },
+    {
+      "id": "transitions-draft/material",
+      "argv": [
+        "material",
+        "<FIXTURES>/transitions-draft.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"_type\":\"videos\",\"id\":\"<UUID>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":10800000000,\"path\":\"/fixtures/assets/img_001.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"img_001.png\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":0}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false,\"is_clould\":false,\"mask_video_path\":\"\",\"cloud_product_fps\":0},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":62978047,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"is_set_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "id": "masks-filters-draft/info",
+      "argv": [
+        "info",
+        "<FIXTURES>/masks-filters-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"id\":\"<UUID>\",\"name\":\"<UUID>\",\"duration_us\":5000000,\"fps\":30,\"width\":1072,\"height\":1920,\"ratio\":\"original\",\"tracks\":2,\"segments\":2,\"platform\":\"CapCut 8.6.0\",\"material_types\":54,\"materials_with_items\":9,\"material_summary\":[{\"type\":\"videos\",\"count\":1},{\"type\":\"effects\",\"count\":1},{\"type\":\"canvases\",\"count\":1},{\"type\":\"placeholder_infos\",\"count\":1},{\"type\":\"speeds\",\"count\":1},{\"type\":\"common_mask\",\"count\":1},{\"type\":\"sound_channel_mappings\",\"count\":1},{\"type\":\"material_colors\",\"count\":1},{\"type\":\"vocal_separations\",\"count\":1}]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "masks-filters-draft/tracks",
+      "argv": [
+        "tracks",
+        "<FIXTURES>/masks-filters-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"index\":0,\"id\":\"<UUID>\",\"type\":\"video\",\"name\":\"\",\"segments\":1,\"duration_us\":5000000,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":1,\"id\":\"<UUID>\",\"type\":\"filter\",\"name\":\"\",\"segments\":1,\"duration_us\":3000000,\"muted\":false,\"hidden\":false,\"locked\":false}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "masks-filters-draft/segments",
+      "argv": [
+        "segments",
+        "<FIXTURES>/masks-filters-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"id\":\"<UUID>\",\"type\":\"video\",\"start_us\":0,\"duration_us\":5000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"img_001.png\"},{\"id\":\"<UUID>\",\"type\":\"filter\",\"start_us\":0,\"duration_us\":3000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"\"}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "masks-filters-draft/texts",
+      "argv": [
+        "texts",
+        "<FIXTURES>/masks-filters-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[]\n",
+      "stderr": ""
+    },
+    {
+      "id": "masks-filters-draft/materials",
+      "argv": [
+        "materials",
+        "<FIXTURES>/masks-filters-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "[{\"type\":\"videos\",\"count\":1},{\"type\":\"effects\",\"count\":1},{\"type\":\"canvases\",\"count\":1},{\"type\":\"placeholder_infos\",\"count\":1},{\"type\":\"speeds\",\"count\":1},{\"type\":\"common_mask\",\"count\":1},{\"type\":\"sound_channel_mappings\",\"count\":1},{\"type\":\"material_colors\",\"count\":1},{\"type\":\"vocal_separations\",\"count\":1},{\"type\":\"flowers\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"audios\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"texts\",\"count\":0},{\"type\":\"stickers\",\"count\":0},{\"type\":\"transitions\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"material_animations\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"video_effects\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"loudnesses\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n",
+      "stderr": ""
+    },
+    {
+      "id": "masks-filters-draft/export-srt",
+      "argv": [
+        "export-srt",
+        "<FIXTURES>/masks-filters-draft.json"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "id": "masks-filters-draft/validate",
+      "argv": [
+        "validate",
+        "<FIXTURES>/masks-filters-draft.json",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<FIXTURES>\",\"draft_file\":\"<FIXTURES>/masks-filters-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "masks-filters-draft/segment",
+      "argv": [
+        "segment",
+        "<FIXTURES>/masks-filters-draft.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"id\":\"<UUID>\",\"source_timerange\":{\"start\":0,\"duration\":5000000},\"target_timerange\":{\"start\":0,\"duration\":5000000},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":1,\"last_nonzero_volume\":1,\"clip\":{\"scale\":{\"x\":1,\"y\":1},\"rotation\":0,\"transform\":{\"x\":0,\"y\":0},\"flip\":{\"vertical\":false,\"horizontal\":false},\"alpha\":1},\"uniform_scale\":{\"on\":true,\"value\":1},\"material_id\":\"<UUID>\",\"extra_material_refs\":[\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\",\"<UUID>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":true,\"enable_adjust\":true,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":{\"mode\":1,\"intensity\":1,\"nits\":1000},\"enable_color_wheels\":true,\"track_attribute\":0,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"video\",\"_track_name\":\"\",\"_track_id\":\"<UUID>\",\"_material\":{\"_type\":\"videos\",\"id\":\"<UUID>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":10800000000,\"path\":\"/fixtures/assets/img_001.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"img_001.png\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":0}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false,\"is_clould\":false,\"mask_video_path\":\"\",\"cloud_product_fps\":0},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":62978047,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"is_set_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}}\n",
+      "stderr": ""
+    },
+    {
+      "id": "masks-filters-draft/material",
+      "argv": [
+        "material",
+        "<FIXTURES>/masks-filters-draft.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"_type\":\"videos\",\"id\":\"<UUID>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":10800000000,\"path\":\"/fixtures/assets/img_001.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"img_001.png\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":0}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false,\"is_clould\":false,\"mask_video_path\":\"\",\"cloud_product_fps\":0},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":62978047,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"is_set_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/minimal-draft/shift-all+500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-minimal-draft/draft_content.json",
+        "+500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":0,\"offset_us\":500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/minimal-draft/shift-all-500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-minimal-draft/draft_content.json",
+        "-500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":0,\"offset_us\":-500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/minimal-draft/shift-all+250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-minimal-draft/draft_content.json",
+        "+250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":0,\"offset_us\":250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/minimal-draft/shift-all-250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-minimal-draft/draft_content.json",
+        "-250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":0,\"offset_us\":-250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/shift-all+500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-ken-burns-draft/draft_content.json",
+        "+500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":9,\"offset_us\":500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/shift-all-500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-ken-burns-draft/draft_content.json",
+        "-500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":9,\"offset_us\":-500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/shift-all+250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-ken-burns-draft/draft_content.json",
+        "+250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":9,\"offset_us\":250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/shift-all-250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-ken-burns-draft/draft_content.json",
+        "-250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":9,\"offset_us\":-250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/shift-all+500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-effects-draft/draft_content.json",
+        "+500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":52,\"offset_us\":500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/shift-all-500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-effects-draft/draft_content.json",
+        "-500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":52,\"offset_us\":-500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/shift-all+250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-effects-draft/draft_content.json",
+        "+250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":52,\"offset_us\":250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/shift-all-250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-effects-draft/draft_content.json",
+        "-250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":52,\"offset_us\":-250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/shift-all+500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-subtitles-draft/draft_content.json",
+        "+500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":30,\"offset_us\":500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/shift-all-500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-subtitles-draft/draft_content.json",
+        "-500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":30,\"offset_us\":-500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/shift-all+250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-subtitles-draft/draft_content.json",
+        "+250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":30,\"offset_us\":250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/shift-all-250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-subtitles-draft/draft_content.json",
+        "-250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":30,\"offset_us\":-250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/shift-all+500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-full-psycho-draft/draft_content.json",
+        "+500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":111,\"offset_us\":500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/shift-all-500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-full-psycho-draft/draft_content.json",
+        "-500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":111,\"offset_us\":-500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/shift-all+250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-full-psycho-draft/draft_content.json",
+        "+250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":111,\"offset_us\":250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/shift-all-250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-full-psycho-draft/draft_content.json",
+        "-250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":111,\"offset_us\":-250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/shift-all+500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-animations-draft/draft_content.json",
+        "+500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":2,\"offset_us\":500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/shift-all-500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-animations-draft/draft_content.json",
+        "-500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":2,\"offset_us\":-500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/shift-all+250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-animations-draft/draft_content.json",
+        "+250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":2,\"offset_us\":250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/shift-all-250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-animations-draft/draft_content.json",
+        "-250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":2,\"offset_us\":-250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/shift-all+500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-stickers-draft/draft_content.json",
+        "+500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":2,\"offset_us\":500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/shift-all-500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-stickers-draft/draft_content.json",
+        "-500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":2,\"offset_us\":-500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/shift-all+250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-stickers-draft/draft_content.json",
+        "+250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":2,\"offset_us\":250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/shift-all-250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-stickers-draft/draft_content.json",
+        "-250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":2,\"offset_us\":-250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/shift-all+500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-transitions-draft/draft_content.json",
+        "+500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":2,\"offset_us\":500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/shift-all-500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-transitions-draft/draft_content.json",
+        "-500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":2,\"offset_us\":-500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/shift-all+250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-transitions-draft/draft_content.json",
+        "+250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":2,\"offset_us\":250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/shift-all-250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-transitions-draft/draft_content.json",
+        "-250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":2,\"offset_us\":-250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/shift-all+500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-masks-filters-draft/draft_content.json",
+        "+500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":2,\"offset_us\":500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/shift-all-500ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-masks-filters-draft/draft_content.json",
+        "-500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":2,\"offset_us\":-500000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/shift-all+250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-masks-filters-draft/draft_content.json",
+        "+250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":2,\"offset_us\":250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/shift-all-250ms",
+      "argv": [
+        "shift-all",
+        "<TMP>/rt-masks-filters-draft/draft_content.json",
+        "-250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"shifted\":2,\"offset_us\":-250000,\"id\":\"\"}\n",
+      "stderr": ""
+    }
+  ],
+  "roundtrips": [
+    {
+      "fixture": "minimal-draft",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "604cb94751a672ce2e166ce85e9cdbd32fc202ab94e43498d319026f5fd1a12b"
+    },
+    {
+      "fixture": "ken-burns-draft",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "c54847351c73a3de7b82caed5b9917c54162b06bc2771395cb99f16476725bd8"
+    },
+    {
+      "fixture": "effects-draft",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "7368cc35e9003bda3147797e36fe3033d70ef4460ff2ab58a0bb33e9610893f3"
+    },
+    {
+      "fixture": "subtitles-draft",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "672450716f1d0b610e05d41afdab53db72ec7fa2d3efccac158bcfe06bc6892e"
+    },
+    {
+      "fixture": "full-psycho-draft",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "7ae943db064389390cfcb5d9c7c1fa9e3a919f079dfc015bf512a4cf2e92e5dd"
+    },
+    {
+      "fixture": "animations-draft",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "911062863f4174d77bed812cbb1f82630e2989d319879d6318b5a1d0183d05e8"
+    },
+    {
+      "fixture": "stickers-draft",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "5625f17d40e7e99cb300afe4e4ddb6a0e03bf1ef2edea541dd29b6fd1c09365b"
+    },
+    {
+      "fixture": "transitions-draft",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "1df6f808136ecd7f9b0740566cb0517fa99a6016fc8758bab3c1c75e79f81908"
+    },
+    {
+      "fixture": "masks-filters-draft",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "52fb52e2518041e5b9085df5061c184f97a40b73839c497fc752b44c7c67eb1d"
+    }
+  ]
+}

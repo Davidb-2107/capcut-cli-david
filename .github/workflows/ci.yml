@@ -134,6 +134,35 @@ jobs:
         run: python test-fixtures/_final_integrity.py
 
   # ---------------------------------------------------------------------------
+  # Golden output (ARCH PR 0) — characterization net: captures stdout/stderr/
+  # exit codes of the read-only surface across the 9 anonymized fixtures plus
+  # a write round-trip on temp copies, canonicalizes (UUIDs + absolute paths
+  # → tokens) and diffs against the committed baseline. Any drift fails the
+  # job; regenerate with `npm run golden:write` and justify in the PR.
+  # ---------------------------------------------------------------------------
+  golden-output:
+    name: Golden output (baseline diff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (tsc)
+        run: npm run build
+
+      - name: Diff against the committed baseline
+        run: npm run test:golden
+
+  # ---------------------------------------------------------------------------
   # Secrets scan (audit CLI-M1) - fail the build if a credential is committed.
   # ---------------------------------------------------------------------------
   secrets-scan:
@@ -157,7 +186,7 @@ jobs:
   ci-pass:
     name: CI Pass
     if: always()
-    needs: [lint, test, coverage, fixture-integrity]
+    needs: [lint, test, coverage, fixture-integrity, golden-output]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all jobs succeeded
@@ -165,12 +194,14 @@ jobs:
           if [ "${{ needs.lint.result }}" != "success" ] || \
              [ "${{ needs.test.result }}" != "success" ] || \
              [ "${{ needs.coverage.result }}" != "success" ] || \
-             [ "${{ needs.fixture-integrity.result }}" != "success" ]; then
+             [ "${{ needs.fixture-integrity.result }}" != "success" ] || \
+             [ "${{ needs.golden-output.result }}" != "success" ]; then
             echo "::error::One or more required jobs failed."
             echo "lint=${{ needs.lint.result }}"
             echo "test=${{ needs.test.result }}"
             echo "coverage=${{ needs.coverage.result }}"
             echo "fixture-integrity=${{ needs.fixture-integrity.result }}"
+            echo "golden-output=${{ needs.golden-output.result }}"
             exit 1
           fi
           echo "All required jobs passed."
