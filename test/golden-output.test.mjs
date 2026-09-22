@@ -98,7 +98,10 @@ function cap(id, over = {}) {
 }
 
 test("diffBaselines: identical baselines produce zero diffs", () => {
-  const a = baseline([cap("x/info"), cap("x/tracks")], [{ fixture: "x", stableBytes: true, contentSha256: "abc" }]);
+  const a = baseline(
+    [cap("x/info"), cap("x/tracks")],
+    [{ id: "x/shift-all", stableBytes: true, contentSha256: "abc" }],
+  );
   deepStrictEqual(diffBaselines(a, a), []);
 });
 
@@ -135,7 +138,7 @@ test("diffBaselines: missing and extra capture ids are reported", () => {
 });
 
 test("diffBaselines: round-trip instability and hash divergence are reported", () => {
-  const rt = (over = {}) => ({ fixture: "x", stableBytes: true, contentSha256: "aaa", ...over });
+  const rt = (over = {}) => ({ id: "x/shift-all", stableBytes: true, contentSha256: "aaa", ...over });
   const exp = baseline([], [rt()]);
   const unstable = diffBaselines(exp, baseline([], [rt({ stableBytes: false })]));
   strictEqual(unstable.length, 1);
@@ -145,6 +148,25 @@ test("diffBaselines: round-trip instability and hash divergence are reported", (
   ok(hashDiff[0].includes("contentSha256") || hashDiff[0].includes("sha256"), hashDiff[0]);
   const missing = diffBaselines(exp, baseline([], []));
   strictEqual(missing.length, 1);
+});
+
+test("diffBaselines: round-trip canonicalStable divergence is reported (M1 UUID-generating verbs)", () => {
+  const rt = (over = {}) => ({
+    id: "x/add-text",
+    mode: "twice-canonical",
+    stableBytes: false,
+    canonicalStable: true,
+    contentSha256: "aaa",
+    ...over,
+  });
+  const exp = baseline([], [rt()]);
+  // canonicalStable flipping means a UUID-generating write stopped being
+  // deterministic modulo UUIDs — the persistence migration must be caught.
+  const diffs = diffBaselines(exp, baseline([], [rt({ canonicalStable: false })]));
+  strictEqual(diffs.length, 1);
+  ok(diffs[0].includes("canonicalStable"), diffs[0]);
+  // Pair-mode round-trips carry no canonicalStable field — absent vs absent is equal.
+  deepStrictEqual(diffBaselines(exp, baseline([], [rt()])), []);
 });
 
 test("diffBaselines: skipped captures compare equal", () => {

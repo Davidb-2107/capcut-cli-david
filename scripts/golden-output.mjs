@@ -6,8 +6,11 @@
 //     (info, tracks, segments, texts, materials, segment, material, export-srt,
 //     validate without --fix, query, --help, plus the capabilities surface via
 //     `ui --print-path` and the dispatch error paths the registry must preserve)
-//   - a write round-trip on temp copies: shift-all +500ms/-500ms then
-//     +250ms/-250ms must leave byte-identical files (persistence stability).
+//   - write round-trips on temp copies covering the in-place persistence
+//     surface (M1): shift-all/shift/opacity/volume/speed/trim as byte-stable
+//     pairs, remove-segment/set-text as two-copy determinism, and the
+//     UUID-generating creators (add-text/add-keyframe/ken-burns/add-effect/
+//     add-filter/add-transition/cut) as two-copy canonical-hash determinism.
 //
 // Captures are canonicalized before comparison — generated UUIDs become <UUID>,
 // repo/tmp/fixture paths become <ROOT>/<TMP>/<FIXTURES> tokens (precedent:
@@ -123,28 +126,31 @@ export function diffBaselines(expected, actual) {
   for (const id of actCaps.keys()) {
     if (!expCaps.has(id)) diffs.push(`extra capture: ${id}`);
   }
-  const expRt = new Map(expected.roundtrips.map((r) => [r.fixture, r]));
-  const actRt = new Map(actual.roundtrips.map((r) => [r.fixture, r]));
-  for (const [fixture, exp] of expRt) {
-    const act = actRt.get(fixture);
+  const expRt = new Map(expected.roundtrips.map((r) => [r.id, r]));
+  const actRt = new Map(actual.roundtrips.map((r) => [r.id, r]));
+  for (const [id, exp] of expRt) {
+    const act = actRt.get(id);
     if (!act) {
-      diffs.push(`missing round-trip: ${fixture}`);
+      diffs.push(`missing round-trip: ${id}`);
       continue;
     }
     if (exp.matchesOriginal !== act.matchesOriginal)
       diffs.push(
-        `${fixture}: round-trip matchesOriginal ${exp.matchesOriginal} vs ${act.matchesOriginal}` +
+        `${id}: round-trip matchesOriginal ${exp.matchesOriginal} vs ${act.matchesOriginal}` +
           " (did persistence start restoring pristine bytes?)",
       );
     if (exp.stableBytes !== act.stableBytes)
+      diffs.push(`${id}: round-trip stableBytes ${exp.stableBytes} → ${act.stableBytes} (persistence not byte-stable)`);
+    if ((exp.canonicalStable ?? null) !== (act.canonicalStable ?? null))
       diffs.push(
-        `${fixture}: round-trip stableBytes ${exp.stableBytes} → ${act.stableBytes} (persistence not byte-stable)`,
+        `${id}: round-trip canonicalStable ${exp.canonicalStable} → ${act.canonicalStable}` +
+          " (UUID-generating write no longer canonically deterministic)",
       );
     if (exp.contentSha256 !== act.contentSha256)
-      diffs.push(`${fixture}: round-trip contentSha256 diverged (${exp.contentSha256} → ${act.contentSha256})`);
+      diffs.push(`${id}: round-trip contentSha256 diverged (${exp.contentSha256} → ${act.contentSha256})`);
   }
-  for (const fixture of actRt.keys()) {
-    if (!expRt.has(fixture)) diffs.push(`extra round-trip: ${fixture}`);
+  for (const id of actRt.keys()) {
+    if (!expRt.has(id)) diffs.push(`extra round-trip: ${id}`);
   }
   return diffs;
 }
@@ -157,6 +163,188 @@ function firstSegmentId(fx) {
   }
   return null;
 }
+
+// First segment id whose material lives in materials.<kind>s ("video" |
+// "audio" | "text") — opacity/ken-burns/add-transition refuse non-video
+// segments, set-text needs a text segment, volume targets audio.
+function segmentIdByKind(fx, kind) {
+  const ids = new Set((fx.materials?.[`${kind}s`] ?? []).map((m) => m.id));
+  for (const track of fx.tracks ?? []) {
+    for (const seg of track.segments ?? []) {
+      if (ids.has(seg.material_id)) return seg.id;
+    }
+  }
+  return null;
+}
+
+// M1 write-round-trip table — three deterministic shapes, picked per verb:
+//   pair            op + inverse x2 on one copy; absolute-set/invertible edits
+//                   converge, so the bytes after each pair must be identical.
+//   twice           same one-way deterministic op on two fresh copies; the
+//                   resulting bytes must be identical.
+//   twice-canonical UUID-generating op on two fresh copies; raw bytes differ
+//                   (recorded, not asserted) but canonical hashes must match
+//                   (canonicalStable). Validated live: every pair verb below
+//                   is byte-stable, fake resource ids are accepted, and the
+//                   --write determinism gate re-proves all of it on each regen.
+const PROBE_TEXT = "golden probe M1";
+const WRITE_ROUNDTRIPS = [
+  {
+    verb: "shift-all",
+    mode: "pair",
+    needs: null,
+    steps: ({ a }) => [
+      { suffix: "shift-all+500ms", argv: ["shift-all", a, "+500ms"] },
+      { suffix: "shift-all-500ms", argv: ["shift-all", a, "-500ms"] },
+      { suffix: "shift-all+250ms", argv: ["shift-all", a, "+250ms"] },
+      { suffix: "shift-all-250ms", argv: ["shift-all", a, "-250ms"] },
+    ],
+  },
+  {
+    verb: "shift",
+    mode: "pair",
+    needs: "any",
+    steps: ({ a }, s) => [
+      { suffix: "shift+500ms", argv: ["shift", a, s.any, "+500ms"] },
+      { suffix: "shift-500ms", argv: ["shift", a, s.any, "-500ms"] },
+      { suffix: "shift+250ms", argv: ["shift", a, s.any, "+250ms"] },
+      { suffix: "shift-250ms", argv: ["shift", a, s.any, "-250ms"] },
+    ],
+  },
+  {
+    verb: "opacity",
+    mode: "pair",
+    needs: "video",
+    steps: ({ a }, s) => [
+      { suffix: "opacity-0.5", argv: ["opacity", a, s.video, "0.5"] },
+      { suffix: "opacity-1.0", argv: ["opacity", a, s.video, "1.0"] },
+      { suffix: "opacity-0.5#2", argv: ["opacity", a, s.video, "0.5"] },
+      { suffix: "opacity-1.0#2", argv: ["opacity", a, s.video, "1.0"] },
+    ],
+  },
+  {
+    verb: "volume",
+    mode: "pair",
+    needs: "audio",
+    steps: ({ a }, s) => [
+      { suffix: "volume-0.5", argv: ["volume", a, s.audio, "0.5"] },
+      { suffix: "volume-1.0", argv: ["volume", a, s.audio, "1.0"] },
+      { suffix: "volume-0.5#2", argv: ["volume", a, s.audio, "0.5"] },
+      { suffix: "volume-1.0#2", argv: ["volume", a, s.audio, "1.0"] },
+    ],
+  },
+  {
+    verb: "speed",
+    mode: "pair",
+    needs: "video",
+    steps: ({ a }, s) => [
+      { suffix: "speed-2.0", argv: ["speed", a, s.video, "2.0"] },
+      { suffix: "speed-1.0", argv: ["speed", a, s.video, "1.0"] },
+      { suffix: "speed-2.0#2", argv: ["speed", a, s.video, "2.0"] },
+      { suffix: "speed-1.0#2", argv: ["speed", a, s.video, "1.0"] },
+    ],
+  },
+  {
+    verb: "trim",
+    mode: "pair",
+    needs: "any",
+    steps: ({ a }, s) => [
+      { suffix: "trim-500ms", argv: ["trim", a, s.any, "0", "500ms"] },
+      { suffix: "trim-250ms", argv: ["trim", a, s.any, "0", "250ms"] },
+      { suffix: "trim-500ms#2", argv: ["trim", a, s.any, "0", "500ms"] },
+      { suffix: "trim-250ms#2", argv: ["trim", a, s.any, "0", "250ms"] },
+    ],
+  },
+  {
+    verb: "remove-segment",
+    mode: "twice",
+    needs: "any",
+    steps: ({ a, b }, s) => [
+      { suffix: "remove-segment#a", argv: ["remove-segment", a, s.any] },
+      { suffix: "remove-segment#b", argv: ["remove-segment", b, s.any] },
+    ],
+  },
+  {
+    verb: "set-text",
+    mode: "twice",
+    needs: "text",
+    steps: ({ a, b }, s) => [
+      { suffix: "set-text#a", argv: ["set-text", a, s.text, PROBE_TEXT] },
+      { suffix: "set-text#b", argv: ["set-text", b, s.text, PROBE_TEXT] },
+    ],
+  },
+  {
+    verb: "add-text",
+    mode: "twice-canonical",
+    needs: null,
+    steps: ({ a, b }) => [
+      { suffix: "add-text#a", argv: ["add-text", a, "0", "1s", PROBE_TEXT] },
+      { suffix: "add-text#b", argv: ["add-text", b, "0", "1s", PROBE_TEXT] },
+    ],
+  },
+  {
+    verb: "add-keyframe",
+    mode: "twice-canonical",
+    needs: "any",
+    steps: ({ a, b }, s) => [
+      { suffix: "add-keyframe#a", argv: ["add-keyframe", a, s.any, "0", "--property", "scale_x", "--value", "1.5"] },
+      { suffix: "add-keyframe#b", argv: ["add-keyframe", b, s.any, "0", "--property", "scale_x", "--value", "1.5"] },
+    ],
+  },
+  {
+    verb: "ken-burns",
+    mode: "twice-canonical",
+    needs: "video",
+    steps: ({ a, b }, s) => [
+      { suffix: "ken-burns#a", argv: ["ken-burns", a, s.video, "--from", "1.0", "--to", "1.08"] },
+      { suffix: "ken-burns#b", argv: ["ken-burns", b, s.video, "--from", "1.0", "--to", "1.08"] },
+    ],
+  },
+  {
+    verb: "add-effect",
+    mode: "twice-canonical",
+    needs: null,
+    steps: ({ a, b }) => [
+      { suffix: "add-effect#a", argv: ["add-effect", a, "golden-probe-rid", "GoldenProbe", "--full"] },
+      { suffix: "add-effect#b", argv: ["add-effect", b, "golden-probe-rid", "GoldenProbe", "--full"] },
+    ],
+  },
+  {
+    verb: "add-filter",
+    mode: "twice-canonical",
+    needs: null,
+    steps: ({ a, b }) => [
+      { suffix: "add-filter#a", argv: ["add-filter", a, "golden-probe-rid", "GoldenProbeF", "--full"] },
+      { suffix: "add-filter#b", argv: ["add-filter", b, "golden-probe-rid", "GoldenProbeF", "--full"] },
+    ],
+  },
+  {
+    verb: "add-transition",
+    mode: "twice-canonical",
+    needs: "video",
+    steps: ({ a, b }, s) => [
+      { suffix: "add-transition#a", argv: ["add-transition", a, s.video, "golden-probe-rid", "GoldenProbeT"] },
+      { suffix: "add-transition#b", argv: ["add-transition", b, s.video, "golden-probe-rid", "GoldenProbeT"] },
+    ],
+  },
+  {
+    verb: "cut",
+    mode: "twice-canonical",
+    needs: "any",
+    steps: ({ a, b, dir }) => [
+      {
+        suffix: "cut#a",
+        argv: ["cut", a, "0", "500ms", "--out", join(dir, "cut-a.json")],
+        reads: join(dir, "cut-a.json"),
+      },
+      {
+        suffix: "cut#b",
+        argv: ["cut", b, "0", "500ms", "--out", join(dir, "cut-b.json")],
+        reads: join(dir, "cut-b.json"),
+      },
+    ],
+  },
+];
 
 function firstMaterialId(fx) {
   for (const slot of Object.values(fx.materials ?? {})) {
@@ -237,34 +425,82 @@ function captureAll() {
       else skip(`${key}/material`, "no material in fixture");
     }
 
-    // -- Write round-trip on temp copies --------------------------------------
+    // -- Write round-trips on temp copies --------------------------------------
     // shift-all generates no UUIDs, so the persisted bytes are deterministic.
-    // +N then -N is an exact inverse (all starts stay ≥ 0 after the +N leg, so
+    // +N then -N is an exact inverse (all starts stay >= 0 after the +N leg, so
     // the clamp at 0 never fires on the way back). Two nested round-trips:
     // the file bytes after each must be identical — any persistence drift
     // (ordering, reformatting, hidden state) breaks byte stability.
+    // M1 generalises this to the whole in-place writer surface (see
+    // WRITE_ROUNDTRIPS). Each verb gets its OWN fresh copies (a/b) — sharing
+    // one mutated copy across verbs would make cross-copy comparisons
+    // meaningless (a's history would differ from b's).
     const roundtrips = [];
     for (const key of FIXTURE_KEYS) {
       const dir = join(tmpRoot, `rt-${key}`);
       mkdirSync(dir, { recursive: true });
-      const fp = join(dir, "draft_content.json");
-      copyFileSync(join(FIXTURES_DIR, `${key}.json`), fp);
-      const pristine = readFileSync(fp);
-      cap(`roundtrip/${key}/shift-all+500ms`, ["shift-all", fp, "+500ms"]);
-      cap(`roundtrip/${key}/shift-all-500ms`, ["shift-all", fp, "-500ms"]);
-      const bytes1 = readFileSync(fp);
-      cap(`roundtrip/${key}/shift-all+250ms`, ["shift-all", fp, "+250ms"]);
-      cap(`roundtrip/${key}/shift-all-250ms`, ["shift-all", fp, "-250ms"]);
-      const bytes2 = readFileSync(fp);
-      roundtrips.push({
-        fixture: key,
-        stableBytes: bytes1.equals(bytes2),
-        // Persistence normalizes serialization (a +N/−N round-trip does NOT
-        // restore the pristine fixture bytes) — pinned, not asserted: any
-        // change in this fact is a contract change the baseline must surface.
-        matchesOriginal: bytes1.equals(pristine),
-        contentSha256: canonicalHash(bytes1.toString("utf-8"), pathTokens),
-      });
+      const src = join(FIXTURES_DIR, `${key}.json`);
+      const segs = (() => {
+        const fx = JSON.parse(readFileSync(src, "utf-8"));
+        return {
+          any: firstSegmentId(fx),
+          video: segmentIdByKind(fx, "video"),
+          audio: segmentIdByKind(fx, "audio"),
+          text: segmentIdByKind(fx, "text"),
+        };
+      })();
+      for (const rt of WRITE_ROUNDTRIPS) {
+        const id = `roundtrip/${key}/${rt.verb}`;
+        if (rt.needs && !segs[rt.needs]) {
+          skip(id, `no ${rt.needs} segment in fixture`);
+          continue;
+        }
+        const a = join(dir, `a-${rt.verb}.json`);
+        const b = join(dir, `b-${rt.verb}.json`);
+        copyFileSync(src, a);
+        copyFileSync(src, b);
+        const pristine = readFileSync(a);
+        const steps = rt.steps({ a, b, dir }, segs);
+        if (rt.mode === "pair") {
+          cap(`${id}/${steps[0].suffix}`, steps[0].argv);
+          cap(`${id}/${steps[1].suffix}`, steps[1].argv);
+          const bytes1 = readFileSync(steps[1].reads ?? a);
+          cap(`${id}/${steps[2].suffix}`, steps[2].argv);
+          cap(`${id}/${steps[3].suffix}`, steps[3].argv);
+          const bytes2 = readFileSync(steps[3].reads ?? a);
+          roundtrips.push({
+            id,
+            verb: rt.verb,
+            mode: rt.mode,
+            stableBytes: bytes1.equals(bytes2),
+            // Persistence normalizes serialization (a round-trip does NOT
+            // restore the pristine fixture bytes) — pinned, not asserted: any
+            // change in this fact is a contract change the baseline surfaces.
+            matchesOriginal: bytes1.equals(pristine),
+            contentSha256: canonicalHash(bytes1.toString("utf-8"), pathTokens),
+          });
+        } else {
+          // twice / twice-canonical: same op on two fresh copies.
+          cap(`${id}/${steps[0].suffix}`, steps[0].argv);
+          const bytes1 = readFileSync(steps[0].reads ?? a);
+          cap(`${id}/${steps[1].suffix}`, steps[1].argv);
+          const bytes2 = readFileSync(steps[1].reads ?? b);
+          const h1 = canonicalHash(bytes1.toString("utf-8"), pathTokens);
+          const h2 = canonicalHash(bytes2.toString("utf-8"), pathTokens);
+          roundtrips.push({
+            id,
+            verb: rt.verb,
+            mode: rt.mode,
+            // For twice-canonical verbs raw byte equality is expected to be
+            // false (UUID churn) — recorded, but the asserted signal is
+            // canonicalStable: identical canonicalized content across copies.
+            stableBytes: bytes1.equals(bytes2),
+            canonicalStable: h1 === h2,
+            matchesOriginal: bytes1.equals(pristine),
+            contentSha256: h1,
+          });
+        }
+      }
     }
 
     return { version: 1, captures, roundtrips };

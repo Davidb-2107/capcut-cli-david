@@ -901,10 +901,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/minimal-draft/shift-all+500ms",
+      "id": "roundtrip/minimal-draft/shift-all/shift-all+500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-minimal-draft/draft_content.json",
+        "<TMP>/rt-minimal-draft/a-shift-all.json",
         "+500ms"
       ],
       "exit": 0,
@@ -912,10 +912,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/minimal-draft/shift-all-500ms",
+      "id": "roundtrip/minimal-draft/shift-all/shift-all-500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-minimal-draft/draft_content.json",
+        "<TMP>/rt-minimal-draft/a-shift-all.json",
         "-500ms"
       ],
       "exit": 0,
@@ -923,10 +923,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/minimal-draft/shift-all+250ms",
+      "id": "roundtrip/minimal-draft/shift-all/shift-all+250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-minimal-draft/draft_content.json",
+        "<TMP>/rt-minimal-draft/a-shift-all.json",
         "+250ms"
       ],
       "exit": 0,
@@ -934,10 +934,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/minimal-draft/shift-all-250ms",
+      "id": "roundtrip/minimal-draft/shift-all/shift-all-250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-minimal-draft/draft_content.json",
+        "<TMP>/rt-minimal-draft/a-shift-all.json",
         "-250ms"
       ],
       "exit": 0,
@@ -945,10 +945,176 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/ken-burns-draft/shift-all+500ms",
+      "id": "roundtrip/minimal-draft/shift",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no any segment in fixture"
+    },
+    {
+      "id": "roundtrip/minimal-draft/opacity",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no video segment in fixture"
+    },
+    {
+      "id": "roundtrip/minimal-draft/volume",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no audio segment in fixture"
+    },
+    {
+      "id": "roundtrip/minimal-draft/speed",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no video segment in fixture"
+    },
+    {
+      "id": "roundtrip/minimal-draft/trim",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no any segment in fixture"
+    },
+    {
+      "id": "roundtrip/minimal-draft/remove-segment",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no any segment in fixture"
+    },
+    {
+      "id": "roundtrip/minimal-draft/set-text",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no text segment in fixture"
+    },
+    {
+      "id": "roundtrip/minimal-draft/add-text/add-text#a",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-minimal-draft/a-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/minimal-draft/add-text/add-text#b",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-minimal-draft/b-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/minimal-draft/add-keyframe",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no any segment in fixture"
+    },
+    {
+      "id": "roundtrip/minimal-draft/ken-burns",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no video segment in fixture"
+    },
+    {
+      "id": "roundtrip/minimal-draft/add-effect/add-effect#a",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-minimal-draft/a-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "{\"error\":\"--full: draft has no duration\"}\n"
+    },
+    {
+      "id": "roundtrip/minimal-draft/add-effect/add-effect#b",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-minimal-draft/b-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "{\"error\":\"--full: draft has no duration\"}\n"
+    },
+    {
+      "id": "roundtrip/minimal-draft/add-filter/add-filter#a",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-minimal-draft/a-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "{\"error\":\"--full: draft has no duration\"}\n"
+    },
+    {
+      "id": "roundtrip/minimal-draft/add-filter/add-filter#b",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-minimal-draft/b-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "{\"error\":\"--full: draft has no duration\"}\n"
+    },
+    {
+      "id": "roundtrip/minimal-draft/add-transition",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no video segment in fixture"
+    },
+    {
+      "id": "roundtrip/minimal-draft/cut",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no any segment in fixture"
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/shift-all/shift-all+500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-ken-burns-draft/draft_content.json",
+        "<TMP>/rt-ken-burns-draft/a-shift-all.json",
         "+500ms"
       ],
       "exit": 0,
@@ -956,10 +1122,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/ken-burns-draft/shift-all-500ms",
+      "id": "roundtrip/ken-burns-draft/shift-all/shift-all-500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-ken-burns-draft/draft_content.json",
+        "<TMP>/rt-ken-burns-draft/a-shift-all.json",
         "-500ms"
       ],
       "exit": 0,
@@ -967,10 +1133,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/ken-burns-draft/shift-all+250ms",
+      "id": "roundtrip/ken-burns-draft/shift-all/shift-all+250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-ken-burns-draft/draft_content.json",
+        "<TMP>/rt-ken-burns-draft/a-shift-all.json",
         "+250ms"
       ],
       "exit": 0,
@@ -978,10 +1144,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/ken-burns-draft/shift-all-250ms",
+      "id": "roundtrip/ken-burns-draft/shift-all/shift-all-250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-ken-burns-draft/draft_content.json",
+        "<TMP>/rt-ken-burns-draft/a-shift-all.json",
         "-250ms"
       ],
       "exit": 0,
@@ -989,10 +1155,494 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/effects-draft/shift-all+500ms",
+      "id": "roundtrip/ken-burns-draft/shift/shift+500ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-ken-burns-draft/a-shift.json",
+        "<UUID>",
+        "+500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":0,\"new_start_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/shift/shift-500ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-ken-burns-draft/a-shift.json",
+        "<UUID>",
+        "-500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":500000,\"new_start_us\":0}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/shift/shift+250ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-ken-burns-draft/a-shift.json",
+        "<UUID>",
+        "+250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":0,\"new_start_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/shift/shift-250ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-ken-burns-draft/a-shift.json",
+        "<UUID>",
+        "-250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":250000,\"new_start_us\":0}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/opacity/opacity-0.5",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-ken-burns-draft/a-opacity.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":1,\"new_opacity\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/opacity/opacity-1.0",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-ken-burns-draft/a-opacity.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":0.5,\"new_opacity\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/opacity/opacity-0.5#2",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-ken-burns-draft/a-opacity.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":1,\"new_opacity\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/opacity/opacity-1.0#2",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-ken-burns-draft/a-opacity.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":0.5,\"new_opacity\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/volume/volume-0.5",
+      "argv": [
+        "volume",
+        "<TMP>/rt-ken-burns-draft/a-volume.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_volume\":0.5,\"new_volume\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/volume/volume-1.0",
+      "argv": [
+        "volume",
+        "<TMP>/rt-ken-burns-draft/a-volume.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_volume\":0.5,\"new_volume\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/volume/volume-0.5#2",
+      "argv": [
+        "volume",
+        "<TMP>/rt-ken-burns-draft/a-volume.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_volume\":1,\"new_volume\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/volume/volume-1.0#2",
+      "argv": [
+        "volume",
+        "<TMP>/rt-ken-burns-draft/a-volume.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_volume\":0.5,\"new_volume\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/speed/speed-2.0",
+      "argv": [
+        "speed",
+        "<TMP>/rt-ken-burns-draft/a-speed.json",
+        "<UUID>",
+        "2.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":1,\"new_speed\":2}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/speed/speed-1.0",
+      "argv": [
+        "speed",
+        "<TMP>/rt-ken-burns-draft/a-speed.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":2,\"new_speed\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/speed/speed-2.0#2",
+      "argv": [
+        "speed",
+        "<TMP>/rt-ken-burns-draft/a-speed.json",
+        "<UUID>",
+        "2.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":1,\"new_speed\":2}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/speed/speed-1.0#2",
+      "argv": [
+        "speed",
+        "<TMP>/rt-ken-burns-draft/a-speed.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":2,\"new_speed\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/trim/trim-500ms",
+      "argv": [
+        "trim",
+        "<TMP>/rt-ken-burns-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":500000,\"target_duration_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/trim/trim-250ms",
+      "argv": [
+        "trim",
+        "<TMP>/rt-ken-burns-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":250000,\"target_duration_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/trim/trim-500ms#2",
+      "argv": [
+        "trim",
+        "<TMP>/rt-ken-burns-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":500000,\"target_duration_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/trim/trim-250ms#2",
+      "argv": [
+        "trim",
+        "<TMP>/rt-ken-burns-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":250000,\"target_duration_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/remove-segment/remove-segment#a",
+      "argv": [
+        "remove-segment",
+        "<TMP>/rt-ken-burns-draft/a-remove-segment.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"track_removed\":true,\"materials_removed\":1,\"project\":\"<TMP>/rt-ken-burns-draft\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/remove-segment/remove-segment#b",
+      "argv": [
+        "remove-segment",
+        "<TMP>/rt-ken-burns-draft/b-remove-segment.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"track_removed\":true,\"materials_removed\":1,\"project\":\"<TMP>/rt-ken-burns-draft\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/set-text/set-text#a",
+      "argv": [
+        "set-text",
+        "<TMP>/rt-ken-burns-draft/a-set-text.json",
+        "<UUID>",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old\":\"LOREM LOREM LOREM LOREM\",\"new\":\"golden probe M1\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/set-text/set-text#b",
+      "argv": [
+        "set-text",
+        "<TMP>/rt-ken-burns-draft/b-set-text.json",
+        "<UUID>",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old\":\"LOREM LOREM LOREM LOREM\",\"new\":\"golden probe M1\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/add-text/add-text#a",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-ken-burns-draft/a-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/add-text/add-text#b",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-ken-burns-draft/b-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/add-keyframe/add-keyframe#a",
+      "argv": [
+        "add-keyframe",
+        "<TMP>/rt-ken-burns-draft/a-add-keyframe.json",
+        "<UUID>",
+        "0",
+        "--property",
+        "scale_x",
+        "--value",
+        "1.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"property\":\"KFTypeScaleX\",\"time_offset_us\":0,\"value\":1.5,\"curve\":\"linear\",\"keyframes\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/add-keyframe/add-keyframe#b",
+      "argv": [
+        "add-keyframe",
+        "<TMP>/rt-ken-burns-draft/b-add-keyframe.json",
+        "<UUID>",
+        "0",
+        "--property",
+        "scale_x",
+        "--value",
+        "1.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"property\":\"KFTypeScaleX\",\"time_offset_us\":0,\"value\":1.5,\"curve\":\"linear\",\"keyframes\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/ken-burns/ken-burns#a",
+      "argv": [
+        "ken-burns",
+        "<TMP>/rt-ken-burns-draft/a-ken-burns.json",
+        "<UUID>",
+        "--from",
+        "1.0",
+        "--to",
+        "1.08"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"from\":1,\"to\":1.08,\"duration_us\":766666,\"curve\":\"ease-out\",\"keyframes_added\":4}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/ken-burns/ken-burns#b",
+      "argv": [
+        "ken-burns",
+        "<TMP>/rt-ken-burns-draft/b-ken-burns.json",
+        "<UUID>",
+        "--from",
+        "1.0",
+        "--to",
+        "1.08"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"from\":1,\"to\":1.08,\"duration_us\":766666,\"curve\":\"ease-out\",\"keyframes_added\":4}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/add-effect/add-effect#a",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-ken-burns-draft/a-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbe\",\"value\":1,\"apply_target_type\":2,\"bind_segment_id\":\"\",\"start_us\":0,\"duration_us\":3533333}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/add-effect/add-effect#b",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-ken-burns-draft/b-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbe\",\"value\":1,\"apply_target_type\":2,\"bind_segment_id\":\"\",\"start_us\":0,\"duration_us\":3533333}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/add-filter/add-filter#a",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-ken-burns-draft/a-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeF\",\"value\":1,\"apply_target_type\":0,\"start_us\":0,\"duration_us\":3533333}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/add-filter/add-filter#b",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-ken-burns-draft/b-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeF\",\"value\":1,\"apply_target_type\":0,\"start_us\":0,\"duration_us\":3533333}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/add-transition/add-transition#a",
+      "argv": [
+        "add-transition",
+        "<TMP>/rt-ken-burns-draft/a-add-transition.json",
+        "<UUID>",
+        "golden-probe-rid",
+        "GoldenProbeT"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeT\",\"duration_us\":400000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/add-transition/add-transition#b",
+      "argv": [
+        "add-transition",
+        "<TMP>/rt-ken-burns-draft/b-add-transition.json",
+        "<UUID>",
+        "golden-probe-rid",
+        "GoldenProbeT"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeT\",\"duration_us\":400000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/cut/cut#a",
+      "argv": [
+        "cut",
+        "<TMP>/rt-ken-burns-draft/a-cut.json",
+        "0",
+        "500ms",
+        "--out",
+        "<TMP>/rt-ken-burns-draft/cut-a.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"kept\":2,\"removed\":7,\"duration_us\":500000,\"out\":\"<TMP>/rt-ken-burns-draft/cut-a.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/cut/cut#b",
+      "argv": [
+        "cut",
+        "<TMP>/rt-ken-burns-draft/b-cut.json",
+        "0",
+        "500ms",
+        "--out",
+        "<TMP>/rt-ken-burns-draft/cut-b.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"kept\":2,\"removed\":7,\"duration_us\":500000,\"out\":\"<TMP>/rt-ken-burns-draft/cut-b.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/shift-all/shift-all+500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-effects-draft/draft_content.json",
+        "<TMP>/rt-effects-draft/a-shift-all.json",
         "+500ms"
       ],
       "exit": 0,
@@ -1000,10 +1650,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/effects-draft/shift-all-500ms",
+      "id": "roundtrip/effects-draft/shift-all/shift-all-500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-effects-draft/draft_content.json",
+        "<TMP>/rt-effects-draft/a-shift-all.json",
         "-500ms"
       ],
       "exit": 0,
@@ -1011,10 +1661,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/effects-draft/shift-all+250ms",
+      "id": "roundtrip/effects-draft/shift-all/shift-all+250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-effects-draft/draft_content.json",
+        "<TMP>/rt-effects-draft/a-shift-all.json",
         "+250ms"
       ],
       "exit": 0,
@@ -1022,10 +1672,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/effects-draft/shift-all-250ms",
+      "id": "roundtrip/effects-draft/shift-all/shift-all-250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-effects-draft/draft_content.json",
+        "<TMP>/rt-effects-draft/a-shift-all.json",
         "-250ms"
       ],
       "exit": 0,
@@ -1033,10 +1683,478 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/subtitles-draft/shift-all+500ms",
+      "id": "roundtrip/effects-draft/shift/shift+500ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-effects-draft/a-shift.json",
+        "<UUID>",
+        "+500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":0,\"new_start_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/shift/shift-500ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-effects-draft/a-shift.json",
+        "<UUID>",
+        "-500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":500000,\"new_start_us\":0}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/shift/shift+250ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-effects-draft/a-shift.json",
+        "<UUID>",
+        "+250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":0,\"new_start_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/shift/shift-250ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-effects-draft/a-shift.json",
+        "<UUID>",
+        "-250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":250000,\"new_start_us\":0}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/opacity/opacity-0.5",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-effects-draft/a-opacity.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":1,\"new_opacity\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/opacity/opacity-1.0",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-effects-draft/a-opacity.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":0.5,\"new_opacity\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/opacity/opacity-0.5#2",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-effects-draft/a-opacity.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":1,\"new_opacity\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/opacity/opacity-1.0#2",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-effects-draft/a-opacity.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":0.5,\"new_opacity\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/volume/volume-0.5",
+      "argv": [
+        "volume",
+        "<TMP>/rt-effects-draft/a-volume.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_volume\":1,\"new_volume\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/volume/volume-1.0",
+      "argv": [
+        "volume",
+        "<TMP>/rt-effects-draft/a-volume.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_volume\":0.5,\"new_volume\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/volume/volume-0.5#2",
+      "argv": [
+        "volume",
+        "<TMP>/rt-effects-draft/a-volume.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_volume\":1,\"new_volume\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/volume/volume-1.0#2",
+      "argv": [
+        "volume",
+        "<TMP>/rt-effects-draft/a-volume.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_volume\":0.5,\"new_volume\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/speed/speed-2.0",
+      "argv": [
+        "speed",
+        "<TMP>/rt-effects-draft/a-speed.json",
+        "<UUID>",
+        "2.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":1,\"new_speed\":2}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/speed/speed-1.0",
+      "argv": [
+        "speed",
+        "<TMP>/rt-effects-draft/a-speed.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":2,\"new_speed\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/speed/speed-2.0#2",
+      "argv": [
+        "speed",
+        "<TMP>/rt-effects-draft/a-speed.json",
+        "<UUID>",
+        "2.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":1,\"new_speed\":2}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/speed/speed-1.0#2",
+      "argv": [
+        "speed",
+        "<TMP>/rt-effects-draft/a-speed.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":2,\"new_speed\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/trim/trim-500ms",
+      "argv": [
+        "trim",
+        "<TMP>/rt-effects-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":500000,\"target_duration_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/trim/trim-250ms",
+      "argv": [
+        "trim",
+        "<TMP>/rt-effects-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":250000,\"target_duration_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/trim/trim-500ms#2",
+      "argv": [
+        "trim",
+        "<TMP>/rt-effects-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":500000,\"target_duration_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/trim/trim-250ms#2",
+      "argv": [
+        "trim",
+        "<TMP>/rt-effects-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":250000,\"target_duration_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/remove-segment/remove-segment#a",
+      "argv": [
+        "remove-segment",
+        "<TMP>/rt-effects-draft/a-remove-segment.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"track_removed\":true,\"materials_removed\":1,\"project\":\"<TMP>/rt-effects-draft\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/remove-segment/remove-segment#b",
+      "argv": [
+        "remove-segment",
+        "<TMP>/rt-effects-draft/b-remove-segment.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"track_removed\":true,\"materials_removed\":1,\"project\":\"<TMP>/rt-effects-draft\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/set-text",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no text segment in fixture"
+    },
+    {
+      "id": "roundtrip/effects-draft/add-text/add-text#a",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-effects-draft/a-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/add-text/add-text#b",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-effects-draft/b-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/add-keyframe/add-keyframe#a",
+      "argv": [
+        "add-keyframe",
+        "<TMP>/rt-effects-draft/a-add-keyframe.json",
+        "<UUID>",
+        "0",
+        "--property",
+        "scale_x",
+        "--value",
+        "1.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"property\":\"KFTypeScaleX\",\"time_offset_us\":0,\"value\":1.5,\"curve\":\"linear\",\"keyframes\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/add-keyframe/add-keyframe#b",
+      "argv": [
+        "add-keyframe",
+        "<TMP>/rt-effects-draft/b-add-keyframe.json",
+        "<UUID>",
+        "0",
+        "--property",
+        "scale_x",
+        "--value",
+        "1.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"property\":\"KFTypeScaleX\",\"time_offset_us\":0,\"value\":1.5,\"curve\":\"linear\",\"keyframes\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/ken-burns/ken-burns#a",
+      "argv": [
+        "ken-burns",
+        "<TMP>/rt-effects-draft/a-ken-burns.json",
+        "<UUID>",
+        "--from",
+        "1.0",
+        "--to",
+        "1.08"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"from\":1,\"to\":1.08,\"duration_us\":2733333,\"curve\":\"ease-out\",\"keyframes_added\":4}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/ken-burns/ken-burns#b",
+      "argv": [
+        "ken-burns",
+        "<TMP>/rt-effects-draft/b-ken-burns.json",
+        "<UUID>",
+        "--from",
+        "1.0",
+        "--to",
+        "1.08"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"from\":1,\"to\":1.08,\"duration_us\":2733333,\"curve\":\"ease-out\",\"keyframes_added\":4}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/add-effect/add-effect#a",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-effects-draft/a-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbe\",\"value\":1,\"apply_target_type\":2,\"bind_segment_id\":\"\",\"start_us\":0,\"duration_us\":62000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/add-effect/add-effect#b",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-effects-draft/b-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbe\",\"value\":1,\"apply_target_type\":2,\"bind_segment_id\":\"\",\"start_us\":0,\"duration_us\":62000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/add-filter/add-filter#a",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-effects-draft/a-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeF\",\"value\":1,\"apply_target_type\":0,\"start_us\":0,\"duration_us\":62000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/add-filter/add-filter#b",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-effects-draft/b-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeF\",\"value\":1,\"apply_target_type\":0,\"start_us\":0,\"duration_us\":62000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/add-transition/add-transition#a",
+      "argv": [
+        "add-transition",
+        "<TMP>/rt-effects-draft/a-add-transition.json",
+        "<UUID>",
+        "golden-probe-rid",
+        "GoldenProbeT"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeT\",\"duration_us\":400000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/add-transition/add-transition#b",
+      "argv": [
+        "add-transition",
+        "<TMP>/rt-effects-draft/b-add-transition.json",
+        "<UUID>",
+        "golden-probe-rid",
+        "GoldenProbeT"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeT\",\"duration_us\":400000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/cut/cut#a",
+      "argv": [
+        "cut",
+        "<TMP>/rt-effects-draft/a-cut.json",
+        "0",
+        "500ms",
+        "--out",
+        "<TMP>/rt-effects-draft/cut-a.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"kept\":4,\"removed\":48,\"duration_us\":500000,\"out\":\"<TMP>/rt-effects-draft/cut-a.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/effects-draft/cut/cut#b",
+      "argv": [
+        "cut",
+        "<TMP>/rt-effects-draft/b-cut.json",
+        "0",
+        "500ms",
+        "--out",
+        "<TMP>/rt-effects-draft/cut-b.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"kept\":4,\"removed\":48,\"duration_us\":500000,\"out\":\"<TMP>/rt-effects-draft/cut-b.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/shift-all/shift-all+500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-subtitles-draft/draft_content.json",
+        "<TMP>/rt-subtitles-draft/a-shift-all.json",
         "+500ms"
       ],
       "exit": 0,
@@ -1044,10 +2162,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/subtitles-draft/shift-all-500ms",
+      "id": "roundtrip/subtitles-draft/shift-all/shift-all-500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-subtitles-draft/draft_content.json",
+        "<TMP>/rt-subtitles-draft/a-shift-all.json",
         "-500ms"
       ],
       "exit": 0,
@@ -1055,10 +2173,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/subtitles-draft/shift-all+250ms",
+      "id": "roundtrip/subtitles-draft/shift-all/shift-all+250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-subtitles-draft/draft_content.json",
+        "<TMP>/rt-subtitles-draft/a-shift-all.json",
         "+250ms"
       ],
       "exit": 0,
@@ -1066,10 +2184,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/subtitles-draft/shift-all-250ms",
+      "id": "roundtrip/subtitles-draft/shift-all/shift-all-250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-subtitles-draft/draft_content.json",
+        "<TMP>/rt-subtitles-draft/a-shift-all.json",
         "-250ms"
       ],
       "exit": 0,
@@ -1077,10 +2195,494 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/full-psycho-draft/shift-all+500ms",
+      "id": "roundtrip/subtitles-draft/shift/shift+500ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-subtitles-draft/a-shift.json",
+        "<UUID>",
+        "+500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":0,\"new_start_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/shift/shift-500ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-subtitles-draft/a-shift.json",
+        "<UUID>",
+        "-500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":500000,\"new_start_us\":0}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/shift/shift+250ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-subtitles-draft/a-shift.json",
+        "<UUID>",
+        "+250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":0,\"new_start_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/shift/shift-250ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-subtitles-draft/a-shift.json",
+        "<UUID>",
+        "-250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":250000,\"new_start_us\":0}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/opacity/opacity-0.5",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-subtitles-draft/a-opacity.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":1,\"new_opacity\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/opacity/opacity-1.0",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-subtitles-draft/a-opacity.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":0.5,\"new_opacity\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/opacity/opacity-0.5#2",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-subtitles-draft/a-opacity.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":1,\"new_opacity\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/opacity/opacity-1.0#2",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-subtitles-draft/a-opacity.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":0.5,\"new_opacity\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/volume/volume-0.5",
+      "argv": [
+        "volume",
+        "<TMP>/rt-subtitles-draft/a-volume.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_volume\":1,\"new_volume\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/volume/volume-1.0",
+      "argv": [
+        "volume",
+        "<TMP>/rt-subtitles-draft/a-volume.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_volume\":0.5,\"new_volume\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/volume/volume-0.5#2",
+      "argv": [
+        "volume",
+        "<TMP>/rt-subtitles-draft/a-volume.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_volume\":1,\"new_volume\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/volume/volume-1.0#2",
+      "argv": [
+        "volume",
+        "<TMP>/rt-subtitles-draft/a-volume.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_volume\":0.5,\"new_volume\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/speed/speed-2.0",
+      "argv": [
+        "speed",
+        "<TMP>/rt-subtitles-draft/a-speed.json",
+        "<UUID>",
+        "2.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":1,\"new_speed\":2}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/speed/speed-1.0",
+      "argv": [
+        "speed",
+        "<TMP>/rt-subtitles-draft/a-speed.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":2,\"new_speed\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/speed/speed-2.0#2",
+      "argv": [
+        "speed",
+        "<TMP>/rt-subtitles-draft/a-speed.json",
+        "<UUID>",
+        "2.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":1,\"new_speed\":2}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/speed/speed-1.0#2",
+      "argv": [
+        "speed",
+        "<TMP>/rt-subtitles-draft/a-speed.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":2,\"new_speed\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/trim/trim-500ms",
+      "argv": [
+        "trim",
+        "<TMP>/rt-subtitles-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":500000,\"target_duration_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/trim/trim-250ms",
+      "argv": [
+        "trim",
+        "<TMP>/rt-subtitles-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":250000,\"target_duration_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/trim/trim-500ms#2",
+      "argv": [
+        "trim",
+        "<TMP>/rt-subtitles-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":500000,\"target_duration_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/trim/trim-250ms#2",
+      "argv": [
+        "trim",
+        "<TMP>/rt-subtitles-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":250000,\"target_duration_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/remove-segment/remove-segment#a",
+      "argv": [
+        "remove-segment",
+        "<TMP>/rt-subtitles-draft/a-remove-segment.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"track_removed\":true,\"materials_removed\":1,\"project\":\"<TMP>/rt-subtitles-draft\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/remove-segment/remove-segment#b",
+      "argv": [
+        "remove-segment",
+        "<TMP>/rt-subtitles-draft/b-remove-segment.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"track_removed\":true,\"materials_removed\":1,\"project\":\"<TMP>/rt-subtitles-draft\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/set-text/set-text#a",
+      "argv": [
+        "set-text",
+        "<TMP>/rt-subtitles-draft/a-set-text.json",
+        "<UUID>",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old\":\"LOREM LOREM LOREM LOREM LOREM\",\"new\":\"golden probe M1\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/set-text/set-text#b",
+      "argv": [
+        "set-text",
+        "<TMP>/rt-subtitles-draft/b-set-text.json",
+        "<UUID>",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old\":\"LOREM LOREM LOREM LOREM LOREM\",\"new\":\"golden probe M1\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/add-text/add-text#a",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-subtitles-draft/a-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/add-text/add-text#b",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-subtitles-draft/b-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/add-keyframe/add-keyframe#a",
+      "argv": [
+        "add-keyframe",
+        "<TMP>/rt-subtitles-draft/a-add-keyframe.json",
+        "<UUID>",
+        "0",
+        "--property",
+        "scale_x",
+        "--value",
+        "1.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"property\":\"KFTypeScaleX\",\"time_offset_us\":0,\"value\":1.5,\"curve\":\"linear\",\"keyframes\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/add-keyframe/add-keyframe#b",
+      "argv": [
+        "add-keyframe",
+        "<TMP>/rt-subtitles-draft/b-add-keyframe.json",
+        "<UUID>",
+        "0",
+        "--property",
+        "scale_x",
+        "--value",
+        "1.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"property\":\"KFTypeScaleX\",\"time_offset_us\":0,\"value\":1.5,\"curve\":\"linear\",\"keyframes\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/ken-burns/ken-burns#a",
+      "argv": [
+        "ken-burns",
+        "<TMP>/rt-subtitles-draft/a-ken-burns.json",
+        "<UUID>",
+        "--from",
+        "1.0",
+        "--to",
+        "1.08"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"from\":1,\"to\":1.08,\"duration_us\":60033333,\"curve\":\"ease-out\",\"keyframes_added\":4}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/ken-burns/ken-burns#b",
+      "argv": [
+        "ken-burns",
+        "<TMP>/rt-subtitles-draft/b-ken-burns.json",
+        "<UUID>",
+        "--from",
+        "1.0",
+        "--to",
+        "1.08"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"from\":1,\"to\":1.08,\"duration_us\":60033333,\"curve\":\"ease-out\",\"keyframes_added\":4}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/add-effect/add-effect#a",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-subtitles-draft/a-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbe\",\"value\":1,\"apply_target_type\":2,\"bind_segment_id\":\"\",\"start_us\":0,\"duration_us\":60033333}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/add-effect/add-effect#b",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-subtitles-draft/b-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbe\",\"value\":1,\"apply_target_type\":2,\"bind_segment_id\":\"\",\"start_us\":0,\"duration_us\":60033333}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/add-filter/add-filter#a",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-subtitles-draft/a-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeF\",\"value\":1,\"apply_target_type\":0,\"start_us\":0,\"duration_us\":60033333}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/add-filter/add-filter#b",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-subtitles-draft/b-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeF\",\"value\":1,\"apply_target_type\":0,\"start_us\":0,\"duration_us\":60033333}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/add-transition/add-transition#a",
+      "argv": [
+        "add-transition",
+        "<TMP>/rt-subtitles-draft/a-add-transition.json",
+        "<UUID>",
+        "golden-probe-rid",
+        "GoldenProbeT"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeT\",\"duration_us\":400000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/add-transition/add-transition#b",
+      "argv": [
+        "add-transition",
+        "<TMP>/rt-subtitles-draft/b-add-transition.json",
+        "<UUID>",
+        "golden-probe-rid",
+        "GoldenProbeT"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeT\",\"duration_us\":400000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/cut/cut#a",
+      "argv": [
+        "cut",
+        "<TMP>/rt-subtitles-draft/a-cut.json",
+        "0",
+        "500ms",
+        "--out",
+        "<TMP>/rt-subtitles-draft/cut-a.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"kept\":3,\"removed\":27,\"duration_us\":500000,\"out\":\"<TMP>/rt-subtitles-draft/cut-a.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/subtitles-draft/cut/cut#b",
+      "argv": [
+        "cut",
+        "<TMP>/rt-subtitles-draft/b-cut.json",
+        "0",
+        "500ms",
+        "--out",
+        "<TMP>/rt-subtitles-draft/cut-b.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"kept\":3,\"removed\":27,\"duration_us\":500000,\"out\":\"<TMP>/rt-subtitles-draft/cut-b.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/shift-all/shift-all+500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-full-psycho-draft/draft_content.json",
+        "<TMP>/rt-full-psycho-draft/a-shift-all.json",
         "+500ms"
       ],
       "exit": 0,
@@ -1088,10 +2690,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/full-psycho-draft/shift-all-500ms",
+      "id": "roundtrip/full-psycho-draft/shift-all/shift-all-500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-full-psycho-draft/draft_content.json",
+        "<TMP>/rt-full-psycho-draft/a-shift-all.json",
         "-500ms"
       ],
       "exit": 0,
@@ -1099,10 +2701,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/full-psycho-draft/shift-all+250ms",
+      "id": "roundtrip/full-psycho-draft/shift-all/shift-all+250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-full-psycho-draft/draft_content.json",
+        "<TMP>/rt-full-psycho-draft/a-shift-all.json",
         "+250ms"
       ],
       "exit": 0,
@@ -1110,10 +2712,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/full-psycho-draft/shift-all-250ms",
+      "id": "roundtrip/full-psycho-draft/shift-all/shift-all-250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-full-psycho-draft/draft_content.json",
+        "<TMP>/rt-full-psycho-draft/a-shift-all.json",
         "-250ms"
       ],
       "exit": 0,
@@ -1121,10 +2723,494 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/animations-draft/shift-all+500ms",
+      "id": "roundtrip/full-psycho-draft/shift/shift+500ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-full-psycho-draft/a-shift.json",
+        "<UUID>",
+        "+500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":0,\"new_start_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/shift/shift-500ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-full-psycho-draft/a-shift.json",
+        "<UUID>",
+        "-500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":500000,\"new_start_us\":0}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/shift/shift+250ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-full-psycho-draft/a-shift.json",
+        "<UUID>",
+        "+250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":0,\"new_start_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/shift/shift-250ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-full-psycho-draft/a-shift.json",
+        "<UUID>",
+        "-250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":250000,\"new_start_us\":0}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/opacity/opacity-0.5",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-full-psycho-draft/a-opacity.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":1,\"new_opacity\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/opacity/opacity-1.0",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-full-psycho-draft/a-opacity.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":0.5,\"new_opacity\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/opacity/opacity-0.5#2",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-full-psycho-draft/a-opacity.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":1,\"new_opacity\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/opacity/opacity-1.0#2",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-full-psycho-draft/a-opacity.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":0.5,\"new_opacity\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/volume/volume-0.5",
+      "argv": [
+        "volume",
+        "<TMP>/rt-full-psycho-draft/a-volume.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_volume\":2.5040502548217773,\"new_volume\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/volume/volume-1.0",
+      "argv": [
+        "volume",
+        "<TMP>/rt-full-psycho-draft/a-volume.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_volume\":0.5,\"new_volume\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/volume/volume-0.5#2",
+      "argv": [
+        "volume",
+        "<TMP>/rt-full-psycho-draft/a-volume.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_volume\":1,\"new_volume\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/volume/volume-1.0#2",
+      "argv": [
+        "volume",
+        "<TMP>/rt-full-psycho-draft/a-volume.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_volume\":0.5,\"new_volume\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/speed/speed-2.0",
+      "argv": [
+        "speed",
+        "<TMP>/rt-full-psycho-draft/a-speed.json",
+        "<UUID>",
+        "2.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":1,\"new_speed\":2}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/speed/speed-1.0",
+      "argv": [
+        "speed",
+        "<TMP>/rt-full-psycho-draft/a-speed.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":2,\"new_speed\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/speed/speed-2.0#2",
+      "argv": [
+        "speed",
+        "<TMP>/rt-full-psycho-draft/a-speed.json",
+        "<UUID>",
+        "2.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":1,\"new_speed\":2}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/speed/speed-1.0#2",
+      "argv": [
+        "speed",
+        "<TMP>/rt-full-psycho-draft/a-speed.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":2,\"new_speed\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/trim/trim-500ms",
+      "argv": [
+        "trim",
+        "<TMP>/rt-full-psycho-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":500000,\"target_duration_us\":483343}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/trim/trim-250ms",
+      "argv": [
+        "trim",
+        "<TMP>/rt-full-psycho-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":250000,\"target_duration_us\":241671}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/trim/trim-500ms#2",
+      "argv": [
+        "trim",
+        "<TMP>/rt-full-psycho-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":500000,\"target_duration_us\":483343}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/trim/trim-250ms#2",
+      "argv": [
+        "trim",
+        "<TMP>/rt-full-psycho-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":250000,\"target_duration_us\":241671}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/remove-segment/remove-segment#a",
+      "argv": [
+        "remove-segment",
+        "<TMP>/rt-full-psycho-draft/a-remove-segment.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"track_removed\":true,\"materials_removed\":1,\"project\":\"<TMP>/rt-full-psycho-draft\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/remove-segment/remove-segment#b",
+      "argv": [
+        "remove-segment",
+        "<TMP>/rt-full-psycho-draft/b-remove-segment.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"track_removed\":true,\"materials_removed\":1,\"project\":\"<TMP>/rt-full-psycho-draft\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/set-text/set-text#a",
+      "argv": [
+        "set-text",
+        "<TMP>/rt-full-psycho-draft/a-set-text.json",
+        "<UUID>",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old\":\"LOREM LOREM LOREM LOREM LOREM\",\"new\":\"golden probe M1\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/set-text/set-text#b",
+      "argv": [
+        "set-text",
+        "<TMP>/rt-full-psycho-draft/b-set-text.json",
+        "<UUID>",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old\":\"LOREM LOREM LOREM LOREM LOREM\",\"new\":\"golden probe M1\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/add-text/add-text#a",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-full-psycho-draft/a-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/add-text/add-text#b",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-full-psycho-draft/b-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/add-keyframe/add-keyframe#a",
+      "argv": [
+        "add-keyframe",
+        "<TMP>/rt-full-psycho-draft/a-add-keyframe.json",
+        "<UUID>",
+        "0",
+        "--property",
+        "scale_x",
+        "--value",
+        "1.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"property\":\"KFTypeScaleX\",\"time_offset_us\":0,\"value\":1.5,\"curve\":\"linear\",\"keyframes\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/add-keyframe/add-keyframe#b",
+      "argv": [
+        "add-keyframe",
+        "<TMP>/rt-full-psycho-draft/b-add-keyframe.json",
+        "<UUID>",
+        "0",
+        "--property",
+        "scale_x",
+        "--value",
+        "1.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"property\":\"KFTypeScaleX\",\"time_offset_us\":0,\"value\":1.5,\"curve\":\"linear\",\"keyframes\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/ken-burns/ken-burns#a",
+      "argv": [
+        "ken-burns",
+        "<TMP>/rt-full-psycho-draft/a-ken-burns.json",
+        "<UUID>",
+        "--from",
+        "1.0",
+        "--to",
+        "1.08"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"from\":1,\"to\":1.08,\"duration_us\":733333,\"curve\":\"ease-out\",\"keyframes_added\":4}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/ken-burns/ken-burns#b",
+      "argv": [
+        "ken-burns",
+        "<TMP>/rt-full-psycho-draft/b-ken-burns.json",
+        "<UUID>",
+        "--from",
+        "1.0",
+        "--to",
+        "1.08"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"from\":1,\"to\":1.08,\"duration_us\":733333,\"curve\":\"ease-out\",\"keyframes_added\":4}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/add-effect/add-effect#a",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-full-psycho-draft/a-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbe\",\"value\":1,\"apply_target_type\":2,\"bind_segment_id\":\"\",\"start_us\":0,\"duration_us\":60000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/add-effect/add-effect#b",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-full-psycho-draft/b-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbe\",\"value\":1,\"apply_target_type\":2,\"bind_segment_id\":\"\",\"start_us\":0,\"duration_us\":60000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/add-filter/add-filter#a",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-full-psycho-draft/a-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeF\",\"value\":1,\"apply_target_type\":0,\"start_us\":0,\"duration_us\":60000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/add-filter/add-filter#b",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-full-psycho-draft/b-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeF\",\"value\":1,\"apply_target_type\":0,\"start_us\":0,\"duration_us\":60000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/add-transition/add-transition#a",
+      "argv": [
+        "add-transition",
+        "<TMP>/rt-full-psycho-draft/a-add-transition.json",
+        "<UUID>",
+        "golden-probe-rid",
+        "GoldenProbeT"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeT\",\"duration_us\":400000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/add-transition/add-transition#b",
+      "argv": [
+        "add-transition",
+        "<TMP>/rt-full-psycho-draft/b-add-transition.json",
+        "<UUID>",
+        "golden-probe-rid",
+        "GoldenProbeT"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeT\",\"duration_us\":400000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/cut/cut#a",
+      "argv": [
+        "cut",
+        "<TMP>/rt-full-psycho-draft/a-cut.json",
+        "0",
+        "500ms",
+        "--out",
+        "<TMP>/rt-full-psycho-draft/cut-a.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"kept\":4,\"removed\":107,\"duration_us\":500000,\"out\":\"<TMP>/rt-full-psycho-draft/cut-a.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/cut/cut#b",
+      "argv": [
+        "cut",
+        "<TMP>/rt-full-psycho-draft/b-cut.json",
+        "0",
+        "500ms",
+        "--out",
+        "<TMP>/rt-full-psycho-draft/cut-b.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"kept\":4,\"removed\":107,\"duration_us\":500000,\"out\":\"<TMP>/rt-full-psycho-draft/cut-b.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/shift-all/shift-all+500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-animations-draft/draft_content.json",
+        "<TMP>/rt-animations-draft/a-shift-all.json",
         "+500ms"
       ],
       "exit": 0,
@@ -1132,10 +3218,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/animations-draft/shift-all-500ms",
+      "id": "roundtrip/animations-draft/shift-all/shift-all-500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-animations-draft/draft_content.json",
+        "<TMP>/rt-animations-draft/a-shift-all.json",
         "-500ms"
       ],
       "exit": 0,
@@ -1143,10 +3229,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/animations-draft/shift-all+250ms",
+      "id": "roundtrip/animations-draft/shift-all/shift-all+250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-animations-draft/draft_content.json",
+        "<TMP>/rt-animations-draft/a-shift-all.json",
         "+250ms"
       ],
       "exit": 0,
@@ -1154,10 +3240,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/animations-draft/shift-all-250ms",
+      "id": "roundtrip/animations-draft/shift-all/shift-all-250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-animations-draft/draft_content.json",
+        "<TMP>/rt-animations-draft/a-shift-all.json",
         "-250ms"
       ],
       "exit": 0,
@@ -1165,10 +3251,454 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/stickers-draft/shift-all+500ms",
+      "id": "roundtrip/animations-draft/shift/shift+500ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-animations-draft/a-shift.json",
+        "<UUID>",
+        "+500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":0,\"new_start_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/shift/shift-500ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-animations-draft/a-shift.json",
+        "<UUID>",
+        "-500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":500000,\"new_start_us\":0}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/shift/shift+250ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-animations-draft/a-shift.json",
+        "<UUID>",
+        "+250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":0,\"new_start_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/shift/shift-250ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-animations-draft/a-shift.json",
+        "<UUID>",
+        "-250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":250000,\"new_start_us\":0}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/opacity/opacity-0.5",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-animations-draft/a-opacity.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":1,\"new_opacity\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/opacity/opacity-1.0",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-animations-draft/a-opacity.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":0.5,\"new_opacity\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/opacity/opacity-0.5#2",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-animations-draft/a-opacity.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":1,\"new_opacity\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/opacity/opacity-1.0#2",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-animations-draft/a-opacity.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":0.5,\"new_opacity\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/volume",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no audio segment in fixture"
+    },
+    {
+      "id": "roundtrip/animations-draft/speed/speed-2.0",
+      "argv": [
+        "speed",
+        "<TMP>/rt-animations-draft/a-speed.json",
+        "<UUID>",
+        "2.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":1,\"new_speed\":2}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/speed/speed-1.0",
+      "argv": [
+        "speed",
+        "<TMP>/rt-animations-draft/a-speed.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":2,\"new_speed\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/speed/speed-2.0#2",
+      "argv": [
+        "speed",
+        "<TMP>/rt-animations-draft/a-speed.json",
+        "<UUID>",
+        "2.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":1,\"new_speed\":2}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/speed/speed-1.0#2",
+      "argv": [
+        "speed",
+        "<TMP>/rt-animations-draft/a-speed.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":2,\"new_speed\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/trim/trim-500ms",
+      "argv": [
+        "trim",
+        "<TMP>/rt-animations-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":500000,\"target_duration_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/trim/trim-250ms",
+      "argv": [
+        "trim",
+        "<TMP>/rt-animations-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":250000,\"target_duration_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/trim/trim-500ms#2",
+      "argv": [
+        "trim",
+        "<TMP>/rt-animations-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":500000,\"target_duration_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/trim/trim-250ms#2",
+      "argv": [
+        "trim",
+        "<TMP>/rt-animations-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":250000,\"target_duration_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/remove-segment/remove-segment#a",
+      "argv": [
+        "remove-segment",
+        "<TMP>/rt-animations-draft/a-remove-segment.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"track_removed\":true,\"materials_removed\":1,\"project\":\"<TMP>/rt-animations-draft\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/remove-segment/remove-segment#b",
+      "argv": [
+        "remove-segment",
+        "<TMP>/rt-animations-draft/b-remove-segment.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"track_removed\":true,\"materials_removed\":1,\"project\":\"<TMP>/rt-animations-draft\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/set-text/set-text#a",
+      "argv": [
+        "set-text",
+        "<TMP>/rt-animations-draft/a-set-text.json",
+        "<UUID>",
+        "golden probe M1"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "{\"error\":\"Cannot set-text on a multi-span (keyword-highlight) caption — its style ranges would be corrupted. Rebuild it with `add-text --keyword` or `import-captions`.\"}\n"
+    },
+    {
+      "id": "roundtrip/animations-draft/set-text/set-text#b",
+      "argv": [
+        "set-text",
+        "<TMP>/rt-animations-draft/b-set-text.json",
+        "<UUID>",
+        "golden probe M1"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "{\"error\":\"Cannot set-text on a multi-span (keyword-highlight) caption — its style ranges would be corrupted. Rebuild it with `add-text --keyword` or `import-captions`.\"}\n"
+    },
+    {
+      "id": "roundtrip/animations-draft/add-text/add-text#a",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-animations-draft/a-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/add-text/add-text#b",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-animations-draft/b-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/add-keyframe/add-keyframe#a",
+      "argv": [
+        "add-keyframe",
+        "<TMP>/rt-animations-draft/a-add-keyframe.json",
+        "<UUID>",
+        "0",
+        "--property",
+        "scale_x",
+        "--value",
+        "1.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"property\":\"KFTypeScaleX\",\"time_offset_us\":0,\"value\":1.5,\"curve\":\"linear\",\"keyframes\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/add-keyframe/add-keyframe#b",
+      "argv": [
+        "add-keyframe",
+        "<TMP>/rt-animations-draft/b-add-keyframe.json",
+        "<UUID>",
+        "0",
+        "--property",
+        "scale_x",
+        "--value",
+        "1.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"property\":\"KFTypeScaleX\",\"time_offset_us\":0,\"value\":1.5,\"curve\":\"linear\",\"keyframes\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/ken-burns/ken-burns#a",
+      "argv": [
+        "ken-burns",
+        "<TMP>/rt-animations-draft/a-ken-burns.json",
+        "<UUID>",
+        "--from",
+        "1.0",
+        "--to",
+        "1.08"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"from\":1,\"to\":1.08,\"duration_us\":5000000,\"curve\":\"ease-out\",\"keyframes_added\":4}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/ken-burns/ken-burns#b",
+      "argv": [
+        "ken-burns",
+        "<TMP>/rt-animations-draft/b-ken-burns.json",
+        "<UUID>",
+        "--from",
+        "1.0",
+        "--to",
+        "1.08"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"from\":1,\"to\":1.08,\"duration_us\":5000000,\"curve\":\"ease-out\",\"keyframes_added\":4}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/add-effect/add-effect#a",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-animations-draft/a-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbe\",\"value\":1,\"apply_target_type\":2,\"bind_segment_id\":\"\",\"start_us\":0,\"duration_us\":5000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/add-effect/add-effect#b",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-animations-draft/b-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbe\",\"value\":1,\"apply_target_type\":2,\"bind_segment_id\":\"\",\"start_us\":0,\"duration_us\":5000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/add-filter/add-filter#a",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-animations-draft/a-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeF\",\"value\":1,\"apply_target_type\":0,\"start_us\":0,\"duration_us\":5000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/add-filter/add-filter#b",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-animations-draft/b-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeF\",\"value\":1,\"apply_target_type\":0,\"start_us\":0,\"duration_us\":5000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/add-transition/add-transition#a",
+      "argv": [
+        "add-transition",
+        "<TMP>/rt-animations-draft/a-add-transition.json",
+        "<UUID>",
+        "golden-probe-rid",
+        "GoldenProbeT"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeT\",\"duration_us\":400000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/add-transition/add-transition#b",
+      "argv": [
+        "add-transition",
+        "<TMP>/rt-animations-draft/b-add-transition.json",
+        "<UUID>",
+        "golden-probe-rid",
+        "GoldenProbeT"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeT\",\"duration_us\":400000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/cut/cut#a",
+      "argv": [
+        "cut",
+        "<TMP>/rt-animations-draft/a-cut.json",
+        "0",
+        "500ms",
+        "--out",
+        "<TMP>/rt-animations-draft/cut-a.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"kept\":2,\"removed\":0,\"duration_us\":500000,\"out\":\"<TMP>/rt-animations-draft/cut-a.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/animations-draft/cut/cut#b",
+      "argv": [
+        "cut",
+        "<TMP>/rt-animations-draft/b-cut.json",
+        "0",
+        "500ms",
+        "--out",
+        "<TMP>/rt-animations-draft/cut-b.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"kept\":2,\"removed\":0,\"duration_us\":500000,\"out\":\"<TMP>/rt-animations-draft/cut-b.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/shift-all/shift-all+500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-stickers-draft/draft_content.json",
+        "<TMP>/rt-stickers-draft/a-shift-all.json",
         "+500ms"
       ],
       "exit": 0,
@@ -1176,10 +3706,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/stickers-draft/shift-all-500ms",
+      "id": "roundtrip/stickers-draft/shift-all/shift-all-500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-stickers-draft/draft_content.json",
+        "<TMP>/rt-stickers-draft/a-shift-all.json",
         "-500ms"
       ],
       "exit": 0,
@@ -1187,10 +3717,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/stickers-draft/shift-all+250ms",
+      "id": "roundtrip/stickers-draft/shift-all/shift-all+250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-stickers-draft/draft_content.json",
+        "<TMP>/rt-stickers-draft/a-shift-all.json",
         "+250ms"
       ],
       "exit": 0,
@@ -1198,10 +3728,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/stickers-draft/shift-all-250ms",
+      "id": "roundtrip/stickers-draft/shift-all/shift-all-250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-stickers-draft/draft_content.json",
+        "<TMP>/rt-stickers-draft/a-shift-all.json",
         "-250ms"
       ],
       "exit": 0,
@@ -1209,10 +3739,438 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/transitions-draft/shift-all+500ms",
+      "id": "roundtrip/stickers-draft/shift/shift+500ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-stickers-draft/a-shift.json",
+        "<UUID>",
+        "+500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":0,\"new_start_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/shift/shift-500ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-stickers-draft/a-shift.json",
+        "<UUID>",
+        "-500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":500000,\"new_start_us\":0}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/shift/shift+250ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-stickers-draft/a-shift.json",
+        "<UUID>",
+        "+250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":0,\"new_start_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/shift/shift-250ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-stickers-draft/a-shift.json",
+        "<UUID>",
+        "-250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":250000,\"new_start_us\":0}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/opacity/opacity-0.5",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-stickers-draft/a-opacity.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":1,\"new_opacity\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/opacity/opacity-1.0",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-stickers-draft/a-opacity.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":0.5,\"new_opacity\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/opacity/opacity-0.5#2",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-stickers-draft/a-opacity.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":1,\"new_opacity\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/opacity/opacity-1.0#2",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-stickers-draft/a-opacity.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":0.5,\"new_opacity\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/volume",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no audio segment in fixture"
+    },
+    {
+      "id": "roundtrip/stickers-draft/speed/speed-2.0",
+      "argv": [
+        "speed",
+        "<TMP>/rt-stickers-draft/a-speed.json",
+        "<UUID>",
+        "2.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":1,\"new_speed\":2}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/speed/speed-1.0",
+      "argv": [
+        "speed",
+        "<TMP>/rt-stickers-draft/a-speed.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":2,\"new_speed\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/speed/speed-2.0#2",
+      "argv": [
+        "speed",
+        "<TMP>/rt-stickers-draft/a-speed.json",
+        "<UUID>",
+        "2.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":1,\"new_speed\":2}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/speed/speed-1.0#2",
+      "argv": [
+        "speed",
+        "<TMP>/rt-stickers-draft/a-speed.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":2,\"new_speed\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/trim/trim-500ms",
+      "argv": [
+        "trim",
+        "<TMP>/rt-stickers-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":500000,\"target_duration_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/trim/trim-250ms",
+      "argv": [
+        "trim",
+        "<TMP>/rt-stickers-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":250000,\"target_duration_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/trim/trim-500ms#2",
+      "argv": [
+        "trim",
+        "<TMP>/rt-stickers-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":500000,\"target_duration_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/trim/trim-250ms#2",
+      "argv": [
+        "trim",
+        "<TMP>/rt-stickers-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":250000,\"target_duration_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/remove-segment/remove-segment#a",
+      "argv": [
+        "remove-segment",
+        "<TMP>/rt-stickers-draft/a-remove-segment.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"track_removed\":true,\"materials_removed\":1,\"project\":\"<TMP>/rt-stickers-draft\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/remove-segment/remove-segment#b",
+      "argv": [
+        "remove-segment",
+        "<TMP>/rt-stickers-draft/b-remove-segment.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"track_removed\":true,\"materials_removed\":1,\"project\":\"<TMP>/rt-stickers-draft\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/set-text",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no text segment in fixture"
+    },
+    {
+      "id": "roundtrip/stickers-draft/add-text/add-text#a",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-stickers-draft/a-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/add-text/add-text#b",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-stickers-draft/b-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/add-keyframe/add-keyframe#a",
+      "argv": [
+        "add-keyframe",
+        "<TMP>/rt-stickers-draft/a-add-keyframe.json",
+        "<UUID>",
+        "0",
+        "--property",
+        "scale_x",
+        "--value",
+        "1.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"property\":\"KFTypeScaleX\",\"time_offset_us\":0,\"value\":1.5,\"curve\":\"linear\",\"keyframes\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/add-keyframe/add-keyframe#b",
+      "argv": [
+        "add-keyframe",
+        "<TMP>/rt-stickers-draft/b-add-keyframe.json",
+        "<UUID>",
+        "0",
+        "--property",
+        "scale_x",
+        "--value",
+        "1.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"property\":\"KFTypeScaleX\",\"time_offset_us\":0,\"value\":1.5,\"curve\":\"linear\",\"keyframes\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/ken-burns/ken-burns#a",
+      "argv": [
+        "ken-burns",
+        "<TMP>/rt-stickers-draft/a-ken-burns.json",
+        "<UUID>",
+        "--from",
+        "1.0",
+        "--to",
+        "1.08"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"from\":1,\"to\":1.08,\"duration_us\":5000000,\"curve\":\"ease-out\",\"keyframes_added\":4}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/ken-burns/ken-burns#b",
+      "argv": [
+        "ken-burns",
+        "<TMP>/rt-stickers-draft/b-ken-burns.json",
+        "<UUID>",
+        "--from",
+        "1.0",
+        "--to",
+        "1.08"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"from\":1,\"to\":1.08,\"duration_us\":5000000,\"curve\":\"ease-out\",\"keyframes_added\":4}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/add-effect/add-effect#a",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-stickers-draft/a-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbe\",\"value\":1,\"apply_target_type\":2,\"bind_segment_id\":\"\",\"start_us\":0,\"duration_us\":5000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/add-effect/add-effect#b",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-stickers-draft/b-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbe\",\"value\":1,\"apply_target_type\":2,\"bind_segment_id\":\"\",\"start_us\":0,\"duration_us\":5000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/add-filter/add-filter#a",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-stickers-draft/a-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeF\",\"value\":1,\"apply_target_type\":0,\"start_us\":0,\"duration_us\":5000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/add-filter/add-filter#b",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-stickers-draft/b-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeF\",\"value\":1,\"apply_target_type\":0,\"start_us\":0,\"duration_us\":5000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/add-transition/add-transition#a",
+      "argv": [
+        "add-transition",
+        "<TMP>/rt-stickers-draft/a-add-transition.json",
+        "<UUID>",
+        "golden-probe-rid",
+        "GoldenProbeT"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeT\",\"duration_us\":400000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/add-transition/add-transition#b",
+      "argv": [
+        "add-transition",
+        "<TMP>/rt-stickers-draft/b-add-transition.json",
+        "<UUID>",
+        "golden-probe-rid",
+        "GoldenProbeT"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeT\",\"duration_us\":400000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/cut/cut#a",
+      "argv": [
+        "cut",
+        "<TMP>/rt-stickers-draft/a-cut.json",
+        "0",
+        "500ms",
+        "--out",
+        "<TMP>/rt-stickers-draft/cut-a.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"kept\":2,\"removed\":0,\"duration_us\":500000,\"out\":\"<TMP>/rt-stickers-draft/cut-a.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/stickers-draft/cut/cut#b",
+      "argv": [
+        "cut",
+        "<TMP>/rt-stickers-draft/b-cut.json",
+        "0",
+        "500ms",
+        "--out",
+        "<TMP>/rt-stickers-draft/cut-b.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"kept\":2,\"removed\":0,\"duration_us\":500000,\"out\":\"<TMP>/rt-stickers-draft/cut-b.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/shift-all/shift-all+500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-transitions-draft/draft_content.json",
+        "<TMP>/rt-transitions-draft/a-shift-all.json",
         "+500ms"
       ],
       "exit": 0,
@@ -1220,10 +4178,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/transitions-draft/shift-all-500ms",
+      "id": "roundtrip/transitions-draft/shift-all/shift-all-500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-transitions-draft/draft_content.json",
+        "<TMP>/rt-transitions-draft/a-shift-all.json",
         "-500ms"
       ],
       "exit": 0,
@@ -1231,10 +4189,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/transitions-draft/shift-all+250ms",
+      "id": "roundtrip/transitions-draft/shift-all/shift-all+250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-transitions-draft/draft_content.json",
+        "<TMP>/rt-transitions-draft/a-shift-all.json",
         "+250ms"
       ],
       "exit": 0,
@@ -1242,10 +4200,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/transitions-draft/shift-all-250ms",
+      "id": "roundtrip/transitions-draft/shift-all/shift-all-250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-transitions-draft/draft_content.json",
+        "<TMP>/rt-transitions-draft/a-shift-all.json",
         "-250ms"
       ],
       "exit": 0,
@@ -1253,10 +4211,438 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/masks-filters-draft/shift-all+500ms",
+      "id": "roundtrip/transitions-draft/shift/shift+500ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-transitions-draft/a-shift.json",
+        "<UUID>",
+        "+500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":0,\"new_start_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/shift/shift-500ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-transitions-draft/a-shift.json",
+        "<UUID>",
+        "-500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":500000,\"new_start_us\":0}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/shift/shift+250ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-transitions-draft/a-shift.json",
+        "<UUID>",
+        "+250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":0,\"new_start_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/shift/shift-250ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-transitions-draft/a-shift.json",
+        "<UUID>",
+        "-250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":250000,\"new_start_us\":0}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/opacity/opacity-0.5",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-transitions-draft/a-opacity.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":1,\"new_opacity\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/opacity/opacity-1.0",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-transitions-draft/a-opacity.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":0.5,\"new_opacity\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/opacity/opacity-0.5#2",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-transitions-draft/a-opacity.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":1,\"new_opacity\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/opacity/opacity-1.0#2",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-transitions-draft/a-opacity.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":0.5,\"new_opacity\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/volume",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no audio segment in fixture"
+    },
+    {
+      "id": "roundtrip/transitions-draft/speed/speed-2.0",
+      "argv": [
+        "speed",
+        "<TMP>/rt-transitions-draft/a-speed.json",
+        "<UUID>",
+        "2.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":1,\"new_speed\":2}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/speed/speed-1.0",
+      "argv": [
+        "speed",
+        "<TMP>/rt-transitions-draft/a-speed.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":2,\"new_speed\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/speed/speed-2.0#2",
+      "argv": [
+        "speed",
+        "<TMP>/rt-transitions-draft/a-speed.json",
+        "<UUID>",
+        "2.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":1,\"new_speed\":2}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/speed/speed-1.0#2",
+      "argv": [
+        "speed",
+        "<TMP>/rt-transitions-draft/a-speed.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":2,\"new_speed\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/trim/trim-500ms",
+      "argv": [
+        "trim",
+        "<TMP>/rt-transitions-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":500000,\"target_duration_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/trim/trim-250ms",
+      "argv": [
+        "trim",
+        "<TMP>/rt-transitions-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":250000,\"target_duration_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/trim/trim-500ms#2",
+      "argv": [
+        "trim",
+        "<TMP>/rt-transitions-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":500000,\"target_duration_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/trim/trim-250ms#2",
+      "argv": [
+        "trim",
+        "<TMP>/rt-transitions-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":250000,\"target_duration_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/remove-segment/remove-segment#a",
+      "argv": [
+        "remove-segment",
+        "<TMP>/rt-transitions-draft/a-remove-segment.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"track_removed\":false,\"materials_removed\":1,\"project\":\"<TMP>/rt-transitions-draft\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/remove-segment/remove-segment#b",
+      "argv": [
+        "remove-segment",
+        "<TMP>/rt-transitions-draft/b-remove-segment.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"track_removed\":false,\"materials_removed\":1,\"project\":\"<TMP>/rt-transitions-draft\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/set-text",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no text segment in fixture"
+    },
+    {
+      "id": "roundtrip/transitions-draft/add-text/add-text#a",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-transitions-draft/a-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/add-text/add-text#b",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-transitions-draft/b-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/add-keyframe/add-keyframe#a",
+      "argv": [
+        "add-keyframe",
+        "<TMP>/rt-transitions-draft/a-add-keyframe.json",
+        "<UUID>",
+        "0",
+        "--property",
+        "scale_x",
+        "--value",
+        "1.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"property\":\"KFTypeScaleX\",\"time_offset_us\":0,\"value\":1.5,\"curve\":\"linear\",\"keyframes\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/add-keyframe/add-keyframe#b",
+      "argv": [
+        "add-keyframe",
+        "<TMP>/rt-transitions-draft/b-add-keyframe.json",
+        "<UUID>",
+        "0",
+        "--property",
+        "scale_x",
+        "--value",
+        "1.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"property\":\"KFTypeScaleX\",\"time_offset_us\":0,\"value\":1.5,\"curve\":\"linear\",\"keyframes\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/ken-burns/ken-burns#a",
+      "argv": [
+        "ken-burns",
+        "<TMP>/rt-transitions-draft/a-ken-burns.json",
+        "<UUID>",
+        "--from",
+        "1.0",
+        "--to",
+        "1.08"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"from\":1,\"to\":1.08,\"duration_us\":5000000,\"curve\":\"ease-out\",\"keyframes_added\":4}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/ken-burns/ken-burns#b",
+      "argv": [
+        "ken-burns",
+        "<TMP>/rt-transitions-draft/b-ken-burns.json",
+        "<UUID>",
+        "--from",
+        "1.0",
+        "--to",
+        "1.08"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"from\":1,\"to\":1.08,\"duration_us\":5000000,\"curve\":\"ease-out\",\"keyframes_added\":4}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/add-effect/add-effect#a",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-transitions-draft/a-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbe\",\"value\":1,\"apply_target_type\":2,\"bind_segment_id\":\"\",\"start_us\":0,\"duration_us\":10000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/add-effect/add-effect#b",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-transitions-draft/b-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbe\",\"value\":1,\"apply_target_type\":2,\"bind_segment_id\":\"\",\"start_us\":0,\"duration_us\":10000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/add-filter/add-filter#a",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-transitions-draft/a-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeF\",\"value\":1,\"apply_target_type\":0,\"start_us\":0,\"duration_us\":10000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/add-filter/add-filter#b",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-transitions-draft/b-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeF\",\"value\":1,\"apply_target_type\":0,\"start_us\":0,\"duration_us\":10000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/add-transition/add-transition#a",
+      "argv": [
+        "add-transition",
+        "<TMP>/rt-transitions-draft/a-add-transition.json",
+        "<UUID>",
+        "golden-probe-rid",
+        "GoldenProbeT"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeT\",\"duration_us\":400000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/add-transition/add-transition#b",
+      "argv": [
+        "add-transition",
+        "<TMP>/rt-transitions-draft/b-add-transition.json",
+        "<UUID>",
+        "golden-probe-rid",
+        "GoldenProbeT"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeT\",\"duration_us\":400000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/cut/cut#a",
+      "argv": [
+        "cut",
+        "<TMP>/rt-transitions-draft/a-cut.json",
+        "0",
+        "500ms",
+        "--out",
+        "<TMP>/rt-transitions-draft/cut-a.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"kept\":1,\"removed\":1,\"duration_us\":500000,\"out\":\"<TMP>/rt-transitions-draft/cut-a.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/transitions-draft/cut/cut#b",
+      "argv": [
+        "cut",
+        "<TMP>/rt-transitions-draft/b-cut.json",
+        "0",
+        "500ms",
+        "--out",
+        "<TMP>/rt-transitions-draft/cut-b.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"kept\":1,\"removed\":1,\"duration_us\":500000,\"out\":\"<TMP>/rt-transitions-draft/cut-b.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/shift-all/shift-all+500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-masks-filters-draft/draft_content.json",
+        "<TMP>/rt-masks-filters-draft/a-shift-all.json",
         "+500ms"
       ],
       "exit": 0,
@@ -1264,10 +4650,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/masks-filters-draft/shift-all-500ms",
+      "id": "roundtrip/masks-filters-draft/shift-all/shift-all-500ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-masks-filters-draft/draft_content.json",
+        "<TMP>/rt-masks-filters-draft/a-shift-all.json",
         "-500ms"
       ],
       "exit": 0,
@@ -1275,10 +4661,10 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/masks-filters-draft/shift-all+250ms",
+      "id": "roundtrip/masks-filters-draft/shift-all/shift-all+250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-masks-filters-draft/draft_content.json",
+        "<TMP>/rt-masks-filters-draft/a-shift-all.json",
         "+250ms"
       ],
       "exit": 0,
@@ -1286,71 +4672,1444 @@
       "stderr": ""
     },
     {
-      "id": "roundtrip/masks-filters-draft/shift-all-250ms",
+      "id": "roundtrip/masks-filters-draft/shift-all/shift-all-250ms",
       "argv": [
         "shift-all",
-        "<TMP>/rt-masks-filters-draft/draft_content.json",
+        "<TMP>/rt-masks-filters-draft/a-shift-all.json",
         "-250ms"
       ],
       "exit": 0,
       "stdout": "{\"ok\":true,\"shifted\":2,\"offset_us\":-250000,\"id\":\"\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/shift/shift+500ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-masks-filters-draft/a-shift.json",
+        "<UUID>",
+        "+500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":0,\"new_start_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/shift/shift-500ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-masks-filters-draft/a-shift.json",
+        "<UUID>",
+        "-500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":500000,\"new_start_us\":0}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/shift/shift+250ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-masks-filters-draft/a-shift.json",
+        "<UUID>",
+        "+250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":0,\"new_start_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/shift/shift-250ms",
+      "argv": [
+        "shift",
+        "<TMP>/rt-masks-filters-draft/a-shift.json",
+        "<UUID>",
+        "-250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_start_us\":250000,\"new_start_us\":0}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/opacity/opacity-0.5",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-masks-filters-draft/a-opacity.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":1,\"new_opacity\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/opacity/opacity-1.0",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-masks-filters-draft/a-opacity.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":0.5,\"new_opacity\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/opacity/opacity-0.5#2",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-masks-filters-draft/a-opacity.json",
+        "<UUID>",
+        "0.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":1,\"new_opacity\":0.5}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/opacity/opacity-1.0#2",
+      "argv": [
+        "opacity",
+        "<TMP>/rt-masks-filters-draft/a-opacity.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_opacity\":0.5,\"new_opacity\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/volume",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no audio segment in fixture"
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/speed/speed-2.0",
+      "argv": [
+        "speed",
+        "<TMP>/rt-masks-filters-draft/a-speed.json",
+        "<UUID>",
+        "2.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":1,\"new_speed\":2}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/speed/speed-1.0",
+      "argv": [
+        "speed",
+        "<TMP>/rt-masks-filters-draft/a-speed.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":2,\"new_speed\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/speed/speed-2.0#2",
+      "argv": [
+        "speed",
+        "<TMP>/rt-masks-filters-draft/a-speed.json",
+        "<UUID>",
+        "2.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":1,\"new_speed\":2}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/speed/speed-1.0#2",
+      "argv": [
+        "speed",
+        "<TMP>/rt-masks-filters-draft/a-speed.json",
+        "<UUID>",
+        "1.0"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"old_speed\":2,\"new_speed\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/trim/trim-500ms",
+      "argv": [
+        "trim",
+        "<TMP>/rt-masks-filters-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":500000,\"target_duration_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/trim/trim-250ms",
+      "argv": [
+        "trim",
+        "<TMP>/rt-masks-filters-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":250000,\"target_duration_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/trim/trim-500ms#2",
+      "argv": [
+        "trim",
+        "<TMP>/rt-masks-filters-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "500ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":500000,\"target_duration_us\":500000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/trim/trim-250ms#2",
+      "argv": [
+        "trim",
+        "<TMP>/rt-masks-filters-draft/a-trim.json",
+        "<UUID>",
+        "0",
+        "250ms"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"source_start_us\":0,\"source_duration_us\":250000,\"target_duration_us\":250000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/remove-segment/remove-segment#a",
+      "argv": [
+        "remove-segment",
+        "<TMP>/rt-masks-filters-draft/a-remove-segment.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"track_removed\":true,\"materials_removed\":1,\"project\":\"<TMP>/rt-masks-filters-draft\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/remove-segment/remove-segment#b",
+      "argv": [
+        "remove-segment",
+        "<TMP>/rt-masks-filters-draft/b-remove-segment.json",
+        "<UUID>"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"track_removed\":true,\"materials_removed\":1,\"project\":\"<TMP>/rt-masks-filters-draft\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/set-text",
+      "argv": [],
+      "exit": null,
+      "stdout": "",
+      "stderr": "",
+      "skipped": "no text segment in fixture"
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/add-text/add-text#a",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-masks-filters-draft/a-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/add-text/add-text#b",
+      "argv": [
+        "add-text",
+        "<TMP>/rt-masks-filters-draft/b-add-text.json",
+        "0",
+        "1s",
+        "golden probe M1"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"text\":\"golden probe M1\",\"start_us\":0,\"duration_us\":1000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/add-keyframe/add-keyframe#a",
+      "argv": [
+        "add-keyframe",
+        "<TMP>/rt-masks-filters-draft/a-add-keyframe.json",
+        "<UUID>",
+        "0",
+        "--property",
+        "scale_x",
+        "--value",
+        "1.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"property\":\"KFTypeScaleX\",\"time_offset_us\":0,\"value\":1.5,\"curve\":\"linear\",\"keyframes\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/add-keyframe/add-keyframe#b",
+      "argv": [
+        "add-keyframe",
+        "<TMP>/rt-masks-filters-draft/b-add-keyframe.json",
+        "<UUID>",
+        "0",
+        "--property",
+        "scale_x",
+        "--value",
+        "1.5"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"property\":\"KFTypeScaleX\",\"time_offset_us\":0,\"value\":1.5,\"curve\":\"linear\",\"keyframes\":1}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/ken-burns/ken-burns#a",
+      "argv": [
+        "ken-burns",
+        "<TMP>/rt-masks-filters-draft/a-ken-burns.json",
+        "<UUID>",
+        "--from",
+        "1.0",
+        "--to",
+        "1.08"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"from\":1,\"to\":1.08,\"duration_us\":5000000,\"curve\":\"ease-out\",\"keyframes_added\":4}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/ken-burns/ken-burns#b",
+      "argv": [
+        "ken-burns",
+        "<TMP>/rt-masks-filters-draft/b-ken-burns.json",
+        "<UUID>",
+        "--from",
+        "1.0",
+        "--to",
+        "1.08"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"id\":\"<UUID>\",\"from\":1,\"to\":1.08,\"duration_us\":5000000,\"curve\":\"ease-out\",\"keyframes_added\":4}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/add-effect/add-effect#a",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-masks-filters-draft/a-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbe\",\"value\":1,\"apply_target_type\":2,\"bind_segment_id\":\"\",\"start_us\":0,\"duration_us\":5000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/add-effect/add-effect#b",
+      "argv": [
+        "add-effect",
+        "<TMP>/rt-masks-filters-draft/b-add-effect.json",
+        "golden-probe-rid",
+        "GoldenProbe",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbe\",\"value\":1,\"apply_target_type\":2,\"bind_segment_id\":\"\",\"start_us\":0,\"duration_us\":5000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/add-filter/add-filter#a",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-masks-filters-draft/a-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeF\",\"value\":1,\"apply_target_type\":0,\"start_us\":0,\"duration_us\":5000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/add-filter/add-filter#b",
+      "argv": [
+        "add-filter",
+        "<TMP>/rt-masks-filters-draft/b-add-filter.json",
+        "golden-probe-rid",
+        "GoldenProbeF",
+        "--full"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeF\",\"value\":1,\"apply_target_type\":0,\"start_us\":0,\"duration_us\":5000000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/add-transition/add-transition#a",
+      "argv": [
+        "add-transition",
+        "<TMP>/rt-masks-filters-draft/a-add-transition.json",
+        "<UUID>",
+        "golden-probe-rid",
+        "GoldenProbeT"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeT\",\"duration_us\":400000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/add-transition/add-transition#b",
+      "argv": [
+        "add-transition",
+        "<TMP>/rt-masks-filters-draft/b-add-transition.json",
+        "<UUID>",
+        "golden-probe-rid",
+        "GoldenProbeT"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"segment_id\":\"<UUID>\",\"material_id\":\"<UUID>\",\"track_id\":\"<UUID>\",\"resource_id\":\"golden-probe-rid\",\"name\":\"GoldenProbeT\",\"duration_us\":400000}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/cut/cut#a",
+      "argv": [
+        "cut",
+        "<TMP>/rt-masks-filters-draft/a-cut.json",
+        "0",
+        "500ms",
+        "--out",
+        "<TMP>/rt-masks-filters-draft/cut-a.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"kept\":2,\"removed\":0,\"duration_us\":500000,\"out\":\"<TMP>/rt-masks-filters-draft/cut-a.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/cut/cut#b",
+      "argv": [
+        "cut",
+        "<TMP>/rt-masks-filters-draft/b-cut.json",
+        "0",
+        "500ms",
+        "--out",
+        "<TMP>/rt-masks-filters-draft/cut-b.json"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true,\"kept\":2,\"removed\":0,\"duration_us\":500000,\"out\":\"<TMP>/rt-masks-filters-draft/cut-b.json\"}\n",
       "stderr": ""
     }
   ],
   "roundtrips": [
     {
-      "fixture": "minimal-draft",
+      "id": "roundtrip/minimal-draft/shift-all",
+      "verb": "shift-all",
+      "mode": "pair",
       "stableBytes": true,
       "matchesOriginal": false,
       "contentSha256": "604cb94751a672ce2e166ce85e9cdbd32fc202ab94e43498d319026f5fd1a12b"
     },
     {
-      "fixture": "ken-burns-draft",
+      "id": "roundtrip/minimal-draft/add-text",
+      "verb": "add-text",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "9f8266d6101c51df5d3a1b01b5ad6ffcbf9d2cf952519fd59a1e312b0afe5aff"
+    },
+    {
+      "id": "roundtrip/minimal-draft/add-effect",
+      "verb": "add-effect",
+      "mode": "twice-canonical",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": true,
+      "contentSha256": "5bd718477f886ea802325ebc41c0e4bb64c1d016f2022dfa459ec683c71a5b56"
+    },
+    {
+      "id": "roundtrip/minimal-draft/add-filter",
+      "verb": "add-filter",
+      "mode": "twice-canonical",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": true,
+      "contentSha256": "5bd718477f886ea802325ebc41c0e4bb64c1d016f2022dfa459ec683c71a5b56"
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/shift-all",
+      "verb": "shift-all",
+      "mode": "pair",
       "stableBytes": true,
       "matchesOriginal": false,
       "contentSha256": "c54847351c73a3de7b82caed5b9917c54162b06bc2771395cb99f16476725bd8"
     },
     {
-      "fixture": "effects-draft",
+      "id": "roundtrip/ken-burns-draft/shift",
+      "verb": "shift",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "c54847351c73a3de7b82caed5b9917c54162b06bc2771395cb99f16476725bd8"
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/opacity",
+      "verb": "opacity",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "c54847351c73a3de7b82caed5b9917c54162b06bc2771395cb99f16476725bd8"
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/volume",
+      "verb": "volume",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "5643373e3007c46516703b1f54468a0c8af13bd471b084b7a3e6bb95bfc9f477"
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/speed",
+      "verb": "speed",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "c54847351c73a3de7b82caed5b9917c54162b06bc2771395cb99f16476725bd8"
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/trim",
+      "verb": "trim",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "57bd9400bbd928dfad5b2494e92150ee72901b9f8feb977e2cc7456b4c8785ef"
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/remove-segment",
+      "verb": "remove-segment",
+      "mode": "twice",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "3ce33d001debbc05d7c9853d99e7c8436bc9598bc1fc5f2f3fb2651e10fb3a84"
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/set-text",
+      "verb": "set-text",
+      "mode": "twice",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "643cf3906dac43cfeb4151b258757846993388edb3d601031bdb9d73c2c7e410"
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/add-text",
+      "verb": "add-text",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "0d66fa993c31edff33a151a56295d9aa263cf35fcd4ea02cf3b842991a65552b"
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/add-keyframe",
+      "verb": "add-keyframe",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "68b5db9c06e85785063c816ab2489ff3a3933aa697df889a14fccf22fcc81700"
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/ken-burns",
+      "verb": "ken-burns",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "80b36bf4af93c3f2fb85d0704182df1a28cc830ad0d80ece2706325eeb9a4b4b"
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/add-effect",
+      "verb": "add-effect",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "8f60b413eec2dbd116699a1f3fd8b7fdc8c83a2851e052c52cb4f2b6d558c83d"
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/add-filter",
+      "verb": "add-filter",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "4feb4dc67d4dbcfa2938d9f1a87d155d6de7df222fa00e8775113af734ca4a18"
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/add-transition",
+      "verb": "add-transition",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "cd9dd532c5a8ccf0ae608da7f7c34ed50079d3250855b73a048acc478d69e7ad"
+    },
+    {
+      "id": "roundtrip/ken-burns-draft/cut",
+      "verb": "cut",
+      "mode": "twice-canonical",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "0ef1893862931f07f9ea8570f24fe8a4fdafb34ff2fc85c54e296e392506c4ff"
+    },
+    {
+      "id": "roundtrip/effects-draft/shift-all",
+      "verb": "shift-all",
+      "mode": "pair",
       "stableBytes": true,
       "matchesOriginal": false,
       "contentSha256": "7368cc35e9003bda3147797e36fe3033d70ef4460ff2ab58a0bb33e9610893f3"
     },
     {
-      "fixture": "subtitles-draft",
+      "id": "roundtrip/effects-draft/shift",
+      "verb": "shift",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "7368cc35e9003bda3147797e36fe3033d70ef4460ff2ab58a0bb33e9610893f3"
+    },
+    {
+      "id": "roundtrip/effects-draft/opacity",
+      "verb": "opacity",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "7368cc35e9003bda3147797e36fe3033d70ef4460ff2ab58a0bb33e9610893f3"
+    },
+    {
+      "id": "roundtrip/effects-draft/volume",
+      "verb": "volume",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "7368cc35e9003bda3147797e36fe3033d70ef4460ff2ab58a0bb33e9610893f3"
+    },
+    {
+      "id": "roundtrip/effects-draft/speed",
+      "verb": "speed",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "7368cc35e9003bda3147797e36fe3033d70ef4460ff2ab58a0bb33e9610893f3"
+    },
+    {
+      "id": "roundtrip/effects-draft/trim",
+      "verb": "trim",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "ea408c76aecc608634498bd624244c1d49ff946b706372edd5400a72020aba52"
+    },
+    {
+      "id": "roundtrip/effects-draft/remove-segment",
+      "verb": "remove-segment",
+      "mode": "twice",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "4c4faf28164e288ae142835fe26c593196b36d76e1b578946dd6731886197359"
+    },
+    {
+      "id": "roundtrip/effects-draft/add-text",
+      "verb": "add-text",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "ac04f7d8d20b572ed79c6fcff20cccbdf9c137d4513485185d95351ee70b4ca1"
+    },
+    {
+      "id": "roundtrip/effects-draft/add-keyframe",
+      "verb": "add-keyframe",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "e0a9da32fd4870ccf1ffbbe8056b6d822b5009ce4c44d0e285ebf3890a2fdb51"
+    },
+    {
+      "id": "roundtrip/effects-draft/ken-burns",
+      "verb": "ken-burns",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "6993ea0715879ea19a4225b81b091ec45223b24a737985df737bc09a05414ff0"
+    },
+    {
+      "id": "roundtrip/effects-draft/add-effect",
+      "verb": "add-effect",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "6b830bf3062816fdcbee973ddc283e876cd0d0f4715205a9f9327ecd4e7fb0c7"
+    },
+    {
+      "id": "roundtrip/effects-draft/add-filter",
+      "verb": "add-filter",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "0fda8179e3f7b8056d28c54275df0546f131f1d766dffb4a8280744d79cc41da"
+    },
+    {
+      "id": "roundtrip/effects-draft/add-transition",
+      "verb": "add-transition",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "3d45ca8ee83d1484f7dc29ed4ae35198845b07599692b170e8257cebad6f8aa0"
+    },
+    {
+      "id": "roundtrip/effects-draft/cut",
+      "verb": "cut",
+      "mode": "twice-canonical",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "f33502339e7a4f3825ff83152738f53292d69ad798f038e5074b7149725d89de"
+    },
+    {
+      "id": "roundtrip/subtitles-draft/shift-all",
+      "verb": "shift-all",
+      "mode": "pair",
       "stableBytes": true,
       "matchesOriginal": false,
       "contentSha256": "672450716f1d0b610e05d41afdab53db72ec7fa2d3efccac158bcfe06bc6892e"
     },
     {
-      "fixture": "full-psycho-draft",
+      "id": "roundtrip/subtitles-draft/shift",
+      "verb": "shift",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "672450716f1d0b610e05d41afdab53db72ec7fa2d3efccac158bcfe06bc6892e"
+    },
+    {
+      "id": "roundtrip/subtitles-draft/opacity",
+      "verb": "opacity",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "672450716f1d0b610e05d41afdab53db72ec7fa2d3efccac158bcfe06bc6892e"
+    },
+    {
+      "id": "roundtrip/subtitles-draft/volume",
+      "verb": "volume",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "672450716f1d0b610e05d41afdab53db72ec7fa2d3efccac158bcfe06bc6892e"
+    },
+    {
+      "id": "roundtrip/subtitles-draft/speed",
+      "verb": "speed",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "672450716f1d0b610e05d41afdab53db72ec7fa2d3efccac158bcfe06bc6892e"
+    },
+    {
+      "id": "roundtrip/subtitles-draft/trim",
+      "verb": "trim",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "ee177579d64bba7c6481942958407b58bf6d3eff0c2d207f605cecad4f864f1c"
+    },
+    {
+      "id": "roundtrip/subtitles-draft/remove-segment",
+      "verb": "remove-segment",
+      "mode": "twice",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "746935d857ed95739d92317d56c53d5b97fd39ba5926ca1a167c0c579db7792d"
+    },
+    {
+      "id": "roundtrip/subtitles-draft/set-text",
+      "verb": "set-text",
+      "mode": "twice",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "f6ec0693caacc8d55637a8d6375fd6167edf8af5295dd5b4197e312acfdacaea"
+    },
+    {
+      "id": "roundtrip/subtitles-draft/add-text",
+      "verb": "add-text",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "df176888299774b089bd35a26473ac672b5584b4ebbb29945ee46dab564f7f25"
+    },
+    {
+      "id": "roundtrip/subtitles-draft/add-keyframe",
+      "verb": "add-keyframe",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "986134e08113aa3f9eee050fe1417d3e52c67bf81d882d81db9b30b77f44f493"
+    },
+    {
+      "id": "roundtrip/subtitles-draft/ken-burns",
+      "verb": "ken-burns",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "200b480e7e50b08184b633d19ff5f9fa680c7cfde807e21c401f3403d0e9c645"
+    },
+    {
+      "id": "roundtrip/subtitles-draft/add-effect",
+      "verb": "add-effect",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "5716e0488b40801aa468a2c77b9eede53f7461d44a615ecb993e0d4e74f6ff00"
+    },
+    {
+      "id": "roundtrip/subtitles-draft/add-filter",
+      "verb": "add-filter",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "76405aab67a4e0baca2366191eb6039d937e6407f472283cdc3ea821381b6bc9"
+    },
+    {
+      "id": "roundtrip/subtitles-draft/add-transition",
+      "verb": "add-transition",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "a84ede1b099279e7f64673bcbbf70520665227612e6c76e38746cf72dad13c42"
+    },
+    {
+      "id": "roundtrip/subtitles-draft/cut",
+      "verb": "cut",
+      "mode": "twice-canonical",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "93bef22f688144bfa45883f28035a0bf09d7134018f48db00f8a37d24aae6bf0"
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/shift-all",
+      "verb": "shift-all",
+      "mode": "pair",
       "stableBytes": true,
       "matchesOriginal": false,
       "contentSha256": "7ae943db064389390cfcb5d9c7c1fa9e3a919f079dfc015bf512a4cf2e92e5dd"
     },
     {
-      "fixture": "animations-draft",
+      "id": "roundtrip/full-psycho-draft/shift",
+      "verb": "shift",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "7ae943db064389390cfcb5d9c7c1fa9e3a919f079dfc015bf512a4cf2e92e5dd"
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/opacity",
+      "verb": "opacity",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "7ae943db064389390cfcb5d9c7c1fa9e3a919f079dfc015bf512a4cf2e92e5dd"
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/volume",
+      "verb": "volume",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "5d369b958cad9572dbce7ed4d98b44540e662a49bea3f6e898ac91fc0e232c10"
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/speed",
+      "verb": "speed",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "7ae943db064389390cfcb5d9c7c1fa9e3a919f079dfc015bf512a4cf2e92e5dd"
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/trim",
+      "verb": "trim",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "d9cb1056b951b477c8dd4a3104b9c157046a6d2b657f3bce41b5d61149c0de1b"
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/remove-segment",
+      "verb": "remove-segment",
+      "mode": "twice",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "a1a1d1c79e515c8892dda89f168f0b05db6e9de59d31107079c39601ade29758"
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/set-text",
+      "verb": "set-text",
+      "mode": "twice",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "dc52db11fc82c266c3cac355797f4622c147b85e84ce4ddc56edc7209294edeb"
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/add-text",
+      "verb": "add-text",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "9660344338704c490ea54e2f46ae46bc7d0faf2b0ef442bb73a12f58ff74004a"
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/add-keyframe",
+      "verb": "add-keyframe",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "983898e67a9540c2c749a6799a2be90eb1fc028106f99d8297fa45e0be2ef675"
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/ken-burns",
+      "verb": "ken-burns",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "917845356eb701489923a329a8d08805dc772906c5896a83ad8b66da0f5c8780"
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/add-effect",
+      "verb": "add-effect",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "6c22b46dc631a83b3798b06c1595dad0f114c500e91e3b1f10cbc42a43964a24"
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/add-filter",
+      "verb": "add-filter",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "b09df0caa980bd3883076e5f17f4b68ff6d25209dab0450c6420de97c47475e5"
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/add-transition",
+      "verb": "add-transition",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "f92930a16abfd72a4d6d95c9323219c652899c8a661cb045bb62e55447137e86"
+    },
+    {
+      "id": "roundtrip/full-psycho-draft/cut",
+      "verb": "cut",
+      "mode": "twice-canonical",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "ed3ee716274c17b6ac9163fcbdeaf38c8986c9fdfc22ebc8ae11b08683f7e52b"
+    },
+    {
+      "id": "roundtrip/animations-draft/shift-all",
+      "verb": "shift-all",
+      "mode": "pair",
       "stableBytes": true,
       "matchesOriginal": false,
       "contentSha256": "911062863f4174d77bed812cbb1f82630e2989d319879d6318b5a1d0183d05e8"
     },
     {
-      "fixture": "stickers-draft",
+      "id": "roundtrip/animations-draft/shift",
+      "verb": "shift",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "911062863f4174d77bed812cbb1f82630e2989d319879d6318b5a1d0183d05e8"
+    },
+    {
+      "id": "roundtrip/animations-draft/opacity",
+      "verb": "opacity",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "911062863f4174d77bed812cbb1f82630e2989d319879d6318b5a1d0183d05e8"
+    },
+    {
+      "id": "roundtrip/animations-draft/speed",
+      "verb": "speed",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "911062863f4174d77bed812cbb1f82630e2989d319879d6318b5a1d0183d05e8"
+    },
+    {
+      "id": "roundtrip/animations-draft/trim",
+      "verb": "trim",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "0b277e2f5c54483d797312c69f9c048fbe52a03a2831e334c93d0f90ec3576c6"
+    },
+    {
+      "id": "roundtrip/animations-draft/remove-segment",
+      "verb": "remove-segment",
+      "mode": "twice",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "cc8b58f624dcd09d3430e954839b1d309581fe59b44ea4293080fed553554321"
+    },
+    {
+      "id": "roundtrip/animations-draft/set-text",
+      "verb": "set-text",
+      "mode": "twice",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": true,
+      "contentSha256": "125ad391770a6eddaefa918dc752537c18bc69f220641b3d0cc583bafa05ddbb"
+    },
+    {
+      "id": "roundtrip/animations-draft/add-text",
+      "verb": "add-text",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "3e5489601b301026d02392e601bf8f2968a715218cffd3fa5bcc32d38b963611"
+    },
+    {
+      "id": "roundtrip/animations-draft/add-keyframe",
+      "verb": "add-keyframe",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "76a33a78b831ea92517b170ac97b9aeb7539b3b67f527a4145ed6a43301c3f3e"
+    },
+    {
+      "id": "roundtrip/animations-draft/ken-burns",
+      "verb": "ken-burns",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "eccd5856d21b63fc019a10eb5d5bc12f8297c7ecb4a19591872bc046081c2b55"
+    },
+    {
+      "id": "roundtrip/animations-draft/add-effect",
+      "verb": "add-effect",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "5b6fa2c14208e393ae686178be6ea84a45258f3bfaa966b57d298634ac93877a"
+    },
+    {
+      "id": "roundtrip/animations-draft/add-filter",
+      "verb": "add-filter",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "39bc503cc5cbabede4caf59821019df278b4a1d5be35a0163d129d0099cff79e"
+    },
+    {
+      "id": "roundtrip/animations-draft/add-transition",
+      "verb": "add-transition",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "adb32cd396ba4f4128417201a3d5bc23ec622cb6242c76de2cdd9352748c689c"
+    },
+    {
+      "id": "roundtrip/animations-draft/cut",
+      "verb": "cut",
+      "mode": "twice-canonical",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "355e490e1a7d6dc1cc5a325b4286a8d3e1d5989d4b50b4a0bc3cdaf4028ec3d4"
+    },
+    {
+      "id": "roundtrip/stickers-draft/shift-all",
+      "verb": "shift-all",
+      "mode": "pair",
       "stableBytes": true,
       "matchesOriginal": false,
       "contentSha256": "5625f17d40e7e99cb300afe4e4ddb6a0e03bf1ef2edea541dd29b6fd1c09365b"
     },
     {
-      "fixture": "transitions-draft",
+      "id": "roundtrip/stickers-draft/shift",
+      "verb": "shift",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "5625f17d40e7e99cb300afe4e4ddb6a0e03bf1ef2edea541dd29b6fd1c09365b"
+    },
+    {
+      "id": "roundtrip/stickers-draft/opacity",
+      "verb": "opacity",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "5625f17d40e7e99cb300afe4e4ddb6a0e03bf1ef2edea541dd29b6fd1c09365b"
+    },
+    {
+      "id": "roundtrip/stickers-draft/speed",
+      "verb": "speed",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "5625f17d40e7e99cb300afe4e4ddb6a0e03bf1ef2edea541dd29b6fd1c09365b"
+    },
+    {
+      "id": "roundtrip/stickers-draft/trim",
+      "verb": "trim",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "d61321744e4ca86970918bdca2fcc71558a7b70138b36e50afff47b4cadd8ebf"
+    },
+    {
+      "id": "roundtrip/stickers-draft/remove-segment",
+      "verb": "remove-segment",
+      "mode": "twice",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "aefeaed06f36e6c050a6bbe349f4923a411bb56d65f1f012e6505ddf5d44695e"
+    },
+    {
+      "id": "roundtrip/stickers-draft/add-text",
+      "verb": "add-text",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "103d516afcf4477baf5fd6ff2e56052b9815661a24325c552fda47f902f454a3"
+    },
+    {
+      "id": "roundtrip/stickers-draft/add-keyframe",
+      "verb": "add-keyframe",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "ce4fb171362733e852c126b0adbb1e9bbeae58a3c862b8a80a98a14dba197269"
+    },
+    {
+      "id": "roundtrip/stickers-draft/ken-burns",
+      "verb": "ken-burns",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "65f3ef5882765ad8ba66ee9bf81d0a7a550405e3bc06e253415ba3912fc38d59"
+    },
+    {
+      "id": "roundtrip/stickers-draft/add-effect",
+      "verb": "add-effect",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "52060333fc84e66ad832f58d5a725657dcc8fced71fac1a78e85c20fb2708e1b"
+    },
+    {
+      "id": "roundtrip/stickers-draft/add-filter",
+      "verb": "add-filter",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "0d05c9307adff4826fcd6bda180909020e918f91d50d097d5e3056757e3ac8f0"
+    },
+    {
+      "id": "roundtrip/stickers-draft/add-transition",
+      "verb": "add-transition",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "720e03ace84539885dac5a36f824b99c99b738f6c2749e11306c1d531f187c2f"
+    },
+    {
+      "id": "roundtrip/stickers-draft/cut",
+      "verb": "cut",
+      "mode": "twice-canonical",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "ffb921283ee734a6462300b80cd6bb7474b20ab3a861c47674cb58d3a1f08342"
+    },
+    {
+      "id": "roundtrip/transitions-draft/shift-all",
+      "verb": "shift-all",
+      "mode": "pair",
       "stableBytes": true,
       "matchesOriginal": false,
       "contentSha256": "1df6f808136ecd7f9b0740566cb0517fa99a6016fc8758bab3c1c75e79f81908"
     },
     {
-      "fixture": "masks-filters-draft",
+      "id": "roundtrip/transitions-draft/shift",
+      "verb": "shift",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "1df6f808136ecd7f9b0740566cb0517fa99a6016fc8758bab3c1c75e79f81908"
+    },
+    {
+      "id": "roundtrip/transitions-draft/opacity",
+      "verb": "opacity",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "1df6f808136ecd7f9b0740566cb0517fa99a6016fc8758bab3c1c75e79f81908"
+    },
+    {
+      "id": "roundtrip/transitions-draft/speed",
+      "verb": "speed",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "1df6f808136ecd7f9b0740566cb0517fa99a6016fc8758bab3c1c75e79f81908"
+    },
+    {
+      "id": "roundtrip/transitions-draft/trim",
+      "verb": "trim",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "f698b03ec4406319d93dc6bae29fb39161c5a4108a9c833f9feb706d06031b38"
+    },
+    {
+      "id": "roundtrip/transitions-draft/remove-segment",
+      "verb": "remove-segment",
+      "mode": "twice",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "a9ec689a0012d4bba6266d2eb201aebcbdbacb81a485dba03e49ae89ce7fcd17"
+    },
+    {
+      "id": "roundtrip/transitions-draft/add-text",
+      "verb": "add-text",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "aa3a4cddf4161e8945061b8ca13fb73a356bfa1e6dd1956fd51e0098f8bda956"
+    },
+    {
+      "id": "roundtrip/transitions-draft/add-keyframe",
+      "verb": "add-keyframe",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "0d2466d81df9f1e02fbfaaa2beab82fc2f64fe95095774792cbe8ae3a96d1629"
+    },
+    {
+      "id": "roundtrip/transitions-draft/ken-burns",
+      "verb": "ken-burns",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "ae06325c03f1b96b7c57d207f18b917db319d11c5ee4d683217fa9dbed7b1ef9"
+    },
+    {
+      "id": "roundtrip/transitions-draft/add-effect",
+      "verb": "add-effect",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "a013ee28e54ac08c714995d322403821ccf5562db0df223675769f485f247f8a"
+    },
+    {
+      "id": "roundtrip/transitions-draft/add-filter",
+      "verb": "add-filter",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "e5673e57a6c59f6115fe906698b4b80a94f055a5a3ac19f000a3708ef8d89de6"
+    },
+    {
+      "id": "roundtrip/transitions-draft/add-transition",
+      "verb": "add-transition",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "ad927339268eb655e4ded912b7d01015ee551e7c50fc353d774acd8f6452d6b6"
+    },
+    {
+      "id": "roundtrip/transitions-draft/cut",
+      "verb": "cut",
+      "mode": "twice-canonical",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "4a297e992697fd487235426f80c66c11a7d39e565ec4fe3dd7b669aa1e514a5e"
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/shift-all",
+      "verb": "shift-all",
+      "mode": "pair",
       "stableBytes": true,
       "matchesOriginal": false,
       "contentSha256": "52fb52e2518041e5b9085df5061c184f97a40b73839c497fc752b44c7c67eb1d"
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/shift",
+      "verb": "shift",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "52fb52e2518041e5b9085df5061c184f97a40b73839c497fc752b44c7c67eb1d"
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/opacity",
+      "verb": "opacity",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "52fb52e2518041e5b9085df5061c184f97a40b73839c497fc752b44c7c67eb1d"
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/speed",
+      "verb": "speed",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "52fb52e2518041e5b9085df5061c184f97a40b73839c497fc752b44c7c67eb1d"
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/trim",
+      "verb": "trim",
+      "mode": "pair",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "919d98dcd6a8e419f8eb24265e9d1a50cb90fa21bbd7773a545a77051091d8f2"
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/remove-segment",
+      "verb": "remove-segment",
+      "mode": "twice",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "5ff17670f7a9ea901cf067cc5647530f0791679d6bd0460e331ede1dd7ab0a8e"
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/add-text",
+      "verb": "add-text",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "d4d04bddc2f641a9bf147e396e51a1accee5549029c6101fb72166ad7aac684e"
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/add-keyframe",
+      "verb": "add-keyframe",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "9401e6d62035e76eea2e279b147f333d4dd1faea5ee53f0785052c29ebe73203"
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/ken-burns",
+      "verb": "ken-burns",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "c003976596027ecf9d520331704ad2ed26d2a5f7a84b4e46cfaa04c41a2a16a6"
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/add-effect",
+      "verb": "add-effect",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "943574c3747945218bfdd5970fbb4b9e61e826c7b71a94a8ba21907e16e22d05"
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/add-filter",
+      "verb": "add-filter",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "70951041a52a4ce8a4322138d3e019d79c642baae73f4efc4a86a677b82ea35a"
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/add-transition",
+      "verb": "add-transition",
+      "mode": "twice-canonical",
+      "stableBytes": false,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "bda7bb5820afa205469ba1773320464816adc2c7ee12ead60163e314796969f1"
+    },
+    {
+      "id": "roundtrip/masks-filters-draft/cut",
+      "verb": "cut",
+      "mode": "twice-canonical",
+      "stableBytes": true,
+      "canonicalStable": true,
+      "matchesOriginal": false,
+      "contentSha256": "bbcdd3247053fe30defe04a51daf2b407d2d0915f1c49f2fd3bdf9a79d099f86"
     }
   ]
 }
