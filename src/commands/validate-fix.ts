@@ -1,6 +1,6 @@
 import { statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { type Draft, loadDraft, saveDraft } from "../draft.js";
+import { type Draft, type DraftStore, LocalDraftStore, persistDraft } from "../draft.js";
 import { assertCapCutClosed } from "../utils/capcut-guard.js";
 import { CliError, die, type Flags, out } from "../utils/cli.js";
 import { applyGc, planGc } from "./gc.js";
@@ -140,7 +140,13 @@ interface ResultEntry {
  * gc path (a clean fix and a no-op both exit 0, even under --strict). The success
  * signal for gc is fix.results[].wrote, never the exit code (B7).
  */
-export function cmdValidateFix(draft: Draft, filePath: string, projectInput: string, flags: Flags): number {
+export function cmdValidateFix(
+  draft: Draft,
+  filePath: string,
+  projectInput: string,
+  flags: Flags,
+  store: DraftStore = new LocalDraftStore(),
+): number {
   // B5: --apply and --dry-run are contradictory; reject FIRST so the dryRun
   // driver below can never silently apply.
   if (flags.apply && flags.dryRun) die("--apply and --dry-run are mutually exclusive");
@@ -258,14 +264,14 @@ export function cmdValidateFix(draft: Draft, filePath: string, projectInput: str
 
   const results: ResultEntry[] = [];
 
-  // 1. gc — mutate the in-memory draft, then the SOLE root saveDraft of the pass.
+  // 1. gc - mutate the in-memory draft, then the SOLE root persistDraft of the pass.
   if (selected("gc")) {
     const gcIds = findingsForFixer(report.findings, "gc").map((f) => f.id);
     const ids = [...new Set(gcIds)];
     const gcPlan = planGc(draft);
     if (gcPlan.total > 0) {
       applyGc(draft, gcPlan);
-      saveDraft(filePath, draft);
+      persistDraft(store, filePath, draft);
       results.push({
         fixer: "gc",
         status: "wrote",
@@ -352,9 +358,8 @@ export function cmdValidateFix(draft: Draft, filePath: string, projectInput: str
   }
 
   // D4: re-validate from FRESH disk state so content + FS checks uniformly see
-  // the committed result. Inert that loadDraft re-arms rawOriginal — nothing
-  // writes after this (index.ts process.exits on return).
-  const { draft: fresh } = loadDraft(filePath);
+  // the committed result. Inert: nothing writes after this (index.ts process.exits on return).
+  const { draft: fresh } = new LocalDraftStore().load(filePath);
   const residual = runValidate(fresh, draftDir, opts);
   emitApply(results, residual);
   return reportExitCode(residual);

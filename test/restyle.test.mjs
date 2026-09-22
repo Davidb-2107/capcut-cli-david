@@ -8,7 +8,7 @@ import { dirname, join } from "node:path";
 
 import { applyCaptionStyle, restyleContent, restyleMaterial, spanStyleFromPreset } from "../dist/commands/restyle.js";
 import { importCaptions } from "../dist/commands/create.js";
-import { loadDraft } from "../dist/draft.js";
+import { LocalDraftStore } from "../dist/draft.js";
 import { FIXTURES } from "./helpers/load-fixture.mjs";
 import { tmpDraft } from "./helpers/tmp-draft.mjs";
 import { runCli } from "./helpers/spawn-cli.mjs";
@@ -196,7 +196,7 @@ const CARDS = [
 
 test("applyCaptionStyle: restyles every reachable caption, preserves keyword colors", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const res = importCaptions(draft, filePath, { cards: CARDS, trackName: "subtitle" });
   const track = draft.tracks.find((tr) => tr.id === res.trackId);
   const reachableIds = track.segments.map((s) => s.material_id);
@@ -218,7 +218,7 @@ test("applyCaptionStyle: restyles every reachable caption, preserves keyword col
 
 test("applyCaptionStyle: leaves orphan (unreferenced) materials untouched — B-8 scoping", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   // Import WITHOUT a track name → replaces the first text track's segments, leaving
   // the fixture's original caption materials orphaned (unreferenced) in materials.texts.
   importCaptions(draft, filePath, { cards: CARDS });
@@ -234,7 +234,7 @@ test("applyCaptionStyle: leaves orphan (unreferenced) materials untouched — B-
 
 test("applyCaptionStyle: grafts segment fields without clobbering identity/timing", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const res = importCaptions(draft, filePath, { cards: CARDS, trackName: "subtitle" });
   const track = draft.tracks.find((tr) => tr.id === res.trackId);
   const before = track.segments.map((s) => ({ id: s.id, mat: s.material_id, tr: { ...s.target_timerange } }));
@@ -253,7 +253,7 @@ test("applyCaptionStyle: mirrors the font to sidecars sitting next to the draft"
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
   const dir = dirname(filePath);
   writeFileSync(join(dir, "key_value.json"), JSON.stringify({ existing: { a: 1 } }), "utf-8");
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   importCaptions(draft, filePath, { cards: CARDS });
 
   const out = applyCaptionStyle(draft, filePath, { preset: PRESET });

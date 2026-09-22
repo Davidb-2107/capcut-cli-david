@@ -1,4 +1,4 @@
-import { type Draft, saveDraft } from "../draft.js";
+import { type Draft, type DraftStore, LocalDraftStore, persistDraft } from "../draft.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { readStdinCapped } from "../utils/safe-io.js";
 import { cmdOpacity, cmdSetText, cmdShift, cmdShiftAll, cmdSpeed, cmdTrim, cmdVolume } from "./edit-cli.js";
@@ -52,7 +52,12 @@ function execBatchOp(draft: Draft, filePath: string, op: BatchOp, flags: Flags):
   }
 }
 
-export function cmdBatch(draft: Draft, filePath: string, flags: Flags): number {
+export function cmdBatch(
+  draft: Draft,
+  filePath: string,
+  flags: Flags,
+  store: DraftStore = new LocalDraftStore(),
+): number {
   // fd 0 = stdin, cross-platform (Windows lacks /dev/stdin path).
   // Audit CLI-N10: unbounded stdin freezes the process on a huge payload.
   const input = readStdinCapped().trim();
@@ -73,7 +78,7 @@ export function cmdBatch(draft: Draft, filePath: string, flags: Flags): number {
       process.stderr.write(`${JSON.stringify({ error: msg, line: trimmed })}\n`);
     }
   }
-  saveDraft(filePath, draft);
+  persistDraft(store, filePath, draft);
   // Audit CLI-M6: ok must reflect reality; the caller maps fail>0 to exit 1.
   out({ ok: fail === 0, succeeded: ok, failed: fail }, flags);
   return fail;

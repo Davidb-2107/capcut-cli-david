@@ -8,7 +8,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const { initDraft } = await import("../dist/commands/create.js");
-const { findSegment, findMaterialGlobal, LocalDraftStore, persistDraft, loadDraft } = await import("../dist/draft.js");
+const { findSegment, findMaterialGlobal, LocalDraftStore, persistDraft } = await import("../dist/draft.js");
 const { hexToRgb } = await import("../dist/utils/companion.js");
 const { parseTimeInput } = await import("../dist/utils/time.js");
 const { readFileCapped, readStdinCapped } = await import("../dist/utils/safe-io.js");
@@ -28,7 +28,7 @@ test("CLI-M7: initDraft rejects path traversal in name", () => {
 
 test("CLI-N8: findSegment refuses ambiguous prefix", async (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const videoTrack = draft.tracks.find((tr) => tr.type === "video");
   ok(videoTrack && videoTrack.segments.length >= 1, "fixture must have a video segment");
   const seg = videoTrack.segments[0];
@@ -47,7 +47,7 @@ test("CLI-N8: findSegment refuses ambiguous prefix", async (t) => {
 
 test("CLI-N8: findMaterialGlobal refuses ambiguous prefix", async (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const arr = draft.materials.texts;
   ok(Array.isArray(arr) && arr.length >= 1, "fixture must have text materials");
   const clone = JSON.parse(JSON.stringify(arr[0]));
@@ -72,7 +72,7 @@ test("CLI-N2: parseTimeInput hh:mm:ss rejects garbage", () => {
 
 test("CLI-M3: atomic draft save leaves no .tmp litter and file is valid JSON", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft, filePath: fp } = loadDraft(filePath);
+  const { draft, filePath: fp } = new LocalDraftStore().load(filePath);
   const store = new LocalDraftStore();
   persistDraft(store, fp, draft, "");
   const dir = join(fp, "..");

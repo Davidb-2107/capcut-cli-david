@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
 
 import { initDraft, addVideo, addAudio } from "../dist/commands/create.js";
-import { loadDraft, saveDraft } from "../dist/draft.js";
+import { LocalDraftStore, persistDraft } from "../dist/draft.js";
 import { FIXTURES, fixturePath } from "./helpers/load-fixture.mjs";
 import { runCli } from "./helpers/spawn-cli.mjs";
 
@@ -56,7 +56,7 @@ test("add-video --batch: ordered ids, photo/video mix, volume, ONE track", (t) =
   strictEqual(outJson.ok, true);
   strictEqual(outJson.count, 2);
   strictEqual(outJson.segment_ids.length, 2);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const track = draft.tracks.find((tr) => tr.type === "video");
   // order preserved: segment ids on the track match output order
   deepStrictEqual(track.segments.map((s) => s.id), outJson.segment_ids);
@@ -106,10 +106,10 @@ test("oracle: batch of 2 ≡ 2 unitary addVideo calls (modulo uuids)", (t) => {
   const r = runCli(["add-video", a.filePath, "--batch", `@${items}`]);
   strictEqual(r.status, 0, r.stderr);
   // B: unitary via library (same params)
-  const { draft: draftB } = loadDraft(b.filePath);
+  const { draft: draftB } = new LocalDraftStore().load(b.filePath);
   addVideo(draftB, b.filePath, { path: b.clip, start: 0, duration: 2_000_000, volume: 0 });
   addVideo(draftB, b.filePath, { path: b.still, start: 2_000_000, duration: 1_000_000, volume: 0 });
-  saveDraft(b.filePath, draftB);
+  persistDraft(new LocalDraftStore(), b.filePath, draftB);
   // canonicalize: strip uuids + machine tmp-dir names, then compare
   const canon = (fp) =>
     JSON.stringify(JSON.parse(readFileSync(fp, "utf-8")))
@@ -135,7 +135,7 @@ test("add-audio --batch: ordered ids + volume per item", (t) => {
   const outJson = JSON.parse(r.stdout);
   strictEqual(outJson.ok, true);
   strictEqual(outJson.count, 2);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const track = draft.tracks.find((tr) => tr.type === "audio");
   deepStrictEqual(track.segments.map((s) => s.id), outJson.segment_ids);
   strictEqual(track.segments[0].volume, 0.8);
@@ -176,7 +176,7 @@ test("add-keyframe --batch: Ken Burns pair on two segments, one save", (t) => {
   const r = runCli(["add-keyframe", filePath, "--batch", `@${entries}`]);
   strictEqual(r.status, 0, r.stderr);
   strictEqual(JSON.parse(r.stdout).count, 8);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const seg = draft.tracks.find((tr) => tr.type === "video").segments[0];
   strictEqual(seg.common_keyframes.length >= 2, true, "keyframe lists missing on segment 1");
 });

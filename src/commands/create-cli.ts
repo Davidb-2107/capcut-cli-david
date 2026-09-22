@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
-import { type Draft, saveDraft } from "../draft.js";
+import { type Draft, type DraftStore, LocalDraftStore, persistDraft } from "../draft.js";
 import { defaultProjectsRoot, resolveTemplateDir } from "../utils/capcut-paths.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { hexToRgb } from "../utils/companion.js";
@@ -50,7 +50,13 @@ export function cmdInit(positional: string[], flags: Flags): void {
   if (!flags.quiet) process.stderr.write(`Created: ${result.draftPath}\n`);
 }
 
-export function cmdAddAudio(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
+export function cmdAddAudio(
+  draft: Draft,
+  filePath: string,
+  positional: string[],
+  flags: Flags,
+  store: DraftStore = new LocalDraftStore(),
+): void {
   const audioPath = positional[2];
   const startStr = positional[3];
   const durationStr = positional[4];
@@ -70,7 +76,7 @@ export function cmdAddAudio(draft: Draft, filePath: string, positional: string[]
     trackName: flags.trackName,
   };
   const result = addAudio(draft, filePath, opts);
-  saveDraft(filePath, draft);
+  persistDraft(store, filePath, draft);
   out(
     {
       ok: true,
@@ -85,7 +91,13 @@ export function cmdAddAudio(draft: Draft, filePath: string, positional: string[]
   );
 }
 
-export function cmdAddVideo(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
+export function cmdAddVideo(
+  draft: Draft,
+  filePath: string,
+  positional: string[],
+  flags: Flags,
+  store: DraftStore = new LocalDraftStore(),
+): void {
   const videoPath = positional[2];
   const startStr = positional[3];
   const durationStr = positional[4];
@@ -104,7 +116,7 @@ export function cmdAddVideo(draft: Draft, filePath: string, positional: string[]
     trackName: flags.trackName,
   };
   const result = addVideo(draft, filePath, opts);
-  saveDraft(filePath, draft);
+  persistDraft(store, filePath, draft);
   out(
     {
       ok: true,
@@ -159,7 +171,12 @@ function normalizeMediaItem(raw: MediaBatchItem, idx: number, verb: string) {
   return { ...raw, path: abs, start: t(raw.start, "start"), duration: t(raw.duration, "duration") };
 }
 
-export function cmdAddVideoBatch(draft: Draft, filePath: string, flags: Flags): void {
+export function cmdAddVideoBatch(
+  draft: Draft,
+  filePath: string,
+  flags: Flags,
+  store: DraftStore = new LocalDraftStore(),
+): void {
   const raw = readBatchItems(flags.batch as string, "add-video");
   // all-or-nothing: validate EVERY item before the first mutation
   const items = raw.map((it, i) => normalizeMediaItem(it, i + 1, "add-video"));
@@ -180,11 +197,16 @@ export function cmdAddVideoBatch(draft: Draft, filePath: string, flags: Flags): 
     material_ids.push(r.materialId);
     track_ids.push(r.trackId);
   }
-  saveDraft(filePath, draft); // ONE save
+  persistDraft(store, filePath, draft); // ONE save
   out({ ok: true, count: items.length, segment_ids, material_ids, track_ids }, flags);
 }
 
-export function cmdAddAudioBatch(draft: Draft, filePath: string, flags: Flags): void {
+export function cmdAddAudioBatch(
+  draft: Draft,
+  filePath: string,
+  flags: Flags,
+  store: DraftStore = new LocalDraftStore(),
+): void {
   const raw = readBatchItems(flags.batch as string, "add-audio");
   // all-or-nothing: validate EVERY item before the first mutation
   const items = raw.map((it, i) => normalizeMediaItem(it, i + 1, "add-audio"));
@@ -203,7 +225,7 @@ export function cmdAddAudioBatch(draft: Draft, filePath: string, flags: Flags): 
     material_ids.push(r.materialId);
     track_ids.push(r.trackId);
   }
-  saveDraft(filePath, draft); // ONE save
+  persistDraft(store, filePath, draft); // ONE save
   out({ ok: true, count: items.length, segment_ids, material_ids, track_ids }, flags);
 }
 
@@ -231,7 +253,13 @@ function parseKeywordFlags(text: string, flags: Flags): TextHighlight[] {
   return [];
 }
 
-export function cmdAddText(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
+export function cmdAddText(
+  draft: Draft,
+  filePath: string,
+  positional: string[],
+  flags: Flags,
+  store: DraftStore = new LocalDraftStore(),
+): void {
   const startStr = positional[2];
   const durationStr = positional[3];
   const text = positional.slice(4).join(" ");
@@ -251,7 +279,7 @@ export function cmdAddText(draft: Draft, filePath: string, positional: string[],
     highlights: parseKeywordFlags(text, flags),
   };
   const result = addText(draft, filePath, opts);
-  saveDraft(filePath, draft);
+  persistDraft(store, filePath, draft);
   out(
     {
       ok: true,
@@ -266,7 +294,13 @@ export function cmdAddText(draft: Draft, filePath: string, positional: string[],
   );
 }
 
-export function cmdImportCaptions(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
+export function cmdImportCaptions(
+  draft: Draft,
+  filePath: string,
+  positional: string[],
+  flags: Flags,
+  store: DraftStore = new LocalDraftStore(),
+): void {
   const jsonPath = positional[2];
   if (!jsonPath) {
     die(
@@ -294,7 +328,7 @@ export function cmdImportCaptions(draft: Draft, filePath: string, positional: st
     transformY: flags.transformY,
     cloneStyle: flags.cloneStyle,
   });
-  saveDraft(filePath, draft);
+  persistDraft(store, filePath, draft);
   out({ ok: true, track_id: result.trackId, captions: result.count }, flags);
 }
 
@@ -315,7 +349,13 @@ function resolveRange(
   return { start: parseTimeInput(startStr), duration: parseTimeInput(durationStr) };
 }
 
-export function cmdAddEffect(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
+export function cmdAddEffect(
+  draft: Draft,
+  filePath: string,
+  positional: string[],
+  flags: Flags,
+  store: DraftStore = new LocalDraftStore(),
+): void {
   const resourceId = positional[2];
   const effectName = positional[3];
   if (!resourceId || !effectName) {
@@ -343,7 +383,7 @@ export function cmdAddEffect(draft: Draft, filePath: string, positional: string[
     bindSegmentId: flags.bind,
   };
   const result = addEffect(draft, filePath, opts);
-  saveDraft(filePath, draft);
+  persistDraft(store, filePath, draft);
   out(
     {
       ok: true,
@@ -362,7 +402,13 @@ export function cmdAddEffect(draft: Draft, filePath: string, positional: string[
   );
 }
 
-export function cmdAddFilter(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
+export function cmdAddFilter(
+  draft: Draft,
+  filePath: string,
+  positional: string[],
+  flags: Flags,
+  store: DraftStore = new LocalDraftStore(),
+): void {
   const resourceId = positional[2];
   const filterName = positional[3];
   if (!resourceId || !filterName) {
@@ -388,7 +434,7 @@ export function cmdAddFilter(draft: Draft, filePath: string, positional: string[
     duration,
     value: filterValue,
   });
-  saveDraft(filePath, draft);
+  persistDraft(store, filePath, draft);
   out(
     {
       ok: true,
@@ -406,7 +452,13 @@ export function cmdAddFilter(draft: Draft, filePath: string, positional: string[
   );
 }
 
-export function cmdAddTransition(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
+export function cmdAddTransition(
+  draft: Draft,
+  filePath: string,
+  positional: string[],
+  flags: Flags,
+  store: DraftStore = new LocalDraftStore(),
+): void {
   const segmentId = positional[2];
   const resourceId = positional[3];
   const transitionName = positional[4];
@@ -424,7 +476,7 @@ export function cmdAddTransition(draft: Draft, filePath: string, positional: str
     name: transitionName,
     duration,
   });
-  saveDraft(filePath, draft);
+  persistDraft(store, filePath, draft);
   out(
     {
       ok: true,

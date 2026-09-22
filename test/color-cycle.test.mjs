@@ -8,7 +8,7 @@ import { dirname, join } from "node:path";
 
 import { importCaptions } from "../dist/commands/create.js";
 import { hexToRgb } from "../dist/utils/companion.js";
-import { loadDraft } from "../dist/draft.js";
+import { LocalDraftStore } from "../dist/draft.js";
 
 import { FIXTURES } from "./helpers/load-fixture.mjs";
 import { tmpDraft } from "./helpers/tmp-draft.mjs";
@@ -31,7 +31,7 @@ function materialFor(draftJson, seg) {
 
 test("importCaptions: colorCycle assigns cycle[i % n] as base text_color per card", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const cycle = ["#FF00FF", "#00FFFF"];
   const res = importCaptions(draft, filePath, { cards: CARDS, trackName: "subtitle", colorCycle: cycle });
   const segs = segmentsOf(draft, res.trackId);
@@ -46,7 +46,7 @@ test("importCaptions: colorCycle assigns cycle[i % n] as base text_color per car
 
 test("importCaptions WITHOUT colorCycle: every card keeps the uniform --color/default base color", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const res = importCaptions(draft, filePath, { cards: CARDS, trackName: "subtitle" });
   for (const seg of segmentsOf(draft, res.trackId)) {
     const mat = materialFor(draft, seg);

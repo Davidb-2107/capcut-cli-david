@@ -133,6 +133,31 @@ jobs:
       - name: Validate all anonymized fixtures
         run: python test-fixtures/_final_integrity.py
 
+# Job golden-output (ARCH ticket 01, PR 0): characterization net.
+# Diff the built CLI's canonicalized output against the committed baseline
+# (test-fixtures/golden/baseline.json). Any unjustified divergence fails.
+golden-output:
+  name: Golden output (behaviour-preserving net)
+  runs-on: ubuntu-latest
+  timeout-minutes: 10
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build (tsc)
+      run: npm run build
+
+    - name: Golden output diff vs committed baseline
+      run: node scripts/golden-output.mjs --check
+
   # ---------------------------------------------------------------------------
   # Secrets scan (audit CLI-M1) - fail the build if a credential is committed.
   # ---------------------------------------------------------------------------
@@ -157,7 +182,7 @@ jobs:
   ci-pass:
     name: CI Pass
     if: always()
-    needs: [lint, test, coverage, fixture-integrity]
+    needs: [lint, test, coverage, fixture-integrity, golden-output]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all jobs succeeded

@@ -19,7 +19,7 @@ import {
   cmdOpacity,
   cmdTrim,
 } from "../dist/commands/edit-cli.js";
-import { loadDraft, extractText } from "../dist/draft.js";
+import { LocalDraftStore, extractText } from "../dist/draft.js";
 
 import { FIXTURES, fixturePath } from "./helpers/load-fixture.mjs";
 import { tmpDraft } from "./helpers/tmp-draft.mjs";
@@ -39,7 +39,7 @@ function firstSegmentOfType(draft, type) {
 
 test("cmdSetText: happy path mutates material content and persists to disk", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { segment: seg } = firstSegmentOfType(draft, "text");
 
   cmdSetText(draft, filePath, seg.id, "Lorem replaced", flagsQuiet);
@@ -50,7 +50,7 @@ test("cmdSetText: happy path mutates material content and persists to disk", (t)
   strictEqual(extractText(mat.content), "Lorem replaced");
 
   // On disk: re-load and verify persistence.
-  const { draft: after } = loadDraft(filePath);
+  const { draft: after } = new LocalDraftStore().load(filePath);
   const matAfter = after.materials.texts.find((m) => m.id === seg.material_id);
   strictEqual(extractText(matAfter.content), "Lorem replaced");
 });
@@ -58,12 +58,12 @@ test("cmdSetText: happy path mutates material content and persists to disk", (t)
 test("cmdSetText: save=false does not write to disk", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
   const mtimeBefore = statSync(filePath).mtimeMs;
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { segment: seg } = firstSegmentOfType(draft, "text");
 
   cmdSetText(draft, filePath, seg.id, "Not saved", flagsQuiet, false);
 
-  const { draft: afterReload } = loadDraft(filePath);
+  const { draft: afterReload } = new LocalDraftStore().load(filePath);
   const matAfter = afterReload.materials.texts.find((m) => m.id === seg.material_id);
   notStrictEqual(extractText(matAfter.content), "Not saved");
   const mtimeAfter = statSync(filePath).mtimeMs;
@@ -79,7 +79,7 @@ test("set-text: missing segment id exits 1 with 'Segment not found'", () => {
 
 test("set-text: non-text segment id exits 1 with 'Text material not found'", () => {
   // Pick a video segment id from KEN_BURNS, then run set-text against it.
-  const { draft } = loadDraft(fixturePath(FIXTURES.KEN_BURNS));
+  const { draft } = new LocalDraftStore().load(fixturePath(FIXTURES.KEN_BURNS));
   const { segment: videoSeg } = firstSegmentOfType(draft, "video");
   const r = runCli(["set-text", fixturePath(FIXTURES.KEN_BURNS), videoSeg.id, "noop"]);
   strictEqual(r.status, 1);
@@ -93,7 +93,7 @@ test("set-text: non-text segment id exits 1 with 'Text material not found'", () 
 
 test("cmdShift: +500ms advances target_timerange.start and persists", (t) => {
   const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { segment: seg } = firstSegmentOfType(draft, "video");
   const oldStart = seg.target_timerange.start;
 
@@ -101,7 +101,7 @@ test("cmdShift: +500ms advances target_timerange.start and persists", (t) => {
 
   strictEqual(seg.target_timerange.start, oldStart + 500_000);
 
-  const { draft: after } = loadDraft(filePath);
+  const { draft: after } = new LocalDraftStore().load(filePath);
   const segAfter = after.tracks
     .flatMap((tr) => tr.segments)
     .find((s) => s.id === seg.id);
@@ -110,7 +110,7 @@ test("cmdShift: +500ms advances target_timerange.start and persists", (t) => {
 
 test("cmdShift: negative offset clamps to 0 (Math.max guard)", (t) => {
   const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { segment: seg } = firstSegmentOfType(draft, "video");
 
   cmdShift(draft, filePath, seg.id, "-10s", flagsQuiet);
@@ -131,7 +131,7 @@ test("shift: missing segment exits 1 with 'Segment not found'", () => {
 
 test("cmdShiftAll: track-filtered shifts only that track type", (t) => {
   const { filePath } = tmpDraft(FIXTURES.FULL_PSYCHO, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
 
   // Snapshot starts by track type.
   const snapshot = new Map();
@@ -163,7 +163,7 @@ test("cmdShiftAll: track-filtered shifts only that track type", (t) => {
   }
 
   // Verify on-disk persistence for video segments.
-  const { draft: after } = loadDraft(filePath);
+  const { draft: after } = new LocalDraftStore().load(filePath);
   for (const track of after.tracks.filter((tr) => tr.type === "video")) {
     for (const seg of track.segments) {
       const prev = snapshot.get(seg.id);
@@ -174,7 +174,7 @@ test("cmdShiftAll: track-filtered shifts only that track type", (t) => {
 
 test("cmdShiftAll: without flags.track shifts every segment", (t) => {
   const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
 
   const snapshot = new Map();
   for (const track of draft.tracks) {
@@ -204,7 +204,7 @@ test("shift-all: invalid time format exits 1 with 'Invalid time'", () => {
 
 test("cmdSpeed: 2.0 sets seg.speed and recomputes source_timerange.duration", (t) => {
   const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { segment: seg } = firstSegmentOfType(draft, "video");
   const targetDur = seg.target_timerange.duration;
 
@@ -214,7 +214,7 @@ test("cmdSpeed: 2.0 sets seg.speed and recomputes source_timerange.duration", (t
   strictEqual(seg.source_timerange.duration, Math.round(targetDur * 2));
 
   // Persistence check.
-  const { draft: after } = loadDraft(filePath);
+  const { draft: after } = new LocalDraftStore().load(filePath);
   const segAfter = after.tracks.flatMap((tr) => tr.segments).find((s) => s.id === seg.id);
   strictEqual(segAfter.speed, 2);
   strictEqual(segAfter.source_timerange.duration, Math.round(targetDur * 2));
@@ -222,7 +222,7 @@ test("cmdSpeed: 2.0 sets seg.speed and recomputes source_timerange.duration", (t
 
 test("cmdSpeed: also updates a referenced speeds material when present", (t) => {
   const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
 
   // Find any segment whose extra_material_refs points at a speeds material.
   let target = null;
@@ -254,7 +254,7 @@ test("cmdSpeed: also updates a referenced speeds material when present", (t) => 
 });
 
 test("speed: non-numeric multiplier exits 1 with 'Speed must be a positive number'", () => {
-  const { draft } = loadDraft(fixturePath(FIXTURES.KEN_BURNS));
+  const { draft } = new LocalDraftStore().load(fixturePath(FIXTURES.KEN_BURNS));
   const { segment: seg } = firstSegmentOfType(draft, "video");
   const r = runCli(["speed", fixturePath(FIXTURES.KEN_BURNS), seg.id, "abc"]);
   strictEqual(r.status, 1);
@@ -263,7 +263,7 @@ test("speed: non-numeric multiplier exits 1 with 'Speed must be a positive numbe
 });
 
 test("speed: negative multiplier exits 1 with 'Speed must be a positive number'", () => {
-  const { draft } = loadDraft(fixturePath(FIXTURES.KEN_BURNS));
+  const { draft } = new LocalDraftStore().load(fixturePath(FIXTURES.KEN_BURNS));
   const { segment: seg } = firstSegmentOfType(draft, "video");
   const r = runCli(["speed", fixturePath(FIXTURES.KEN_BURNS), seg.id, "-1"]);
   strictEqual(r.status, 1);
@@ -277,20 +277,20 @@ test("speed: negative multiplier exits 1 with 'Speed must be a positive number'"
 
 test("cmdVolume: 0.5 updates audio segment volume and persists", (t) => {
   const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { segment: seg } = firstSegmentOfType(draft, "audio");
 
   cmdVolume(draft, filePath, seg.id, "0.5", flagsQuiet);
 
   strictEqual(seg.volume, 0.5);
 
-  const { draft: after } = loadDraft(filePath);
+  const { draft: after } = new LocalDraftStore().load(filePath);
   const segAfter = after.tracks.flatMap((tr) => tr.segments).find((s) => s.id === seg.id);
   strictEqual(segAfter.volume, 0.5);
 });
 
 test("volume: negative value exits 1 with 'Volume must be >= 0'", () => {
-  const { draft } = loadDraft(fixturePath(FIXTURES.KEN_BURNS));
+  const { draft } = new LocalDraftStore().load(fixturePath(FIXTURES.KEN_BURNS));
   const { segment: seg } = firstSegmentOfType(draft, "audio");
   const r = runCli(["volume", fixturePath(FIXTURES.KEN_BURNS), seg.id, "-0.1"]);
   strictEqual(r.status, 1);
@@ -299,7 +299,7 @@ test("volume: negative value exits 1 with 'Volume must be >= 0'", () => {
 });
 
 test("volume: non-numeric value exits 1 with 'Volume must be >= 0'", () => {
-  const { draft } = loadDraft(fixturePath(FIXTURES.KEN_BURNS));
+  const { draft } = new LocalDraftStore().load(fixturePath(FIXTURES.KEN_BURNS));
   const { segment: seg } = firstSegmentOfType(draft, "audio");
   const r = runCli(["volume", fixturePath(FIXTURES.KEN_BURNS), seg.id, "abc"]);
   strictEqual(r.status, 1);
@@ -313,7 +313,7 @@ test("volume: non-numeric value exits 1 with 'Volume must be >= 0'", () => {
 
 test("cmdOpacity: 0.5 mutates clip.alpha and persists", (t) => {
   const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { segment: seg } = firstSegmentOfType(draft, "video");
   ok(seg.clip, "video segment must have a clip block in fixture");
 
@@ -321,13 +321,13 @@ test("cmdOpacity: 0.5 mutates clip.alpha and persists", (t) => {
 
   strictEqual(seg.clip.alpha, 0.5);
 
-  const { draft: after } = loadDraft(filePath);
+  const { draft: after } = new LocalDraftStore().load(filePath);
   const segAfter = after.tracks.flatMap((tr) => tr.segments).find((s) => s.id === seg.id);
   strictEqual(segAfter.clip.alpha, 0.5);
 });
 
 test("opacity: out-of-range value exits 1 with 'Opacity must be 0.0-1.0'", () => {
-  const { draft } = loadDraft(fixturePath(FIXTURES.KEN_BURNS));
+  const { draft } = new LocalDraftStore().load(fixturePath(FIXTURES.KEN_BURNS));
   const { segment: seg } = firstSegmentOfType(draft, "video");
   const r = runCli(["opacity", fixturePath(FIXTURES.KEN_BURNS), seg.id, "1.5"]);
   strictEqual(r.status, 1);
@@ -336,7 +336,7 @@ test("opacity: out-of-range value exits 1 with 'Opacity must be 0.0-1.0'", () =>
 });
 
 test("opacity: audio segment (no clip) exits 1 with 'no clip'", () => {
-  const { draft } = loadDraft(fixturePath(FIXTURES.KEN_BURNS));
+  const { draft } = new LocalDraftStore().load(fixturePath(FIXTURES.KEN_BURNS));
   const { segment: audioSeg } = firstSegmentOfType(draft, "audio");
   const r = runCli(["opacity", fixturePath(FIXTURES.KEN_BURNS), audioSeg.id, "0.5"]);
   strictEqual(r.status, 1);
@@ -350,7 +350,7 @@ test("opacity: audio segment (no clip) exits 1 with 'no clip'", () => {
 
 test("cmdTrim: sets source_timerange and recomputes target_timerange.duration by speed", (t) => {
   const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { segment: seg } = firstSegmentOfType(draft, "video");
   const speed = seg.speed;
 
@@ -360,7 +360,7 @@ test("cmdTrim: sets source_timerange and recomputes target_timerange.duration by
   strictEqual(seg.source_timerange.duration, 1_000_000);
   strictEqual(seg.target_timerange.duration, Math.round(1_000_000 / speed));
 
-  const { draft: after } = loadDraft(filePath);
+  const { draft: after } = new LocalDraftStore().load(filePath);
   const segAfter = after.tracks.flatMap((tr) => tr.segments).find((s) => s.id === seg.id);
   strictEqual(segAfter.source_timerange.start, 0);
   strictEqual(segAfter.source_timerange.duration, 1_000_000);
@@ -368,7 +368,7 @@ test("cmdTrim: sets source_timerange and recomputes target_timerange.duration by
 });
 
 test("trim: invalid time format exits 1 with 'Invalid time'", () => {
-  const { draft } = loadDraft(fixturePath(FIXTURES.KEN_BURNS));
+  const { draft } = new LocalDraftStore().load(fixturePath(FIXTURES.KEN_BURNS));
   const { segment: seg } = firstSegmentOfType(draft, "video");
   const r = runCli(["trim", fixturePath(FIXTURES.KEN_BURNS), seg.id, "garbage", "1s"]);
   strictEqual(r.status, 1);
