@@ -2,7 +2,6 @@
 
 import { writeSync } from "node:fs";
 import { cmdBatch } from "./commands/batch.js";
-import { cmdCalibrationUi } from "./commands/calibration-ui.js";
 import { cmdCascadeWords } from "./commands/cascade-words-cli.js";
 import { cmdCatalogue } from "./commands/catalogue-cli.js";
 import {
@@ -276,11 +275,6 @@ Catalogue:
              (page embarquée dans le paquet). --print-path affiche le chemin
              absolu de la page sans l’ouvrir (headless/tests).
 
-  calibration-ui [--data-dir <dir>] [--host <host>] [--port <port>] [--open]
-                 [--allow-network]
-                 Lance l’interface locale de calibration ElevenLabs. Le bind
-                 réseau est refusé sans --allow-network ; cette option expose
-                 un consommateur de credentials local non authentifié.
 
 Project:
   cut        <project> <start> <end> --out <path>
@@ -545,11 +539,6 @@ async function main(): Promise<void> {
   if (cmd === "ui") {
     cmdUi(positional.includes("--print-path"));
     process.exit(0);
-  }
-
-  if (cmd === "calibration-ui") {
-    await cmdCalibrationUi(flags);
-    return;
   }
 
   if (!projectPath) die("Missing project path. Run 'capcut-david --help' for usage.");
