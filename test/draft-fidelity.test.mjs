@@ -96,6 +96,25 @@ test("fidelity: gc no-op writes nothing (no .bak, no rewrite)", (t) => {
   strictEqual(readFileSync(fp, "utf-8"), before, "no-op gc must not rewrite the draft");
 });
 
+test("fidelity: a UTF-8 BOM is tolerated on load and never leaks into .bak", (t) => {
+  const { fp } = stagedCopy(FIXTURES.SUBTITLES, t);
+  // Simulate a PowerShell Set-Content draft: BOM + the original bytes.
+  const withBom = `\uFEFF${readFileSync(fp, "utf-8")}`;
+  writeFileSync(fp, withBom, "utf-8");
+
+  const store = new LocalDraftStore();
+  const { draft } = store.load(fp); // must parse (BOM stripped)
+  const segId = draft.tracks.find((tr) => tr.type === "text").segments[0].id;
+  const r = runCli(["set-text", fp, segId, "BOM-PROBE"]);
+  strictEqual(r.status, 0, r.stderr);
+
+  const bak = readFileSync(`${fp}.bak`, "utf-8");
+  ok(bak.length > 0, ".bak must not be empty");
+  strictEqual(bak.charCodeAt(0), "{".charCodeAt(0), ".bak must hold the BOM-stripped original bytes");
+  ok(!bak.startsWith("\uFEFF"), "the facade never wrote a BOM into .bak - neither may we");
+  ok(bak.includes("LOREM LOREM"), ".bak must be the pre-write content");
+});
+
 test("persistDraft without raw recovers on-disk bytes (facade-equivalent)", (t) => {
   const { fp, original } = stagedCopy(FIXTURES.SUBTITLES, t);
   const store = new LocalDraftStore();

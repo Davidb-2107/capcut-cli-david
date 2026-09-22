@@ -166,7 +166,17 @@ export class LocalDraftStore implements DraftStore {
  *    to a path with no file): no meaningful .bak, indent falls back to 0.
  */
 export function persistDraft(store: DraftStore, filePath: string, draft: Draft, raw?: string): void {
-  const effectiveRaw = raw !== undefined ? raw : existsSync(filePath) ? readFileSync(filePath, "utf-8") : "";
+  let effectiveRaw: string;
+  if (raw !== undefined) {
+    effectiveRaw = raw;
+  } else if (existsSync(filePath)) {
+    effectiveRaw = readFileSync(filePath, "utf-8");
+    // Mirror load(): the facade captured BOM-stripped bytes, so .bak must not
+    // gain a BOM the deleted facade never wrote.
+    if (effectiveRaw.charCodeAt(0) === 0xfeff) effectiveRaw = effectiveRaw.slice(1);
+  } else {
+    effectiveRaw = "";
+  }
   store.save({ draft, filePath, raw: effectiveRaw });
 }
 
