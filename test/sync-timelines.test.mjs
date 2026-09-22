@@ -12,7 +12,7 @@ import { test } from "node:test";
 import { strictEqual, deepStrictEqual, ok } from "node:assert";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, statSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join, resolve, dirname } from "node:path";
 
 import { listTimelineDirs } from "../dist/utils/timelines.js";
 
@@ -130,6 +130,25 @@ test("sync: --dry-run reports what WOULD change but writes zero bytes", (t) => {
 
 import { chmodSync } from "node:fs";
 
+
+// Cross-platform write-failure injection for the atomic-write era (audit M3).
+// POSIX rename() ignores the read-only bit of the TARGET file (only the dir
+// matters), so chmod 0o444 on the mirror file no longer fails the write on
+// Linux/macOS. blockMirrorWrites() instead makes the guid DIRECTORY read-only
+// on POSIX (tmp creation fails with EACCES) and the file read-only on Windows
+// (rename replacement fails with EPERM). Both cross reconcileFile's real
+// failure path; restoreMirrorWrites() unwinds in the same order.
+const IS_WINDOWS = process.platform === "win32";
+function blockMirrorWrites(mirrorFile) {
+  if (IS_WINDOWS) { chmodSync(mirrorFile, 0o444); return { file: mirrorFile }; }
+  const dir = dirname(mirrorFile);
+  chmodSync(dir, 0o555);
+  return { dir };
+}
+function restoreMirrorWrites(token) {
+  if (token.file) chmodSync(token.file, 0o644);
+  if (token.dir) chmodSync(token.dir, 0o755);
+}
 test("sync: patch journals (mini_draft.json/patch.json) are NEVER touched", (t) => {
   const stale = JSON.stringify({ id: "X", duration: 1, tracks: [], materials: {} });
   const { dir, filePath } = setup(t, { mirrors: { "G1": { draft: stale, journals: true } } });
@@ -186,7 +205,7 @@ test("sync: a write failure on one guid is isolated — other guids still sync, 
   const stale = JSON.stringify({ id: "X", duration: 1, tracks: [], materials: {} });
   const { dir, filePath } = setup(t, { mirrors: { "BAD": { draft: stale }, "OK": { draft: stale } } });
   const badMirror = join(dir, "Timelines", "BAD", "draft_content.json");
-  chmodSync(badMirror, 0o444); // read-only → writeFileSync throws after the backup copy
+  const lock = blockMirrorWrites(badMirror);
   try {
     const rep = syncTimelines(filePath, { nowMs: NOW });
     strictEqual(rep.errors.length, 1);
@@ -197,7 +216,7 @@ test("sync: a write failure on one guid is isolated — other guids still sync, 
     // no orphan backup left for the failed write:
     strictEqual(existsSync(join(dir, "Timelines", "BAD", `draft_content.json.synced-${NOW}.bak`)), false, "orphan backup must be cleaned up");
   } finally {
-    chmodSync(badMirror, 0o644);
+    restoreMirrorWrites(lock);
   }
 });
 
@@ -256,7 +275,7 @@ test("CLI sync-timelines: a guid write failure → exit 1 with {error}", (t) => 
   const stale = JSON.stringify({ id: "X", duration: 1, tracks: [], materials: {} });
   const { dir } = setup(t, { mirrors: { "BAD": { draft: stale } } });
   const badMirror = join(dir, "Timelines", "BAD", "draft_content.json");
-  chmodSync(badMirror, 0o444);
+  const lock = blockMirrorWrites(badMirror);
   try {
     const r = runCli(["sync-timelines", dir]);
     strictEqual(r.status, 1);
