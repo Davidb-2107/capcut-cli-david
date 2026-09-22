@@ -231,9 +231,28 @@ function makeCanon() {
 function normalizeText(s, dir) {
   let out = s.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
   if (dir) {
-    // both mkdtemp spellings (base + random suffix) collapse to <TMP>
-    out = out.replace(/golden-[a-z]+-[A-Za-z0-9_]+/g, "<TMP>");
-    out = out.split(dir).join("<TMP>").split(dir.replace(/\\/g, "/")).join("<TMP>");
+    // Machine-portable temp collapsing: the mkdtemp leaf AND its absolute
+    // prefix (user- and OS-specific) must both disappear, otherwise a baseline
+    // captured on Windows embeds C:\Users\...\Temp\<TMP> and diverges on
+    // ubuntu-latest (/tmp/<TMP>). Collapse in both separators orders.
+    out = out.replace(/golden-[a-z]+-[A-Za-z0-9_]+/g, "<TMP>"); // leaf first
+    // Collapse the temp prefix in EVERY encoding it can appear in: raw
+    // backslashes (Windows stdout), JSON-escaped backslashes (strings that go
+    // through JSON), and forward slashes. Order matters: longest first.
+    const forms = [];
+    const tmpRoot = tmpdir();
+    for (const root of [dir, tmpRoot]) {
+      if (!root) continue;
+      const fwd = root.replace(/\\/g, "/");
+      const esc = root.replace(/\\/g, "\\\\");
+      forms.push(esc, fwd, root);
+    }
+    for (const f of forms) {
+      out = out.split(f + "\\").join("<TMP>/");
+      out = out.split(f + "/").join("<TMP>/");
+      out = out.split(f).join("<TMP>");
+    }
+    out = out.split("\\\\").join("\\");
   }
   return out;
 }
