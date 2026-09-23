@@ -1,7 +1,8 @@
 // Tests for the font-mirroring sidecar pass (src/utils/mirror.ts → dist).
 // Ports fix_content_styles_font.py (walk content.styles[].font) + fix_key_value.py
-// (key_value registry) + restyle.py's template-2.tmp/.bak mirror. Skip-if-absent;
-// never fabricates key_value.json.
+// (key_value registry) + restyle.py's template-2.tmp mirror. Skip-if-absent; the
+// root draft_content.json.bak is deliberately NOT mirrored (it is the store's rollback,
+// ticket 02). Never fabricates key_value.json.
 import { test } from "node:test";
 import { strictEqual, deepStrictEqual, ok } from "node:assert";
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -38,11 +39,15 @@ test("mirrorFont: forces content.styles[].font.path/.id inside Timelines mini_dr
   strictEqual(font.id, "NEWID");
 });
 
-test("mirrorFont: writes the new draft state to template-2.tmp and draft_content.json.bak (Python parity)", () => {
+test("mirrorFont: writes the new draft state to template-2.tmp, but NEVER the root draft_content.json.bak (ticket 02)", () => {
   const dir = fakeDraftDir();
-  mirrorFont(dir, { v: 2 }, FONT, KV_ENTRY);
+  const res = mirrorFont(dir, { v: 2 }, FONT, KV_ENTRY);
   deepStrictEqual(JSON.parse(readFileSync(join(dir, "template-2.tmp"), "utf-8")), { v: 2 });
-  deepStrictEqual(JSON.parse(readFileSync(join(dir, "draft_content.json.bak"), "utf-8")), { v: 2 });
+  // The root draft_content.json.bak is the draft store's rollback (persistDraft,
+  // written with the PRE-edit bytes). The font mirror must never clobber it, or a
+  // font restyle would silently destroy the user's undo of the root edit.
+  strictEqual(existsSync(join(dir, "draft_content.json.bak")), false, "root rollback must not be created by the mirror");
+  ok(!res.written.includes("draft_content.json.bak"), "root .bak must not be reported as mirrored");
 });
 
 test("mirrorFont: injects a key_value entry keyed by resourceId, keeping existing keys", () => {

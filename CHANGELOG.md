@@ -26,6 +26,12 @@ per [`RELEASE.md`](./RELEASE.md) §4.
 - `--max-chars` was removed. Existing invocations must select a font (or use a valid `--clone-style`) and rely on measured wrapping instead of character counts.
 - The `packages/voice-calibration` npm workspace and the `npm run build -w voice-calibration` build step (moved to the standalone repository).
 
+#### Fixed
+- `restyle` with a **font-bearing preset** no longer overwrites the root `<draft>/draft_content.json.bak`
+  rollback. The font mirror keeps refreshing CapCut's read targets (`template-2.tmp`, `Timelines/<guid>/*`),
+  but the draft store's pre-edit bytes (original indent) survive on the root `.bak`, so the user can always
+  undo a caption-font restyle - as with every other write verb.
+
 #### Compatibility gate
 - The OpenType-to-CapCut scale still requires a real CapCut/cutcli calibration and visual render check; no empirical scale factor is claimed until [`docs/cascade-words-font-calibration.md`](./docs/cascade-words-font-calibration.md) records that result.
 

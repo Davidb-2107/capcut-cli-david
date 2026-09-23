@@ -1323,9 +1323,9 @@
   "subtitles/restyle-with-font": {
    "code": 0,
    "out": {
-    "sha": "eca20bcd1d63f740",
-    "len": 152,
-    "text": "{\"ok\":true,\"materials_patched\":28,\"segments_patched\":28,\"mirrored\":[\"template-2.tmp\",\"draft_content.json.bak\",\"Timelines/<UUID#1>/draft_content.json\"]}\n"
+    "sha": "ca0279de2157d126",
+    "len": 127,
+    "text": "{\"ok\":true,\"materials_patched\":28,\"segments_patched\":28,\"mirrored\":[\"template-2.tmp\",\"Timelines/<UUID#1>/draft_content.json\"]}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -1335,8 +1335,8 @@
    "artifact": {
     "draft_canon_sha": "c4c6a9880a97e130",
     "bak_exists": true,
-    "bak_equals_original": false,
-    "bak_canon_sha": "c4c6a9880a97e130",
+    "bak_equals_original": true,
+    "bak_canon_sha": "5d1b78e42166240d",
     "indent_preserved": true,
     "single_line": false,
     "mirror_twins": {
