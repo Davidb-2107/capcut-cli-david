@@ -43,6 +43,32 @@ Trois refactors comportement-préservant, dans cet ordre : (1) migrer toute la p
 - La décision Windows-first vs multi-OS (mini-mémo séparé, N9).
 - Toute exposition réseau, auth, sandbox chemins (reportés avec déclencheurs objectifs, §7 audit).
 
+---
+
+## Clarification post-ticket 02 (2026-09-23, audit adversarial)
+
+Le ticket 02 exigeait « sans changer aucun comportement observable ». Une
+exception, unique et bornée, a été appliquée **et doit être lue comme telle** :
+
+- **Fait** : les 7 verbes du module `edit` (`set-text`, `shift`, `shift-all`,
+  `speed`, `volume`, `trim`, `opacity`) écrivaient, depuis `6ffc030`/`02bb642`,
+  un `.bak` **vide (0 octet)** et ré-sérialisaient le draft en **JSON compact
+  (indent 0)**, alors que la façade `saveDraft` (utilisée par les 10 autres
+  modules) préservait les octets d'origine et l'indent.
+- **Décision** : lors de la migration, `persistDraft` avec `raw` omis récupère
+  les octets disque (comportement exact de la façade supprimée). Le résultat
+  observable **revient** à celui d'avant `6ffc030` : `.bak` = octets d'origine,
+  indent d'origine préservée.
+- **Portée** : `stdout`, `stderr`, codes d'exit et contrats JSON **inchangés**
+  (golden `--check` : signature canonique identique) ; seul le fichier écrit et
+  son `.bak` sont restaurés. Aucun nouveau verbe, aucun changement de schéma.
+- **Pourquoi c'est dans le périmètre** : la façade supprimée *était* le contrat
+  à préserver ; sa réplique restaurée corrige une régression antérieure non
+  détectée (aucun test n'exerçait `index.ts → handler → persistDraft`). Ne pas
+  « re-corriger » en réintroduisant l'écriture compacte.
+- **Verrou** : `test/draft-fidelity.test.mjs` (8 tests) + les baselines golden
+  (voir `test-fixtures/golden/README.md`, entrée `8d652ac`).
+
 ## Further notes
 
 - Références : ADR 0002 (stratégie du chantier), ADR 0001, glossaire du dépôt, §7 de l'audit 2026-09-21 (réécrit après décision Route A), mémo de décision produit 2026-09-22.

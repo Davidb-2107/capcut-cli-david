@@ -12,6 +12,10 @@ _Avoid_: projet, film, timeline (au singulier, ambigu)
 Copie de `draft_content.json` (ou `draft_info.json`) sous `Timelines/<guid>/` que CapCut lit à l'ouverture ; le CLI la réconcilie depuis le draft racine (`sync-timelines`).
 _Avoid_: copie, backup
 
+**Rollback (racine `.bak`)** :
+Le fichier `<draft>/draft_content.json.bak` écrit par le `DraftStore` à chaque édition racine ; il contient les **octets d'avant l'écriture** (indent d'origine). C'est l'unique undo de la dernière écriture — le miroir de police (`mirrorFont`) ne doit **jamais** l'écraser, et `sync-timelines` le préserve explicitement.
+_Avoid_: backup (concept CapCut distinct), copie
+
 **Handler**:
 Fonction qui exécute un verbe de la CLI, appelée par le dispatcher ; à terme enregistrée dans le registry plutôt que câblée en `case` dans `index.ts`.
 _Avoid_: commande (réservé au verbe vu par l'utilisateur), action

@@ -8,7 +8,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { importCaptions } from "../dist/commands/create.js";
-import { loadDraft } from "../dist/draft.js";
+import { LocalDraftStore } from "../dist/draft.js";
 
 import { FIXTURES } from "./helpers/load-fixture.mjs";
 import { tmpDraft } from "./helpers/tmp-draft.mjs";
@@ -43,7 +43,7 @@ function normalizedSegment(seg) {
 
 test("byte-identity: importCaptions WITHOUT transformY → segment byte-identical to v1.15.0", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const res = importCaptions(draft, filePath, {
     cards: [{ text: "le PC", start: 0, end: 500000, hl: [3, 5] }],
     trackName: "subtitle",
@@ -58,7 +58,7 @@ test("byte-identity: importCaptions WITHOUT transformY → segment byte-identica
 
 test("importCaptions: transformY sets clip.transform.y on EVERY rebuilt segment (lean)", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const res = importCaptions(draft, filePath, { cards: CARDS, trackName: "subtitle", transformY: -0.4 });
   const segs = segmentsOf(draft, res.trackId);
   strictEqual(segs.length, 2);
@@ -70,7 +70,7 @@ test("importCaptions: transformY sets clip.transform.y on EVERY rebuilt segment 
 
 test("importCaptions: transformY rides the --clone-style path too", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const res = importCaptions(draft, filePath, {
     cards: CARDS,
     trackName: "subtitle",
@@ -84,7 +84,7 @@ test("importCaptions: transformY rides the --clone-style path too", (t) => {
 
 test("importCaptions: segment lands on the target track (raw_segment_id) before id normalization", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const res = importCaptions(draft, filePath, {
     cards: [{ text: "le PC", start: 0, end: 500000, hl: [3, 5] }],
     trackName: "subtitle",

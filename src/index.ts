@@ -43,7 +43,7 @@ import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template-cli.js";
 import { cmdUi } from "./commands/ui.js";
 import { cmdValidate } from "./commands/validate-cli.js";
 import { cmdValidateFix } from "./commands/validate-fix.js";
-import { loadDraft } from "./draft.js";
+import { LocalDraftStore } from "./draft.js";
 import { assertCapCutClosed, WRITE_COMMANDS } from "./utils/capcut-guard.js";
 import { CliError, die, type Flags, requireArgs } from "./utils/cli.js";
 
@@ -543,7 +543,7 @@ async function main(): Promise<void> {
 
   if (!projectPath) die("Missing project path. Run 'capcut-david --help' for usage.");
 
-  const { draft, filePath } = loadDraft(projectPath);
+  const { draft, filePath } = new LocalDraftStore().load(projectPath);
 
   switch (cmd) {
     case "info":

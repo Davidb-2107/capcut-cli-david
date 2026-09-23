@@ -14,6 +14,41 @@ Le filet de non-régression est un **golden-output check livré en PR 0 préalab
 - **Inspect dans le split** : rejeté (PR vide ou glissement non-mécanique).
 - **Sortie unique via un `process.exit()` central** : rejeté — privilégier `process.exitCode = code` + sortie naturelle ; un `exit()` central recréerait le bug de troncature `--help` (~8 ko) documenté à `index.ts:490`.
 
+---
+
+## Clarification post-ticket 02 (2026-09-23, audit adversarial)
+
+Le ticket 02 exigeait « sans changer aucun comportement observable ». Une
+exception, unique et bornée, a été appliquée **et doit être lue comme telle** :
+
+- **Fait** : les 7 verbes du module `edit` (`set-text`, `shift`, `shift-all`,
+  `speed`, `volume`, `trim`, `opacity`) écrivaient, depuis `6ffc030`/`02bb642`,
+  un `.bak` **vide (0 octet)** et ré-sérialisaient le draft en **JSON compact
+  (indent 0)**, alors que la façade `saveDraft` (utilisée par les 10 autres
+  modules) préservait les octets d'origine et l'indent.
+- **Décision** : lors de la migration, `persistDraft` avec `raw` omis récupère
+  les octets disque (comportement exact de la façade supprimée). Le résultat
+  observable **revient** à celui d'avant `6ffc030` : `.bak` = octets d'origine,
+  indent d'origine préservée.
+- **Portée** : `stdout`, `stderr`, codes d'exit et contrats JSON **inchangés**
+  (golden `--check` : signature canonique identique) ; seul le fichier écrit et
+  son `.bak` sont restaurés. Aucun nouveau verbe, aucun changement de schéma.
+- **Pourquoi c'est dans le périmètre** : la façade supprimée *était* le contrat
+  à préserver ; sa réplique restaurée corrige une régression antérieure non
+  détectée (aucun test n'exerçait `index.ts → handler → persistDraft`). Ne pas
+  « re-corriger » en réintroduisant l'écriture compacte.
+- **Verrou** : `test/draft-fidelity.test.mjs` (8 tests) + les baselines golden
+  (voir `test-fixtures/golden/README.md`, entrée `8d652ac`).
+
+## Clarification - workstream bak-rollback-integrity (2026-09-23)
+
+Le DoD ci-dessus (« contrats JSON de sortie identiques au golden-output ») se lit absolu. Le workstream
+**bak-rollback-integrity** (tickets 01-02, spec `.scratch/bak-rollback-integrity/`) fait une exception **unique,
+bornée et documentée** : corriger la collision « rollback racine » du verbe `restyle` avec preset de police
+**change un contrat stdout observable** — la liste `mirrored` perd `draft_content.json.bak` (le miroir n'écrit
+plus le rollback racine). La baseline golden est régénérée **dans le même diff** (AC4 du ticket 02), avec
+justification ; les 89 autres cas et les autres verbes sont inchangés. Détail : spec du workstream.
+
 ## Consequences
 
 - Le registry doit couvrir les 34 cases **et les chemins non-verbaux** (`--help`, version, capabilities, erreurs de parsing) : 10 des 14 `process.exit` vivent avant le switch — c'est là que se cachent les exits oubliés.

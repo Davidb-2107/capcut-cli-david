@@ -9,7 +9,7 @@ import { dirname, join } from "node:path";
 
 import { addText } from "../dist/commands/create.js";
 import { cascadeWords, planCascadeLayout } from "../dist/commands/cascade-words.js";
-import { loadDraft, saveDraft } from "../dist/draft.js";
+import { LocalDraftStore, persistDraft } from "../dist/draft.js";
 
 import { FIXTURES } from "./helpers/load-fixture.mjs";
 import { tmpDraft } from "./helpers/tmp-draft.mjs";
@@ -165,7 +165,7 @@ test("planCascadeLayout honors explicit line hints when a POC already chose the 
 
 test("cascadeWords applies the selected font calibration before wrapping", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   buildGuide(draft, filePath);
   draft.canvas_config.width = 500;
 
@@ -194,7 +194,7 @@ test("cascadeWords applies the selected font calibration before wrapping", (t) =
 
 test("cascadeWords: measurement failure leaves draft unchanged in memory", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   buildGuide(draft, filePath);
   const before = JSON.stringify(draft);
 
@@ -220,7 +220,7 @@ test("cascadeWords: measurement failure leaves draft unchanged in memory", (t) =
 
 test("cascadeWords: measured single line — one base track + N word tracks", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   buildGuide(draft, filePath);
 
   const res = cascadeWords(draft, filePath, withFont({ cards: WORDS, guideTrackName: "sentence" }));
@@ -252,7 +252,7 @@ test("cascadeWords: measured single line — one base track + N word tracks", (t
 
 test("cascadeWords: word tracks are highlight-colored and end at the line end", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   buildGuide(draft, filePath);
   cascadeWords(draft, filePath, withFont({ cards: WORDS, guideTrackName: "sentence" }));
 
@@ -269,7 +269,7 @@ test("cascadeWords: word tracks are highlight-colored and end at the line end", 
 
 test("cascadeWords: word x-offset sign matches position in line (before/after center)", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   buildGuide(draft, filePath);
   cascadeWords(draft, filePath, withFont({ cards: WORDS, guideTrackName: "sentence" }));
 
@@ -284,7 +284,7 @@ test("cascadeWords: word x-offset sign matches position in line (before/after ce
 
 test("cascadeWords --alpha-lines: reveals one word in a full transparent line without x-offset", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   buildGuide(draft, filePath);
 
   const res = cascadeWords(
@@ -324,7 +324,7 @@ test("cascadeWords --alpha-lines: reveals one word in a full transparent line wi
 
 test("cascadeWords --alpha-lines: explicit line hints reproduce the three POC lines", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   buildGuide(draft, filePath);
 
   const res = cascadeWords(draft, filePath, withFont({ cards: POC_WORDS, guideTrackName: "sentence", alphaLines: true }));
@@ -338,7 +338,7 @@ test("cascadeWords --alpha-lines: explicit line hints reproduce the three POC li
 
 test("cascadeWords: base track pushed before its line's word tracks (z-order)", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   buildGuide(draft, filePath);
   cascadeWords(draft, filePath, withFont({ cards: WORDS, guideTrackName: "sentence" }));
 
@@ -351,7 +351,7 @@ test("cascadeWords: base track pushed before its line's word tracks (z-order)", 
 
 test("cascadeWords: measured width splits into multiple lines, each with its own base + words", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   buildGuide(draft, filePath);
   // The injected test metric is one unit per character; 12 canvas units fit
   // "this is the" exactly with room, while the full phrase measures 18.
@@ -381,7 +381,7 @@ test("cascadeWords: measured width splits into multiple lines, each with its own
 
 test("cascadeWords: last line's end is capped at guideEnd when the guide is SHORTER than the last card", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   // Guide segment shorter than the last card's own natural end (900000 < 1100000).
   addText(draft, filePath, { text: "short guide", start: 0, duration: 900000, trackName: "sentence" });
   const res = cascadeWords(draft, filePath, withFont({ cards: WORDS, guideTrackName: "sentence" }));
@@ -395,7 +395,7 @@ test("cascadeWords: last line's end is capped at guideEnd when the guide is SHOR
 
 test("cascadeWords: guide track is hidden via attribute (not segment.visible), segment marked consumed", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const guide = buildGuide(draft, filePath);
   const before = { ...guide.segments[0], cascade_words_consumed: undefined };
   cascadeWords(draft, filePath, withFont({ cards: WORDS, guideTrackName: "sentence" }));
@@ -413,7 +413,7 @@ test("cascadeWords: guide track is hidden via attribute (not segment.visible), s
 
 test("cascadeWords: explicit font also synchronizes the hidden guide material", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const guide = buildGuide(draft, filePath);
   const guideMat = draft.materials.texts.find((m) => m.id === guide.segments[0].material_id);
 
@@ -432,7 +432,7 @@ test("cascadeWords: explicit font also synchronizes the hidden guide material", 
 
 test("cascadeWords: guide track with multiple segments — each call anchors to and hides its OWN (first unconsumed) one", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const guide = buildGuide(draft, filePath); // segment 0: [0, GUIDE_END)
   const SECOND_START = GUIDE_END;
   const SECOND_END = GUIDE_END + 500000;
@@ -477,7 +477,7 @@ test("cascadeWords: guide track with multiple segments — each call anchors to 
 
 test("cascadeWords: word starting at/after line end is skipped, not counted", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   buildGuide(draft, filePath);
   const cards = [...WORDS, { text: "late", start: GUIDE_END, end: GUIDE_END + 100000 }];
   const res = cascadeWords(draft, filePath, withFont({ cards, guideTrackName: "sentence" }));
@@ -487,7 +487,7 @@ test("cascadeWords: word starting at/after line end is skipped, not counted", (t
 
 test("cascadeWords: empty cards array dies", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   buildGuide(draft, filePath);
   try {
     cascadeWords(draft, filePath, withFont({ cards: [], guideTrackName: "sentence" }));
@@ -499,7 +499,7 @@ test("cascadeWords: empty cards array dies", (t) => {
 
 test("cascadeWords: missing guide track dies", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   try {
     cascadeWords(draft, filePath, withFont({ cards: WORDS, guideTrackName: "nope" }));
     ok(false, "should have thrown");
@@ -510,7 +510,7 @@ test("cascadeWords: missing guide track dies", (t) => {
 
 test("cascadeWords: --track-prefix collision with an existing track dies", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   buildGuide(draft, filePath);
   draft.tracks.push({ id: "x", type: "text", name: "word-000", attribute: 0, segments: [] });
   try {
@@ -523,7 +523,7 @@ test("cascadeWords: --track-prefix collision with an existing track dies", (t) =
 
 test("cascadeWords: --line-prefix collision with an existing track dies", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   buildGuide(draft, filePath);
   draft.tracks.push({ id: "x", type: "text", name: "line-000", attribute: 0, segments: [] });
   try {
@@ -536,7 +536,7 @@ test("cascadeWords: --line-prefix collision with an existing track dies", (t) =>
 
 test("cascadeWords --clone-style: base and word segments inherit the guide caption's style", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const guide = buildGuide(draft, filePath);
   const { fontPath } = setGuideStyle(draft, guide, filePath);
 
@@ -553,7 +553,7 @@ test("cascadeWords --clone-style: base and word segments inherit the guide capti
 
 test("cascadeWords --font without --clone-style: generated materials bind the measured font consistently", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   buildGuide(draft, filePath);
 
   const res = cascadeWords(draft, filePath, withFont({ cards: WORDS, guideTrackName: "sentence", fontSize: 24 }));
@@ -569,7 +569,7 @@ test("cascadeWords --font without --clone-style: generated materials bind the me
 
 test("cascadeWords --clone-style: cloned materials keep font path/id and size mirrors consistent", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const guide = buildGuide(draft, filePath);
   const { fontPath } = setGuideStyle(draft, guide, filePath);
 
@@ -587,7 +587,7 @@ test("cascadeWords --clone-style: cloned materials keep font path/id and size mi
 
 test("cascadeWords --font + --clone-style: explicit font replaces cloned font while preserving cloned size", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const guide = buildGuide(draft, filePath);
   setGuideStyle(draft, guide, filePath);
 
@@ -604,7 +604,7 @@ test("cascadeWords --font + --clone-style: explicit font replaces cloned font wh
 
 test("cascadeWords: without --font or readable --clone-style dies before mutation", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const guide = buildGuide(draft, filePath);
   const tracksBefore = draft.tracks.length;
   const textsBefore = draft.materials.texts.length;
@@ -629,7 +629,7 @@ test("cascadeWords --clone-style: refuses unvalidated horizontal/non-linear styl
 
   for (const c of cases) {
     const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-    const { draft } = loadDraft(filePath);
+    const { draft } = new LocalDraftStore().load(filePath);
     const guide = buildGuide(draft, filePath);
     setGuideStyle(draft, guide, filePath, c);
     const tracksBefore = draft.tracks.length;
@@ -649,9 +649,9 @@ test("cascadeWords --clone-style: refuses unvalidated horizontal/non-linear styl
 
 test("cascade-words (CLI happy): reads JSON, creates base+word tracks, returns counts", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   buildGuide(draft, filePath);
-  saveDraft(filePath, draft);
+  persistDraft(new LocalDraftStore(), filePath, draft);
 
   const jsonPath = join(dirname(filePath), "words.json");
   writeFileSync(jsonPath, JSON.stringify(WORDS), "utf-8");
@@ -689,9 +689,9 @@ test("cascade-words (CLI happy): reads JSON, creates base+word tracks, returns c
 
 test("cascade-words (CLI): missing --guide-track dies", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   buildGuide(draft, filePath);
-  saveDraft(filePath, draft);
+  persistDraft(new LocalDraftStore(), filePath, draft);
 
   const jsonPath = join(dirname(filePath), "words.json");
   writeFileSync(jsonPath, JSON.stringify(WORDS), "utf-8");

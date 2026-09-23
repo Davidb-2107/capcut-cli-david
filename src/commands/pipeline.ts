@@ -1,6 +1,6 @@
 import { existsSync, writeFileSync } from "node:fs";
 import { basename, dirname, isAbsolute, resolve } from "node:path";
-import { loadDraft, saveDraft } from "../draft.js";
+import { type DraftStore, LocalDraftStore, persistDraft } from "../draft.js";
 import { resolveTemplateDir as resolveSharedTemplateDir } from "../utils/capcut-paths.js";
 import { die } from "../utils/cli.js";
 import { setUuidProvider } from "../utils/companion.js";
@@ -638,6 +638,7 @@ export function psychoBuild(
   outOpt: string | undefined,
   seedOpt: string | undefined,
   registerOpt?: PsychoBuildRegisterOpts,
+  store: DraftStore = new LocalDraftStore(),
 ): PsychoBuildResult {
   if (!existsSync(manifestPath)) die(`Manifest not found: ${manifestPath}`);
   const manifestAbs = resolve(manifestPath);
@@ -658,7 +659,7 @@ export function psychoBuild(
     const templateDir = resolveTemplateDir();
 
     const { draftPath, filePath } = initDraft({ name, templateDir, draftsDir });
-    const { draft } = loadDraft(filePath);
+    const { draft } = store.load(filePath);
     draft.canvas_config.width = manifest.resolution.width;
     draft.canvas_config.height = manifest.resolution.height;
     draft.fps = manifest.fps;
@@ -729,7 +730,7 @@ export function psychoBuild(
       captionCount = entries.length;
     }
 
-    saveDraft(filePath, draft);
+    persistDraft(store, filePath, draft);
 
     // Emit CapCut's two sidecar metadata files so the draft is visible in the
     // CapCut UI's project list. draft_content.json alone is not enough.

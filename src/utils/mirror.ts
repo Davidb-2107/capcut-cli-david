@@ -1,8 +1,9 @@
-// Font-mirroring sidecar pass — ports fix_content_styles_font.py (force
+// Font-sidecar pass — ports fix_content_styles_font.py (force
 // content.styles[].font everywhere it lives) + fix_key_value.py (dropdown
-// registry) + restyle.py's template-2.tmp/.bak mirror. All targets are
-// skip-if-absent; key_value.json is never fabricated (parity with the Python
-// preflight that requires it to pre-exist).
+// registry) + restyle.py's runtime sibling writes (template-2.tmp). All targets
+// are skip-if-absent, and key_value.json is never fabricated (parity with the
+// Python preflight that requires it to pre-exist). The ROOT draft_content.json.bak
+// is deliberately NOT written — see the canonical note in mirrorFont() below.
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { writeFileAtomic } from "./atomic-write.js";
@@ -152,11 +153,15 @@ export function mirrorFont(
   const written: string[] = [];
   const newJson = JSON.stringify(draft);
 
-  // Runtime mirrors of the primary draft — Python writes the NEW content here.
-  for (const sib of ["template-2.tmp", "draft_content.json.bak"]) {
-    writeFileAtomic(join(draftDir, sib), newJson);
-    written.push(sib);
-  }
+  // CapCut runtime sibling of the primary draft — Python writes the NEW content
+  // to template-2.tmp here (the Timelines/<guid>/* targets below keep their own
+  // .bak). The ROOT draft_content.json.bak is DELIBERATELY EXCLUDED: it is the
+  // draft store's rollback of the last root edit (persistDraft, original indent),
+  // and re-writing it with the NEW draft would destroy that undo. This is the
+  // canonical explanation — tests reference it rather than restating it
+  // (workstream: .scratch/bak-rollback-integrity/, ticket 02).
+  writeFileAtomic(join(draftDir, "template-2.tmp"), newJson);
+  written.push("template-2.tmp");
 
   // Timeline journal mirrors — force the embedded content fonts (skip-if-absent).
   for (const { guid: uuid, dir: tldir } of listTimelineDirs(draftDir)) {

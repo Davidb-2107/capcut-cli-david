@@ -11,7 +11,7 @@ export function cmdInitMeta(positional: string[], flags: Flags): void {
   const input = positional[1];
   if (!input) die("Usage: capcut-david init-meta <project> [--force] [--register] [--dry-run]");
 
-  // Own findDraft + parse (dispatched before loadDraft) so a corrupt draft is a
+  // Own findDraft + parse (dispatched before the dispatcher's store load) so a corrupt draft is a
   // clean error, and so the dir/file distinction is unambiguous.
   const draftFile = findDraft(input);
   if (basename(draftFile) !== "draft_content.json") {

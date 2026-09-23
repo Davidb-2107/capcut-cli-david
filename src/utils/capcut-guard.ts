@@ -4,7 +4,7 @@ import { die, type Flags } from "./cli.js";
 /**
  * Commands that write a draft (or CapCut's index) on disk. They run the
  * "CapCut is open" preflight so the CLI never silently loses edits to CapCut's
- * on-close overwrite. Covers every in-place `saveDraft` caller plus `register`
+ * on-close overwrite. Covers every in-place `persistDraft` caller plus `register`
  * (rewrites root_meta_info.json — the file CapCut itself overwrites on close).
  * Read-only commands and `init` (creates a brand-new draft, no open-draft
  * conflict) are intentionally absent.

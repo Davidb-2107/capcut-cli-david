@@ -78,7 +78,7 @@ test("assertCapCutClosed: CAPCUT_DAVID_FORCE env bypasses even when CapCut is ru
 // =============================================================
 
 test("WRITE_COMMANDS: covers every command that writes a draft/index in place", () => {
-  // These all call saveDraft() in place OR rewrite root_meta_info.json (register) —
+  // These all write the draft in place OR rewrite root_meta_info.json (register) —
   // i.e. every command vulnerable to CapCut's on-close overwrite.
   const mustGuard = [
     "add-text",

@@ -134,14 +134,15 @@ jobs:
         run: python test-fixtures/_final_integrity.py
 
   # ---------------------------------------------------------------------------
-  # Golden output (ARCH PR 0) — characterization net: captures stdout/stderr/
-  # exit codes of the read-only surface across the 9 anonymized fixtures plus
-  # a write round-trip on temp copies, canonicalizes (UUIDs + absolute paths
-  # → tokens) and diffs against the committed baseline. Any drift fails the
-  # job; regenerate with `npm run test:golden:write` and justify in the PR.
+  # Golden output (ARCH) — characterization net: captures stdout/stderr/exit
+  # codes of the read-only surface across the anonymized fixtures plus the M1
+  # write round-trips, canonicalizes (UUIDs + absolute paths → tokens) and
+  # diffs against the committed baseline. Any drift fails the job; regenerate
+  # with `npm run test:golden:write` and justify in the PR. Followed by the
+  # per-verb write-fidelity sweep (.bak + indent).
   # ---------------------------------------------------------------------------
   golden-output:
-    name: Golden output (baseline diff)
+    name: Golden output (behaviour-preserving net)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -159,8 +160,11 @@ jobs:
       - name: Build (tsc)
         run: npm run build
 
-      - name: Diff against the committed baseline
+      - name: Golden output diff vs committed baseline
         run: npm run test:golden
+
+      - name: Per-verb write-fidelity sweep (.bak + indent)
+        run: npm run test:fidelity
 
   # ---------------------------------------------------------------------------
   # Secrets scan (audit CLI-M1) - fail the build if a credential is committed.
@@ -186,7 +190,7 @@ jobs:
   ci-pass:
     name: CI Pass
     if: always()
-    needs: [lint, test, coverage, fixture-integrity, golden-output]
+    needs: [lint, test, coverage, fixture-integrity, golden-output, secrets-scan]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all jobs succeeded
@@ -195,13 +199,15 @@ jobs:
              [ "${{ needs.test.result }}" != "success" ] || \
              [ "${{ needs.coverage.result }}" != "success" ] || \
              [ "${{ needs.fixture-integrity.result }}" != "success" ] || \
-             [ "${{ needs.golden-output.result }}" != "success" ]; then
+             [ "${{ needs.golden-output.result }}" != "success" ] || \
+             [ "${{ needs.secrets-scan.result }}" != "success" ]; then
             echo "::error::One or more required jobs failed."
             echo "lint=${{ needs.lint.result }}"
             echo "test=${{ needs.test.result }}"
             echo "coverage=${{ needs.coverage.result }}"
             echo "fixture-integrity=${{ needs.fixture-integrity.result }}"
             echo "golden-output=${{ needs.golden-output.result }}"
+            echo "secrets-scan=${{ needs.secrets-scan.result }}"
             exit 1
           fi
           echo "All required jobs passed."

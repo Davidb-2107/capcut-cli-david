@@ -1,4 +1,4 @@
-import { type Draft, saveDraft } from "../draft.js";
+import { type Draft, type DraftStore, LocalDraftStore, persistDraft } from "../draft.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { parseTimeInput } from "../utils/time.js";
 import { applyTemplate, saveTemplate } from "./template.js";
@@ -21,7 +21,13 @@ export function cmdSaveTemplate(draft: Draft, positional: string[], flags: Flags
   );
 }
 
-export function cmdApplyTemplate(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
+export function cmdApplyTemplate(
+  draft: Draft,
+  filePath: string,
+  positional: string[],
+  flags: Flags,
+  store: DraftStore = new LocalDraftStore(),
+): void {
   const templatePath = positional[2];
   const startStr = positional[3];
   const durationStr = positional[4];
@@ -33,7 +39,7 @@ export function cmdApplyTemplate(draft: Draft, filePath: string, positional: str
     y: flags.y,
     text: textOverride,
   });
-  saveDraft(filePath, draft);
+  persistDraft(store, filePath, draft);
   out(
     {
       ok: true,

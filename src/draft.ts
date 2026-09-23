@@ -110,15 +110,14 @@ export function findDraft(input: string): string {
 //
 // The seam between draft domain logic and persistence. `LoadedDraft` carries
 // everything save() needs (path, original bytes) so no module-global state is
-// required — two drafts loaded in parallel no longer interfere. The legacy
-// loadDraft/saveDraft functions below delegate to a process-wide default store
-// so existing call sites keep working unchanged while commands migrate to
-// injected stores (see D2+D3).
+// required - two drafts loaded in parallel no longer interfere. There is no
+// process-wide default store: every caller holds (or is handed) a store, and
+// tests inject their own.
 
 export interface LoadedDraft {
   draft: Draft;
   filePath: string;
-  /** Original file bytes (BOM stripped) as loaded — preserved for .bak and indent fidelity. */
+  /** Original file bytes (BOM stripped) as loaded - preserved for .bak and indent fidelity. */
   raw: string;
 }
 
@@ -155,35 +154,35 @@ export class LocalDraftStore implements DraftStore {
 
 /**
  * Serialize + persist a loaded draft with full fidelity (.bak backup, original
- * indent, timeline-dir rename + root-bytes sync). Pass the raw bytes captured
- * at load time when available; pass "" when the draft was created in-memory
- * (initDraft) — indent then falls back to 0 and no meaningful .bak diff exists.
+ * indent, timeline-dir rename + root-bytes sync). The single persistence
+ * idiom of the codebase - the old `saveDraft`/`loadDraft` facade was deleted.
+ *
+ * `raw` is the bytes captured at load time:
+ *  - pass the loaded bytes (`loaded.raw`) when you hold them;
+ *  - OMIT `raw` (the common CLI-handler case) and the CURRENT on-disk bytes are
+ *    read and used, exactly like the deleted facade did: .bak keeps the
+ *    pre-write bytes and the original indent is detected. Behavior-preserving by
+ *    construction. Note this is a disk read even when a store is injected, so a
+ *    fully diskless test must pass `raw` explicitly;
+ *  - pass "" explicitly ONLY when you do NOT want a rollback copy: on an
+ *    EXISTING file this EMPTIES `<file>.bak` and falls back to indent 0 (the
+ *    in-memory/initDraft case). When the file does not exist yet, "" and an
+ *    omitted raw are equivalent (nothing to back up, indent 0 either way).
  */
-export function persistDraft(store: DraftStore, filePath: string, draft: Draft, raw = ""): void {
-  store.save({ draft, filePath, raw });
+export function persistDraft(store: DraftStore, filePath: string, draft: Draft, raw?: string): void {
+  let effectiveRaw: string;
+  if (raw !== undefined) {
+    effectiveRaw = raw;
+  } else if (existsSync(filePath)) {
+    effectiveRaw = readFileSync(filePath, "utf-8");
+    // Mirror load(): the facade captured BOM-stripped bytes, so .bak must not
+    // gain a BOM the deleted facade never wrote.
+    if (effectiveRaw.charCodeAt(0) === 0xfeff) effectiveRaw = effectiveRaw.slice(1);
+  } else {
+    effectiveRaw = "";
+  }
+  store.save({ draft, filePath, raw: effectiveRaw });
 }
-
-const defaultStore = new LocalDraftStore();
-
-/** @deprecated Prefer an injected DraftStore. Kept as a thin facade over the default LocalDraftStore. */
-export function loadDraft(path: string): { draft: Draft; filePath: string } {
-  const { draft, filePath, raw } = defaultStore.load(path);
-  loadedByPath.set(filePath, raw);
-  return { draft, filePath };
-}
-
-/** @deprecated Prefer an injected DraftStore. Kept as a thin facade over the default LocalDraftStore. */
-export function saveDraft(filePath: string, draft: Draft): void {
-  // Facade path: recover the raw bytes captured by the matching loadDraft so
-  // behaviour (backup + indent fidelity) is identical to the store path.
-  const raw = loadedByPath.get(filePath) ?? (existsSync(filePath) ? readFileSync(filePath, "utf-8") : "");
-  defaultStore.save({ draft, filePath, raw });
-  loadedByPath.delete(filePath);
-}
-
-// Facade bookkeeping only: maps filePath -> raw bytes captured by loadDraft.
-// Not semantically load-bearing — the store itself holds no state.
-const loadedByPath = new Map<string, string>();
 
 function detectIndent(raw: string | null): string | number {
   if (!raw) return 0;

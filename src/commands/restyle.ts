@@ -4,7 +4,7 @@
 // span-aware so multi-span keyword captions keep their per-span colors + ranges.
 
 import { dirname } from "node:path";
-import { type Draft, saveDraft } from "../draft.js";
+import { type Draft, type DraftStore, LocalDraftStore, persistDraft } from "../draft.js";
 import { buildKeyValueEntry, type FontMirror, mirrorFont } from "../utils/mirror.js";
 
 /** A per-span style block (font/strokes/shadows/size/bold…) grafted onto each span. */
@@ -111,6 +111,7 @@ export function applyCaptionStyle(
   draft: Draft,
   filePath: string,
   opts: ApplyCaptionStyleOptions,
+  store: DraftStore = new LocalDraftStore(),
 ): { materialsPatched: number; segmentsPatched: number; mirrored: string[] } {
   const spanStyle = spanStyleFromPreset(opts.preset);
   const materialFields = opts.preset.text_material ?? {};
@@ -144,7 +145,7 @@ export function applyCaptionStyle(
     }
   }
 
-  saveDraft(filePath, draft);
+  persistDraft(store, filePath, draft);
 
   // Mirror the font across CapCut's other read locations (template-2.tmp, Timeline
   // journals, key_value registry). Skip-if-absent; only when the preset carries a font.
