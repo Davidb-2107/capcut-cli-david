@@ -252,9 +252,41 @@ function normalizeText(s, dir) {
       out = out.split(f + "/").join("<TMP>/");
       out = out.split(f).join("<TMP>");
     }
-    out = out.split("\\\\").join("\\");
+    // OS-agnostic squeeze: on Windows the root collapse can leave a residual
+    // '\' (the escaped pair is consumed one character at a time) while Linux
+    // (forward slashes) never does - that single character alone made the
+    // baseline Windows-only (audit F1). Collapse any separator run glued to the
+    // token, in both directions, so the SAME logical path canonicalises
+    // identically on win32 and linux. Backslashes NOT adjacent to <TMP> (JSON
+    // escapes such as \n) are left untouched.
+    out = out.replace(/<TMP>[\\/]+/g, "<TMP>/").replace(/[\\/]+<TMP>/g, "/<TMP>");
   }
   return out;
+}
+
+/** Prove the canonicaliser is OS-agnostic (audit F1): Windows and Linux forms
+ *  of the same logical output must collapse to the same string. Runs in CI on
+ *  ubuntu, where it is the only available proof of Windows/Linux parity. */
+export function selfTest() {
+  const leaf = "golden-ro-a1b2c3d4";
+  const winRoot = "C:\\Users\\someuser\\AppData\\Local\\Temp";
+  const linRoot = "/tmp";
+  const winJson = JSON.stringify({ project: `${winRoot}\\${leaf}`, draft_file: `${winRoot}\\${leaf}\\draft_content.json` });
+  const linJson = JSON.stringify({ project: `${linRoot}/${leaf}`, draft_file: `${linRoot}/${leaf}/draft_content.json` });
+  const cases = [
+    ["JSON/win vs JSON/linux", normalizeText(winJson, winRoot), normalizeText(linJson, linRoot)],
+    ["raw/win vs raw/linux", normalizeText(`${winRoot}\\${leaf}\\draft_content.json`, winRoot), normalizeText(`${linRoot}/${leaf}/draft_content.json`, linRoot)],
+    ["help (no dir) is untouched", normalizeText("stage\twin", null), "stage\twin"],
+  ];
+  let ok = true;
+  for (const [name, a, b] of cases) {
+    if (a !== b) {
+      ok = false;
+      console.error(`selftest FAIL ${name}: ${JSON.stringify(a)} != ${JSON.stringify(b)}`);
+    }
+  }
+  console.log(ok ? "golden selftest: OK (Windows and Linux forms canonicalise identically)" : "golden selftest: FAIL");
+  return ok;
 }
 
 function run(args, opts = {}) {
@@ -354,6 +386,9 @@ function capture() {
 
 function main() {
   const argv = process.argv.slice(2);
+  if (argv.includes("--selftest")) {
+    process.exit(selfTest() ? 0 : 1);
+  }
   if (!existsSync(CLI)) {
     console.error(`golden: missing ${CLI} — run \`npm run build\` first.`);
     process.exit(2);

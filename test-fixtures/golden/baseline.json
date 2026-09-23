@@ -87,9 +87,9 @@
   "minimal-draft/validate": {
    "code": 0,
    "out": {
-    "sha": "ddbe78632eca7f00",
-    "len": 213,
-    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/\\<TMP>\",\"draft_file\":\"<TMP>/\\<TMP>\\draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -170,9 +170,9 @@
   "subtitles-draft/validate": {
    "code": 0,
    "out": {
-    "sha": "ddbe78632eca7f00",
-    "len": 213,
-    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/\\<TMP>\",\"draft_file\":\"<TMP>/\\<TMP>\\draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -198,9 +198,9 @@
   "subtitles-draft/segment": {
    "code": 0,
    "out": {
-    "sha": "5ceb53a61e1890a2",
-    "len": 2851,
-    "text": "{\"id\":\"<UUID#1>\",\"source_timerange\":{\"start\":0,\"duration\":60033333},\"target_timerange\":{\"start\":0,\"duration\":60033333},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":1,\"last_nonzero_volume\":1,\"clip\":null,\"uniform_scale\":null,\"material_id\":\"<UUID#2>\",\"extra_material_refs\":[\"<UUID#3>\",\"<UUID#4>\",\"<UUID#5>\",\"<UUID#6>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":false,\"enable_adjust\":false,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":null,\"enable_color_wheels\":true,\"track_attribute\":0,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"audio\",\"_track_name\":\"\",\"_track_id\":\"<UUID#7>\",\"_material\":{\"_type\":\"audios\",\"id\":\"<UUID#2>\",\"unique_id\":\"\",\"type\":\"extract_music\",\"name\":\"<UUID#8>\",\"duration\":60033333,\"path\":\"##_draftpath_placeholder_<UUID#9>_##\\Resources\\<UUID#10>.mp3\",\"category_name\":\"local\",\"wave_points\":[],\"music_id\":\"\",\"app_id\":0,\"text_id\":\"\",\"tone_type\":\"\",\"source_platform\":0,\"video_id\":\"\",\"effect_id\":\"\",\"resource_id\":\"\",\"third_resource_id\":\"\",\"category_id\":\"\",\"intensifies_path\":\"\",\"formula_id\":\"\",\"check_flag\":1,\"team_id\":\"\",\"local_material_id\":\"\",\"tone_speaker\":\"\",\"mock_tone_speaker\":\"\",\"tone_effect_id\":\"\",\"tone_effect_name\":\"\",\"tone_platform\":\"\",\"cloned_model_type\":\"\",\"tone_category_id\":\"\",\"tone_category_name\":\"\",\"tone_second_category_id\":\"\",\"tone_second_category_name\":\"\",\"tone_emotion_name_key\":\"\",\"tone_emotion_style\":\"\",\"tone_emotion_role\":\"\",\"tone_emotion_selection\":\"\",\"tone_emotion_scale\":0,\"moyin_emotion\":\"\",\"request_id\":\"\",\"query\":\"\",\"search_id\":\"\",\"sound_separate_type\":\"\",\"is_text_edit_overdub\":false,\"is_ugc\":false,\"is_ai_clone_tone\":false,\"is_ai_clone_tone_post\":false,\"source_from\":\"\",\"copyright_limit_type\":\"none\",\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"music_source\":\"\",\"pgc_id\":\"\",\"pgc_name\":\"\",\"similiar_music_info\":{\"original_song_id\":\"\",\"original_song_name\":\"\"},\"ai_music_type\":0,\"ai_music_enter_from\":\"\",\"lyric_type\":0,\"tts_task_id\":\"\",\"tts_generate_scene\":\"\",\"ai_music_generate_scene\":0,\"tts_benefit_info\":{\"benefit_type\":\"none\",\"benefit_log_id\":\"\",\"benefit_log_extra\":\"\",\"benefit_amount\":-1}}}\n"
+    "sha": "5e90d6fc75d62589",
+    "len": 2853,
+    "text": "{\"id\":\"<UUID#1>\",\"source_timerange\":{\"start\":0,\"duration\":60033333},\"target_timerange\":{\"start\":0,\"duration\":60033333},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":1,\"last_nonzero_volume\":1,\"clip\":null,\"uniform_scale\":null,\"material_id\":\"<UUID#2>\",\"extra_material_refs\":[\"<UUID#3>\",\"<UUID#4>\",\"<UUID#5>\",\"<UUID#6>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":false,\"enable_adjust\":false,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":null,\"enable_color_wheels\":true,\"track_attribute\":0,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"audio\",\"_track_name\":\"\",\"_track_id\":\"<UUID#7>\",\"_material\":{\"_type\":\"audios\",\"id\":\"<UUID#2>\",\"unique_id\":\"\",\"type\":\"extract_music\",\"name\":\"<UUID#8>\",\"duration\":60033333,\"path\":\"##_draftpath_placeholder_<UUID#9>_##\\\\Resources\\\\<UUID#10>.mp3\",\"category_name\":\"local\",\"wave_points\":[],\"music_id\":\"\",\"app_id\":0,\"text_id\":\"\",\"tone_type\":\"\",\"source_platform\":0,\"video_id\":\"\",\"effect_id\":\"\",\"resource_id\":\"\",\"third_resource_id\":\"\",\"category_id\":\"\",\"intensifies_path\":\"\",\"formula_id\":\"\",\"check_flag\":1,\"team_id\":\"\",\"local_material_id\":\"\",\"tone_speaker\":\"\",\"mock_tone_speaker\":\"\",\"tone_effect_id\":\"\",\"tone_effect_name\":\"\",\"tone_platform\":\"\",\"cloned_model_type\":\"\",\"tone_category_id\":\"\",\"tone_category_name\":\"\",\"tone_second_category_id\":\"\",\"tone_second_category_name\":\"\",\"tone_emotion_name_key\":\"\",\"tone_emotion_style\":\"\",\"tone_emotion_role\":\"\",\"tone_emotion_selection\":\"\",\"tone_emotion_scale\":0,\"moyin_emotion\":\"\",\"request_id\":\"\",\"query\":\"\",\"search_id\":\"\",\"sound_separate_type\":\"\",\"is_text_edit_overdub\":false,\"is_ugc\":false,\"is_ai_clone_tone\":false,\"is_ai_clone_tone_post\":false,\"source_from\":\"\",\"copyright_limit_type\":\"none\",\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"music_source\":\"\",\"pgc_id\":\"\",\"pgc_name\":\"\",\"similiar_music_info\":{\"original_song_id\":\"\",\"original_song_name\":\"\"},\"ai_music_type\":0,\"ai_music_enter_from\":\"\",\"lyric_type\":0,\"tts_task_id\":\"\",\"tts_generate_scene\":\"\",\"ai_music_generate_scene\":0,\"tts_benefit_info\":{\"benefit_type\":\"none\",\"benefit_log_id\":\"\",\"benefit_log_extra\":\"\",\"benefit_amount\":-1}}}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -212,9 +212,9 @@
   "subtitles-draft/material": {
    "code": 0,
    "out": {
-    "sha": "7045371acaa94d9d",
-    "len": 2694,
-    "text": "{\"_type\":\"videos\",\"id\":\"<UUID#1>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":5000000,\"path\":\"##_draftpath_placeholder_<UUID#2>_##\\Resources\\<UUID#3>.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"<UUID#4>\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":5000000}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":63487,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n"
+    "sha": "a96d5bc0e2c247fe",
+    "len": 2696,
+    "text": "{\"_type\":\"videos\",\"id\":\"<UUID#1>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":5000000,\"path\":\"##_draftpath_placeholder_<UUID#2>_##\\\\Resources\\\\<UUID#3>.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"<UUID#4>\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":5000000}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":63487,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -296,9 +296,9 @@
   "ken-burns-draft/validate": {
    "code": 0,
    "out": {
-    "sha": "ddbe78632eca7f00",
-    "len": 213,
-    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/\\<TMP>\",\"draft_file\":\"<TMP>/\\<TMP>\\draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -324,9 +324,9 @@
   "ken-burns-draft/segment": {
    "code": 0,
    "out": {
-    "sha": "f9f17eb029ae7f43",
-    "len": 2851,
-    "text": "{\"id\":\"<UUID#1>\",\"source_timerange\":{\"start\":0,\"duration\":3533333},\"target_timerange\":{\"start\":0,\"duration\":3533333},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":0.5,\"last_nonzero_volume\":1,\"clip\":null,\"uniform_scale\":null,\"material_id\":\"<UUID#2>\",\"extra_material_refs\":[\"<UUID#3>\",\"<UUID#4>\",\"<UUID#5>\",\"<UUID#6>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":false,\"enable_adjust\":false,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":null,\"enable_color_wheels\":true,\"track_attribute\":1,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"audio\",\"_track_name\":\"\",\"_track_id\":\"<UUID#7>\",\"_material\":{\"_type\":\"audios\",\"id\":\"<UUID#2>\",\"unique_id\":\"\",\"type\":\"extract_music\",\"name\":\"<UUID#8>\",\"duration\":60000000,\"path\":\"##_draftpath_placeholder_<UUID#9>_##\\Resources\\<UUID#10>.mp3\",\"category_name\":\"local\",\"wave_points\":[],\"music_id\":\"\",\"app_id\":0,\"text_id\":\"\",\"tone_type\":\"\",\"source_platform\":0,\"video_id\":\"\",\"effect_id\":\"\",\"resource_id\":\"\",\"third_resource_id\":\"\",\"category_id\":\"\",\"intensifies_path\":\"\",\"formula_id\":\"\",\"check_flag\":1,\"team_id\":\"\",\"local_material_id\":\"\",\"tone_speaker\":\"\",\"mock_tone_speaker\":\"\",\"tone_effect_id\":\"\",\"tone_effect_name\":\"\",\"tone_platform\":\"\",\"cloned_model_type\":\"\",\"tone_category_id\":\"\",\"tone_category_name\":\"\",\"tone_second_category_id\":\"\",\"tone_second_category_name\":\"\",\"tone_emotion_name_key\":\"\",\"tone_emotion_style\":\"\",\"tone_emotion_role\":\"\",\"tone_emotion_selection\":\"\",\"tone_emotion_scale\":0,\"moyin_emotion\":\"\",\"request_id\":\"\",\"query\":\"\",\"search_id\":\"\",\"sound_separate_type\":\"\",\"is_text_edit_overdub\":false,\"is_ugc\":false,\"is_ai_clone_tone\":false,\"is_ai_clone_tone_post\":false,\"source_from\":\"\",\"copyright_limit_type\":\"none\",\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"music_source\":\"\",\"pgc_id\":\"\",\"pgc_name\":\"\",\"similiar_music_info\":{\"original_song_id\":\"\",\"original_song_name\":\"\"},\"ai_music_type\":0,\"ai_music_enter_from\":\"\",\"lyric_type\":0,\"tts_task_id\":\"\",\"tts_generate_scene\":\"\",\"ai_music_generate_scene\":0,\"tts_benefit_info\":{\"benefit_type\":\"none\",\"benefit_log_id\":\"\",\"benefit_log_extra\":\"\",\"benefit_amount\":-1}}}\n"
+    "sha": "d9ca1ce60c10cb24",
+    "len": 2853,
+    "text": "{\"id\":\"<UUID#1>\",\"source_timerange\":{\"start\":0,\"duration\":3533333},\"target_timerange\":{\"start\":0,\"duration\":3533333},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":0.5,\"last_nonzero_volume\":1,\"clip\":null,\"uniform_scale\":null,\"material_id\":\"<UUID#2>\",\"extra_material_refs\":[\"<UUID#3>\",\"<UUID#4>\",\"<UUID#5>\",\"<UUID#6>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":false,\"enable_adjust\":false,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":null,\"enable_color_wheels\":true,\"track_attribute\":1,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"audio\",\"_track_name\":\"\",\"_track_id\":\"<UUID#7>\",\"_material\":{\"_type\":\"audios\",\"id\":\"<UUID#2>\",\"unique_id\":\"\",\"type\":\"extract_music\",\"name\":\"<UUID#8>\",\"duration\":60000000,\"path\":\"##_draftpath_placeholder_<UUID#9>_##\\\\Resources\\\\<UUID#10>.mp3\",\"category_name\":\"local\",\"wave_points\":[],\"music_id\":\"\",\"app_id\":0,\"text_id\":\"\",\"tone_type\":\"\",\"source_platform\":0,\"video_id\":\"\",\"effect_id\":\"\",\"resource_id\":\"\",\"third_resource_id\":\"\",\"category_id\":\"\",\"intensifies_path\":\"\",\"formula_id\":\"\",\"check_flag\":1,\"team_id\":\"\",\"local_material_id\":\"\",\"tone_speaker\":\"\",\"mock_tone_speaker\":\"\",\"tone_effect_id\":\"\",\"tone_effect_name\":\"\",\"tone_platform\":\"\",\"cloned_model_type\":\"\",\"tone_category_id\":\"\",\"tone_category_name\":\"\",\"tone_second_category_id\":\"\",\"tone_second_category_name\":\"\",\"tone_emotion_name_key\":\"\",\"tone_emotion_style\":\"\",\"tone_emotion_role\":\"\",\"tone_emotion_selection\":\"\",\"tone_emotion_scale\":0,\"moyin_emotion\":\"\",\"request_id\":\"\",\"query\":\"\",\"search_id\":\"\",\"sound_separate_type\":\"\",\"is_text_edit_overdub\":false,\"is_ugc\":false,\"is_ai_clone_tone\":false,\"is_ai_clone_tone_post\":false,\"source_from\":\"\",\"copyright_limit_type\":\"none\",\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"music_source\":\"\",\"pgc_id\":\"\",\"pgc_name\":\"\",\"similiar_music_info\":{\"original_song_id\":\"\",\"original_song_name\":\"\"},\"ai_music_type\":0,\"ai_music_enter_from\":\"\",\"lyric_type\":0,\"tts_task_id\":\"\",\"tts_generate_scene\":\"\",\"ai_music_generate_scene\":0,\"tts_benefit_info\":{\"benefit_type\":\"none\",\"benefit_log_id\":\"\",\"benefit_log_extra\":\"\",\"benefit_amount\":-1}}}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -338,9 +338,9 @@
   "ken-burns-draft/material": {
    "code": 0,
    "out": {
-    "sha": "7045371acaa94d9d",
-    "len": 2694,
-    "text": "{\"_type\":\"videos\",\"id\":\"<UUID#1>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":5000000,\"path\":\"##_draftpath_placeholder_<UUID#2>_##\\Resources\\<UUID#3>.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"<UUID#4>\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":5000000}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":63487,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n"
+    "sha": "a96d5bc0e2c247fe",
+    "len": 2696,
+    "text": "{\"_type\":\"videos\",\"id\":\"<UUID#1>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":5000000,\"path\":\"##_draftpath_placeholder_<UUID#2>_##\\\\Resources\\\\<UUID#3>.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"<UUID#4>\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":5000000}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":63487,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -421,9 +421,9 @@
   "effects-draft/validate": {
    "code": 0,
    "out": {
-    "sha": "ddbe78632eca7f00",
-    "len": 213,
-    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/\\<TMP>\",\"draft_file\":\"<TMP>/\\<TMP>\\draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -435,9 +435,9 @@
   "effects-draft/segment": {
    "code": 0,
    "out": {
-    "sha": "1e5d9a090d6b6eb9",
-    "len": 2851,
-    "text": "{\"id\":\"<UUID#1>\",\"source_timerange\":{\"start\":0,\"duration\":49266666},\"target_timerange\":{\"start\":0,\"duration\":49266666},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":1,\"last_nonzero_volume\":1,\"clip\":null,\"uniform_scale\":null,\"material_id\":\"<UUID#2>\",\"extra_material_refs\":[\"<UUID#3>\",\"<UUID#4>\",\"<UUID#5>\",\"<UUID#6>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":false,\"enable_adjust\":false,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":null,\"enable_color_wheels\":true,\"track_attribute\":0,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"audio\",\"_track_name\":\"\",\"_track_id\":\"<UUID#7>\",\"_material\":{\"_type\":\"audios\",\"id\":\"<UUID#2>\",\"unique_id\":\"\",\"type\":\"extract_music\",\"name\":\"<UUID#8>\",\"duration\":49266666,\"path\":\"##_draftpath_placeholder_<UUID#9>_##\\Resources\\<UUID#10>.mp3\",\"category_name\":\"local\",\"wave_points\":[],\"music_id\":\"\",\"app_id\":0,\"text_id\":\"\",\"tone_type\":\"\",\"source_platform\":0,\"video_id\":\"\",\"effect_id\":\"\",\"resource_id\":\"\",\"third_resource_id\":\"\",\"category_id\":\"\",\"intensifies_path\":\"\",\"formula_id\":\"\",\"check_flag\":1,\"team_id\":\"\",\"local_material_id\":\"\",\"tone_speaker\":\"\",\"mock_tone_speaker\":\"\",\"tone_effect_id\":\"\",\"tone_effect_name\":\"\",\"tone_platform\":\"\",\"cloned_model_type\":\"\",\"tone_category_id\":\"\",\"tone_category_name\":\"\",\"tone_second_category_id\":\"\",\"tone_second_category_name\":\"\",\"tone_emotion_name_key\":\"\",\"tone_emotion_style\":\"\",\"tone_emotion_role\":\"\",\"tone_emotion_selection\":\"\",\"tone_emotion_scale\":0,\"moyin_emotion\":\"\",\"request_id\":\"\",\"query\":\"\",\"search_id\":\"\",\"sound_separate_type\":\"\",\"is_text_edit_overdub\":false,\"is_ugc\":false,\"is_ai_clone_tone\":false,\"is_ai_clone_tone_post\":false,\"source_from\":\"\",\"copyright_limit_type\":\"none\",\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"music_source\":\"\",\"pgc_id\":\"\",\"pgc_name\":\"\",\"similiar_music_info\":{\"original_song_id\":\"\",\"original_song_name\":\"\"},\"ai_music_type\":0,\"ai_music_enter_from\":\"\",\"lyric_type\":0,\"tts_task_id\":\"\",\"tts_generate_scene\":\"\",\"ai_music_generate_scene\":0,\"tts_benefit_info\":{\"benefit_type\":\"none\",\"benefit_log_id\":\"\",\"benefit_log_extra\":\"\",\"benefit_amount\":-1}}}\n"
+    "sha": "4a32afc3c91b36e2",
+    "len": 2853,
+    "text": "{\"id\":\"<UUID#1>\",\"source_timerange\":{\"start\":0,\"duration\":49266666},\"target_timerange\":{\"start\":0,\"duration\":49266666},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":1,\"last_nonzero_volume\":1,\"clip\":null,\"uniform_scale\":null,\"material_id\":\"<UUID#2>\",\"extra_material_refs\":[\"<UUID#3>\",\"<UUID#4>\",\"<UUID#5>\",\"<UUID#6>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":false,\"enable_adjust\":false,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":null,\"enable_color_wheels\":true,\"track_attribute\":0,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"audio\",\"_track_name\":\"\",\"_track_id\":\"<UUID#7>\",\"_material\":{\"_type\":\"audios\",\"id\":\"<UUID#2>\",\"unique_id\":\"\",\"type\":\"extract_music\",\"name\":\"<UUID#8>\",\"duration\":49266666,\"path\":\"##_draftpath_placeholder_<UUID#9>_##\\\\Resources\\\\<UUID#10>.mp3\",\"category_name\":\"local\",\"wave_points\":[],\"music_id\":\"\",\"app_id\":0,\"text_id\":\"\",\"tone_type\":\"\",\"source_platform\":0,\"video_id\":\"\",\"effect_id\":\"\",\"resource_id\":\"\",\"third_resource_id\":\"\",\"category_id\":\"\",\"intensifies_path\":\"\",\"formula_id\":\"\",\"check_flag\":1,\"team_id\":\"\",\"local_material_id\":\"\",\"tone_speaker\":\"\",\"mock_tone_speaker\":\"\",\"tone_effect_id\":\"\",\"tone_effect_name\":\"\",\"tone_platform\":\"\",\"cloned_model_type\":\"\",\"tone_category_id\":\"\",\"tone_category_name\":\"\",\"tone_second_category_id\":\"\",\"tone_second_category_name\":\"\",\"tone_emotion_name_key\":\"\",\"tone_emotion_style\":\"\",\"tone_emotion_role\":\"\",\"tone_emotion_selection\":\"\",\"tone_emotion_scale\":0,\"moyin_emotion\":\"\",\"request_id\":\"\",\"query\":\"\",\"search_id\":\"\",\"sound_separate_type\":\"\",\"is_text_edit_overdub\":false,\"is_ugc\":false,\"is_ai_clone_tone\":false,\"is_ai_clone_tone_post\":false,\"source_from\":\"\",\"copyright_limit_type\":\"none\",\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"music_source\":\"\",\"pgc_id\":\"\",\"pgc_name\":\"\",\"similiar_music_info\":{\"original_song_id\":\"\",\"original_song_name\":\"\"},\"ai_music_type\":0,\"ai_music_enter_from\":\"\",\"lyric_type\":0,\"tts_task_id\":\"\",\"tts_generate_scene\":\"\",\"ai_music_generate_scene\":0,\"tts_benefit_info\":{\"benefit_type\":\"none\",\"benefit_log_id\":\"\",\"benefit_log_extra\":\"\",\"benefit_amount\":-1}}}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -449,9 +449,9 @@
   "effects-draft/material": {
    "code": 0,
    "out": {
-    "sha": "04de4328b7ab3771",
-    "len": 2783,
-    "text": "{\"_type\":\"videos\",\"id\":\"<UUID#1>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":5000000,\"path\":\"##_draftpath_placeholder_<UUID#2>_##\\Resources\\<UUID#3>.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":1080,\"height\":1920,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"<UUID#4>\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":5000000}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false,\"is_clould\":false,\"mask_video_path\":\"\",\"cloud_product_fps\":0},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":63487,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"is_set_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n"
+    "sha": "11274bcf5e2ab297",
+    "len": 2785,
+    "text": "{\"_type\":\"videos\",\"id\":\"<UUID#1>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":5000000,\"path\":\"##_draftpath_placeholder_<UUID#2>_##\\\\Resources\\\\<UUID#3>.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":1080,\"height\":1920,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"<UUID#4>\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":5000000}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false,\"is_clould\":false,\"mask_video_path\":\"\",\"cloud_product_fps\":0},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":63487,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"is_set_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -532,9 +532,9 @@
   "full-psycho-draft/validate": {
    "code": 0,
    "out": {
-    "sha": "ddbe78632eca7f00",
-    "len": 213,
-    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/\\<TMP>\",\"draft_file\":\"<TMP>/\\<TMP>\\draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -560,9 +560,9 @@
   "full-psycho-draft/segment": {
    "code": 0,
    "out": {
-    "sha": "0edfdbbbc25e0fcf",
-    "len": 2885,
-    "text": "{\"id\":\"<UUID#1>\",\"source_timerange\":{\"start\":0,\"duration\":60033333},\"target_timerange\":{\"start\":0,\"duration\":58033333},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1.0344629525241984,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":2.5040502548217773,\"last_nonzero_volume\":1,\"clip\":null,\"uniform_scale\":null,\"material_id\":\"<UUID#2>\",\"extra_material_refs\":[\"<UUID#3>\",\"<UUID#4>\",\"<UUID#5>\",\"<UUID#6>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":false,\"enable_adjust\":false,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":null,\"enable_color_wheels\":true,\"track_attribute\":0,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"audio\",\"_track_name\":\"\",\"_track_id\":\"<UUID#7>\",\"_material\":{\"_type\":\"audios\",\"id\":\"<UUID#2>\",\"unique_id\":\"\",\"type\":\"extract_music\",\"name\":\"<UUID#8>\",\"duration\":60033333,\"path\":\"##_draftpath_placeholder_<UUID#9>_##\\Resources\\<UUID#10>.mp3\",\"category_name\":\"local\",\"wave_points\":[],\"music_id\":\"\",\"app_id\":0,\"text_id\":\"\",\"tone_type\":\"\",\"source_platform\":0,\"video_id\":\"\",\"effect_id\":\"\",\"resource_id\":\"\",\"third_resource_id\":\"\",\"category_id\":\"\",\"intensifies_path\":\"\",\"formula_id\":\"\",\"check_flag\":1,\"team_id\":\"\",\"local_material_id\":\"\",\"tone_speaker\":\"\",\"mock_tone_speaker\":\"\",\"tone_effect_id\":\"\",\"tone_effect_name\":\"\",\"tone_platform\":\"\",\"cloned_model_type\":\"\",\"tone_category_id\":\"\",\"tone_category_name\":\"\",\"tone_second_category_id\":\"\",\"tone_second_category_name\":\"\",\"tone_emotion_name_key\":\"\",\"tone_emotion_style\":\"\",\"tone_emotion_role\":\"\",\"tone_emotion_selection\":\"\",\"tone_emotion_scale\":0,\"moyin_emotion\":\"\",\"request_id\":\"\",\"query\":\"\",\"search_id\":\"\",\"sound_separate_type\":\"\",\"is_text_edit_overdub\":false,\"is_ugc\":false,\"is_ai_clone_tone\":false,\"is_ai_clone_tone_post\":false,\"source_from\":\"\",\"copyright_limit_type\":\"none\",\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"music_source\":\"\",\"pgc_id\":\"\",\"pgc_name\":\"\",\"similiar_music_info\":{\"original_song_id\":\"\",\"original_song_name\":\"\"},\"ai_music_type\":0,\"ai_music_enter_from\":\"\",\"lyric_type\":0,\"tts_task_id\":\"\",\"tts_generate_scene\":\"\",\"ai_music_generate_scene\":0,\"tts_benefit_info\":{\"benefit_type\":\"none\",\"benefit_log_id\":\"\",\"benefit_log_extra\":\"\",\"benefit_amount\":-1}}}\n"
+    "sha": "4aff1021883469fb",
+    "len": 2887,
+    "text": "{\"id\":\"<UUID#1>\",\"source_timerange\":{\"start\":0,\"duration\":60033333},\"target_timerange\":{\"start\":0,\"duration\":58033333},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1.0344629525241984,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":2.5040502548217773,\"last_nonzero_volume\":1,\"clip\":null,\"uniform_scale\":null,\"material_id\":\"<UUID#2>\",\"extra_material_refs\":[\"<UUID#3>\",\"<UUID#4>\",\"<UUID#5>\",\"<UUID#6>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":false,\"enable_adjust\":false,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":null,\"enable_color_wheels\":true,\"track_attribute\":0,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"audio\",\"_track_name\":\"\",\"_track_id\":\"<UUID#7>\",\"_material\":{\"_type\":\"audios\",\"id\":\"<UUID#2>\",\"unique_id\":\"\",\"type\":\"extract_music\",\"name\":\"<UUID#8>\",\"duration\":60033333,\"path\":\"##_draftpath_placeholder_<UUID#9>_##\\\\Resources\\\\<UUID#10>.mp3\",\"category_name\":\"local\",\"wave_points\":[],\"music_id\":\"\",\"app_id\":0,\"text_id\":\"\",\"tone_type\":\"\",\"source_platform\":0,\"video_id\":\"\",\"effect_id\":\"\",\"resource_id\":\"\",\"third_resource_id\":\"\",\"category_id\":\"\",\"intensifies_path\":\"\",\"formula_id\":\"\",\"check_flag\":1,\"team_id\":\"\",\"local_material_id\":\"\",\"tone_speaker\":\"\",\"mock_tone_speaker\":\"\",\"tone_effect_id\":\"\",\"tone_effect_name\":\"\",\"tone_platform\":\"\",\"cloned_model_type\":\"\",\"tone_category_id\":\"\",\"tone_category_name\":\"\",\"tone_second_category_id\":\"\",\"tone_second_category_name\":\"\",\"tone_emotion_name_key\":\"\",\"tone_emotion_style\":\"\",\"tone_emotion_role\":\"\",\"tone_emotion_selection\":\"\",\"tone_emotion_scale\":0,\"moyin_emotion\":\"\",\"request_id\":\"\",\"query\":\"\",\"search_id\":\"\",\"sound_separate_type\":\"\",\"is_text_edit_overdub\":false,\"is_ugc\":false,\"is_ai_clone_tone\":false,\"is_ai_clone_tone_post\":false,\"source_from\":\"\",\"copyright_limit_type\":\"none\",\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"music_source\":\"\",\"pgc_id\":\"\",\"pgc_name\":\"\",\"similiar_music_info\":{\"original_song_id\":\"\",\"original_song_name\":\"\"},\"ai_music_type\":0,\"ai_music_enter_from\":\"\",\"lyric_type\":0,\"tts_task_id\":\"\",\"tts_generate_scene\":\"\",\"ai_music_generate_scene\":0,\"tts_benefit_info\":{\"benefit_type\":\"none\",\"benefit_log_id\":\"\",\"benefit_log_extra\":\"\",\"benefit_amount\":-1}}}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -574,9 +574,9 @@
   "full-psycho-draft/material": {
    "code": 0,
    "out": {
-    "sha": "7045371acaa94d9d",
-    "len": 2694,
-    "text": "{\"_type\":\"videos\",\"id\":\"<UUID#1>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":5000000,\"path\":\"##_draftpath_placeholder_<UUID#2>_##\\Resources\\<UUID#3>.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"<UUID#4>\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":5000000}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":63487,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n"
+    "sha": "a96d5bc0e2c247fe",
+    "len": 2696,
+    "text": "{\"_type\":\"videos\",\"id\":\"<UUID#1>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":5000000,\"path\":\"##_draftpath_placeholder_<UUID#2>_##\\\\Resources\\\\<UUID#3>.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"<UUID#4>\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":5000000}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":63487,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -658,9 +658,9 @@
   "animations-draft/validate": {
    "code": 0,
    "out": {
-    "sha": "ddbe78632eca7f00",
-    "len": 213,
-    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/\\<TMP>\",\"draft_file\":\"<TMP>/\\<TMP>\\draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -783,9 +783,9 @@
   "stickers-draft/validate": {
    "code": 0,
    "out": {
-    "sha": "ddbe78632eca7f00",
-    "len": 213,
-    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/\\<TMP>\",\"draft_file\":\"<TMP>/\\<TMP>\\draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -894,9 +894,9 @@
   "transitions-draft/validate": {
    "code": 0,
    "out": {
-    "sha": "ddbe78632eca7f00",
-    "len": 213,
-    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/\\<TMP>\",\"draft_file\":\"<TMP>/\\<TMP>\\draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -1005,9 +1005,9 @@
   "masks-filters-draft/validate": {
    "code": 0,
    "out": {
-    "sha": "ddbe78632eca7f00",
-    "len": 213,
-    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/\\<TMP>\",\"draft_file\":\"<TMP>/\\<TMP>\\draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -1069,7 +1069,7 @@
     "text": ""
    },
    "artifact": {
-    "draft_canon_sha": "9b55a709de52e3f1",
+    "draft_canon_sha": "914520cdc5fa5f8e",
     "bak_exists": true,
     "bak_equals_original": true,
     "indent_preserved": true,
@@ -1089,7 +1089,7 @@
     "text": ""
    },
    "artifact": {
-    "draft_canon_sha": "4c07066999e74afb",
+    "draft_canon_sha": "f7af37a32318d1f0",
     "bak_exists": true,
     "bak_equals_original": true,
     "indent_preserved": true,
@@ -1109,7 +1109,7 @@
     "text": ""
    },
    "artifact": {
-    "draft_canon_sha": "80e8a16e89b27a58",
+    "draft_canon_sha": "d2bf53341c25c759",
     "bak_exists": true,
     "bak_equals_original": true,
     "indent_preserved": true,
@@ -1139,9 +1139,9 @@
   "minimal/add-audio": {
    "code": 0,
    "out": {
-    "sha": "de2282ad1acf3518",
-    "len": 149,
-    "text": "{\"ok\":true,\"segment_id\":\"<UUID#1>\",\"material_id\":\"<UUID#2>\",\"track_id\":\"<UUID#3>\",\"path\":\"<TMP>/\\<TMP>\\tone.mp3\",\"start_us\":0,\"duration_us\":2000000}\n"
+    "sha": "df7396f1a4f10704",
+    "len": 148,
+    "text": "{\"ok\":true,\"segment_id\":\"<UUID#1>\",\"material_id\":\"<UUID#2>\",\"track_id\":\"<UUID#3>\",\"path\":\"<TMP>/<TMP>/tone.mp3\",\"start_us\":0,\"duration_us\":2000000}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -1149,7 +1149,7 @@
     "text": ""
    },
    "artifact": {
-    "draft_canon_sha": "251b416b0bd44130",
+    "draft_canon_sha": "cd0db3fb487a75f8",
     "bak_exists": true,
     "bak_equals_original": true,
     "indent_preserved": true,
@@ -1179,9 +1179,9 @@
   "minimal/gc-noop": {
    "code": 0,
    "out": {
-    "sha": "63e29eb1e7e8fa65",
-    "len": 276,
-    "text": "{\"schema\":\"capcut-david/gc@1\",\"ok\":true,\"dry_run\":false,\"project\":\"<TMP>/\\<TMP>\",\"draft_file\":\"<TMP>/\\<TMP>\\draft_content.json\",\"removed\":{\"texts\":[],\"videos\":[],\"audios\":[]},\"skipped_cross_ref\":[],\"summary\":{\"orphan_text\":0,\"orphan_media\":0,\"removed_total\":0,\"wrote\":false}}\n"
+    "sha": "95e39e9b68dd23da",
+    "len": 274,
+    "text": "{\"schema\":\"capcut-david/gc@1\",\"ok\":true,\"dry_run\":false,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"removed\":{\"texts\":[],\"videos\":[],\"audios\":[]},\"skipped_cross_ref\":[],\"summary\":{\"orphan_text\":0,\"orphan_media\":0,\"removed_total\":0,\"wrote\":false}}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -1209,7 +1209,7 @@
     "text": ""
    },
    "artifact": {
-    "draft_canon_sha": "51ffe3bf82944e0d",
+    "draft_canon_sha": "614afa83a0627b24",
     "bak_exists": true,
     "bak_equals_original": true,
     "indent_preserved": true,
@@ -1229,7 +1229,7 @@
     "text": "{\"error\":\"Segment <UUID#1> has no clip (audio segment?)\"}\n"
    },
    "artifact": {
-    "draft_canon_sha": "ed91e81b79e2583e",
+    "draft_canon_sha": "ac18f23f78a7c694",
     "bak_exists": false,
     "bak_equals_original": null,
     "indent_preserved": true,
@@ -1249,7 +1249,7 @@
     "text": ""
    },
    "artifact": {
-    "draft_canon_sha": "6dce43455715e624",
+    "draft_canon_sha": "49095401fac48b66",
     "bak_exists": true,
     "bak_equals_original": true,
     "indent_preserved": true,
@@ -1259,9 +1259,9 @@
   "effects/remove-segment": {
    "code": 0,
    "out": {
-    "sha": "db7e1b49cc771546",
-    "len": 167,
-    "text": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID#1>\",\"track_id\":\"<UUID#2>\",\"track_removed\":true,\"materials_removed\":1,\"project\":\"<TMP>/\\<TMP>\"}\n"
+    "sha": "5c29808565780806",
+    "len": 166,
+    "text": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID#1>\",\"track_id\":\"<UUID#2>\",\"track_removed\":true,\"materials_removed\":1,\"project\":\"<TMP>/<TMP>\"}\n"
    },
    "err": {
     "sha": "e3b0c44298fc1c14",
@@ -1269,7 +1269,7 @@
     "text": ""
    },
    "artifact": {
-    "draft_canon_sha": "3a76f988cddef35f",
+    "draft_canon_sha": "2a800a4617224e8f",
     "bak_exists": true,
     "bak_equals_original": true,
     "indent_preserved": true,
@@ -1289,7 +1289,7 @@
     "text": ""
    },
    "artifact": {
-    "draft_canon_sha": "bab02ba168d53576",
+    "draft_canon_sha": "1dd29440198005a1",
     "bak_exists": true,
     "bak_equals_original": true,
     "indent_preserved": true,
@@ -1309,7 +1309,7 @@
     "text": ""
    },
    "artifact": {
-    "draft_canon_sha": "30f9ec934ecc0aeb",
+    "draft_canon_sha": "ed885ff5dba7620b",
     "bak_exists": true,
     "bak_equals_original": true,
     "indent_preserved": true,
