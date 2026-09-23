@@ -27,7 +27,7 @@ doit être écrite dans la spec et le contrat documenté mis à jour dans le mê
       (un seul champ change : l'identité du rollback racine) ; le reste de la capture est inchangé
 - [x] Le cas est verrouillé par un test de comportement (CLI réelle sur copie temporaire) qui échoue sans le fix
 - [x] `restyle` **sans** police garde exactement son comportement actuel
-- [ ] Tests au comportement inchangé par ailleurs ; suite complète verte ; coverage ≥80 % ; CI verte
+- [x] Tests au comportement inchangé par ailleurs ; suite complète verte ; coverage ≥80 % ; CI verte
 
 > **Notes d'audit (2026-09-23).**
 > - **AC7** : les volets locaux sont vérifiés (suite 714/714, coverage 94,96 % lignes / 98,22 % fonctions),
@@ -40,7 +40,7 @@ doit être écrite dans la spec et le contrat documenté mis à jour dans le mê
 >   régénérée dans le même diff.
 > - **Test renforcé** : `test/mirror.test.mjs` pré-crée un `.bak` et asserte l'invariant « jamais écrasé ».
 
-**Status:** in-progress
+**Status:** done
 
 **Blocked by:** 01 — net : restyle avec police (le filet doit d'abord enregistrer l'état actuel pour que la
 divergence soit justifiable dans le même diff)
@@ -90,3 +90,17 @@ reste le preexistant (checkout CRLF + config racine imbriquee `.kilo/`), non imp
 
 **CI** : branche **non poussee** -> la run `ubuntu-latest` reste a declencher (meme schema que le ticket 01) ;
 la baseline a ete regeneree et verifiee en local (Windows) + la parite LF a ete mesuree au niveau du fichier modele.
+
+---
+
+## Cloture CI (2026-09-23)
+
+Branche poussee (`origin/feat/arch-02-restyle-preserves-root-rollback`), PR [#7](https://github.com/Davidb-2107/capcut-cli-david/pull/7)
+ouverte (`MERGEABLE`, `CLEAN`). Run CI [35859814670](https://github.com/Davidb-2107/capcut-cli-david/actions/runs/35859814670)
+sur `ubuntu-latest` : **15/15 jobs SUCCESS** (dont *Golden output*, *Coverage*, *Lint + Typecheck*, *Fixture integrity*,
+*Secrets scan*, et 9 jobs *Test* Node 18/20/22 x ubuntu/macos/windows). Journal du job *Golden output* :
+`golden selftest: OK (Windows and Linux forms canonicalise identically)` ;
+`golden: OK - 90 cases identical to baseline.` ; `21 verbs swept, 0 unexpected result(s)`.
+
+**AC7 levee** : suite 715/715, coverage 94,93 % lignes / 98,22 % fonctions, CI verte (run 35859814670)
+-> la qualification de la note d'audit est resolue ; ticket **done**.
