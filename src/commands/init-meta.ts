@@ -42,7 +42,7 @@ export function planInitMeta(draft: Draft, draftDir: string): InitMetaPlan {
 }
 
 /** Write the sidecar to disk. If one already exists, back it up FIRST (bak-first,
- * like saveDraft) so a forced overwrite stays recoverable. CREATE path = exactly
+ * like persistDraft) so a forced overwrite stays recoverable. CREATE path = exactly
  * one trailing write (a read-only dir throws here with nothing half-written).
  * Extracted from cmdInitMeta so the `validate --fix` umbrella can apply init-meta
  * without re-parsing or re-emitting an envelope. */

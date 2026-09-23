@@ -1,0 +1,1320 @@
+{
+ "schema": "capcut-david/golden@1",
+ "generatedBy": "scripts/golden-output.mjs",
+ "entries": {
+  "help": {
+   "code": 0,
+   "out": {
+    "sha": "a5e76f799c387037",
+    "len": 14823
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   }
+  },
+  "minimal-draft/info": {
+   "code": 0,
+   "out": {
+    "sha": "2fcbb49695f96f63",
+    "len": 224,
+    "text": "{\"id\":\"<UUID#1>\",\"name\":\"<UUID#1>\",\"duration_us\":0,\"fps\":30,\"width\":1920,\"height\":1080,\"ratio\":\"original\",\"tracks\":0,\"segments\":0,\"platform\":\"CapCut 8.5.0\",\"material_types\":54,\"materials_with_items\":0,\"material_summary\":[]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "minimal-draft/tracks": {
+   "code": 0,
+   "out": {
+    "sha": "37517e5f3dc66819",
+    "len": 3,
+    "text": "[]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "minimal-draft/materials": {
+   "code": 0,
+   "out": {
+    "sha": "3a8b0b979a3b1c6b",
+    "len": 1860,
+    "text": "[{\"type\":\"flowers\",\"count\":0},{\"type\":\"videos\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"audios\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"texts\",\"count\":0},{\"type\":\"effects\",\"count\":0},{\"type\":\"stickers\",\"count\":0},{\"type\":\"canvases\",\"count\":0},{\"type\":\"transitions\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"material_animations\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"placeholder_infos\",\"count\":0},{\"type\":\"speeds\",\"count\":0},{\"type\":\"common_mask\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"video_effects\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"sound_channel_mappings\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"material_colors\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"loudnesses\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"vocal_separations\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "minimal-draft/segments": {
+   "code": 1,
+   "out": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "err": {
+    "sha": "b5e5edd02627618f",
+    "len": 44,
+    "text": "{\"error\":\"No tracks of type \\\"undefined\\\"\"}\n"
+   },
+   "readonly_untouched": true
+  },
+  "minimal-draft/texts": {
+   "code": 0,
+   "out": {
+    "sha": "37517e5f3dc66819",
+    "len": 3,
+    "text": "[]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "minimal-draft/validate": {
+   "code": 0,
+   "out": {
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "subtitles-draft/info": {
+   "code": 0,
+   "out": {
+    "sha": "d86dc808c04a1222",
+    "len": 607,
+    "text": "{\"id\":\"<UUID#1>\",\"name\":\"<UUID#1>\",\"duration_us\":60033333,\"fps\":30,\"width\":1080,\"height\":1920,\"ratio\":\"original\",\"tracks\":3,\"segments\":30,\"platform\":\"CapCut 8.2.0\",\"material_types\":54,\"materials_with_items\":11,\"material_summary\":[{\"type\":\"texts\",\"count\":28},{\"type\":\"material_animations\",\"count\":28},{\"type\":\"placeholder_infos\",\"count\":2},{\"type\":\"speeds\",\"count\":2},{\"type\":\"sound_channel_mappings\",\"count\":2},{\"type\":\"vocal_separations\",\"count\":2},{\"type\":\"videos\",\"count\":1},{\"type\":\"audios\",\"count\":1},{\"type\":\"canvases\",\"count\":1},{\"type\":\"material_colors\",\"count\":1},{\"type\":\"loudnesses\",\"count\":1}]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "subtitles-draft/tracks": {
+   "code": 0,
+   "out": {
+    "sha": "529adaf1e02226f7",
+    "len": 401,
+    "text": "[{\"index\":0,\"id\":\"<UUID#1>\",\"type\":\"audio\",\"name\":\"\",\"segments\":1,\"duration_us\":60033333,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":1,\"id\":\"<UUID#2>\",\"type\":\"video\",\"name\":\"\",\"segments\":1,\"duration_us\":60033333,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":2,\"id\":\"<UUID#3>\",\"type\":\"text\",\"name\":\"\",\"segments\":28,\"duration_us\":59766666,\"muted\":false,\"hidden\":false,\"locked\":false}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "subtitles-draft/materials": {
+   "code": 0,
+   "out": {
+    "sha": "3c03d0200453672b",
+    "len": 1862,
+    "text": "[{\"type\":\"texts\",\"count\":28},{\"type\":\"material_animations\",\"count\":28},{\"type\":\"placeholder_infos\",\"count\":2},{\"type\":\"speeds\",\"count\":2},{\"type\":\"sound_channel_mappings\",\"count\":2},{\"type\":\"vocal_separations\",\"count\":2},{\"type\":\"videos\",\"count\":1},{\"type\":\"audios\",\"count\":1},{\"type\":\"canvases\",\"count\":1},{\"type\":\"material_colors\",\"count\":1},{\"type\":\"loudnesses\",\"count\":1},{\"type\":\"flowers\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"effects\",\"count\":0},{\"type\":\"stickers\",\"count\":0},{\"type\":\"transitions\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"common_mask\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"video_effects\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "subtitles-draft/segments": {
+   "code": 0,
+   "out": {
+    "sha": "bedd07825f55ea1a",
+    "len": 4372
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "subtitles-draft/texts": {
+   "code": 0,
+   "out": {
+    "sha": "e36a72594a643138",
+    "len": 2782,
+    "text": "[{\"id\":\"<UUID#1>\",\"start_us\":66666,\"duration_us\":1400000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#2>\",\"start_us\":2533333,\"duration_us\":1800000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#3>\",\"start_us\":5000000,\"duration_us\":1066666,\"text\":\"LOREM LOREM LOREM\"},{\"id\":\"<UUID#4>\",\"start_us\":6766666,\"duration_us\":900000,\"text\":\"LOREM LOREM\"},{\"id\":\"<UUID#5>\",\"start_us\":8366666,\"duration_us\":1900000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#6>\",\"start_us\":10866666,\"duration_us\":1700000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#7>\",\"start_us\":13333333,\"duration_us\":1366667,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#8>\",\"start_us\":15100000,\"duration_us\":1266666,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#9>\",\"start_us\":16733333,\"duration_us\":1566667,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#10>\",\"start_us\":18700000,\"duration_us\":3200000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#11>\",\"start_us\":22533333,\"duration_us\":2600000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#12>\",\"start_us\":25666666,\"duration_us\":800000,\"text\":\"LOREM LOREM LOREM\"},{\"id\":\"<UUID#13>\",\"start_us\":26800000,\"duration_us\":1766666,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#14>\",\"start_us\":29400000,\"duration_us\":1333333,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#15>\",\"start_us\":31066666,\"duration_us\":1700000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#16>\",\"start_us\":33100000,\"duration_us\":1600000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#17>\",\"start_us\":35200000,\"duration_us\":1600000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#18>\",\"start_us\":37333333,\"duration_us\":1466667,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#19>\",\"start_us\":39200000,\"duration_us\":1400000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#20>\",\"start_us\":41300000,\"duration_us\":1866666,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#21>\",\"start_us\":43500000,\"duration_us\":1700000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#22>\",\"start_us\":45700000,\"duration_us\":1166666,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#23>\",\"start_us\":47200000,\"duration_us\":2300000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#24>\",\"start_us\":50100000,\"duration_us\":900000,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#25>\",\"start_us\":51900000,\"duration_us\":1633333,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#26>\",\"start_us\":53933333,\"duration_us\":2066667,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#27>\",\"start_us\":57000000,\"duration_us\":1533333,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#28>\",\"start_us\":58966666,\"duration_us\":800000,\"text\":\"LOREM LOREM LOREM\"}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "subtitles-draft/validate": {
+   "code": 0,
+   "out": {
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "subtitles-draft/export-srt": {
+   "code": 0,
+   "out": {
+    "sha": "dd960e49d766b32d",
+    "len": 1782,
+    "text": "1\n00:00:00,067 --> 00:00:01,467\nLOREM LOREM LOREM LOREM LOREM\n\n2\n00:00:02,533 --> 00:00:04,333\nLOREM LOREM LOREM LOREM LOREM\n\n3\n00:00:05,000 --> 00:00:06,067\nLOREM LOREM LOREM\n\n4\n00:00:06,767 --> 00:00:07,667\nLOREM LOREM\n\n5\n00:00:08,367 --> 00:00:10,267\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n6\n00:00:10,867 --> 00:00:12,567\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n7\n00:00:13,333 --> 00:00:14,700\nLOREM LOREM LOREM LOREM LOREM\n\n8\n00:00:15,100 --> 00:00:16,367\nLOREM LOREM LOREM LOREM\n\n9\n00:00:16,733 --> 00:00:18,300\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n10\n00:00:18,700 --> 00:00:21,900\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n11\n00:00:22,533 --> 00:00:25,133\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n12\n00:00:25,667 --> 00:00:26,467\nLOREM LOREM LOREM\n\n13\n00:00:26,800 --> 00:00:28,567\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n14\n00:00:29,400 --> 00:00:30,733\nLOREM LOREM LOREM LOREM\n\n15\n00:00:31,067 --> 00:00:32,767\nLOREM LOREM LOREM LOREM LOREM\n\n16\n00:00:33,100 --> 00:00:34,700\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n17\n00:00:35,200 --> 00:00:36,800\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n18\n00:00:37,333 --> 00:00:38,800\nLOREM LOREM LOREM LOREM\n\n19\n00:00:39,200 --> 00:00:40,600\nLOREM LOREM LOREM LOREM LOREM\n\n20\n00:00:41,300 --> 00:00:43,167\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n21\n00:00:43,500 --> 00:00:45,200\nLOREM LOREM LOREM LOREM LOREM\n\n22\n00:00:45,700 --> 00:00:46,867\nLOREM LOREM LOREM LOREM\n\n23\n00:00:47,200 --> 00:00:49,500\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n24\n00:00:50,100 --> 00:00:51,000\nLOREM LOREM LOREM LOREM\n\n25\n00:00:51,900 --> 00:00:53,533\nLOREM LOREM LOREM LOREM LOREM\n\n26\n00:00:53,933 --> 00:00:56,000\nLOREM LOREM LOREM LOREM\n\n27\n00:00:57,000 --> 00:00:58,533\nLOREM LOREM LOREM LOREM\n\n28\n00:00:58,967 --> 00:00:59,767\nLOREM LOREM LOREM\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "subtitles-draft/segment": {
+   "code": 0,
+   "out": {
+    "sha": "5e90d6fc75d62589",
+    "len": 2853,
+    "text": "{\"id\":\"<UUID#1>\",\"source_timerange\":{\"start\":0,\"duration\":60033333},\"target_timerange\":{\"start\":0,\"duration\":60033333},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":1,\"last_nonzero_volume\":1,\"clip\":null,\"uniform_scale\":null,\"material_id\":\"<UUID#2>\",\"extra_material_refs\":[\"<UUID#3>\",\"<UUID#4>\",\"<UUID#5>\",\"<UUID#6>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":false,\"enable_adjust\":false,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":null,\"enable_color_wheels\":true,\"track_attribute\":0,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"audio\",\"_track_name\":\"\",\"_track_id\":\"<UUID#7>\",\"_material\":{\"_type\":\"audios\",\"id\":\"<UUID#2>\",\"unique_id\":\"\",\"type\":\"extract_music\",\"name\":\"<UUID#8>\",\"duration\":60033333,\"path\":\"##_draftpath_placeholder_<UUID#9>_##\\\\Resources\\\\<UUID#10>.mp3\",\"category_name\":\"local\",\"wave_points\":[],\"music_id\":\"\",\"app_id\":0,\"text_id\":\"\",\"tone_type\":\"\",\"source_platform\":0,\"video_id\":\"\",\"effect_id\":\"\",\"resource_id\":\"\",\"third_resource_id\":\"\",\"category_id\":\"\",\"intensifies_path\":\"\",\"formula_id\":\"\",\"check_flag\":1,\"team_id\":\"\",\"local_material_id\":\"\",\"tone_speaker\":\"\",\"mock_tone_speaker\":\"\",\"tone_effect_id\":\"\",\"tone_effect_name\":\"\",\"tone_platform\":\"\",\"cloned_model_type\":\"\",\"tone_category_id\":\"\",\"tone_category_name\":\"\",\"tone_second_category_id\":\"\",\"tone_second_category_name\":\"\",\"tone_emotion_name_key\":\"\",\"tone_emotion_style\":\"\",\"tone_emotion_role\":\"\",\"tone_emotion_selection\":\"\",\"tone_emotion_scale\":0,\"moyin_emotion\":\"\",\"request_id\":\"\",\"query\":\"\",\"search_id\":\"\",\"sound_separate_type\":\"\",\"is_text_edit_overdub\":false,\"is_ugc\":false,\"is_ai_clone_tone\":false,\"is_ai_clone_tone_post\":false,\"source_from\":\"\",\"copyright_limit_type\":\"none\",\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"music_source\":\"\",\"pgc_id\":\"\",\"pgc_name\":\"\",\"similiar_music_info\":{\"original_song_id\":\"\",\"original_song_name\":\"\"},\"ai_music_type\":0,\"ai_music_enter_from\":\"\",\"lyric_type\":0,\"tts_task_id\":\"\",\"tts_generate_scene\":\"\",\"ai_music_generate_scene\":0,\"tts_benefit_info\":{\"benefit_type\":\"none\",\"benefit_log_id\":\"\",\"benefit_log_extra\":\"\",\"benefit_amount\":-1}}}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "subtitles-draft/material": {
+   "code": 0,
+   "out": {
+    "sha": "a96d5bc0e2c247fe",
+    "len": 2696,
+    "text": "{\"_type\":\"videos\",\"id\":\"<UUID#1>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":5000000,\"path\":\"##_draftpath_placeholder_<UUID#2>_##\\\\Resources\\\\<UUID#3>.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"<UUID#4>\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":5000000}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":63487,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "ken-burns-draft/info": {
+   "code": 0,
+   "out": {
+    "sha": "890bc471e1783549",
+    "len": 603,
+    "text": "{\"id\":\"<UUID#1>\",\"name\":\"<UUID#1>\",\"duration_us\":3533333,\"fps\":30,\"width\":1080,\"height\":1920,\"ratio\":\"original\",\"tracks\":4,\"segments\":9,\"platform\":\"CapCut 8.2.0\",\"material_types\":54,\"materials_with_items\":11,\"material_summary\":[{\"type\":\"placeholder_infos\",\"count\":7},{\"type\":\"speeds\",\"count\":7},{\"type\":\"sound_channel_mappings\",\"count\":7},{\"type\":\"vocal_separations\",\"count\":7},{\"type\":\"videos\",\"count\":5},{\"type\":\"canvases\",\"count\":5},{\"type\":\"material_colors\",\"count\":5},{\"type\":\"loudnesses\",\"count\":5},{\"type\":\"audios\",\"count\":2},{\"type\":\"texts\",\"count\":2},{\"type\":\"material_animations\",\"count\":2}]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "ken-burns-draft/tracks": {
+   "code": 0,
+   "out": {
+    "sha": "8714851d80cd45b2",
+    "len": 528,
+    "text": "[{\"index\":0,\"id\":\"<UUID#1>\",\"type\":\"audio\",\"name\":\"\",\"segments\":1,\"duration_us\":3533333,\"muted\":true,\"hidden\":false,\"locked\":false},{\"index\":1,\"id\":\"<UUID#2>\",\"type\":\"audio\",\"name\":\"\",\"segments\":1,\"duration_us\":3500000,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":2,\"id\":\"<UUID#3>\",\"type\":\"video\",\"name\":\"\",\"segments\":5,\"duration_us\":3533333,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":3,\"id\":\"<UUID#4>\",\"type\":\"text\",\"name\":\"\",\"segments\":2,\"duration_us\":3500000,\"muted\":false,\"hidden\":false,\"locked\":false}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "ken-burns-draft/materials": {
+   "code": 0,
+   "out": {
+    "sha": "299b07220608989e",
+    "len": 1860,
+    "text": "[{\"type\":\"placeholder_infos\",\"count\":7},{\"type\":\"speeds\",\"count\":7},{\"type\":\"sound_channel_mappings\",\"count\":7},{\"type\":\"vocal_separations\",\"count\":7},{\"type\":\"videos\",\"count\":5},{\"type\":\"canvases\",\"count\":5},{\"type\":\"material_colors\",\"count\":5},{\"type\":\"loudnesses\",\"count\":5},{\"type\":\"audios\",\"count\":2},{\"type\":\"texts\",\"count\":2},{\"type\":\"material_animations\",\"count\":2},{\"type\":\"flowers\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"effects\",\"count\":0},{\"type\":\"stickers\",\"count\":0},{\"type\":\"transitions\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"common_mask\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"video_effects\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "ken-burns-draft/segments": {
+   "code": 0,
+   "out": {
+    "sha": "d9cc57ed9653ee73",
+    "len": 1134,
+    "text": "[{\"id\":\"<UUID#1>\",\"type\":\"audio\",\"start_us\":0,\"duration_us\":3533333,\"speed\":1,\"volume\":0.5,\"opacity\":1,\"label\":\"<UUID#2>\"},{\"id\":\"<UUID#3>\",\"type\":\"audio\",\"start_us\":500000,\"duration_us\":3000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID#4>\"},{\"id\":\"<UUID#5>\",\"type\":\"video\",\"start_us\":0,\"duration_us\":766666,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID#6>\"},{\"id\":\"<UUID#7>\",\"type\":\"video\",\"start_us\":766666,\"duration_us\":766667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID#8>\"},{\"id\":\"<UUID#9>\",\"type\":\"video\",\"start_us\":1533333,\"duration_us\":733333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID#10>\"},{\"id\":\"<UUID#11>\",\"type\":\"video\",\"start_us\":2266666,\"duration_us\":633334,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID#12>\"},{\"id\":\"<UUID#13>\",\"type\":\"video\",\"start_us\":2900000,\"duration_us\":633333,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"<UUID#14>\"},{\"id\":\"<UUID#15>\",\"type\":\"text\",\"start_us\":566666,\"duration_us\":1066667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#16>\",\"type\":\"text\",\"start_us\":3033333,\"duration_us\":466667,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"LOREM\"}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "ken-burns-draft/texts": {
+   "code": 0,
+   "out": {
+    "sha": "2087fb5f86635081",
+    "len": 166,
+    "text": "[{\"id\":\"<UUID#1>\",\"start_us\":566666,\"duration_us\":1066667,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#2>\",\"start_us\":3033333,\"duration_us\":466667,\"text\":\"LOREM\"}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "ken-burns-draft/validate": {
+   "code": 0,
+   "out": {
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "ken-burns-draft/export-srt": {
+   "code": 0,
+   "out": {
+    "sha": "3d8238d87221ca79",
+    "len": 95,
+    "text": "1\n00:00:00,567 --> 00:00:01,633\nLOREM LOREM LOREM LOREM\n\n2\n00:00:03,033 --> 00:00:03,500\nLOREM\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "ken-burns-draft/segment": {
+   "code": 0,
+   "out": {
+    "sha": "d9ca1ce60c10cb24",
+    "len": 2853,
+    "text": "{\"id\":\"<UUID#1>\",\"source_timerange\":{\"start\":0,\"duration\":3533333},\"target_timerange\":{\"start\":0,\"duration\":3533333},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":0.5,\"last_nonzero_volume\":1,\"clip\":null,\"uniform_scale\":null,\"material_id\":\"<UUID#2>\",\"extra_material_refs\":[\"<UUID#3>\",\"<UUID#4>\",\"<UUID#5>\",\"<UUID#6>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":false,\"enable_adjust\":false,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":null,\"enable_color_wheels\":true,\"track_attribute\":1,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"audio\",\"_track_name\":\"\",\"_track_id\":\"<UUID#7>\",\"_material\":{\"_type\":\"audios\",\"id\":\"<UUID#2>\",\"unique_id\":\"\",\"type\":\"extract_music\",\"name\":\"<UUID#8>\",\"duration\":60000000,\"path\":\"##_draftpath_placeholder_<UUID#9>_##\\\\Resources\\\\<UUID#10>.mp3\",\"category_name\":\"local\",\"wave_points\":[],\"music_id\":\"\",\"app_id\":0,\"text_id\":\"\",\"tone_type\":\"\",\"source_platform\":0,\"video_id\":\"\",\"effect_id\":\"\",\"resource_id\":\"\",\"third_resource_id\":\"\",\"category_id\":\"\",\"intensifies_path\":\"\",\"formula_id\":\"\",\"check_flag\":1,\"team_id\":\"\",\"local_material_id\":\"\",\"tone_speaker\":\"\",\"mock_tone_speaker\":\"\",\"tone_effect_id\":\"\",\"tone_effect_name\":\"\",\"tone_platform\":\"\",\"cloned_model_type\":\"\",\"tone_category_id\":\"\",\"tone_category_name\":\"\",\"tone_second_category_id\":\"\",\"tone_second_category_name\":\"\",\"tone_emotion_name_key\":\"\",\"tone_emotion_style\":\"\",\"tone_emotion_role\":\"\",\"tone_emotion_selection\":\"\",\"tone_emotion_scale\":0,\"moyin_emotion\":\"\",\"request_id\":\"\",\"query\":\"\",\"search_id\":\"\",\"sound_separate_type\":\"\",\"is_text_edit_overdub\":false,\"is_ugc\":false,\"is_ai_clone_tone\":false,\"is_ai_clone_tone_post\":false,\"source_from\":\"\",\"copyright_limit_type\":\"none\",\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"music_source\":\"\",\"pgc_id\":\"\",\"pgc_name\":\"\",\"similiar_music_info\":{\"original_song_id\":\"\",\"original_song_name\":\"\"},\"ai_music_type\":0,\"ai_music_enter_from\":\"\",\"lyric_type\":0,\"tts_task_id\":\"\",\"tts_generate_scene\":\"\",\"ai_music_generate_scene\":0,\"tts_benefit_info\":{\"benefit_type\":\"none\",\"benefit_log_id\":\"\",\"benefit_log_extra\":\"\",\"benefit_amount\":-1}}}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "ken-burns-draft/material": {
+   "code": 0,
+   "out": {
+    "sha": "a96d5bc0e2c247fe",
+    "len": 2696,
+    "text": "{\"_type\":\"videos\",\"id\":\"<UUID#1>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":5000000,\"path\":\"##_draftpath_placeholder_<UUID#2>_##\\\\Resources\\\\<UUID#3>.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"<UUID#4>\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":5000000}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":63487,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "effects-draft/info": {
+   "code": 0,
+   "out": {
+    "sha": "a15a3d29fa8356f4",
+    "len": 580,
+    "text": "{\"id\":\"<UUID#1>\",\"name\":\"<UUID#1>\",\"duration_us\":62000000,\"fps\":30,\"width\":1080,\"height\":1920,\"ratio\":\"original\",\"tracks\":4,\"segments\":52,\"platform\":\"CapCut 8.2.0\",\"material_types\":54,\"materials_with_items\":10,\"material_summary\":[{\"type\":\"placeholder_infos\",\"count\":51},{\"type\":\"speeds\",\"count\":51},{\"type\":\"sound_channel_mappings\",\"count\":51},{\"type\":\"vocal_separations\",\"count\":51},{\"type\":\"videos\",\"count\":49},{\"type\":\"canvases\",\"count\":49},{\"type\":\"material_colors\",\"count\":49},{\"type\":\"loudnesses\",\"count\":49},{\"type\":\"audios\",\"count\":2},{\"type\":\"video_effects\",\"count\":1}]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "effects-draft/tracks": {
+   "code": 0,
+   "out": {
+    "sha": "74a31d78cf1191ef",
+    "len": 536,
+    "text": "[{\"index\":0,\"id\":\"<UUID#1>\",\"type\":\"audio\",\"name\":\"\",\"segments\":1,\"duration_us\":49266666,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":1,\"id\":\"<UUID#2>\",\"type\":\"audio\",\"name\":\"\",\"segments\":1,\"duration_us\":62000000,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":2,\"id\":\"<UUID#3>\",\"type\":\"video\",\"name\":\"\",\"segments\":49,\"duration_us\":61566666,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":3,\"id\":\"<UUID#4>\",\"type\":\"effect\",\"name\":\"\",\"segments\":1,\"duration_us\":61566666,\"muted\":false,\"hidden\":false,\"locked\":false}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "effects-draft/materials": {
+   "code": 0,
+   "out": {
+    "sha": "70f7b0868e67b787",
+    "len": 1868,
+    "text": "[{\"type\":\"placeholder_infos\",\"count\":51},{\"type\":\"speeds\",\"count\":51},{\"type\":\"sound_channel_mappings\",\"count\":51},{\"type\":\"vocal_separations\",\"count\":51},{\"type\":\"videos\",\"count\":49},{\"type\":\"canvases\",\"count\":49},{\"type\":\"material_colors\",\"count\":49},{\"type\":\"loudnesses\",\"count\":49},{\"type\":\"audios\",\"count\":2},{\"type\":\"video_effects\",\"count\":1},{\"type\":\"flowers\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"texts\",\"count\":0},{\"type\":\"effects\",\"count\":0},{\"type\":\"stickers\",\"count\":0},{\"type\":\"transitions\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"material_animations\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"common_mask\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "effects-draft/segments": {
+   "code": 0,
+   "out": {
+    "sha": "8f754a36a740dd7c",
+    "len": 6667
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "effects-draft/texts": {
+   "code": 0,
+   "out": {
+    "sha": "37517e5f3dc66819",
+    "len": 3,
+    "text": "[]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "effects-draft/validate": {
+   "code": 0,
+   "out": {
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "effects-draft/segment": {
+   "code": 0,
+   "out": {
+    "sha": "4a32afc3c91b36e2",
+    "len": 2853,
+    "text": "{\"id\":\"<UUID#1>\",\"source_timerange\":{\"start\":0,\"duration\":49266666},\"target_timerange\":{\"start\":0,\"duration\":49266666},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":1,\"last_nonzero_volume\":1,\"clip\":null,\"uniform_scale\":null,\"material_id\":\"<UUID#2>\",\"extra_material_refs\":[\"<UUID#3>\",\"<UUID#4>\",\"<UUID#5>\",\"<UUID#6>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":false,\"enable_adjust\":false,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":null,\"enable_color_wheels\":true,\"track_attribute\":0,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"audio\",\"_track_name\":\"\",\"_track_id\":\"<UUID#7>\",\"_material\":{\"_type\":\"audios\",\"id\":\"<UUID#2>\",\"unique_id\":\"\",\"type\":\"extract_music\",\"name\":\"<UUID#8>\",\"duration\":49266666,\"path\":\"##_draftpath_placeholder_<UUID#9>_##\\\\Resources\\\\<UUID#10>.mp3\",\"category_name\":\"local\",\"wave_points\":[],\"music_id\":\"\",\"app_id\":0,\"text_id\":\"\",\"tone_type\":\"\",\"source_platform\":0,\"video_id\":\"\",\"effect_id\":\"\",\"resource_id\":\"\",\"third_resource_id\":\"\",\"category_id\":\"\",\"intensifies_path\":\"\",\"formula_id\":\"\",\"check_flag\":1,\"team_id\":\"\",\"local_material_id\":\"\",\"tone_speaker\":\"\",\"mock_tone_speaker\":\"\",\"tone_effect_id\":\"\",\"tone_effect_name\":\"\",\"tone_platform\":\"\",\"cloned_model_type\":\"\",\"tone_category_id\":\"\",\"tone_category_name\":\"\",\"tone_second_category_id\":\"\",\"tone_second_category_name\":\"\",\"tone_emotion_name_key\":\"\",\"tone_emotion_style\":\"\",\"tone_emotion_role\":\"\",\"tone_emotion_selection\":\"\",\"tone_emotion_scale\":0,\"moyin_emotion\":\"\",\"request_id\":\"\",\"query\":\"\",\"search_id\":\"\",\"sound_separate_type\":\"\",\"is_text_edit_overdub\":false,\"is_ugc\":false,\"is_ai_clone_tone\":false,\"is_ai_clone_tone_post\":false,\"source_from\":\"\",\"copyright_limit_type\":\"none\",\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"music_source\":\"\",\"pgc_id\":\"\",\"pgc_name\":\"\",\"similiar_music_info\":{\"original_song_id\":\"\",\"original_song_name\":\"\"},\"ai_music_type\":0,\"ai_music_enter_from\":\"\",\"lyric_type\":0,\"tts_task_id\":\"\",\"tts_generate_scene\":\"\",\"ai_music_generate_scene\":0,\"tts_benefit_info\":{\"benefit_type\":\"none\",\"benefit_log_id\":\"\",\"benefit_log_extra\":\"\",\"benefit_amount\":-1}}}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "effects-draft/material": {
+   "code": 0,
+   "out": {
+    "sha": "11274bcf5e2ab297",
+    "len": 2785,
+    "text": "{\"_type\":\"videos\",\"id\":\"<UUID#1>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":5000000,\"path\":\"##_draftpath_placeholder_<UUID#2>_##\\\\Resources\\\\<UUID#3>.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":1080,\"height\":1920,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"<UUID#4>\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":5000000}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false,\"is_clould\":false,\"mask_video_path\":\"\",\"cloud_product_fps\":0},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":63487,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"is_set_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "full-psycho-draft/info": {
+   "code": 0,
+   "out": {
+    "sha": "ee5642968e2065bb",
+    "len": 616,
+    "text": "{\"id\":\"<UUID#1>\",\"name\":\"<UUID#1>\",\"duration_us\":60000000,\"fps\":30,\"width\":1080,\"height\":1920,\"ratio\":\"original\",\"tracks\":4,\"segments\":111,\"platform\":\"CapCut 8.2.0\",\"material_types\":54,\"materials_with_items\":11,\"material_summary\":[{\"type\":\"placeholder_infos\",\"count\":83},{\"type\":\"speeds\",\"count\":83},{\"type\":\"sound_channel_mappings\",\"count\":83},{\"type\":\"vocal_separations\",\"count\":83},{\"type\":\"videos\",\"count\":81},{\"type\":\"canvases\",\"count\":81},{\"type\":\"material_colors\",\"count\":81},{\"type\":\"loudnesses\",\"count\":81},{\"type\":\"texts\",\"count\":28},{\"type\":\"material_animations\",\"count\":28},{\"type\":\"audios\",\"count\":2}]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "full-psycho-draft/tracks": {
+   "code": 0,
+   "out": {
+    "sha": "b652bcdad808206e",
+    "len": 535,
+    "text": "[{\"index\":0,\"id\":\"<UUID#1>\",\"type\":\"audio\",\"name\":\"\",\"segments\":1,\"duration_us\":58033333,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":1,\"id\":\"<UUID#2>\",\"type\":\"audio\",\"name\":\"\",\"segments\":1,\"duration_us\":60000000,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":2,\"id\":\"<UUID#3>\",\"type\":\"video\",\"name\":\"\",\"segments\":81,\"duration_us\":59966666,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":3,\"id\":\"<UUID#4>\",\"type\":\"text\",\"name\":\"\",\"segments\":28,\"duration_us\":59766666,\"muted\":false,\"hidden\":false,\"locked\":false}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "full-psycho-draft/materials": {
+   "code": 0,
+   "out": {
+    "sha": "bdc13665bd9d641b",
+    "len": 1870,
+    "text": "[{\"type\":\"placeholder_infos\",\"count\":83},{\"type\":\"speeds\",\"count\":83},{\"type\":\"sound_channel_mappings\",\"count\":83},{\"type\":\"vocal_separations\",\"count\":83},{\"type\":\"videos\",\"count\":81},{\"type\":\"canvases\",\"count\":81},{\"type\":\"material_colors\",\"count\":81},{\"type\":\"loudnesses\",\"count\":81},{\"type\":\"texts\",\"count\":28},{\"type\":\"material_animations\",\"count\":28},{\"type\":\"audios\",\"count\":2},{\"type\":\"flowers\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"effects\",\"count\":0},{\"type\":\"stickers\",\"count\":0},{\"type\":\"transitions\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"common_mask\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"video_effects\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "full-psycho-draft/segments": {
+   "code": 0,
+   "out": {
+    "sha": "ecb2b203dc7397b0",
+    "len": 14917
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "full-psycho-draft/texts": {
+   "code": 0,
+   "out": {
+    "sha": "8ef6d73eaea5e8af",
+    "len": 2832,
+    "text": "[{\"id\":\"<UUID#1>\",\"start_us\":66666,\"duration_us\":1400000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#2>\",\"start_us\":2533333,\"duration_us\":1800000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#3>\",\"start_us\":5000000,\"duration_us\":2666666,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#4>\",\"start_us\":8366666,\"duration_us\":1900000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#5>\",\"start_us\":10866666,\"duration_us\":1700000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#6>\",\"start_us\":13333333,\"duration_us\":1366667,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#7>\",\"start_us\":15100000,\"duration_us\":1266666,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#8>\",\"start_us\":16733333,\"duration_us\":1566667,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#9>\",\"start_us\":18700000,\"duration_us\":1300000,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#10>\",\"start_us\":20000000,\"duration_us\":1900000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#11>\",\"start_us\":22533333,\"duration_us\":2600000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#12>\",\"start_us\":25666666,\"duration_us\":800000,\"text\":\"LOREM LOREM LOREM\"},{\"id\":\"<UUID#13>\",\"start_us\":26800000,\"duration_us\":1766666,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#14>\",\"start_us\":29400000,\"duration_us\":1333333,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#15>\",\"start_us\":31066666,\"duration_us\":1700000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#16>\",\"start_us\":33100000,\"duration_us\":1600000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#17>\",\"start_us\":35200000,\"duration_us\":1600000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#18>\",\"start_us\":37333333,\"duration_us\":1466667,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#19>\",\"start_us\":39200000,\"duration_us\":1400000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#20>\",\"start_us\":41300000,\"duration_us\":1866666,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#21>\",\"start_us\":43500000,\"duration_us\":1700000,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#22>\",\"start_us\":45700000,\"duration_us\":1166666,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#23>\",\"start_us\":47200000,\"duration_us\":2300000,\"text\":\"LOREM LOREM LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#24>\",\"start_us\":50100000,\"duration_us\":900000,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#25>\",\"start_us\":51900000,\"duration_us\":1633333,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#26>\",\"start_us\":53933333,\"duration_us\":2066667,\"text\":\"LOREM LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#27>\",\"start_us\":57000000,\"duration_us\":1533333,\"text\":\"LOREM LOREM LOREM LOREM\"},{\"id\":\"<UUID#28>\",\"start_us\":58966666,\"duration_us\":800000,\"text\":\"LOREM LOREM LOREM\"}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "full-psycho-draft/validate": {
+   "code": 0,
+   "out": {
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "full-psycho-draft/export-srt": {
+   "code": 0,
+   "out": {
+    "sha": "6286994196ea00fe",
+    "len": 1830,
+    "text": "1\n00:00:00,067 --> 00:00:01,467\nLOREM LOREM LOREM LOREM LOREM\n\n2\n00:00:02,533 --> 00:00:04,333\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n3\n00:00:05,000 --> 00:00:07,667\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n4\n00:00:08,367 --> 00:00:10,267\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n5\n00:00:10,867 --> 00:00:12,567\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n6\n00:00:13,333 --> 00:00:14,700\nLOREM LOREM LOREM LOREM LOREM\n\n7\n00:00:15,100 --> 00:00:16,367\nLOREM LOREM LOREM LOREM\n\n8\n00:00:16,733 --> 00:00:18,300\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n9\n00:00:18,700 --> 00:00:20,000\nLOREM LOREM LOREM LOREM\n\n10\n00:00:20,000 --> 00:00:21,900\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n11\n00:00:22,533 --> 00:00:25,133\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n12\n00:00:25,667 --> 00:00:26,467\nLOREM LOREM LOREM\n\n13\n00:00:26,800 --> 00:00:28,567\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n14\n00:00:29,400 --> 00:00:30,733\nLOREM LOREM LOREM LOREM\n\n15\n00:00:31,067 --> 00:00:32,767\nLOREM LOREM LOREM LOREM LOREM\n\n16\n00:00:33,100 --> 00:00:34,700\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n17\n00:00:35,200 --> 00:00:36,800\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n18\n00:00:37,333 --> 00:00:38,800\nLOREM LOREM LOREM LOREM\n\n19\n00:00:39,200 --> 00:00:40,600\nLOREM LOREM LOREM LOREM LOREM\n\n20\n00:00:41,300 --> 00:00:43,167\nLOREM LOREM LOREM LOREM LOREM LOREM\n\n21\n00:00:43,500 --> 00:00:45,200\nLOREM LOREM LOREM LOREM LOREM\n\n22\n00:00:45,700 --> 00:00:46,867\nLOREM LOREM LOREM LOREM\n\n23\n00:00:47,200 --> 00:00:49,500\nLOREM LOREM LOREM LOREM LOREM LOREM LOREM\n\n24\n00:00:50,100 --> 00:00:51,000\nLOREM LOREM LOREM LOREM\n\n25\n00:00:51,900 --> 00:00:53,533\nLOREM LOREM LOREM LOREM LOREM\n\n26\n00:00:53,933 --> 00:00:56,000\nLOREM LOREM LOREM LOREM LOREM\n\n27\n00:00:57,000 --> 00:00:58,533\nLOREM LOREM LOREM LOREM\n\n28\n00:00:58,967 --> 00:00:59,767\nLOREM LOREM LOREM\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "full-psycho-draft/segment": {
+   "code": 0,
+   "out": {
+    "sha": "4aff1021883469fb",
+    "len": 2887,
+    "text": "{\"id\":\"<UUID#1>\",\"source_timerange\":{\"start\":0,\"duration\":60033333},\"target_timerange\":{\"start\":0,\"duration\":58033333},\"render_timerange\":{\"start\":0,\"duration\":0},\"desc\":\"\",\"state\":0,\"speed\":1.0344629525241984,\"is_loop\":false,\"is_tone_modify\":false,\"reverse\":false,\"intensifies_audio\":false,\"cartoon\":false,\"volume\":2.5040502548217773,\"last_nonzero_volume\":1,\"clip\":null,\"uniform_scale\":null,\"material_id\":\"<UUID#2>\",\"extra_material_refs\":[\"<UUID#3>\",\"<UUID#4>\",\"<UUID#5>\",\"<UUID#6>\"],\"render_index\":0,\"keyframe_refs\":[],\"enable_lut\":false,\"enable_adjust\":false,\"enable_hsl\":false,\"visible\":true,\"group_id\":\"\",\"enable_color_curves\":true,\"enable_hsl_curves\":true,\"track_render_index\":0,\"hdr_settings\":null,\"enable_color_wheels\":true,\"track_attribute\":0,\"is_placeholder\":false,\"template_id\":\"\",\"enable_smart_color_adjust\":false,\"template_scene\":\"default\",\"common_keyframes\":[],\"caption_info\":null,\"responsive_layout\":{\"enable\":false,\"target_follow\":\"\",\"size_layout\":0,\"horizontal_pos_layout\":0,\"vertical_pos_layout\":0},\"enable_color_match_adjust\":false,\"enable_color_correct_adjust\":false,\"enable_adjust_mask\":false,\"raw_segment_id\":\"\",\"lyric_keyframes\":null,\"enable_video_mask\":true,\"digital_human_template_group_id\":\"\",\"color_correct_alg_result\":\"\",\"source\":\"segmentsourcenormal\",\"enable_mask_stroke\":false,\"enable_mask_shadow\":false,\"enable_color_adjust_pro\":false,\"_track_type\":\"audio\",\"_track_name\":\"\",\"_track_id\":\"<UUID#7>\",\"_material\":{\"_type\":\"audios\",\"id\":\"<UUID#2>\",\"unique_id\":\"\",\"type\":\"extract_music\",\"name\":\"<UUID#8>\",\"duration\":60033333,\"path\":\"##_draftpath_placeholder_<UUID#9>_##\\\\Resources\\\\<UUID#10>.mp3\",\"category_name\":\"local\",\"wave_points\":[],\"music_id\":\"\",\"app_id\":0,\"text_id\":\"\",\"tone_type\":\"\",\"source_platform\":0,\"video_id\":\"\",\"effect_id\":\"\",\"resource_id\":\"\",\"third_resource_id\":\"\",\"category_id\":\"\",\"intensifies_path\":\"\",\"formula_id\":\"\",\"check_flag\":1,\"team_id\":\"\",\"local_material_id\":\"\",\"tone_speaker\":\"\",\"mock_tone_speaker\":\"\",\"tone_effect_id\":\"\",\"tone_effect_name\":\"\",\"tone_platform\":\"\",\"cloned_model_type\":\"\",\"tone_category_id\":\"\",\"tone_category_name\":\"\",\"tone_second_category_id\":\"\",\"tone_second_category_name\":\"\",\"tone_emotion_name_key\":\"\",\"tone_emotion_style\":\"\",\"tone_emotion_role\":\"\",\"tone_emotion_selection\":\"\",\"tone_emotion_scale\":0,\"moyin_emotion\":\"\",\"request_id\":\"\",\"query\":\"\",\"search_id\":\"\",\"sound_separate_type\":\"\",\"is_text_edit_overdub\":false,\"is_ugc\":false,\"is_ai_clone_tone\":false,\"is_ai_clone_tone_post\":false,\"source_from\":\"\",\"copyright_limit_type\":\"none\",\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"music_source\":\"\",\"pgc_id\":\"\",\"pgc_name\":\"\",\"similiar_music_info\":{\"original_song_id\":\"\",\"original_song_name\":\"\"},\"ai_music_type\":0,\"ai_music_enter_from\":\"\",\"lyric_type\":0,\"tts_task_id\":\"\",\"tts_generate_scene\":\"\",\"ai_music_generate_scene\":0,\"tts_benefit_info\":{\"benefit_type\":\"none\",\"benefit_log_id\":\"\",\"benefit_log_extra\":\"\",\"benefit_amount\":-1}}}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "full-psycho-draft/material": {
+   "code": 0,
+   "out": {
+    "sha": "a96d5bc0e2c247fe",
+    "len": 2696,
+    "text": "{\"_type\":\"videos\",\"id\":\"<UUID#1>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":5000000,\"path\":\"##_draftpath_placeholder_<UUID#2>_##\\\\Resources\\\\<UUID#3>.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"<UUID#4>\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":5000000}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":63487,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "animations-draft/info": {
+   "code": 0,
+   "out": {
+    "sha": "b3834c8d5ce86baa",
+    "len": 542,
+    "text": "{\"id\":\"<UUID#1>\",\"name\":\"<UUID#1>\",\"duration_us\":5000000,\"fps\":30,\"width\":1072,\"height\":1920,\"ratio\":\"original\",\"tracks\":2,\"segments\":2,\"platform\":\"CapCut 8.6.0\",\"material_types\":54,\"materials_with_items\":9,\"material_summary\":[{\"type\":\"videos\",\"count\":1},{\"type\":\"texts\",\"count\":1},{\"type\":\"canvases\",\"count\":1},{\"type\":\"material_animations\",\"count\":1},{\"type\":\"placeholder_infos\",\"count\":1},{\"type\":\"speeds\",\"count\":1},{\"type\":\"sound_channel_mappings\",\"count\":1},{\"type\":\"material_colors\",\"count\":1},{\"type\":\"vocal_separations\",\"count\":1}]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "animations-draft/tracks": {
+   "code": 0,
+   "out": {
+    "sha": "f1e5441c5061e9ef",
+    "len": 265,
+    "text": "[{\"index\":0,\"id\":\"<UUID#1>\",\"type\":\"video\",\"name\":\"\",\"segments\":1,\"duration_us\":5000000,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":1,\"id\":\"<UUID#2>\",\"type\":\"text\",\"name\":\"\",\"segments\":1,\"duration_us\":3000000,\"muted\":false,\"hidden\":false,\"locked\":false}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "animations-draft/materials": {
+   "code": 0,
+   "out": {
+    "sha": "08d1e017a1d76bce",
+    "len": 1860,
+    "text": "[{\"type\":\"videos\",\"count\":1},{\"type\":\"texts\",\"count\":1},{\"type\":\"canvases\",\"count\":1},{\"type\":\"material_animations\",\"count\":1},{\"type\":\"placeholder_infos\",\"count\":1},{\"type\":\"speeds\",\"count\":1},{\"type\":\"sound_channel_mappings\",\"count\":1},{\"type\":\"material_colors\",\"count\":1},{\"type\":\"vocal_separations\",\"count\":1},{\"type\":\"flowers\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"audios\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"effects\",\"count\":0},{\"type\":\"stickers\",\"count\":0},{\"type\":\"transitions\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"common_mask\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"video_effects\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"loudnesses\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "animations-draft/segments": {
+   "code": 0,
+   "out": {
+    "sha": "8d7f25db53786f4c",
+    "len": 261,
+    "text": "[{\"id\":\"<UUID#1>\",\"type\":\"video\",\"start_us\":0,\"duration_us\":5000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"img_001.png\"},{\"id\":\"<UUID#2>\",\"type\":\"text\",\"start_us\":0,\"duration_us\":3000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"THE EYES ARE WATCHING ME.\"}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "animations-draft/texts": {
+   "code": 0,
+   "out": {
+    "sha": "22d60e58fdafdff5",
+    "len": 90,
+    "text": "[{\"id\":\"<UUID#1>\",\"start_us\":0,\"duration_us\":3000000,\"text\":\"THE EYES ARE WATCHING ME.\"}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "animations-draft/validate": {
+   "code": 0,
+   "out": {
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "animations-draft/export-srt": {
+   "code": 0,
+   "out": {
+    "sha": "d1b9986b8efa5ed9",
+    "len": 58,
+    "text": "1\n00:00:00,000 --> 00:00:03,000\nTHE EYES ARE WATCHING ME.\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "animations-draft/segment": {
+   "code": 0,
+   "out": {
+    "sha": "6c1607e2214b0700",
+    "len": 4342
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "animations-draft/material": {
+   "code": 0,
+   "out": {
+    "sha": "8fae6e47b278036d",
+    "len": 2755,
+    "text": "{\"_type\":\"videos\",\"id\":\"<UUID#1>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":10800000000,\"path\":\"/fixtures/assets/img_001.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"img_001.png\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":0}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false,\"is_clould\":false,\"mask_video_path\":\"\",\"cloud_product_fps\":0},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":62978047,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"is_set_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "stickers-draft/info": {
+   "code": 0,
+   "out": {
+    "sha": "c63ade64ce8d236b",
+    "len": 578,
+    "text": "{\"id\":\"<UUID#1>\",\"name\":\"<UUID#1>\",\"duration_us\":5000000,\"fps\":30,\"width\":1072,\"height\":1920,\"ratio\":\"original\",\"tracks\":2,\"segments\":2,\"platform\":\"CapCut 8.6.0\",\"material_types\":54,\"materials_with_items\":10,\"material_summary\":[{\"type\":\"videos\",\"count\":1},{\"type\":\"stickers\",\"count\":1},{\"type\":\"canvases\",\"count\":1},{\"type\":\"material_animations\",\"count\":1},{\"type\":\"placeholder_infos\",\"count\":1},{\"type\":\"speeds\",\"count\":1},{\"type\":\"sound_channel_mappings\",\"count\":1},{\"type\":\"material_colors\",\"count\":1},{\"type\":\"loudnesses\",\"count\":1},{\"type\":\"vocal_separations\",\"count\":1}]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "stickers-draft/tracks": {
+   "code": 0,
+   "out": {
+    "sha": "b88c38025ff93ab2",
+    "len": 268,
+    "text": "[{\"index\":0,\"id\":\"<UUID#1>\",\"type\":\"video\",\"name\":\"\",\"segments\":1,\"duration_us\":5000000,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":1,\"id\":\"<UUID#2>\",\"type\":\"sticker\",\"name\":\"\",\"segments\":1,\"duration_us\":3000000,\"muted\":false,\"hidden\":false,\"locked\":false}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "stickers-draft/materials": {
+   "code": 0,
+   "out": {
+    "sha": "7c3bb3eb04cd193d",
+    "len": 1860,
+    "text": "[{\"type\":\"videos\",\"count\":1},{\"type\":\"stickers\",\"count\":1},{\"type\":\"canvases\",\"count\":1},{\"type\":\"material_animations\",\"count\":1},{\"type\":\"placeholder_infos\",\"count\":1},{\"type\":\"speeds\",\"count\":1},{\"type\":\"sound_channel_mappings\",\"count\":1},{\"type\":\"material_colors\",\"count\":1},{\"type\":\"loudnesses\",\"count\":1},{\"type\":\"vocal_separations\",\"count\":1},{\"type\":\"flowers\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"audios\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"texts\",\"count\":0},{\"type\":\"effects\",\"count\":0},{\"type\":\"transitions\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"common_mask\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"video_effects\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "stickers-draft/segments": {
+   "code": 0,
+   "out": {
+    "sha": "331d779c3f4cca71",
+    "len": 239,
+    "text": "[{\"id\":\"<UUID#1>\",\"type\":\"video\",\"start_us\":0,\"duration_us\":5000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"img_001.png\"},{\"id\":\"<UUID#2>\",\"type\":\"sticker\",\"start_us\":0,\"duration_us\":3000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"\"}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "stickers-draft/texts": {
+   "code": 0,
+   "out": {
+    "sha": "37517e5f3dc66819",
+    "len": 3,
+    "text": "[]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "stickers-draft/validate": {
+   "code": 0,
+   "out": {
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "stickers-draft/segment": {
+   "code": 0,
+   "out": {
+    "sha": "45875dd714ff9741",
+    "len": 4354
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "stickers-draft/material": {
+   "code": 0,
+   "out": {
+    "sha": "8fae6e47b278036d",
+    "len": 2755,
+    "text": "{\"_type\":\"videos\",\"id\":\"<UUID#1>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":10800000000,\"path\":\"/fixtures/assets/img_001.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"img_001.png\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":0}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false,\"is_clould\":false,\"mask_video_path\":\"\",\"cloud_product_fps\":0},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":62978047,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"is_set_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "transitions-draft/info": {
+   "code": 0,
+   "out": {
+    "sha": "61adf5846006a0c1",
+    "len": 508,
+    "text": "{\"id\":\"<UUID#1>\",\"name\":\"<UUID#1>\",\"duration_us\":10000000,\"fps\":30,\"width\":1072,\"height\":1920,\"ratio\":\"original\",\"tracks\":1,\"segments\":2,\"platform\":\"CapCut 8.6.0\",\"material_types\":54,\"materials_with_items\":8,\"material_summary\":[{\"type\":\"videos\",\"count\":2},{\"type\":\"canvases\",\"count\":2},{\"type\":\"placeholder_infos\",\"count\":2},{\"type\":\"speeds\",\"count\":2},{\"type\":\"sound_channel_mappings\",\"count\":2},{\"type\":\"material_colors\",\"count\":2},{\"type\":\"vocal_separations\",\"count\":2},{\"type\":\"transitions\",\"count\":1}]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "transitions-draft/tracks": {
+   "code": 0,
+   "out": {
+    "sha": "4bcbcfbee7129d0a",
+    "len": 135,
+    "text": "[{\"index\":0,\"id\":\"<UUID#1>\",\"type\":\"video\",\"name\":\"\",\"segments\":2,\"duration_us\":10000000,\"muted\":false,\"hidden\":false,\"locked\":false}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "transitions-draft/materials": {
+   "code": 0,
+   "out": {
+    "sha": "07217e5cacaca0cd",
+    "len": 1860,
+    "text": "[{\"type\":\"videos\",\"count\":2},{\"type\":\"canvases\",\"count\":2},{\"type\":\"placeholder_infos\",\"count\":2},{\"type\":\"speeds\",\"count\":2},{\"type\":\"sound_channel_mappings\",\"count\":2},{\"type\":\"material_colors\",\"count\":2},{\"type\":\"vocal_separations\",\"count\":2},{\"type\":\"transitions\",\"count\":1},{\"type\":\"flowers\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"audios\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"texts\",\"count\":0},{\"type\":\"effects\",\"count\":0},{\"type\":\"stickers\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"material_animations\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"common_mask\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"video_effects\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"loudnesses\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "transitions-draft/segments": {
+   "code": 0,
+   "out": {
+    "sha": "7449592a0c7a2423",
+    "len": 254,
+    "text": "[{\"id\":\"<UUID#1>\",\"type\":\"video\",\"start_us\":0,\"duration_us\":5000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"img_001.png\"},{\"id\":\"<UUID#2>\",\"type\":\"video\",\"start_us\":5000000,\"duration_us\":5000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"img_002.png\"}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "transitions-draft/texts": {
+   "code": 0,
+   "out": {
+    "sha": "37517e5f3dc66819",
+    "len": 3,
+    "text": "[]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "transitions-draft/validate": {
+   "code": 0,
+   "out": {
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "transitions-draft/segment": {
+   "code": 0,
+   "out": {
+    "sha": "45875dd714ff9741",
+    "len": 4354
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "transitions-draft/material": {
+   "code": 0,
+   "out": {
+    "sha": "8fae6e47b278036d",
+    "len": 2755,
+    "text": "{\"_type\":\"videos\",\"id\":\"<UUID#1>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":10800000000,\"path\":\"/fixtures/assets/img_001.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"img_001.png\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":0}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false,\"is_clould\":false,\"mask_video_path\":\"\",\"cloud_product_fps\":0},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":62978047,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"is_set_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "masks-filters-draft/info": {
+   "code": 0,
+   "out": {
+    "sha": "9ea73f927d9bcbe3",
+    "len": 536,
+    "text": "{\"id\":\"<UUID#1>\",\"name\":\"<UUID#1>\",\"duration_us\":5000000,\"fps\":30,\"width\":1072,\"height\":1920,\"ratio\":\"original\",\"tracks\":2,\"segments\":2,\"platform\":\"CapCut 8.6.0\",\"material_types\":54,\"materials_with_items\":9,\"material_summary\":[{\"type\":\"videos\",\"count\":1},{\"type\":\"effects\",\"count\":1},{\"type\":\"canvases\",\"count\":1},{\"type\":\"placeholder_infos\",\"count\":1},{\"type\":\"speeds\",\"count\":1},{\"type\":\"common_mask\",\"count\":1},{\"type\":\"sound_channel_mappings\",\"count\":1},{\"type\":\"material_colors\",\"count\":1},{\"type\":\"vocal_separations\",\"count\":1}]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "masks-filters-draft/tracks": {
+   "code": 0,
+   "out": {
+    "sha": "edd0dafbae4227cc",
+    "len": 267,
+    "text": "[{\"index\":0,\"id\":\"<UUID#1>\",\"type\":\"video\",\"name\":\"\",\"segments\":1,\"duration_us\":5000000,\"muted\":false,\"hidden\":false,\"locked\":false},{\"index\":1,\"id\":\"<UUID#2>\",\"type\":\"filter\",\"name\":\"\",\"segments\":1,\"duration_us\":3000000,\"muted\":false,\"hidden\":false,\"locked\":false}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "masks-filters-draft/materials": {
+   "code": 0,
+   "out": {
+    "sha": "7318d000b0b398f2",
+    "len": 1860,
+    "text": "[{\"type\":\"videos\",\"count\":1},{\"type\":\"effects\",\"count\":1},{\"type\":\"canvases\",\"count\":1},{\"type\":\"placeholder_infos\",\"count\":1},{\"type\":\"speeds\",\"count\":1},{\"type\":\"common_mask\",\"count\":1},{\"type\":\"sound_channel_mappings\",\"count\":1},{\"type\":\"material_colors\",\"count\":1},{\"type\":\"vocal_separations\",\"count\":1},{\"type\":\"flowers\",\"count\":0},{\"type\":\"tail_leaders\",\"count\":0},{\"type\":\"audios\",\"count\":0},{\"type\":\"images\",\"count\":0},{\"type\":\"texts\",\"count\":0},{\"type\":\"stickers\",\"count\":0},{\"type\":\"transitions\",\"count\":0},{\"type\":\"audio_effects\",\"count\":0},{\"type\":\"audio_fades\",\"count\":0},{\"type\":\"beats\",\"count\":0},{\"type\":\"material_animations\",\"count\":0},{\"type\":\"placeholders\",\"count\":0},{\"type\":\"chromas\",\"count\":0},{\"type\":\"text_templates\",\"count\":0},{\"type\":\"realtime_denoises\",\"count\":0},{\"type\":\"audio_pannings\",\"count\":0},{\"type\":\"audio_pitch_shifts\",\"count\":0},{\"type\":\"video_trackings\",\"count\":0},{\"type\":\"hsl\",\"count\":0},{\"type\":\"drafts\",\"count\":0},{\"type\":\"color_curves\",\"count\":0},{\"type\":\"hsl_curves\",\"count\":0},{\"type\":\"primary_color_wheels\",\"count\":0},{\"type\":\"log_color_wheels\",\"count\":0},{\"type\":\"video_effects\",\"count\":0},{\"type\":\"audio_balances\",\"count\":0},{\"type\":\"handwrites\",\"count\":0},{\"type\":\"manual_deformations\",\"count\":0},{\"type\":\"manual_beautys\",\"count\":0},{\"type\":\"plugin_effects\",\"count\":0},{\"type\":\"green_screens\",\"count\":0},{\"type\":\"shapes\",\"count\":0},{\"type\":\"digital_humans\",\"count\":0},{\"type\":\"digital_human_model_dressing\",\"count\":0},{\"type\":\"smart_crops\",\"count\":0},{\"type\":\"ai_translates\",\"count\":0},{\"type\":\"audio_track_indexes\",\"count\":0},{\"type\":\"loudnesses\",\"count\":0},{\"type\":\"vocal_beautifys\",\"count\":0},{\"type\":\"smart_relights\",\"count\":0},{\"type\":\"time_marks\",\"count\":0},{\"type\":\"multi_language_refs\",\"count\":0},{\"type\":\"video_shadows\",\"count\":0},{\"type\":\"video_strokes\",\"count\":0},{\"type\":\"video_radius\",\"count\":0}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "masks-filters-draft/segments": {
+   "code": 0,
+   "out": {
+    "sha": "0dfd3cfe483a3fed",
+    "len": 238,
+    "text": "[{\"id\":\"<UUID#1>\",\"type\":\"video\",\"start_us\":0,\"duration_us\":5000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"img_001.png\"},{\"id\":\"<UUID#2>\",\"type\":\"filter\",\"start_us\":0,\"duration_us\":3000000,\"speed\":1,\"volume\":1,\"opacity\":1,\"label\":\"\"}]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "masks-filters-draft/texts": {
+   "code": 0,
+   "out": {
+    "sha": "37517e5f3dc66819",
+    "len": 3,
+    "text": "[]\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "masks-filters-draft/validate": {
+   "code": 0,
+   "out": {
+    "sha": "6b874b6eb5c90b5c",
+    "len": 211,
+    "text": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "masks-filters-draft/segment": {
+   "code": 0,
+   "out": {
+    "sha": "45875dd714ff9741",
+    "len": 4354
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "masks-filters-draft/material": {
+   "code": 0,
+   "out": {
+    "sha": "8fae6e47b278036d",
+    "len": 2755,
+    "text": "{\"_type\":\"videos\",\"id\":\"<UUID#1>\",\"unique_id\":\"\",\"type\":\"photo\",\"duration\":10800000000,\"path\":\"/fixtures/assets/img_001.png\",\"media_path\":\"\",\"local_id\":\"\",\"has_audio\":false,\"reverse_path\":\"\",\"intensifies_path\":\"\",\"reverse_intensifies_path\":\"\",\"intensifies_audio_path\":\"\",\"cartoon_path\":\"\",\"width\":768,\"height\":1376,\"category_id\":\"\",\"category_name\":\"\",\"material_id\":\"\",\"material_name\":\"img_001.png\",\"material_url\":\"\",\"crop\":{\"upper_left_x\":0,\"upper_left_y\":0,\"upper_right_x\":1,\"upper_right_y\":0,\"lower_left_x\":0,\"lower_left_y\":1,\"lower_right_x\":1,\"lower_right_y\":1},\"crop_ratio\":\"free\",\"audio_fade\":null,\"crop_scale\":1,\"extra_type_option\":0,\"stable\":{\"stable_level\":0,\"matrix_path\":\"\",\"time_range\":{\"start\":0,\"duration\":0}},\"matting\":{\"flag\":0,\"path\":\"\",\"interactiveTime\":[],\"has_use_quick_brush\":false,\"strokes\":[],\"has_use_quick_eraser\":false,\"expansion\":0,\"feather\":0,\"reverse\":false,\"custom_matting_id\":\"\",\"enable_matting_stroke\":false,\"is_clould\":false,\"mask_video_path\":\"\",\"cloud_product_fps\":0},\"source\":0,\"source_platform\":0,\"formula_id\":\"\",\"check_flag\":62978047,\"video_algorithm\":{\"algorithms\":[],\"time_range\":null,\"path\":\"\",\"gameplay_configs\":[],\"ai_in_painting_config\":[],\"complement_frame_config\":null,\"motion_blur_config\":null,\"deflicker\":null,\"noise_reduction\":null,\"quality_enhance\":null,\"super_resolution\":null,\"ai_background_configs\":[],\"smart_complement_frame\":null,\"aigc_generate\":null,\"aigc_generate_list\":[],\"mouth_shape_driver\":null,\"ai_expression_driven\":null,\"ai_motion_driven\":null,\"image_interpretation\":null,\"story_video_modify_video_config\":{\"task_id\":\"\",\"is_overwrite_last_video\":false,\"tracker_task_id\":\"\"},\"skip_algorithm_index\":[]},\"is_unified_beauty_mode\":false,\"is_set_beauty_mode\":false,\"object_locked\":null,\"smart_motion\":null,\"multi_camera_info\":null,\"freeze\":null,\"picture_from\":\"none\",\"picture_set_category_id\":\"\",\"picture_set_category_name\":\"\",\"team_id\":\"\",\"local_material_id\":\"\",\"origin_material_id\":\"\",\"request_id\":\"\",\"has_sound_separated\":false,\"is_text_edit_overdub\":false,\"is_ai_generate_content\":false,\"aigc_type\":\"none\",\"is_copyright\":false,\"aigc_history_id\":\"\",\"aigc_item_id\":\"\",\"local_material_from\":\"\",\"smart_match_info\":null,\"beauty_face_preset_infos\":[],\"beauty_body_preset_id\":\"\",\"beauty_face_auto_preset\":{\"preset_id\":\"\",\"name\":\"\",\"rate_map\":\"\",\"scene\":\"\"},\"beauty_face_auto_preset_infos\":[],\"beauty_body_auto_preset\":null,\"live_photo_timestamp\":-1,\"live_photo_cover_path\":\"\",\"content_feature_info\":null,\"corner_pin\":null,\"surface_trackings\":[],\"video_mask_stroke\":{\"resource_id\":\"\",\"path\":\"\",\"type\":\"\",\"color\":\"\",\"size\":0,\"alpha\":0,\"distance\":0,\"texture\":0,\"horizontal_shift\":0,\"vertical_shift\":0},\"video_mask_shadow\":{\"resource_id\":\"\",\"path\":\"\",\"color\":\"\",\"alpha\":0,\"blur\":0,\"distance\":0,\"angle\":0}}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "readonly_untouched": true
+  },
+  "query": {
+   "code": 0,
+   "out": {
+    "sha": "d9d0119a29966f92",
+    "len": 45,
+    "text": "{\"type\":\"capcut-david/query@1\",\"results\":[]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   }
+  },
+  "subtitles/set-text": {
+   "code": 0,
+   "out": {
+    "sha": "7e3492bf6108b584",
+    "len": 86,
+    "text": "{\"ok\":true,\"id\":\"<UUID#1>\",\"old\":\"LOREM LOREM LOREM LOREM LOREM\",\"new\":\"GOLDEN TEXT\"}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "artifact": {
+    "draft_canon_sha": "914520cdc5fa5f8e",
+    "bak_exists": true,
+    "bak_equals_original": true,
+    "indent_preserved": true,
+    "single_line": false
+   }
+  },
+  "subtitles/shift": {
+   "code": 0,
+   "out": {
+    "sha": "57b1d9b762a16a35",
+    "len": 71,
+    "text": "{\"ok\":true,\"id\":\"<UUID#1>\",\"old_start_us\":66666,\"new_start_us\":566666}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "artifact": {
+    "draft_canon_sha": "f7af37a32318d1f0",
+    "bak_exists": true,
+    "bak_equals_original": true,
+    "indent_preserved": true,
+    "single_line": false
+   }
+  },
+  "subtitles/import-captions": {
+   "code": 0,
+   "out": {
+    "sha": "b24b443b383c9b4d",
+    "len": 47,
+    "text": "{\"ok\":true,\"track_id\":\"<UUID#1>\",\"captions\":2}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "artifact": {
+    "draft_canon_sha": "d2bf53341c25c759",
+    "bak_exists": true,
+    "bak_equals_original": true,
+    "indent_preserved": true,
+    "single_line": false
+   }
+  },
+  "minimal/add-text": {
+   "code": 0,
+   "out": {
+    "sha": "e231bed1b3962726",
+    "len": 134,
+    "text": "{\"ok\":true,\"segment_id\":\"<UUID#1>\",\"material_id\":\"<UUID#2>\",\"track_id\":\"<UUID#3>\",\"text\":\"GOLDEN\",\"start_us\":0,\"duration_us\":2000000}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "artifact": {
+    "draft_canon_sha": "48c5faf2d1d360e5",
+    "bak_exists": true,
+    "bak_equals_original": true,
+    "indent_preserved": true,
+    "single_line": false
+   }
+  },
+  "minimal/add-audio": {
+   "code": 0,
+   "out": {
+    "sha": "df7396f1a4f10704",
+    "len": 148,
+    "text": "{\"ok\":true,\"segment_id\":\"<UUID#1>\",\"material_id\":\"<UUID#2>\",\"track_id\":\"<UUID#3>\",\"path\":\"<TMP>/<TMP>/tone.mp3\",\"start_us\":0,\"duration_us\":2000000}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "artifact": {
+    "draft_canon_sha": "cd0db3fb487a75f8",
+    "bak_exists": true,
+    "bak_equals_original": true,
+    "indent_preserved": true,
+    "single_line": false
+   }
+  },
+  "minimal/batch": {
+   "code": 1,
+   "out": {
+    "sha": "344bc20cd4f82a60",
+    "len": 38,
+    "text": "{\"ok\":false,\"succeeded\":0,\"failed\":1}\n"
+   },
+   "err": {
+    "sha": "040949c51750a9b5",
+    "len": 131,
+    "text": "{\"error\":\"Unknown batch command: add-text\",\"line\":\"{\\\"cmd\\\":\\\"add-text\\\",\\\"start\\\":\\\"0\\\",\\\"duration\\\":\\\"1s\\\",\\\"text\\\":\\\"BATCH\\\"}\"}\n"
+   },
+   "artifact": {
+    "draft_canon_sha": "827ae41f0a8236b0",
+    "bak_exists": true,
+    "bak_equals_original": true,
+    "indent_preserved": true,
+    "single_line": false
+   }
+  },
+  "minimal/gc-noop": {
+   "code": 0,
+   "out": {
+    "sha": "95e39e9b68dd23da",
+    "len": 274,
+    "text": "{\"schema\":\"capcut-david/gc@1\",\"ok\":true,\"dry_run\":false,\"project\":\"<TMP>/<TMP>\",\"draft_file\":\"<TMP>/<TMP>/draft_content.json\",\"removed\":{\"texts\":[],\"videos\":[],\"audios\":[]},\"skipped_cross_ref\":[],\"summary\":{\"orphan_text\":0,\"orphan_media\":0,\"removed_total\":0,\"wrote\":false}}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "artifact": {
+    "draft_canon_sha": "827ae41f0a8236b0",
+    "bak_exists": false,
+    "bak_equals_original": null,
+    "indent_preserved": true,
+    "single_line": false
+   }
+  },
+  "ken-burns/add-keyframe": {
+   "code": 0,
+   "out": {
+    "sha": "a5add1e9260843f4",
+    "len": 121,
+    "text": "{\"ok\":true,\"id\":\"<UUID#1>\",\"property\":\"KFTypeScaleX\",\"time_offset_us\":100000,\"value\":1.2,\"curve\":\"linear\",\"keyframes\":1}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "artifact": {
+    "draft_canon_sha": "614afa83a0627b24",
+    "bak_exists": true,
+    "bak_equals_original": true,
+    "indent_preserved": true,
+    "single_line": false
+   }
+  },
+  "ken-burns/ken-burns": {
+   "code": 1,
+   "out": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "err": {
+    "sha": "ede950a8aa4dd1ed",
+    "len": 58,
+    "text": "{\"error\":\"Segment <UUID#1> has no clip (audio segment?)\"}\n"
+   },
+   "artifact": {
+    "draft_canon_sha": "ac18f23f78a7c694",
+    "bak_exists": false,
+    "bak_equals_original": null,
+    "indent_preserved": true,
+    "single_line": false
+   }
+  },
+  "ken-burns/speed": {
+   "code": 0,
+   "out": {
+    "sha": "0c1e3139f0de831a",
+    "len": 58,
+    "text": "{\"ok\":true,\"id\":\"<UUID#1>\",\"old_speed\":1,\"new_speed\":1.5}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "artifact": {
+    "draft_canon_sha": "49095401fac48b66",
+    "bak_exists": true,
+    "bak_equals_original": true,
+    "indent_preserved": true,
+    "single_line": false
+   }
+  },
+  "effects/remove-segment": {
+   "code": 0,
+   "out": {
+    "sha": "5c29808565780806",
+    "len": 166,
+    "text": "{\"schema\":\"capcut-david/remove-segment@1\",\"ok\":true,\"segment_id\":\"<UUID#1>\",\"track_id\":\"<UUID#2>\",\"track_removed\":true,\"materials_removed\":1,\"project\":\"<TMP>/<TMP>\"}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "artifact": {
+    "draft_canon_sha": "2a800a4617224e8f",
+    "bak_exists": true,
+    "bak_equals_original": true,
+    "indent_preserved": true,
+    "single_line": false
+   }
+  },
+  "subtitles/restyle": {
+   "code": 0,
+   "out": {
+    "sha": "aeb85c671b54b1e1",
+    "len": 71,
+    "text": "{\"ok\":true,\"materials_patched\":28,\"segments_patched\":28,\"mirrored\":[]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "artifact": {
+    "draft_canon_sha": "1dd29440198005a1",
+    "bak_exists": true,
+    "bak_equals_original": true,
+    "indent_preserved": true,
+    "single_line": false
+   }
+  },
+  "subtitles/apply-template": {
+   "code": 0,
+   "out": {
+    "sha": "fcaffc57cef027a6",
+    "len": 118,
+    "text": "{\"ok\":true,\"segment_id\":\"<UUID#1>\",\"material_id\":\"<UUID#2>\",\"track_id\":\"<UUID#3>\",\"start_us\":0,\"duration_us\":1000000}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "artifact": {
+    "draft_canon_sha": "ed885ff5dba7620b",
+    "bak_exists": true,
+    "bak_equals_original": true,
+    "indent_preserved": true,
+    "single_line": false
+   }
+  }
+ }
+}

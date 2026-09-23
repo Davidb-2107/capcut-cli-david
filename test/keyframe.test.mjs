@@ -11,7 +11,7 @@ import { dirname, resolve } from "node:path";
 
 import { cmdAddKeyframe, cmdKenBurns } from "../dist/commands/keyframe-cli.js";
 import { PROPERTY_MAP, VALID_CURVES } from "../dist/commands/keyframe.js";
-import { loadDraft } from "../dist/draft.js";
+import { LocalDraftStore } from "../dist/draft.js";
 
 import { FIXTURES, fixturePath, loadFixture } from "./helpers/load-fixture.mjs";
 import { tmpDraft } from "./helpers/tmp-draft.mjs";
@@ -43,7 +43,7 @@ const CLEAN_FIXTURE = FIXTURES.ANIMATIONS;
 for (const [cliProp, kfType] of Object.entries(PROPERTY_MAP)) {
   test(`cmdAddKeyframe: ${cliProp} → ${kfType} creates container and keyframe`, (t) => {
     const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
-    const { draft } = loadDraft(filePath);
+    const { draft } = new LocalDraftStore().load(filePath);
     const { seg } = firstVideoSegment(draft);
 
     const value = cliProp === "alpha" ? 0.5 : cliProp === "rotation" ? 45 : 1.25;
@@ -60,7 +60,7 @@ for (const [cliProp, kfType] of Object.entries(PROPERTY_MAP)) {
     strictEqual(container.keyframe_list[0].string_value, "");
 
     // Persistence
-    const { draft: after } = loadDraft(filePath);
+    const { draft: after } = new LocalDraftStore().load(filePath);
     const segAfter = after.tracks.flatMap((tr) => tr.segments).find((s) => s.id === seg.id);
     const cAfter = segAfter.common_keyframes.find((c) => c.property_type === kfType);
     ok(cAfter, `${kfType} persisted to disk`);
@@ -74,7 +74,7 @@ for (const [cliProp, kfType] of Object.entries(PROPERTY_MAP)) {
 
 test("cmdAddKeyframe: multiple keyframes are sorted by time_offset", (t) => {
   const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { seg } = firstVideoSegment(draft);
 
   cmdAddKeyframe(draft, filePath, seg.id, "2s", "scale_x", "1.5", undefined, flagsQuiet);
@@ -91,7 +91,7 @@ test("cmdAddKeyframe: multiple keyframes are sorted by time_offset", (t) => {
 
 test("cmdAddKeyframe: same time_offset replaces the existing keyframe", (t) => {
   const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { seg } = firstVideoSegment(draft);
 
   cmdAddKeyframe(draft, filePath, seg.id, "0", "scale_x", "1.0", undefined, flagsQuiet);
@@ -104,7 +104,7 @@ test("cmdAddKeyframe: same time_offset replaces the existing keyframe", (t) => {
 
 test("cmdAddKeyframe: save=false leaves file mtime unchanged", (t) => {
   const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { seg } = firstVideoSegment(draft);
   const mtimeBefore = statSync(filePath).mtimeMs;
 
@@ -120,7 +120,7 @@ test("cmdAddKeyframe: save=false leaves file mtime unchanged", (t) => {
 
 test("cmdAddKeyframe: linear curve sets all control points to {0,0}", (t) => {
   const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { seg } = firstVideoSegment(draft);
 
   cmdAddKeyframe(draft, filePath, seg.id, "0", "scale_x", "1.0", "linear", flagsQuiet);
@@ -132,7 +132,7 @@ test("cmdAddKeyframe: linear curve sets all control points to {0,0}", (t) => {
 
 test("cmdAddKeyframe: ease-out solitary kf has {0,0} handles (no neighbor → no easing)", (t) => {
   const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { seg } = firstVideoSegment(draft);
 
   cmdAddKeyframe(draft, filePath, seg.id, "0", "scale_x", "1.0", "ease-out", flagsQuiet);
@@ -144,7 +144,7 @@ test("cmdAddKeyframe: ease-out solitary kf has {0,0} handles (no neighbor → no
 
 test("cmdAddKeyframe: ease-out paired kfs produce Δ-scaled prev.right (canonical dv=+0.5)", (t) => {
   const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { seg } = firstVideoSegment(draft);
   const dur = seg.target_timerange.duration;
 
@@ -163,8 +163,8 @@ test("cmdAddKeyframe: ease-out paired kfs produce Δ-scaled prev.right (canonica
 test("cmdAddKeyframe: ease-in produces different handle profile from ease-out (paired)", (t) => {
   const { filePath: f1 } = tmpDraft(CLEAN_FIXTURE, t);
   const { filePath: f2 } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft: d1 } = loadDraft(f1);
-  const { draft: d2 } = loadDraft(f2);
+  const { draft: d1 } = new LocalDraftStore().load(f1);
+  const { draft: d2 } = new LocalDraftStore().load(f2);
   const { seg: s1 } = firstVideoSegment(d1);
   const { seg: s2 } = firstVideoSegment(d2);
   const dur = s1.target_timerange.duration;
@@ -193,14 +193,14 @@ test("cmdAddKeyframe: ease-in produces different handle profile from ease-out (p
 test("parity: cmdKenBurns ≡ 2× cmdAddKeyframe (ease-out, dv=+0.5, scale_x)", (t) => {
   // Build A: cmdKenBurns
   const { filePath: fA } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft: dA } = loadDraft(fA);
+  const { draft: dA } = new LocalDraftStore().load(fA);
   const { seg: sA } = firstVideoSegment(dA);
   cmdKenBurns(dA, fA, sA.id, "1.0", "1.5", "ease-out", flagsQuiet);
   const dur = sA.target_timerange.duration;
 
   // Build B: two cmdAddKeyframe calls on scale_x
   const { filePath: fB } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft: dB } = loadDraft(fB);
+  const { draft: dB } = new LocalDraftStore().load(fB);
   const { seg: sB } = firstVideoSegment(dB);
   cmdAddKeyframe(dB, fB, sB.id, "0",                        "scale_x", "1.0", "ease-out", flagsQuiet);
   cmdAddKeyframe(dB, fB, sB.id, `${dur / 1_000_000}s`,     "scale_x", "1.5", "ease-out", flagsQuiet);
@@ -220,13 +220,13 @@ test("parity: cmdKenBurns ≡ 2× cmdAddKeyframe (ease-out, dv=+0.5, scale_x)", 
 
 test("parity: cmdKenBurns ≡ 2× cmdAddKeyframe (ease-out, dv=-0.5, canonical capture)", (t) => {
   const { filePath: fA } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft: dA } = loadDraft(fA);
+  const { draft: dA } = new LocalDraftStore().load(fA);
   const { seg: sA } = firstVideoSegment(dA);
   cmdKenBurns(dA, fA, sA.id, "1.5", "1.0", "ease-out", flagsQuiet);
   const dur = sA.target_timerange.duration;
 
   const { filePath: fB } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft: dB } = loadDraft(fB);
+  const { draft: dB } = new LocalDraftStore().load(fB);
   const { seg: sB } = firstVideoSegment(dB);
   cmdAddKeyframe(dB, fB, sB.id, "0",                       "scale_x", "1.5", "ease-out", flagsQuiet);
   cmdAddKeyframe(dB, fB, sB.id, `${dur / 1_000_000}s`,     "scale_x", "1.0", "ease-out", flagsQuiet);
@@ -243,13 +243,13 @@ test("parity: cmdKenBurns ≡ 2× cmdAddKeyframe (ease-out, dv=-0.5, canonical c
 
 test("parity: cmdKenBurns ≡ 2× cmdAddKeyframe (ease-out, dv=+0.12 fine zoom)", (t) => {
   const { filePath: fA } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft: dA } = loadDraft(fA);
+  const { draft: dA } = new LocalDraftStore().load(fA);
   const { seg: sA } = firstVideoSegment(dA);
   cmdKenBurns(dA, fA, sA.id, "1.0", "1.12", "ease-out", flagsQuiet);
   const dur = sA.target_timerange.duration;
 
   const { filePath: fB } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft: dB } = loadDraft(fB);
+  const { draft: dB } = new LocalDraftStore().load(fB);
   const { seg: sB } = firstVideoSegment(dB);
   cmdAddKeyframe(dB, fB, sB.id, "0",                       "scale_x", "1.0",  "ease-out", flagsQuiet);
   cmdAddKeyframe(dB, fB, sB.id, `${dur / 1_000_000}s`,     "scale_x", "1.12", "ease-out", flagsQuiet);
@@ -266,7 +266,7 @@ test("parity: cmdKenBurns ≡ 2× cmdAddKeyframe (ease-out, dv=+0.12 fine zoom)"
 
 test("cmdAddKeyframe: insert between 2 kfs retro-updates prev.right and next.left (ease-out)", (t) => {
   const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { seg } = firstVideoSegment(draft);
   const dur = seg.target_timerange.duration;
   const half = Math.floor(dur / 2);
@@ -291,7 +291,7 @@ test("cmdAddKeyframe: insert between 2 kfs retro-updates prev.right and next.lef
 
 test("cmdAddKeyframe: prepend before existing kf retro-updates next.left (ease-out)", (t) => {
   const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { seg } = firstVideoSegment(draft);
   const dur = seg.target_timerange.duration;
   const half = Math.floor(dur / 2);
@@ -312,7 +312,7 @@ test("cmdAddKeyframe: prepend before existing kf retro-updates next.left (ease-o
 
 test("cmdAddKeyframe: replace at same time retro-updates neighbors with new dv", (t) => {
   const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { seg } = firstVideoSegment(draft);
   const dur = seg.target_timerange.duration;
 
@@ -331,7 +331,7 @@ test("cmdAddKeyframe: replace at same time retro-updates neighbors with new dv",
 
 test("cmdAddKeyframe: ease-in-out insertion retro-updates x of both neighbors, y stays 0", (t) => {
   const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { seg } = firstVideoSegment(draft);
   const dur = seg.target_timerange.duration;
   const half = Math.floor(dur / 2);
@@ -372,7 +372,7 @@ test("byte-identity oracle: triplet ease-out (frame-aligned + non-aligned interv
   // enough to host the 8.133s triplet. ANIMATIONS (default CLEAN_FIXTURE) is
   // only 5s and would reject t=8.133s as out-of-range.
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { seg } = firstVideoSegment(draft);
 
   for (const input of oracle._meta.inputs_to_replay) {
@@ -460,7 +460,7 @@ test("add-keyframe: missing segment exits 1", () => {
 });
 
 test("add-keyframe: invalid property exits 1", () => {
-  const { draft } = loadDraft(fixturePath(CLEAN_FIXTURE));
+  const { draft } = new LocalDraftStore().load(fixturePath(CLEAN_FIXTURE));
   const { seg } = firstVideoSegment(draft);
   const r = runCli([
     "add-keyframe",
@@ -477,7 +477,7 @@ test("add-keyframe: invalid property exits 1", () => {
 });
 
 test("add-keyframe: missing --property exits 1", () => {
-  const { draft } = loadDraft(fixturePath(CLEAN_FIXTURE));
+  const { draft } = new LocalDraftStore().load(fixturePath(CLEAN_FIXTURE));
   const { seg } = firstVideoSegment(draft);
   const r = runCli(["add-keyframe", fixturePath(CLEAN_FIXTURE), seg.id, "0", "--value", "1.0"]);
   strictEqual(r.status, 1);
@@ -485,7 +485,7 @@ test("add-keyframe: missing --property exits 1", () => {
 });
 
 test("add-keyframe: missing --value exits 1", () => {
-  const { draft } = loadDraft(fixturePath(CLEAN_FIXTURE));
+  const { draft } = new LocalDraftStore().load(fixturePath(CLEAN_FIXTURE));
   const { seg } = firstVideoSegment(draft);
   const r = runCli(["add-keyframe", fixturePath(CLEAN_FIXTURE), seg.id, "0", "--property", "scale_x"]);
   strictEqual(r.status, 1);
@@ -493,7 +493,7 @@ test("add-keyframe: missing --value exits 1", () => {
 });
 
 test("add-keyframe: alpha out-of-range exits 1", () => {
-  const { draft } = loadDraft(fixturePath(CLEAN_FIXTURE));
+  const { draft } = new LocalDraftStore().load(fixturePath(CLEAN_FIXTURE));
   const { seg } = firstVideoSegment(draft);
   const r = runCli([
     "add-keyframe",
@@ -510,7 +510,7 @@ test("add-keyframe: alpha out-of-range exits 1", () => {
 });
 
 test("add-keyframe: time exceeds segment duration exits 1", () => {
-  const { draft } = loadDraft(fixturePath(CLEAN_FIXTURE));
+  const { draft } = new LocalDraftStore().load(fixturePath(CLEAN_FIXTURE));
   const { seg } = firstVideoSegment(draft);
   // ANIMATIONS video segment is 5s long; ask for 999s
   const r = runCli([
@@ -528,7 +528,7 @@ test("add-keyframe: time exceeds segment duration exits 1", () => {
 });
 
 test("add-keyframe: invalid curve exits 1", () => {
-  const { draft } = loadDraft(fixturePath(CLEAN_FIXTURE));
+  const { draft } = new LocalDraftStore().load(fixturePath(CLEAN_FIXTURE));
   const { seg } = firstVideoSegment(draft);
   const r = runCli([
     "add-keyframe",
@@ -552,7 +552,7 @@ test("add-keyframe: invalid curve exits 1", () => {
 
 test("cmdKenBurns: creates paired KFTypeScaleX + KFTypeScaleY containers", (t) => {
   const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { seg } = firstVideoSegment(draft);
 
   cmdKenBurns(draft, filePath, seg.id, "1.0", "1.5", undefined, flagsQuiet);
@@ -585,7 +585,7 @@ test("cmdKenBurns: creates paired KFTypeScaleX + KFTypeScaleY containers", (t) =
 
 test("cmdKenBurns: ease-out (default) right_control matches Cubic Out profile (0.32 / -0.4)", (t) => {
   const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { seg } = firstVideoSegment(draft);
 
   cmdKenBurns(draft, filePath, seg.id, "1.5", "1.0", undefined, flagsQuiet);
@@ -650,7 +650,7 @@ test("cmdKenBurns: ken-burns-draft fixture round-trip parity (handle ratios)", (
 
 test("cmdKenBurns: overrides existing scale_x/scale_y containers (opinionated)", (t) => {
   const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { seg } = firstVideoSegment(draft);
 
   // Seed an unrelated scale_x keyframe first.
@@ -671,8 +671,8 @@ test("cmdKenBurns: overrides existing scale_x/scale_y containers (opinionated)",
 test("cmdKenBurns: curve override changes control points", (t) => {
   const { filePath: f1 } = tmpDraft(CLEAN_FIXTURE, t);
   const { filePath: f2 } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft: d1 } = loadDraft(f1);
-  const { draft: d2 } = loadDraft(f2);
+  const { draft: d1 } = new LocalDraftStore().load(f1);
+  const { draft: d2 } = new LocalDraftStore().load(f2);
   const { seg: s1 } = firstVideoSegment(d1);
   const { seg: s2 } = firstVideoSegment(d2);
 
@@ -689,7 +689,7 @@ test("cmdKenBurns: curve override changes control points", (t) => {
 
 test("cmdKenBurns: ease-out start.right_control.y = round(0.94 × Δ) — zoom-in 1.0→1.12", (t) => {
   const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { seg } = firstVideoSegment(draft);
 
   cmdKenBurns(draft, filePath, seg.id, "1.0", "1.12", "ease-out", flagsQuiet);
@@ -709,7 +709,7 @@ test("cmdKenBurns: ease-out start.right_control.y = round(0.94 × Δ) — zoom-i
 
 test("cmdKenBurns: ease-out Δ=-0.5 preserves canonical Cubic Out y = -0.47 (parity lock)", (t) => {
   const { filePath } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const { seg } = firstVideoSegment(draft);
 
   cmdKenBurns(draft, filePath, seg.id, "1.5", "1.0", "ease-out", flagsQuiet);
@@ -722,8 +722,8 @@ test("cmdKenBurns: ease-out Δ=-0.5 preserves canonical Cubic Out y = -0.47 (par
 test("cmdKenBurns: ease-out start.right_control.y is sign-symmetric in Δ", (t) => {
   const { filePath: fIn } = tmpDraft(CLEAN_FIXTURE, t);
   const { filePath: fOut } = tmpDraft(CLEAN_FIXTURE, t);
-  const { draft: dIn } = loadDraft(fIn);
-  const { draft: dOut } = loadDraft(fOut);
+  const { draft: dIn } = new LocalDraftStore().load(fIn);
+  const { draft: dOut } = new LocalDraftStore().load(fOut);
   const { seg: segIn } = firstVideoSegment(dIn);
   const { seg: segOut } = firstVideoSegment(dOut);
 
@@ -743,7 +743,7 @@ test("cmdKenBurns: ease-out start.right_control.y is sign-symmetric in Δ", (t) 
 // ---------------------------------------------------------------------------
 
 test("ken-burns: missing --from exits 1", () => {
-  const { draft } = loadDraft(fixturePath(CLEAN_FIXTURE));
+  const { draft } = new LocalDraftStore().load(fixturePath(CLEAN_FIXTURE));
   const { seg } = firstVideoSegment(draft);
   const r = runCli(["ken-burns", fixturePath(CLEAN_FIXTURE), seg.id, "--to", "1.5"]);
   strictEqual(r.status, 1);
@@ -751,7 +751,7 @@ test("ken-burns: missing --from exits 1", () => {
 });
 
 test("ken-burns: missing --to exits 1", () => {
-  const { draft } = loadDraft(fixturePath(CLEAN_FIXTURE));
+  const { draft } = new LocalDraftStore().load(fixturePath(CLEAN_FIXTURE));
   const { seg } = firstVideoSegment(draft);
   const r = runCli(["ken-burns", fixturePath(CLEAN_FIXTURE), seg.id, "--from", "1.0"]);
   strictEqual(r.status, 1);
@@ -759,7 +759,7 @@ test("ken-burns: missing --to exits 1", () => {
 });
 
 test("ken-burns: from == to exits 1", () => {
-  const { draft } = loadDraft(fixturePath(CLEAN_FIXTURE));
+  const { draft } = new LocalDraftStore().load(fixturePath(CLEAN_FIXTURE));
   const { seg } = firstVideoSegment(draft);
   const r = runCli([
     "ken-burns",
@@ -775,7 +775,7 @@ test("ken-burns: from == to exits 1", () => {
 });
 
 test("ken-burns: negative --from exits 1", () => {
-  const { draft } = loadDraft(fixturePath(CLEAN_FIXTURE));
+  const { draft } = new LocalDraftStore().load(fixturePath(CLEAN_FIXTURE));
   const { seg } = firstVideoSegment(draft);
   const r = runCli([
     "ken-burns",
@@ -791,7 +791,7 @@ test("ken-burns: negative --from exits 1", () => {
 });
 
 test("ken-burns: audio segment (no clip) exits 1", () => {
-  const { draft } = loadDraft(fixturePath(FIXTURES.KEN_BURNS));
+  const { draft } = new LocalDraftStore().load(fixturePath(FIXTURES.KEN_BURNS));
   let audioSeg;
   for (const t of draft.tracks) {
     if (t.type === "audio") {

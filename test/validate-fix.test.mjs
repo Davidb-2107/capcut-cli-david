@@ -56,7 +56,7 @@ function setupRoot(t, { empty = false } = {}) {
 }
 
 // ===========================================================================
-// [B1] blocking-error refusal — checked FIRST, before any applyGc/saveDraft
+// [B1] blocking-error refusal — checked FIRST, before any applyGc/persist
 // ===========================================================================
 
 test("[B1] dangling_ref + orphan, --fix --apply → exit 2, blocked, ZERO writes (applyGc never reached)", (t) => {

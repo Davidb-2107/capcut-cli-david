@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { cutProject } from "../dist/commands/cut.js";
-import { loadDraft } from "../dist/draft.js";
+import { LocalDraftStore } from "../dist/draft.js";
 import { loadFixture, FIXTURES } from "./helpers/load-fixture.mjs";
 import { tmpDraft } from "./helpers/tmp-draft.mjs";
 import { runCli } from "./helpers/spawn-cli.mjs";
@@ -33,7 +33,7 @@ function totalSegments(draft) {
 
 test("cutProject: keeps middle slice [1s, 2s] of ken-burns draft", (t) => {
   const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const originalSegs = totalSegments(draft);
 
   const result = cutProject(draft, { start: 1_000_000, end: 2_000_000 });
@@ -59,7 +59,7 @@ test("cutProject: keeps middle slice [1s, 2s] of ken-burns draft", (t) => {
 
 test("cutProject: cut(0, duration) keeps everything", (t) => {
   const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const originalDuration = draft.duration;
   const originalSegs = totalSegments(draft);
 
@@ -72,7 +72,7 @@ test("cutProject: cut(0, duration) keeps everything", (t) => {
 
 test("cutProject: cut past end drops everything → tracks = []", (t) => {
   const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const originalSegs = totalSegments(draft);
 
   const result = cutProject(draft, { start: 5_000_000, end: 8_000_000 });
@@ -85,7 +85,7 @@ test("cutProject: cut past end drops everything → tracks = []", (t) => {
 
 test("cutProject: source_timerange adjusted by speed on overlapping clip", (t) => {
   const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
 
   // Capture pre-cut source ranges for video track segments that will partially survive.
   const videoTrack = draft.tracks.find((tr) => tr.type === "video");
@@ -163,7 +163,7 @@ test("cutCli: end <= start → exit 1 with 'End time must be after start time'",
 
 test("cutProject: materials swept — drops materials referenced only by removed segments", (t) => {
   const { filePath } = tmpDraft(FIXTURES.FULL_PSYCHO, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const originalVideosCount = loadFixture(FIXTURES.FULL_PSYCHO).materials.videos.length;
 
   // Cut a tiny window in the middle — most of the 60s timeline (and its 81 video
@@ -213,7 +213,7 @@ test("cutProject: materials swept — drops materials referenced only by removed
 
 test("cutProject: materials kept when still referenced elsewhere (sweep keeps shared ids)", (t) => {
   const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
 
   // Cut a slice that keeps the first half (0..1.5s) of ken-burns — multiple
   // segments survive, exercising the survivingMatIds branch.

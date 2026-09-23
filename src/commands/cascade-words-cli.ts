@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { type Draft, saveDraft } from "../draft.js";
+import { type Draft, type DraftStore, LocalDraftStore, persistDraft } from "../draft.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { type FontCalibrationProfile, parseFontCalibrationProfiles } from "../utils/font-calibration.js";
 import { resolveFontReference } from "../utils/font-resolver.js";
@@ -7,7 +7,13 @@ import { readFileCapped } from "../utils/safe-io.js";
 import { cascadeWords } from "./cascade-words.js";
 import type { CaptionCard } from "./create.js";
 
-export function cmdCascadeWords(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
+export function cmdCascadeWords(
+  draft: Draft,
+  filePath: string,
+  positional: string[],
+  flags: Flags,
+  store: DraftStore = new LocalDraftStore(),
+): void {
   const jsonPath = positional[2];
   if (!jsonPath) {
     die(
@@ -51,6 +57,6 @@ export function cmdCascadeWords(draft: Draft, filePath: string, positional: stri
     allowCandidateCalibration: flags.allowCandidateCalibration,
     font: flags.font ? resolveFontReference(flags.font, { draftsRoot: flags.drafts }) : undefined,
   });
-  saveDraft(filePath, draft);
+  persistDraft(store, filePath, draft);
   out({ ok: true, track_ids: result.trackIds, word_count: result.wordCount, line_count: result.lineCount }, flags);
 }

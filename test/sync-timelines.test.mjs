@@ -4,7 +4,7 @@
 //
 // Hard invariants under test:
 //  - direction is ALWAYS root -> mirror, never inverse, no mtime inference;
-//  - writes RAW root bytes (never JSON.stringify / saveDraft);
+//  - writes RAW root bytes (never JSON.stringify / the draft store);
 //  - byte-identical target -> skip (no write, no backup): byte-identity when clean;
 //  - timestamped non-clobbering backups; never touches root draft_content.json.bak
 //    nor the patch journals (mini_draft.json / patch.json).
@@ -157,7 +157,7 @@ test("sync: patch journals (mini_draft.json/patch.json) are NEVER touched", (t) 
   strictEqual(readFileSync(join(dir, "Timelines", "G1", "attachment", "patch", "patch.json"), "utf-8"), '{"content":"OLD"}');
 });
 
-test("sync: the root draft_content.json.bak (saveDraft's rollback) is NEVER touched; root template-2.tmp IS refreshed", (t) => {
+test("sync: the root draft_content.json.bak (the draft store's rollback) is NEVER touched; root template-2.tmp IS refreshed", (t) => {
   const stale = JSON.stringify({ id: "X", duration: 1, tracks: [], materials: {} });
   const { dir, filePath } = setup(t, { mirrors: { "G1": { draft: stale } } });
   const rootBak = join(dir, "draft_content.json.bak");
@@ -288,7 +288,7 @@ test("CLI sync-timelines: a guid write failure → exit 1 with {error}", (t) => 
 // ===========================================================================
 // draft_info.json — the CapCut PRE-OPEN mirror. A CLI-built, never-opened draft
 // has Timelines/<guid>/draft_info.json (video-only, written by cutcli) but NO
-// draft_content.json (CapCut only materialises that on first open). saveDraft
+// draft_content.json (CapCut only materialises that on first open). persistDraft
 // writes only the ROOT draft_content.json, so audio+captions never reach the
 // guid's draft_info.json — the file CapCut actually reads on first open — and
 // are lost. Filesystem repro proved priming the guid's draft_info.json to the

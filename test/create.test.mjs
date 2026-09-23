@@ -17,7 +17,7 @@ import {
   buildTextMaterial,
   initDraft,
 } from "../dist/commands/create.js";
-import { loadDraft, saveDraft } from "../dist/draft.js";
+import { LocalDraftStore, persistDraft } from "../dist/draft.js";
 
 import { FIXTURES, fixturePath } from "./helpers/load-fixture.mjs";
 import { tmpDraft } from "./helpers/tmp-draft.mjs";
@@ -128,7 +128,7 @@ test("init: initDraft throws when target draft directory already exists", (t) =>
 
 test("add-video: addVideo registers material, track, segment and copies asset", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
 
   const tracksBefore = draft.tracks.length;
   const videosBefore = draft.materials.videos.length;
@@ -170,8 +170,8 @@ test("add-video: addVideo registers material, track, segment and copies asset", 
   strictEqual(draft.duration, 1_000_000, "duration should extend to segEnd");
 
   // Persistence: save and re-load
-  saveDraft(filePath, draft);
-  const { draft: reloaded } = loadDraft(filePath);
+  persistDraft(new LocalDraftStore(), filePath, draft);
+  const { draft: reloaded } = new LocalDraftStore().load(filePath);
   ok(
     reloaded.materials.videos.some((m) => m.id === result.materialId),
     "material should persist through save+load",
@@ -197,7 +197,7 @@ test("add-video (CLI): missing args returns CliError 'Missing arguments'", () =>
 
 test("add-audio: addAudio registers material, track, segment with custom volume", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
 
   const tracksBefore = draft.tracks.length;
   const audiosBefore = draft.materials.audios.length;
@@ -235,8 +235,8 @@ test("add-audio: addAudio registers material, track, segment with custom volume"
   ok(existsSync(resolve(dirname(filePath), "Resources", `${result.materialId}.mp3`)), "copied asset should exist in Resources/");
 
   // Persistence
-  saveDraft(filePath, draft);
-  const { draft: reloaded } = loadDraft(filePath);
+  persistDraft(new LocalDraftStore(), filePath, draft);
+  const { draft: reloaded } = new LocalDraftStore().load(filePath);
   ok(reloaded.materials.audios.some((m) => m.id === result.materialId));
   strictEqual(reloaded.duration, 2_000_000);
 });
@@ -255,7 +255,7 @@ test("add-audio (CLI): missing args returns CliError 'Missing arguments'", () =>
 
 test("add-text: addText writes text material w/ #FF0000 color and parseable content", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
 
   const textsBefore = draft.materials.texts.length;
 
@@ -295,8 +295,8 @@ test("add-text: addText writes text material w/ #FF0000 color and parseable cont
   strictEqual(rgb[2], 0);
 
   // Persistence
-  saveDraft(filePath, draft);
-  const { draft: reloaded } = loadDraft(filePath);
+  persistDraft(new LocalDraftStore(), filePath, draft);
+  const { draft: reloaded } = new LocalDraftStore().load(filePath);
   ok(reloaded.materials.texts.some((m) => m.id === result.materialId));
 });
 
@@ -359,7 +359,7 @@ test("applyTextFontIdentity: keeps CapCut's internal font registration id separa
 
 test("add-text: addText with custom trackName creates a new text track", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
 
   const textTracksBefore = draft.tracks.filter((tr) => tr.type === "text").length;
 
@@ -459,7 +459,7 @@ test("add-video (CLI happy): spawns, persists, returns JSON", (t) => {
 
 test("add-video: .png extension uses materialType='photo'", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const srcImg = makeScratchFile(t, "frame.png", "fake-png");
 
   const result = addVideo(draft, filePath, {
@@ -480,7 +480,7 @@ const VHS_HORROR_ID = "7583016187584417032";
 
 test("add-effect: registers video_effect material + effect track + segment", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
 
   const effectsBefore = draft.materials.video_effects?.length ?? 0;
   const tracksBefore = draft.tracks.length;
@@ -523,8 +523,8 @@ test("add-effect: registers video_effect material + effect track + segment", (t)
   strictEqual(mat.apply_target_type, 2, "default should be global/track-wide");
 
   // Persistence
-  saveDraft(filePath, draft);
-  const { draft: reloaded } = loadDraft(filePath);
+  persistDraft(new LocalDraftStore(), filePath, draft);
+  const { draft: reloaded } = new LocalDraftStore().load(filePath);
   ok(
     reloaded.materials.video_effects?.some((m) => m.id === result.materialId),
     "video_effect material should persist through save+load",
@@ -537,7 +537,7 @@ test("add-effect: registers video_effect material + effect track + segment", (t)
 
 test("add-effect: with --bind creates segment-specific effect (apply_target_type=0)", (t) => {
   const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
 
   const firstSegId = draft.tracks.find((tr) => tr.type === "video")?.segments[0]?.id;
   ok(firstSegId, "fixture should have at least one video segment to bind to");
@@ -558,7 +558,7 @@ test("add-effect: with --bind creates segment-specific effect (apply_target_type
 
 test("add-effect: custom --value is written to material", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
 
   const result = addEffect(draft, filePath, {
     resourceId: VHS_HORROR_ID,
@@ -623,7 +623,7 @@ const WESTERN_ID = "7083809725615247874";
 
 test("add-filter: registers filter material in materials.effects + filter track + segment", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
 
   const effectsBefore = draft.materials.effects?.length ?? 0;
   const tracksBefore = draft.tracks.length;
@@ -669,8 +669,8 @@ test("add-filter: registers filter material in materials.effects + filter track 
   strictEqual(mat.category_name, "Filters");
 
   // Persistence
-  saveDraft(filePath, draft);
-  const { draft: reloaded } = loadDraft(filePath);
+  persistDraft(new LocalDraftStore(), filePath, draft);
+  const { draft: reloaded } = new LocalDraftStore().load(filePath);
   ok(
     reloaded.materials.effects?.some((m) => m.id === result.materialId),
     "filter material should persist through save+load",
@@ -683,7 +683,7 @@ test("add-filter: registers filter material in materials.effects + filter track 
 
 test("add-filter: custom --value is written to material", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
 
   const result = addFilter(draft, filePath, {
     resourceId: WESTERN_ID,
@@ -700,7 +700,7 @@ test("add-filter: custom --value is written to material", (t) => {
 
 test("add-filter: reuses an existing filter track", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
 
   const first = addFilter(draft, filePath, {
     resourceId: WESTERN_ID,
@@ -771,7 +771,7 @@ const BLACK_FADE_ID = "6724239388189921806";
 
 test("add-transition: registers material in materials.transitions + ref on the outgoing segment", (t) => {
   const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
 
   const videoTrack = draft.tracks.find((tr) => tr.type === "video");
   const seg = videoTrack.segments[0];
@@ -820,8 +820,8 @@ test("add-transition: registers material in materials.transitions + ref on the o
   );
 
   // Persistence
-  saveDraft(filePath, draft);
-  const { draft: reloaded } = loadDraft(filePath);
+  persistDraft(new LocalDraftStore(), filePath, draft);
+  const { draft: reloaded } = new LocalDraftStore().load(filePath);
   ok(
     reloaded.materials.transitions?.some((m) => m.id === result.materialId),
     "transition material should persist through save+load",
@@ -830,7 +830,7 @@ test("add-transition: registers material in materials.transitions + ref on the o
 
 test("add-transition: custom duration is written to material", (t) => {
   const { filePath } = tmpDraft(FIXTURES.KEN_BURNS, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const seg = draft.tracks.find((tr) => tr.type === "video").segments[0];
 
   const result = addTransition(draft, filePath, {

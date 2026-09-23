@@ -130,8 +130,8 @@ export function syncTimelines(filePath: string, opts: SyncOptions = {}): SyncRep
   }
 
   // Root siblings: refresh template-2.tmp ONLY. NEVER touch the root
-  // draft_content.json.bak — it is saveDraft's private rollback of the last
-  // root edit (draft.ts), and clobbering it would destroy that undo.
+  // draft_content.json.bak — it is the draft store's private rollback of the last
+  // root edit (persistDraft), and clobbering it would destroy that undo.
   const rootSiblingsWritten: string[] = [];
   const rootTmp = join(draftDir, "template-2.tmp");
   const tmpOutcome = reconcileFile(rootTmp, rootBytes, dryRun, epoch);

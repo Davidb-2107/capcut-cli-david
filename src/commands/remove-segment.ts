@@ -1,5 +1,5 @@
 import { dirname } from "node:path";
-import { type Draft, findSegment, saveDraft } from "../draft.js";
+import { type Draft, type DraftStore, findSegment, LocalDraftStore, persistDraft } from "../draft.js";
 import { CliError, type Flags, out } from "../utils/cli.js";
 import { applyGc, planGc } from "./gc.js";
 import { hasBlockingErrors } from "./validate.js";
@@ -10,7 +10,13 @@ import { hasBlockingErrors } from "./validate.js";
 // guarantee: a material still referenced by ANY other segment is never deleted,
 // and the sweep only ever touches materials.texts/videos/audios.
 
-export function cmdRemoveSegment(draft: Draft, filePath: string, positional: string[], flags: Flags): void {
+export function cmdRemoveSegment(
+  draft: Draft,
+  filePath: string,
+  positional: string[],
+  flags: Flags,
+  store: DraftStore = new LocalDraftStore(),
+): void {
   // Same refusal as gc: a dangling ref means the draft is already inconsistent,
   // a duplicate material id makes the id-based sweep ambiguous.
   if (hasBlockingErrors(draft)) {
@@ -33,7 +39,7 @@ export function cmdRemoveSegment(draft: Draft, filePath: string, positional: str
   const plan = planGc(draft);
   applyGc(draft, plan);
 
-  saveDraft(filePath, draft);
+  persistDraft(store, filePath, draft);
 
   out(
     {

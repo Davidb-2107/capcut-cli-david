@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-import { saveDraft } from "../dist/draft.js";
+import { LocalDraftStore, persistDraft } from "../dist/draft.js";
 import { syncTimelines } from "../dist/commands/sync-timelines.js";
 import { runValidate } from "../dist/commands/validate.js";
 
@@ -47,11 +47,11 @@ function seedCopiedDraft(dir) {
   return { draft, filePath, timelineDir };
 }
 
-test("saveDraft normalizes a copied CapCut timeline before the draft is opened", (t) => {
+test("persistDraft normalizes a copied CapCut timeline before the draft is opened", (t) => {
   const dir = makeDraftDir(t);
   const { draft, filePath, timelineDir } = seedCopiedDraft(dir);
 
-  saveDraft(filePath, draft);
+  persistDraft(new LocalDraftStore(), filePath, draft);
 
   const newTimelineDir = join(dir, "Timelines", NEW_ID);
   ok(existsSync(newTimelineDir), "timeline directory must follow draft_content.id");

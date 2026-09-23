@@ -8,7 +8,7 @@ import { dirname, join } from "node:path";
 
 import { addText, buildRichTextContent, importCaptions } from "../dist/commands/create.js";
 import { hexToRgb } from "../dist/utils/companion.js";
-import { loadDraft, saveDraft } from "../dist/draft.js";
+import { LocalDraftStore, persistDraft } from "../dist/draft.js";
 
 import { FIXTURES, fixturePath } from "./helpers/load-fixture.mjs";
 import { tmpDraft } from "./helpers/tmp-draft.mjs";
@@ -144,7 +144,7 @@ test("buildRichTextContent: overlapping ranges throw CliError", () => {
 
 test("addText: with highlights writes is_rich_text + multi-span content", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const result = addText(draft, filePath, {
     text: ORACLE_TEXT,
     start: 0,
@@ -160,7 +160,7 @@ test("addText: with highlights writes is_rich_text + multi-span content", (t) =>
 
 test("addText: WITHOUT highlights stays byte-identical to v1.3.0 (single octet span, no is_rich_text)", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const text = "Test caption";
   const result = addText(draft, filePath, { text, start: 0, duration: 2_000_000, fontSize: 24, color: "#FF0000" });
   const mat = draft.materials.texts.find((m) => m.id === result.materialId);
@@ -259,7 +259,7 @@ const CARDS = [
 
 test("importCaptions: replaces text track with N cards; hl→rich, no-hl→single span", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const res = importCaptions(draft, filePath, { cards: CARDS, trackName: "subtitle" });
   strictEqual(res.count, 3);
   const track = draft.tracks.find((tr) => tr.id === res.trackId);
@@ -281,7 +281,7 @@ test("importCaptions: replaces text track with N cards; hl→rich, no-hl→singl
 
 test("importCaptions: duration = max(1, end-start); timing on segments", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const res = importCaptions(draft, filePath, { cards: CARDS, trackName: "subtitle" });
   const track = draft.tracks.find((tr) => tr.id === res.trackId);
   strictEqual(track.segments[0].target_timerange.start, 0);
@@ -291,7 +291,7 @@ test("importCaptions: duration = max(1, end-start); timing on segments", (t) => 
 
 test("importCaptions: hl [0,0] (patcher sentinel) → no highlight, single span", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const res = importCaptions(draft, filePath, {
     cards: [{ text: "no keyword here", start: 0, end: 1000000, hl: [0, 0] }],
     trackName: "subtitle",
@@ -352,14 +352,14 @@ test("import-captions (CLI): bad range in a card → CliError status 1", (t) => 
 
 test("set-text (CLI): refuses a multi-span (keyword-highlight) caption", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft, filePath: fp } = loadDraft(filePath);
+  const { draft, filePath: fp } = new LocalDraftStore().load(filePath);
   const r = addText(draft, fp, {
     text: "DANGER zone",
     start: 0,
     duration: 1_000_000,
     highlights: [{ range: [0, 6], color: hexToRgb("#FF0000") }],
   });
-  saveDraft(fp, draft);
+  persistDraft(new LocalDraftStore(), fp, draft);
   const res = runCli(["set-text", filePath, r.segmentId, "new plain text"]);
   strictEqual(res.status, 1);
   ok(res.errorJson, `expected JSON on stderr, got: ${res.stderr}`);
@@ -368,9 +368,9 @@ test("set-text (CLI): refuses a multi-span (keyword-highlight) caption", (t) => 
 
 test("set-text (CLI): still works on a normal single-span caption", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft, filePath: fp } = loadDraft(filePath);
+  const { draft, filePath: fp } = new LocalDraftStore().load(filePath);
   const r = addText(draft, fp, { text: "hello", start: 0, duration: 1_000_000 });
-  saveDraft(fp, draft);
+  persistDraft(new LocalDraftStore(), fp, draft);
   const res = runCli(["set-text", filePath, r.segmentId, "goodbye"]);
   strictEqual(res.status, 0, `unexpected stderr: ${res.stderr}`);
   strictEqual(res.json.new, "goodbye");
@@ -431,7 +431,7 @@ test("buildRichTextContent: WITHOUT baseStyle the lean default span shape is unc
 
 test("importCaptions --clone-style: new captions inherit the existing caption's unknown font + stroke", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   // Plant a known style block (unknown font) on the target track's first caption.
   const track = draft.tracks.find((tr) => tr.type === "text");
   ok(track && track.segments[0], "fixture must have a text track with a caption");
@@ -455,7 +455,7 @@ test("importCaptions --clone-style: new captions inherit the existing caption's 
 
 test("importCaptions --clone-style: empty/absent track falls back to default style (no crash, no font)", (t) => {
   const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   // MINIMAL has no "subtitle" track → clone has nothing to copy → default style fallback.
   const res = importCaptions(draft, filePath, {
     cards: [{ text: "hello world", start: 0, end: 1000000, hl: [0, 5] }],
@@ -471,11 +471,11 @@ test("importCaptions --clone-style: empty/absent track falls back to default sty
 
 test("import-captions --clone-style (CLI): runs and clones style end-to-end", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const track = draft.tracks.find((tr) => tr.type === "text");
   const tplMat = draft.materials.texts.find((m) => m.id === track.segments[0].material_id);
   tplMat.content = JSON.stringify({ text: "modèle", styles: [FAKE_STYLE] });
-  saveDraft(filePath, draft);
+  persistDraft(new LocalDraftStore(), filePath, draft);
 
   const jsonPath = join(dirname(filePath), "clone-cards.json");
   writeFileSync(jsonPath, JSON.stringify([{ text: "le PC", start: 0, end: 500000, hl: [3, 5] }]), "utf-8");
@@ -536,7 +536,7 @@ test("buildRichTextContent: highlight WITH size overrides the cloned size on the
 
 test("importCaptions: per-card hlSize wins over global highlightSize; global is the fallback", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const res = importCaptions(draft, filePath, {
     cards: [
       { text: "le PC", start: 0, end: 500000, hl: [3, 5], hlSize: 30 },
@@ -656,7 +656,7 @@ test("add-text --keyword-range + --keyword-size (CLI): explicit range span carri
 
 test("importCaptions --clone-style + hlSize: size override rides ON the cloned style block", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const track = draft.tracks.find((tr) => tr.type === "text");
   const tplMat = draft.materials.texts.find((m) => m.id === track.segments[0].material_id);
   tplMat.content = JSON.stringify({ text: "modèle", styles: [FAKE_STYLE] });
@@ -674,7 +674,7 @@ test("importCaptions --clone-style + hlSize: size override rides ON the cloned s
 
 test("importCaptions: hlSize without hl is silently ignored (single span, not rich)", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const res = importCaptions(draft, filePath, {
     cards: [{ text: "no keyword", start: 0, end: 1000000, hlSize: 34 }],
     trackName: "subtitle",
@@ -687,7 +687,7 @@ test("importCaptions: hlSize without hl is silently ignored (single span, not ri
 
 test("importCaptions: without --track-name targets the FIRST existing text track (no duplicate track)", (t) => {
   const { filePath } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const { draft } = loadDraft(filePath);
+  const { draft } = new LocalDraftStore().load(filePath);
   const textTracksBefore = draft.tracks.filter((tr) => tr.type === "text");
   const firstTextTrack = textTracksBefore[0];
   const res = importCaptions(draft, filePath, {

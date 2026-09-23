@@ -1,10 +1,16 @@
 import { dirname } from "node:path";
-import { type Draft, saveDraft } from "../draft.js";
+import { type Draft, type DraftStore, LocalDraftStore, persistDraft } from "../draft.js";
 import { CliError, type Flags, out } from "../utils/cli.js";
 import { applyGc, planGc } from "./gc.js";
 import { hasBlockingErrors } from "./validate.js";
 
-export function cmdGc(draft: Draft, filePath: string, _positional: string[], flags: Flags): void {
+export function cmdGc(
+  draft: Draft,
+  filePath: string,
+  _positional: string[],
+  flags: Flags,
+  store: DraftStore = new LocalDraftStore(),
+): void {
   // Refuse on an already-broken draft: a dangling ref means it's inconsistent,
   // a duplicate id makes "the orphan with id X" ambiguous.
   if (hasBlockingErrors(draft)) {
@@ -16,10 +22,10 @@ export function cmdGc(draft: Draft, filePath: string, _positional: string[], fla
   const plan = planGc(draft);
   const wrote = plan.total > 0 && !flags.dryRun;
 
-  // No-op MUST NOT write: keep saveDraft's single .bak rollback + mtime intact.
+  // No-op MUST NOT write: keep the store's single .bak rollback + mtime intact.
   if (wrote) {
     applyGc(draft, plan);
-    saveDraft(filePath, draft);
+    persistDraft(store, filePath, draft);
     const ids = [...plan.texts, ...plan.videos, ...plan.audios].slice(0, 5).join(", ");
     process.stderr.write(
       `WARNING gc removed ${plan.total} orphan material(s) [${ids}${plan.total > 5 ? ", …" : ""}] — backup at ${filePath}.bak. Run \`capcut-david sync-timelines\` afterwards (the root now diverges from any Timelines/ mirrors).\n`,

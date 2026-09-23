@@ -1,4 +1,4 @@
-import { type Draft, findSegment, saveDraft } from "../draft.js";
+import { type Draft, type DraftStore, findSegment, LocalDraftStore, persistDraft } from "../draft.js";
 import { die, type Flags, out } from "../utils/cli.js";
 import { parseTimeInput } from "../utils/time.js";
 import { readBatchItems } from "./create-cli.js";
@@ -23,6 +23,7 @@ export function cmdAddKeyframe(
   curveStr: string | undefined,
   flags: Flags,
   save = true,
+  store: DraftStore = new LocalDraftStore(),
 ): void {
   if (!property) die("--property is required (scale_x|scale_y|position_x|position_y|rotation|alpha)");
   if (valueStr === undefined) die("--value is required");
@@ -69,7 +70,7 @@ export function cmdAddKeyframe(
   }
 
   if (save) {
-    saveDraft(filePath, draft);
+    persistDraft(store, filePath, draft);
     out(
       {
         ok: true,
@@ -91,7 +92,12 @@ interface KeyframeBatchEntry {
   keyframes: { time: number | string; value: number | string; curve?: string }[];
 }
 
-export function cmdAddKeyframeBatch(draft: Draft, filePath: string, flags: Flags): void {
+export function cmdAddKeyframeBatch(
+  draft: Draft,
+  filePath: string,
+  flags: Flags,
+  store: DraftStore = new LocalDraftStore(),
+): void {
   const raw = readBatchItems(flags.batch as string, "add-keyframe") as unknown as KeyframeBatchEntry[];
   // all-or-nothing pass 1: structural validation + segment existence (cmdAddKeyframe
   // dies on bad property/curve/time BEFORE mutating, but only per call — so pre-check
@@ -121,11 +127,12 @@ export function cmdAddKeyframeBatch(draft: Draft, filePath: string, flags: Flags
         kf.curve,
         { ...flags, quiet: true },
         /* save */ false,
+        store,
       );
       count++;
     }
   }
-  saveDraft(filePath, draft); // ONE save
+  persistDraft(store, filePath, draft); // ONE save
   out({ ok: true, count }, flags);
 }
 
@@ -138,6 +145,7 @@ export function cmdKenBurns(
   curveStr: string | undefined,
   flags: Flags,
   save = true,
+  store: DraftStore = new LocalDraftStore(),
 ): void {
   if (fromStr === undefined) die("--from is required (starting scale, e.g. 1.0)");
   if (toStr === undefined) die("--to is required (ending scale, e.g. 1.5)");
@@ -149,7 +157,7 @@ export function cmdKenBurns(
     curve: curveStr,
   });
 
-  if (save) saveDraft(filePath, draft);
+  if (save) persistDraft(store, filePath, draft);
   out(
     {
       ok: true,
