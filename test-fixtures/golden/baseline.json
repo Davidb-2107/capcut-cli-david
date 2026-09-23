@@ -5136,7 +5136,7 @@
       "stableBytes": true,
       "canonicalStable": true,
       "matchesOriginal": true,
-      "contentSha256": "5bd718477f886ea802325ebc41c0e4bb64c1d016f2022dfa459ec683c71a5b56"
+      "contentSha256": "5730b95ab89079becb8f92ff91315780261bc238aaa5654800bf668a6341b383"
     },
     {
       "id": "roundtrip/minimal-draft/add-filter",
@@ -5145,7 +5145,7 @@
       "stableBytes": true,
       "canonicalStable": true,
       "matchesOriginal": true,
-      "contentSha256": "5bd718477f886ea802325ebc41c0e4bb64c1d016f2022dfa459ec683c71a5b56"
+      "contentSha256": "5730b95ab89079becb8f92ff91315780261bc238aaa5654800bf668a6341b383"
     },
     {
       "id": "roundtrip/ken-burns-draft/shift-all",
@@ -5710,7 +5710,7 @@
       "stableBytes": true,
       "canonicalStable": true,
       "matchesOriginal": true,
-      "contentSha256": "125ad391770a6eddaefa918dc752537c18bc69f220641b3d0cc583bafa05ddbb"
+      "contentSha256": "99c4f0995955b05e327a9a00ad4473083a3e0cb484c93bc25197777312e8af97"
     },
     {
       "id": "roundtrip/animations-draft/add-text",

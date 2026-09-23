@@ -55,6 +55,11 @@ test("canonicalize: plain text passes through untouched", () => {
   strictEqual(canonicalize("hello world\n", TOKENS), "hello world\n");
 });
 
+test("canonicalize: BOM and CRLF are normalised (win/linux checkout parity)", () => {
+  strictEqual(canonicalize("\uFEFFhello\r\nworld\r\n", TOKENS), "hello\nworld\n");
+  strictEqual(canonicalHash('{"a":1}\r\n', TOKENS), canonicalHash('{"a":1}\n', TOKENS));
+});
+
 test('canonicalize: JSON-escaped paths become tokens (validate\'s "project" field)', () => {
   // JSON.stringify doubles backslashes: a Windows path inside a JSON payload
   // appears as `C:\\repo\\...`. It must canonicalize to the same token as the

@@ -57,9 +57,14 @@ const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi
  *   2. on lines carrying a path token, remaining separators → `/` (Windows
  *      vs POSIX emitters; `\\` first, then lone `\`);
  *   3. every UUID → <UUID> (generated ids must not break the baseline).
+ *
+ * Also normalises BOM + CRLF→LF up front: a pinned clean refusal leaves the
+ * fixture bytes untouched, so without this the hash would depend on the
+ * checkout's CRLF (win) vs LF (linux) form (minimal-draft add-effect/
+ * add-filter, animations-draft set-text diverged win→linux until normalised).
  */
 export function canonicalize(text, pathTokens = []) {
-  let out = text;
+  let out = text.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
   const sorted = [...pathTokens].sort((a, b) => b[1].length - a[1].length);
   for (const [token, p] of sorted) {
     if (!p) continue;
