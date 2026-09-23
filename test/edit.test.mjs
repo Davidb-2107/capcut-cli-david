@@ -2,7 +2,7 @@
 // Strategy:
 //   - Happy paths invoke the exported cmdXxx functions directly against a
 //     freshly-copied tmp fixture, assert in-memory mutation, then re-load via
-//     loadDraft to confirm saveDraft persisted to disk.
+//     the store to confirm persistence reached disk.
 //   - Error paths spawn the built binary via runCli() and assert exit code 1
 //     plus the JSON error message on stderr.
 

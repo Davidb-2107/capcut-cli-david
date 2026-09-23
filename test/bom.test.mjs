@@ -1,4 +1,4 @@
-// loadDraft must tolerate a UTF-8 BOM: external Windows tools (e.g. PowerShell
+// LocalDraftStore.load must tolerate a UTF-8 BOM: external Windows tools (e.g. PowerShell
 // Set-Content -Encoding UTF8) write draft_content.json with a BOM, and bare
 // JSON.parse throws on U+FEFF. The CLI itself never writes a BOM.
 import { test } from "node:test";
@@ -9,7 +9,7 @@ import { join } from "node:path";
 
 import { LocalDraftStore } from "../dist/draft.js";
 
-test("loadDraft: parses a draft_content.json written with a UTF-8 BOM", (t) => {
+test("LocalDraftStore.load: parses a draft_content.json written with a UTF-8 BOM", (t) => {
   const dir = mkdtempSync(join(tmpdir(), "capcut-bom-"));
   t.after(() => {
     try {

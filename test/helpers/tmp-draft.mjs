@@ -1,6 +1,6 @@
 // Test helper: deep-clone a fixture into a unique tmp directory and return the
 // path to draft_content.json inside it. Tests use this when they need a
-// mutable on-disk draft (e.g. set-text writes via saveDraft).
+// mutable on-disk draft (e.g. set-text writes through the DraftStore).
 //
 // Each invocation returns an isolated directory. Registers a node:test
 // `before/after` style cleanup via the optional `t.after(...)` hook the

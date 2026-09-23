@@ -47,7 +47,7 @@ function seedCopiedDraft(dir) {
   return { draft, filePath, timelineDir };
 }
 
-test("saveDraft normalizes a copied CapCut timeline before the draft is opened", (t) => {
+test("persistDraft normalizes a copied CapCut timeline before the draft is opened", (t) => {
   const dir = makeDraftDir(t);
   const { draft, filePath, timelineDir } = seedCopiedDraft(dir);
 
