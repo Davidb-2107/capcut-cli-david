@@ -26,6 +26,7 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc && node scripts/build-ui.mjs && node scripts/build-catalogue-ui.mjs",
     "test": "node --test --test-reporter=spec",
+    "test:fidelity": "node scripts/fidelity-sweep.mjs",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=dist/commands/**/*.js --test-coverage-include=dist/draft.js --test-coverage-lines=80 --test-coverage-functions=80 --test-reporter=spec",
     "dev": "node --import tsx src/index.ts",
     "prepublishOnly": "npm run build"

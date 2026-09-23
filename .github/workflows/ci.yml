@@ -155,8 +155,14 @@ jobs:
       - name: Build (tsc)
         run: npm run build
 
+      - name: Canonicaliser OS-parity self-test (win/linux forms)
+        run: node scripts/golden-output.mjs --selftest
+
       - name: Golden output diff vs committed baseline
         run: node scripts/golden-output.mjs --check
+
+      - name: Per-verb write-fidelity sweep (.bak + indent)
+        run: npm run test:fidelity
 
   # ---------------------------------------------------------------------------
   # Secrets scan (audit CLI-M1) - fail the build if a credential is committed.
@@ -182,7 +188,7 @@ jobs:
   ci-pass:
     name: CI Pass
     if: always()
-    needs: [lint, test, coverage, fixture-integrity, golden-output]
+    needs: [lint, test, coverage, fixture-integrity, golden-output, secrets-scan]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all jobs succeeded
@@ -191,13 +197,15 @@ jobs:
              [ "${{ needs.test.result }}" != "success" ] || \
              [ "${{ needs.coverage.result }}" != "success" ] || \
              [ "${{ needs.fixture-integrity.result }}" != "success" ] || \
-             [ "${{ needs.golden-output.result }}" != "success" ]; then
+             [ "${{ needs.golden-output.result }}" != "success" ] || \
+             [ "${{ needs.secrets-scan.result }}" != "success" ]; then
             echo "::error::One or more required jobs failed."
             echo "lint=${{ needs.lint.result }}"
             echo "test=${{ needs.test.result }}"
             echo "coverage=${{ needs.coverage.result }}"
             echo "fixture-integrity=${{ needs.fixture-integrity.result }}"
             echo "golden-output=${{ needs.golden-output.result }}"
+            echo "secrets-scan=${{ needs.secrets-scan.result }}"
             exit 1
           fi
           echo "All required jobs passed."
