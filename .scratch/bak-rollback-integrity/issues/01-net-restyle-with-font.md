@@ -19,10 +19,10 @@ police local, et obtenir une capture stable (deux exécutions identiques) publi�
 - [x] La capture inclut l'identité du **rollback racine** (`draft_content.json.bak`) et la liste des jumeaux écrits
       par le miroir (`template-2.tmp`, miroirs `Timelines/…` le cas échéant)
 - [x] Deux exécutions consécutives produisent une capture identique (déterminisme), y compris sur un checkout LF
-- [ ] Le job CI du filet reste vert : la collision est enregistrée, pas encore corrigée — _(en attente du push + run `ubuntu-latest`)_
+- [x] Le job CI du filet reste vert : la collision est enregistrée, pas encore corrigée
 - [x] Aucun changement de comportement produit (aucun fichier de production modifié)
 
-**Status:** delivered locally (CI pending push)
+**Status:** done
 
 **Blocked by:** None (can start immediately)
 
@@ -54,8 +54,11 @@ Preuves (rejouables) : `--selftest` OK · `--check` **90/90** · `--dump` ×2 id
 **Parité LF mesurée sur un runtime Linux réel** (Node v22.22.0, noyau WSL2) : `--check` **90/90** sur un
 checkout LF (fixture 301 711 o, 0 CRLF) — la crainte d'une baseline Windows-only est levée.
 
-**Reste (AC4)** : pousser la branche puis confirmer la run CI `golden-output` sur `ubuntu-latest`, et passer le
-statut à `done`.
+**CI réelle confirmée (AC4)** — 2026-09-23 : branche poussée (`origin/feat/arch-01-golden-restyle-with-font`).
+Run [35838548542](https://github.com/Davidb-2107/capcut-cli-david/actions/runs/35838548542) sur `ubuntu-latest` :
+**15/15 jobs SUCCESS**. Journal du job *Golden output* :
+`golden selftest: OK (Windows and Linux forms canonicalise identically)` ·
+`golden: OK — 90 cases identical to baseline.` · `21 verbs swept, 0 unexpected result(s)`.
 
 **Audit externe (2026-09-23)** : PASS local sur AC1–AC3/AC5 ; AC4 non exécuté (branche non poussée). Findings
 traités et triés — voir `delivery/rapport-ticket-01-net-restyle-with-font.md`, section « Réponse à l'audit ».
