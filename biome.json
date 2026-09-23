@@ -7,7 +7,15 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["src/**/*.ts", "test/**/*.ts", "packages/**/*.ts", "*.json", "packages/**/*.json"]
+    "includes": [
+      "src/**/*.ts",
+      "test/**/*.ts",
+      "packages/**/*.ts",
+      "*.json",
+      "packages/**/*.json",
+      "scripts/golden-output.mjs",
+      "test/golden-output.test.mjs"
+    ]
   },
   "formatter": {
     "enabled": true,

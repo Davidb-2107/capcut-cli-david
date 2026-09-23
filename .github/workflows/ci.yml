@@ -133,9 +133,14 @@ jobs:
       - name: Validate all anonymized fixtures
         run: python test-fixtures/_final_integrity.py
 
-  # Job golden-output (ARCH ticket 01, PR 0): characterization net.
-  # Diff the built CLI's canonicalized output against the committed baseline
-  # (test-fixtures/golden/baseline.json). Any unjustified divergence fails.
+  # ---------------------------------------------------------------------------
+  # Golden output (ARCH) — characterization net: captures stdout/stderr/exit
+  # codes of the read-only surface across the anonymized fixtures plus the M1
+  # write round-trips, canonicalizes (UUIDs + absolute paths → tokens) and
+  # diffs against the committed baseline. Any drift fails the job; regenerate
+  # with `npm run test:golden:write` and justify in the PR. Followed by the
+  # per-verb write-fidelity sweep (.bak + indent).
+  # ---------------------------------------------------------------------------
   golden-output:
     name: Golden output (behaviour-preserving net)
     runs-on: ubuntu-latest
@@ -155,11 +160,8 @@ jobs:
       - name: Build (tsc)
         run: npm run build
 
-      - name: Canonicaliser OS-parity self-test (win/linux forms)
-        run: node scripts/golden-output.mjs --selftest
-
       - name: Golden output diff vs committed baseline
-        run: node scripts/golden-output.mjs --check
+        run: npm run test:golden
 
       - name: Per-verb write-fidelity sweep (.bak + indent)
         run: npm run test:fidelity
