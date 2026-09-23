@@ -1072,8 +1072,10 @@
     "draft_canon_sha": "914520cdc5fa5f8e",
     "bak_exists": true,
     "bak_equals_original": true,
+    "bak_canon_sha": "3545d0627b43bbb8",
     "indent_preserved": true,
-    "single_line": false
+    "single_line": false,
+    "mirror_twins": {}
    }
   },
   "subtitles/shift": {
@@ -1092,8 +1094,10 @@
     "draft_canon_sha": "f7af37a32318d1f0",
     "bak_exists": true,
     "bak_equals_original": true,
+    "bak_canon_sha": "3545d0627b43bbb8",
     "indent_preserved": true,
-    "single_line": false
+    "single_line": false,
+    "mirror_twins": {}
    }
   },
   "subtitles/import-captions": {
@@ -1112,8 +1116,10 @@
     "draft_canon_sha": "d2bf53341c25c759",
     "bak_exists": true,
     "bak_equals_original": true,
+    "bak_canon_sha": "6528b8ea329fbe91",
     "indent_preserved": true,
-    "single_line": false
+    "single_line": false,
+    "mirror_twins": {}
    }
   },
   "minimal/add-text": {
@@ -1132,8 +1138,10 @@
     "draft_canon_sha": "48c5faf2d1d360e5",
     "bak_exists": true,
     "bak_equals_original": true,
+    "bak_canon_sha": "1fdff0b6790f5e98",
     "indent_preserved": true,
-    "single_line": false
+    "single_line": false,
+    "mirror_twins": {}
    }
   },
   "minimal/add-audio": {
@@ -1152,8 +1160,10 @@
     "draft_canon_sha": "cd0db3fb487a75f8",
     "bak_exists": true,
     "bak_equals_original": true,
+    "bak_canon_sha": "1fdff0b6790f5e98",
     "indent_preserved": true,
-    "single_line": false
+    "single_line": false,
+    "mirror_twins": {}
    }
   },
   "minimal/batch": {
@@ -1172,8 +1182,10 @@
     "draft_canon_sha": "827ae41f0a8236b0",
     "bak_exists": true,
     "bak_equals_original": true,
+    "bak_canon_sha": "827ae41f0a8236b0",
     "indent_preserved": true,
-    "single_line": false
+    "single_line": false,
+    "mirror_twins": {}
    }
   },
   "minimal/gc-noop": {
@@ -1192,8 +1204,10 @@
     "draft_canon_sha": "827ae41f0a8236b0",
     "bak_exists": false,
     "bak_equals_original": null,
+    "bak_canon_sha": null,
     "indent_preserved": true,
-    "single_line": false
+    "single_line": false,
+    "mirror_twins": {}
    }
   },
   "ken-burns/add-keyframe": {
@@ -1212,8 +1226,10 @@
     "draft_canon_sha": "614afa83a0627b24",
     "bak_exists": true,
     "bak_equals_original": true,
+    "bak_canon_sha": "eb47c29a6d7d4774",
     "indent_preserved": true,
-    "single_line": false
+    "single_line": false,
+    "mirror_twins": {}
    }
   },
   "ken-burns/ken-burns": {
@@ -1232,8 +1248,10 @@
     "draft_canon_sha": "ac18f23f78a7c694",
     "bak_exists": false,
     "bak_equals_original": null,
+    "bak_canon_sha": null,
     "indent_preserved": true,
-    "single_line": false
+    "single_line": false,
+    "mirror_twins": {}
    }
   },
   "ken-burns/speed": {
@@ -1252,8 +1270,10 @@
     "draft_canon_sha": "49095401fac48b66",
     "bak_exists": true,
     "bak_equals_original": true,
+    "bak_canon_sha": "ac18f23f78a7c694",
     "indent_preserved": true,
-    "single_line": false
+    "single_line": false,
+    "mirror_twins": {}
    }
   },
   "effects/remove-segment": {
@@ -1272,8 +1292,10 @@
     "draft_canon_sha": "2a800a4617224e8f",
     "bak_exists": true,
     "bak_equals_original": true,
+    "bak_canon_sha": "f046a1f2c354419e",
     "indent_preserved": true,
-    "single_line": false
+    "single_line": false,
+    "mirror_twins": {}
    }
   },
   "subtitles/restyle": {
@@ -1292,8 +1314,35 @@
     "draft_canon_sha": "1dd29440198005a1",
     "bak_exists": true,
     "bak_equals_original": true,
+    "bak_canon_sha": "d6282fb7378ba237",
     "indent_preserved": true,
-    "single_line": false
+    "single_line": false,
+    "mirror_twins": {}
+   }
+  },
+  "subtitles/restyle-with-font": {
+   "code": 0,
+   "out": {
+    "sha": "eca20bcd1d63f740",
+    "len": 152,
+    "text": "{\"ok\":true,\"materials_patched\":28,\"segments_patched\":28,\"mirrored\":[\"template-2.tmp\",\"draft_content.json.bak\",\"Timelines/<UUID#1>/draft_content.json\"]}\n"
+   },
+   "err": {
+    "sha": "e3b0c44298fc1c14",
+    "len": 0,
+    "text": ""
+   },
+   "artifact": {
+    "draft_canon_sha": "c4c6a9880a97e130",
+    "bak_exists": true,
+    "bak_equals_original": false,
+    "bak_canon_sha": "c4c6a9880a97e130",
+    "indent_preserved": true,
+    "single_line": false,
+    "mirror_twins": {
+     "template-2.tmp": "c4c6a9880a97e130",
+     "Timelines/<GUID>/draft_content.json": "7a6675062b09288d"
+    }
    }
   },
   "subtitles/apply-template": {
@@ -1312,8 +1361,10 @@
     "draft_canon_sha": "ed885ff5dba7620b",
     "bak_exists": true,
     "bak_equals_original": true,
+    "bak_canon_sha": "fe4c1f2ddf65d69b",
     "indent_preserved": true,
-    "single_line": false
+    "single_line": false,
+    "mirror_twins": {}
    }
   }
  }

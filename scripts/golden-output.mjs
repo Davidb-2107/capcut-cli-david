@@ -22,7 +22,7 @@
 
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -103,7 +103,9 @@ cases.push({
 
 // Write round-trips (temp copies). `prepare(dir)` may stage side files; the
 // case then runs ONE mutating command. Artifacts frozen: stdout/stderr/exit +
-// canonical draft signature + .bak fidelity + indent fidelity.
+// canonical draft signature + .bak fidelity + indent fidelity + the ROOT
+// ROLLBACK identity (bak_canon_sha, ticket 01) + the mirror twins CapCut
+// re-reads (mirror_twins: template-2.tmp + any Timelines/<guid>/*).
 const captionsJson = JSON.stringify(
   fixtureDraft("subtitles-draft").tracks.some((t) => t.type === "text")
     ? [
@@ -112,6 +114,43 @@ const captionsJson = JSON.stringify(
       ]
     : [{ text: "GOLDEN", start: 0, end: 900_000 }],
 );
+
+// Ticket 01 (bak-rollback-integrity): a preset that CARRIES A FONT is the only
+// path that runs mirrorFont after persistDraft, i.e. the path that re-writes the
+// root rollback. Schema mirrors the CapCut-CaptionStyling preset. The font path
+// is written verbatim into the draft; mirrorFont never opens the file, so it need
+// not exist on disk (keeps the case independent of the machine).
+const FONT_PRESET = {
+  text_material: {
+    font_path: "C:/fonts/Rubik-Bold.ttf",
+    font_resource_id: "7517472189348695297",
+    font_title: "Rubik-Bold",
+    has_shadow: false,
+    is_rich_text: true,
+    name: "",
+    base_content: "",
+    recognize_text: "",
+    fonts: [
+      { id: "F1", resource_id: "7517472189348695297", path: "C:/fonts/Rubik-Bold.ttf", request_id: "" },
+    ],
+  },
+  content_template: {
+    text: "modele",
+    styles: [
+      {
+        fill: { content: { render_type: "solid", solid: { color: [1, 1, 1] } } },
+        font: { path: "C:/fonts/Rubik-Bold.ttf", id: "7517472189348695297" },
+        size: 12,
+        range: [0, 6],
+      },
+    ],
+  },
+  segment: { render_index: 14000 },
+};
+
+// Fixed (non-random) CapCut timeline id so the staged Timelines/<guid> mirror is
+// deterministic and its canonicalised twin entry is stable run to run.
+const FONT_TIMELINE_GUID = "1D8F0A2C-3B4E-4C5D-8E6F-7A8B9C0D1E2F";
 
 const WRITE_CASES = [
   {
@@ -190,6 +229,26 @@ const WRITE_CASES = [
           segment: {},
         }),
         "utf-8",
+      );
+      return null;
+    },
+    args: (dir, fp) => ["restyle", fp, "--preset", join(dir, "preset.json")],
+  },
+  {
+    // Ticket 01: restyle WITH a font preset -> runs mirrorFont -> the root
+    // draft_content.json.bak is re-written with the NEW compact draft, erasing
+    // the rollback persistDraft just wrote. This case freezes that state as a
+    // mechanical signature; the fix is ticket 02.
+    id: "subtitles/restyle-with-font",
+    fixture: "subtitles-draft",
+    prepare: (dir) => {
+      writeFileSync(join(dir, "preset.json"), JSON.stringify(FONT_PRESET), "utf-8");
+      // Stage a CapCut timeline mirror (as CapCut materialises on first open) so
+      // the net also freezes the Timelines/<guid>/* twin class.
+      mkdirSync(join(dir, "Timelines", FONT_TIMELINE_GUID), { recursive: true });
+      cpSync(
+        join(FIXTURES_DIR, "subtitles-draft.json"),
+        join(dir, "Timelines", FONT_TIMELINE_GUID, "draft_content.json"),
       );
       return null;
     },
@@ -320,6 +379,47 @@ function idsFor(fixtureKey, fp) {
   return { firstSeg, textSeg };
 }
 
+// Ticket 01 (bak-rollback-integrity): the sibling twins mirrorFont rewrites
+// beside the draft (skip-if-absent) that CapCut re-reads. The root
+// draft_content.json.bak is deliberately NOT listed here - it is the store's
+// rollback, frozen separately as `bak_canon_sha`.
+const MIRROR_TIMELINE_TARGETS = [
+  "draft_content.json",
+  "draft_content.json.bak",
+  "template-2.tmp",
+  "attachment/patch/mini_draft.json",
+  "attachment/patch/patch.json",
+];
+
+/** { "<canonical relative path>": "<canonical content sha>" } for every mirror
+ *  twin that actually exists on disk. GUIDs are folded to <GUID> and contents
+ *  hashed after a JSON round-trip, so the map is identical on a CRLF (Windows)
+ *  and an LF (ubuntu CI) checkout. */
+function mirrorTwins(dir, canon) {
+  const out = {};
+  const fold = (p) => {
+    try {
+      return sha(canon(normalizeText(JSON.stringify(JSON.parse(readFileSync(p, "utf-8"))), dir)));
+    } catch {
+      return null;
+    }
+  };
+  const rootTmp = join(dir, "template-2.tmp");
+  if (existsSync(rootTmp)) out["template-2.tmp"] = fold(rootTmp);
+  const tlRoot = join(dir, "Timelines");
+  if (existsSync(tlRoot)) {
+    for (const guid of readdirSync(tlRoot).sort()) {
+      const gdir = join(tlRoot, guid);
+      if (!statSync(gdir).isDirectory()) continue;
+      for (const rel of MIRROR_TIMELINE_TARGETS) {
+        const p = join(gdir, rel);
+        if (existsSync(p)) out[`Timelines/<GUID>/${rel}`] = fold(p);
+      }
+    }
+  }
+  return out;
+}
+
 function capture() {
   const manifest = { schema: "capcut-david/golden@1", generatedBy: "scripts/golden-output.mjs", entries: {} };
 
@@ -368,12 +468,21 @@ function capture() {
         entry.err = sigText(canon(err));
         const afterRaw = existsSync(fp) ? readFileSync(fp, "utf-8") : "";
         const bakPath = `${fp}.bak`;
+        const bakRaw = existsSync(bakPath) ? readFileSync(bakPath, "utf-8") : null;
         entry.artifact = {
           draft_canon_sha: afterRaw ? sha(canon(normalizeText(JSON.stringify(JSON.parse(afterRaw)), dir))) : null,
           bak_exists: existsSync(bakPath),
-          bak_equals_original: existsSync(bakPath) ? readFileSync(bakPath, "utf-8") === originalBytes : null,
+          bak_equals_original: bakRaw === null ? null : bakRaw === originalBytes,
+          // Ticket 01: identity of the ROOT rollback (<draft>.bak). In the font
+          // collision it equals the current draft sha (no rollback survives);
+          // after ticket 02 it must equal the pre-edit draft instead.
+          bak_canon_sha: bakRaw
+            ? sha(canon(normalizeText(JSON.stringify(JSON.parse(bakRaw)), dir)))
+            : null,
           indent_preserved: afterRaw ? afterRaw.includes('\n  "') : null,
           single_line: afterRaw ? afterRaw.split("\n").length <= 2 : null,
+          // Ticket 01: the twins mirrorFont writes that CapCut re-reads.
+          mirror_twins: mirrorTwins(dir, canon),
         };
       } finally {
         rmSync(dir, { recursive: true, force: true });
