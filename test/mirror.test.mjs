@@ -1,7 +1,8 @@
-// Tests for the font-mirroring sidecar pass (src/utils/mirror.ts → dist).
+// Tests for the font-sidecar pass (src/utils/mirror.ts → dist).
 // Ports fix_content_styles_font.py (walk content.styles[].font) + fix_key_value.py
-// (key_value registry) + restyle.py's template-2.tmp/.bak mirror. Skip-if-absent;
-// never fabricates key_value.json.
+// (key_value registry) + restyle.py's template-2.tmp write. Skip-if-absent; the root
+// draft_content.json.bak is never written (see the canonical note in mirrorFont).
+// Never fabricates key_value.json.
 import { test } from "node:test";
 import { strictEqual, deepStrictEqual, ok } from "node:assert";
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -12,15 +13,20 @@ import { buildKeyValueEntry, mirrorFont } from "../dist/utils/mirror.js";
 
 const FONT = { path: "C:/fonts/NEW.ttf", id: "NEWID", resourceId: "RID123" };
 const KV_ENTRY = { materialId: "RID123", materialCategory: "font" };
+// Pre-existing root rollback content (as persistDraft leaves it) — the mirror
+// must leave it byte-identical.
+const ROLLBACK_SENTINEL = JSON.stringify({ marker: "rollback" });
 
 function contentWithFont(path, id) {
   return JSON.stringify({ text: "hi", styles: [{ font: { path, id }, range: [0, 2] }] });
 }
 
 // A draft folder with the sidecars CapCut creates after first save.
-function fakeDraftDir(withKeyValue = true) {
+function fakeDraftDir(withKeyValue = true, withRollback = true) {
   const dir = mkdtempSync(join(tmpdir(), "restyle-mirror-"));
   writeFileSync(join(dir, "draft_content.json"), JSON.stringify({ marker: "top" }), "utf-8");
+  // A pre-existing root rollback (persistDraft): the mirror must never overwrite it.
+  if (withRollback) writeFileSync(join(dir, "draft_content.json.bak"), ROLLBACK_SENTINEL, "utf-8");
   const patch = join(dir, "Timelines", "UUID1", "attachment", "patch");
   mkdirSync(patch, { recursive: true });
   const mini = { materials: { texts: [{ content: contentWithFont("OLD.ttf", "OLDID") }] } };
@@ -38,11 +44,23 @@ test("mirrorFont: forces content.styles[].font.path/.id inside Timelines mini_dr
   strictEqual(font.id, "NEWID");
 });
 
-test("mirrorFont: writes the new draft state to template-2.tmp and draft_content.json.bak (Python parity)", () => {
+test("mirrorFont: writes template-2.tmp but never clobbers an existing root draft_content.json.bak (ticket 02)", () => {
   const dir = fakeDraftDir();
-  mirrorFont(dir, { v: 2 }, FONT, KV_ENTRY);
+  const res = mirrorFont(dir, { v: 2 }, FONT, KV_ENTRY);
   deepStrictEqual(JSON.parse(readFileSync(join(dir, "template-2.tmp"), "utf-8")), { v: 2 });
-  deepStrictEqual(JSON.parse(readFileSync(join(dir, "draft_content.json.bak"), "utf-8")), { v: 2 });
+  // The invariant that matters: the root rollback (persistDraft) is never OVERWRITTEN.
+  strictEqual(
+    readFileSync(join(dir, "draft_content.json.bak"), "utf-8"),
+    ROLLBACK_SENTINEL,
+    "the root rollback must be left byte-identical - never overwritten",
+  );
+  ok(!res.written.includes("draft_content.json.bak"), "root .bak must not be reported as mirrored");
+});
+
+test("mirrorFont: does not create a root draft_content.json.bak when none exists (ticket 02)", () => {
+  const dir = fakeDraftDir(true, false);
+  mirrorFont(dir, { v: 2 }, FONT, KV_ENTRY);
+  strictEqual(existsSync(join(dir, "draft_content.json.bak")), false, "the mirror must not fabricate a root rollback");
 });
 
 test("mirrorFont: injects a key_value entry keyed by resourceId, keeping existing keys", () => {
