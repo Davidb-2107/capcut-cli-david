@@ -60,5 +60,8 @@ Run [35838548542](https://github.com/Davidb-2107/capcut-cli-david/actions/runs/3
 `golden selftest: OK (Windows and Linux forms canonicalise identically)` ·
 `golden: OK — 90 cases identical to baseline.` · `21 verbs swept, 0 unexpected result(s)`.
 
+**PR** [#6](https://github.com/Davidb-2107/capcut-cli-david/pull/6) (base `master`) : ouverte, `MERGEABLE`,
+15/15 checks verts (run 35839352686).
+
 **Audit externe (2026-09-23)** : PASS local sur AC1–AC3/AC5 ; AC4 non exécuté (branche non poussée). Findings
 traités et triés — voir `delivery/rapport-ticket-01-net-restyle-with-font.md`, section « Réponse à l'audit ».
