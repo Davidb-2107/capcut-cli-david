@@ -8,13 +8,15 @@ Motif par call site (mécanique) : la fonction reçoit le store en paramètre pa
 
 **Acceptance criteria:**
 
-- [ ] Les dix fichiers à call sites migrent au motif du module edit (paramètre par défaut, signature-compatible)
-- [ ] La façade globale et sa map d'état caché sont supprimées : plus aucun import ni référence
-- [ ] Le golden-output reste identique (contrats JSON et exit codes inchangés)
-- [ ] Les tests au comportement inchangé passent ; un store en mémoire est injectable dans les commandes d'écriture
-- [ ] Coverage ≥80 % maintenue, CI 15/15 verte
+- [x] Les dix fichiers à call sites migrent au motif du module edit (paramètre par défaut, signature-compatible)
+- [x] La façade globale et sa map d'état caché sont supprimées : plus aucun import ni référence
+- [x] Le golden-output reste identique (contrats JSON et exit codes inchangés)
+- [x] Les tests au comportement inchangé passent ; un store en mémoire est injectable dans les commandes d'écriture
+- [x] Coverage ≥80 % maintenue, CI 15/15 verte
 
-**Status:** ready-for-agent
+**Status:** done
+
+**Done (2026-09-23) :** PR #5 (merge `6e1ff81`, 06:40Z) — migration des 10 fichiers + suppression de la façade `saveDraft`/`loadDraft`/`loadedByPath` (vérifié : 0 call site résiduel dans `src/`). Follow-ups d'audit `5af48a7` (F3 store injectable `pipeline.ts`, F8 réutilise le store, F13 batch forward, F15 doc). Exception `.bak`/indent documentée ADR 0002 §clarification post-ticket 02, verrou `test/draft-fidelity.test.mjs`. Preuve CI : run master `35892903534` success (golden + coverage ≥80 % inclus).
 
 **Blocked by:** 01 - golden-output
 
