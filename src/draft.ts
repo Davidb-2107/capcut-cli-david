@@ -160,10 +160,14 @@ export class LocalDraftStore implements DraftStore {
  * `raw` is the bytes captured at load time:
  *  - pass the loaded bytes (`loaded.raw`) when you hold them;
  *  - OMIT `raw` (the common CLI-handler case) and the CURRENT on-disk bytes are
- *    used, exactly like the deleted facade did: .bak keeps the pre-write bytes
- *    and the original indent is detected. Behavior-preserving by construction;
- *  - pass "" ONLY for a draft that exists purely in memory (about to be written
- *    to a path with no file): no meaningful .bak, indent falls back to 0.
+ *    read and used, exactly like the deleted facade did: .bak keeps the
+ *    pre-write bytes and the original indent is detected. Behavior-preserving by
+ *    construction. Note this is a disk read even when a store is injected, so a
+ *    fully diskless test must pass `raw` explicitly;
+ *  - pass "" explicitly ONLY when you do NOT want a rollback copy: on an
+ *    EXISTING file this EMPTIES `<file>.bak` and falls back to indent 0 (the
+ *    in-memory/initDraft case). When the file does not exist yet, "" and an
+ *    omitted raw are equivalent (nothing to back up, indent 0 either way).
  */
 export function persistDraft(store: DraftStore, filePath: string, draft: Draft, raw?: string): void {
   let effectiveRaw: string;

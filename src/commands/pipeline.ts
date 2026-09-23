@@ -1,6 +1,6 @@
 import { existsSync, writeFileSync } from "node:fs";
 import { basename, dirname, isAbsolute, resolve } from "node:path";
-import { LocalDraftStore, persistDraft } from "../draft.js";
+import { type DraftStore, LocalDraftStore, persistDraft } from "../draft.js";
 import { resolveTemplateDir as resolveSharedTemplateDir } from "../utils/capcut-paths.js";
 import { die } from "../utils/cli.js";
 import { setUuidProvider } from "../utils/companion.js";
@@ -638,6 +638,7 @@ export function psychoBuild(
   outOpt: string | undefined,
   seedOpt: string | undefined,
   registerOpt?: PsychoBuildRegisterOpts,
+  store: DraftStore = new LocalDraftStore(),
 ): PsychoBuildResult {
   if (!existsSync(manifestPath)) die(`Manifest not found: ${manifestPath}`);
   const manifestAbs = resolve(manifestPath);
@@ -658,7 +659,6 @@ export function psychoBuild(
     const templateDir = resolveTemplateDir();
 
     const { draftPath, filePath } = initDraft({ name, templateDir, draftsDir });
-    const store = new LocalDraftStore();
     const { draft } = store.load(filePath);
     draft.canvas_config.width = manifest.resolution.width;
     draft.canvas_config.height = manifest.resolution.height;
