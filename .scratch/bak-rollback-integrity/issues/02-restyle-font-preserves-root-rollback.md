@@ -27,9 +27,20 @@ doit être écrite dans la spec et le contrat documenté mis à jour dans le mê
       (un seul champ change : l'identité du rollback racine) ; le reste de la capture est inchangé
 - [x] Le cas est verrouillé par un test de comportement (CLI réelle sur copie temporaire) qui échoue sans le fix
 - [x] `restyle` **sans** police garde exactement son comportement actuel
-- [x] Tests au comportement inchangé par ailleurs ; suite complète verte ; coverage ≥80 % ; CI verte
+- [ ] Tests au comportement inchangé par ailleurs ; suite complète verte ; coverage ≥80 % ; CI verte
 
-**Status:** done
+> **Notes d'audit (2026-09-23).**
+> - **AC7** : les volets locaux sont vérifiés (suite 714/714, coverage 94,96 % lignes / 98,22 % fonctions),
+>   mais le volet **CI verte** ne l'est pas (branche non poussée) → AC7 décochée jusqu'à la run `ubuntu-latest`.
+> - **AC4** : la capture diverge en réalité sur **3 champs** — `out` (la liste `mirrored` perd
+>   `draft_content.json.bak`, conséquence directe du fix), `bak_equals_original`, `bak_canon_sha`. La lecture
+>   « un seul champ » ne vaut que pour l'artefact *hors* `out` : `draft_canon_sha`, `bak_exists`,
+>   `indent_preserved`, `single_line`, `mirror_twins` sont inchangés.
+> - **Contrat stdout** : exception bornée documentée (spec, addendum 2026-09-23 + ADR 0002) ; baseline
+>   régénérée dans le même diff.
+> - **Test renforcé** : `test/mirror.test.mjs` pré-crée un `.bak` et asserte l'invariant « jamais écrasé ».
+
+**Status:** in-progress
 
 **Blocked by:** 01 — net : restyle avec police (le filet doit d'abord enregistrer l'état actuel pour que la
 divergence soit justifiable dans le même diff)

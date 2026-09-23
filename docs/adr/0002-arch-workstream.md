@@ -40,6 +40,15 @@ exception, unique et bornée, a été appliquée **et doit être lue comme telle
 - **Verrou** : `test/draft-fidelity.test.mjs` (8 tests) + les baselines golden
   (voir `test-fixtures/golden/README.md`, entrée `8d652ac`).
 
+## Clarification - workstream bak-rollback-integrity (2026-09-23)
+
+Le DoD ci-dessus (« contrats JSON de sortie identiques au golden-output ») se lit absolu. Le workstream
+**bak-rollback-integrity** (tickets 01-02, spec `.scratch/bak-rollback-integrity/`) fait une exception **unique,
+bornée et documentée** : corriger la collision « rollback racine » du verbe `restyle` avec preset de police
+**change un contrat stdout observable** — la liste `mirrored` perd `draft_content.json.bak` (le miroir n'écrit
+plus le rollback racine). La baseline golden est régénérée **dans le même diff** (AC4 du ticket 02), avec
+justification ; les 89 autres cas et les autres verbes sont inchangés. Détail : spec du workstream.
+
 ## Consequences
 
 - Le registry doit couvrir les 34 cases **et les chemins non-verbaux** (`--help`, version, capabilities, erreurs de parsing) : 10 des 14 `process.exit` vivent avant le switch — c'est là que se cachent les exits oubliés.

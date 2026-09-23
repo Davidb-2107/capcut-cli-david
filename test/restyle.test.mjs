@@ -304,17 +304,18 @@ test("restyle (CLI): preset file not found → CliError status 1", (t) => {
   ok(r.errorJson, `expected JSON on stderr, got: ${r.stderr}`);
   match(r.errorJson.error, /not found/);
 });
-// --- ticket 02 (bak-rollback-integrity): the font mirror must NOT clobber the
-// root rollback. A `restyle` WITH a font preset must leave
+
+// --- ticket 02 (bak-rollback-integrity): the font sidecar pass must NOT clobber
+// the root rollback. A `restyle` WITH a font preset must leave
 // <draft>/draft_content.json.bak holding the PRE-edit bytes (original indent),
 // while still refreshing CapCut's read targets (template-2.tmp + the staged
-// Timelines/<guid>/* mirror). This is the behaviour test that fails without the
-// fix: before ticket 02, mirrorFont rewrote the root .bak with the NEW draft
-// (and reported it in `mirrored`), destroying the undo of the root edit.
+// Timelines/<guid>/* mirror). Without the fix these tests fail: mirrorFont used to
+// rewrite the root .bak with the NEW draft (and report it in `mirrored`). Canonical
+// rationale: the note in src/utils/mirror.ts (mirrorFont).
 
-// The preset that carries a font (CapCut-CaptionStyling schema). The font path
-// is written verbatim into the draft; mirrorFont never opens the file, so it
-// need not exist on disk.
+// The preset that carries a font (CapCut-CaptionStyling schema). The font path is
+// written verbatim into the draft; mirrorFont never opens the file, so it need not
+// exist on disk.
 const FONT_PRESET = {
   text_material: {
     font_path: "C:/fonts/Rubik-Bold.ttf",
@@ -344,38 +345,45 @@ const FONT_PRESET = {
 // Fixed (non-random) CapCut timeline id so the staged mirror is deterministic.
 const TIMELINE_GUID = "1D8F0A2C-3B4E-4C5D-8E6F-7A8B9C0D1E2F";
 
-test("restyle (CLI, font preset): preserves the root rollback, refreshes CapCut read targets", (t) => {
+/** Copy the subtitles fixture to a tmp dir, write `preset`, optionally stage a
+ *  CapCut timeline mirror, then run `restyle` through the REAL CLI. Returns
+ *  everything the assertions need (pre-edit bytes included). */
+function restyleOnTempCopy(t, preset, { stageMirror = false } = {}) {
   const { filePath, dir } = tmpDraft(FIXTURES.SUBTITLES, t);
   const originalBytes = readFileSync(filePath, "utf-8");
-
-  // Stage a CapCut timeline mirror as CapCut materialises on first open.
-  const mirrorDir = join(dir, "Timelines", TIMELINE_GUID);
-  mkdirSync(mirrorDir, { recursive: true });
-  const mirrorDraft = join(mirrorDir, "draft_content.json");
-  copyFileSync(filePath, mirrorDraft);
-  const mirrorBefore = readFileSync(mirrorDraft, "utf-8");
-
-  const presetPath = join(dir, "font-preset.json");
-  writeFileSync(presetPath, JSON.stringify(FONT_PRESET), "utf-8");
-
+  let mirrorDraft = null;
+  let mirrorBefore = null;
+  if (stageMirror) {
+    const mirrorDir = join(dir, "Timelines", TIMELINE_GUID);
+    mkdirSync(mirrorDir, { recursive: true });
+    mirrorDraft = join(mirrorDir, "draft_content.json");
+    copyFileSync(filePath, mirrorDraft);
+    mirrorBefore = readFileSync(mirrorDraft, "utf-8");
+  }
+  const presetPath = join(dir, "preset.json");
+  writeFileSync(presetPath, JSON.stringify(preset), "utf-8");
   const r = runCli(["restyle", filePath, "--preset", presetPath]);
+  return { r, filePath, dir, originalBytes, mirrorDraft, mirrorBefore };
+}
+
+test("restyle (CLI, font preset): preserves the root rollback, refreshes CapCut read targets", (t) => {
+  const { r, filePath, dir, originalBytes, mirrorDraft, mirrorBefore } = restyleOnTempCopy(t, FONT_PRESET, {
+    stageMirror: true,
+  });
   strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
   strictEqual(r.json.ok, true);
 
   // (1) the ROOT rollback holds the PRE-edit bytes, verbatim (original indent).
-  const bakPath = `${filePath}.bak`;
-  ok(existsSync(bakPath), "root rollback must exist");
-  const bakBytes = readFileSync(bakPath, "utf-8");
+  const bakBytes = readFileSync(`${filePath}.bak`, "utf-8");
   strictEqual(bakBytes, originalBytes, "root .bak must be byte-identical to the pre-edit draft");
   ok(bakBytes.includes('\n  "'), "root .bak must keep the original 2-space indent");
 
-  // (2) the root .bak is NOT a copy of the NEW draft, and is not reported as mirrored.
+  // (2) the root .bak is NOT the NEW draft, and is not reported as mirrored.
   ok(bakBytes !== readFileSync(filePath, "utf-8"), "root .bak must not hold the new draft");
   ok(!r.json.mirrored.includes("draft_content.json.bak"), "root .bak must not be listed as mirrored");
 
   // (3) CapCut read targets are STILL refreshed with the font (Python parity).
   const tmpPath = join(dir, "template-2.tmp");
-  ok(existsSync(tmpPath), "template-2.tmp must be refreshed");
   ok(readFileSync(tmpPath, "utf-8").includes("C:/fonts/Rubik-Bold.ttf"), "template-2.tmp carries the new font");
   ok(r.json.mirrored.includes("template-2.tmp"), "template-2.tmp listed as mirrored");
 
@@ -389,17 +397,8 @@ test("restyle (CLI, font preset): preserves the root rollback, refreshes CapCut 
 });
 
 test("restyle (CLI, no font): root rollback intact, no mirror written - unchanged behaviour", (t) => {
-  const { filePath, dir } = tmpDraft(FIXTURES.SUBTITLES, t);
-  const originalBytes = readFileSync(filePath, "utf-8");
-
-  const presetPath = join(dir, "nofont-preset.json");
-  writeFileSync(
-    presetPath,
-    JSON.stringify({ text_material: { font_size: 42 }, content_template: { styles: [{ font_size: 42 }] }, segment: {} }),
-    "utf-8",
-  );
-
-  const r = runCli(["restyle", filePath, "--preset", presetPath]);
+  const noFontPreset = { text_material: { font_size: 42 }, content_template: { styles: [{ font_size: 42 }] }, segment: {} };
+  const { r, filePath, dir, originalBytes } = restyleOnTempCopy(t, noFontPreset);
   strictEqual(r.status, 0, `unexpected stderr: ${r.stderr}`);
   deepStrictEqual(r.json.mirrored, [], "no-font restyle must not run the font mirror");
   strictEqual(readFileSync(`${filePath}.bak`, "utf-8"), originalBytes, "no-font restyle keeps the pre-edit rollback");

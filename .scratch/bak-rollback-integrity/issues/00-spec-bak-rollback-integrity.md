@@ -57,3 +57,13 @@ explicitée et justifiée dans le ticket de fix.
 
 - `01-net-restyle-with-font.md` — rendre la collision visible/mécaniquement détectable (premier, sans changement de comportement).
 - `02-restyle-font-preserves-root-rollback.md` — corriger la collision (bloqué par 01).
+
+---
+
+## Contrat observable (addendum 2026-09-23)
+
+Le fix du ticket 02 change **un** contrat stdout observable, borné et justifié : sur `restyle` avec un preset
+portant une police, la liste `mirrored` de stdout **ne contient plus** `draft_content.json.bak` (le miroir n'écrit
+plus le rollback racine) et continue de lister `template-2.tmp` + les miroirs `Timelines/<guid>/*`. La baseline du
+filet golden est régénérée **dans le même diff** (AC4), avec justification ; les 89 autres cas et les autres
+verbes sont inchangés. Exception bornée au DoD « contrats JSON de sortie identiques au golden-output » (ADR 0002).
