@@ -15,15 +15,53 @@ police local, et obtenir une capture stable (deux exécutions identiques) publi�
 
 **Acceptance criteria:**
 
-- [ ] Un cas de round-trip `restyle` **avec police** est capturé par le filet (stdout/stderr/exit + artefact)
-- [ ] La capture inclut l'identité du **rollback racine** (`draft_content.json.bak`) et la liste des jumeaux écrits
+- [x] Un cas de round-trip `restyle` **avec police** est capturé par le filet (stdout/stderr/exit + artefact)
+- [x] La capture inclut l'identité du **rollback racine** (`draft_content.json.bak`) et la liste des jumeaux écrits
       par le miroir (`template-2.tmp`, miroirs `Timelines/…` le cas échéant)
-- [ ] Deux exécutions consécutives produisent une capture identique (déterminisme), y compris sur un checkout LF
-- [ ] Le job CI du filet reste vert : la collision est enregistrée, pas encore corrigée
-- [ ] Aucun changement de comportement produit (aucun fichier de production modifié)
+- [x] Deux exécutions consécutives produisent une capture identique (déterminisme), y compris sur un checkout LF
+- [x] Le job CI du filet reste vert : la collision est enregistrée, pas encore corrigée
+- [x] Aucun changement de comportement produit (aucun fichier de production modifié)
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Blocked by:** None (can start immediately)
 
 **Spec:** voir `00-spec-bak-rollback-integrity.md` (ce dossier)
+
+---
+
+## Livraison (2026-09-23)
+
+**Branche** `feat/arch-01-golden-restyle-with-font` · **commit** `387aaef` (parent `e3036e8`) ·
+2 fichiers, +176/−16 · **non poussé**.
+
+Résultat :
+
+- Cas `subtitles/restyle-with-font` capturé : `code 0`, stderr vide,
+  `mirrored = ["template-2.tmp","draft_content.json.bak","Timelines/<guid>/draft_content.json"]`.
+- Deux nouveaux champs d'artefact : `bak_canon_sha` (identité du **rollback racine**) et `mirror_twins`
+  (jumeaux du miroir, GUID replié, canonisés CRLF/LF).
+- **Signature figée** : `bak_equals_original = false` et
+  `bak_canon_sha == draft_canon_sha == mirror_twins["template-2.tmp"] = c4c6a9880a97e130`
+  (le `.bak` racine contient le draft **nouveau**, en compact — plus aucun rollback).
+- Baseline : **89 → 90** cas ; les 13 cas d'écriture existants gagnent les 2 champs, **aucun champ existant ne
+  bouge** ; 76 cas lecture intacts.
+- **Aucun fichier de production modifié** (`src/`, `test/`, `.github/`, `package.json` intacts).
+
+Preuves (rejouables) : `--selftest` OK · `--check` **90/90** · `--dump` ×2 identiques ·
+`npm test` **712/712** · `npm run test:coverage` **94,93 % / 98,22 %** · `npm run test:fidelity` **21/21** ·
+`python test-fixtures/_final_integrity.py` **9/9** · `biome ci .` **0 finding** en checkout LF.
+**Parité LF mesurée sur un runtime Linux réel** (Node v22.22.0, noyau WSL2) : `--check` **90/90** sur un
+checkout LF (fixture 301 711 o, 0 CRLF) — la crainte d'une baseline Windows-only est levée.
+
+**CI réelle confirmée (AC4)** — 2026-09-23 : branche poussée (`origin/feat/arch-01-golden-restyle-with-font`).
+Run [35838548542](https://github.com/Davidb-2107/capcut-cli-david/actions/runs/35838548542) sur `ubuntu-latest` :
+**15/15 jobs SUCCESS**. Journal du job *Golden output* :
+`golden selftest: OK (Windows and Linux forms canonicalise identically)` ·
+`golden: OK — 90 cases identical to baseline.` · `21 verbs swept, 0 unexpected result(s)`.
+
+**PR** [#6](https://github.com/Davidb-2107/capcut-cli-david/pull/6) (base `master`) : ouverte, `MERGEABLE`,
+15/15 checks verts (run 35839352686).
+
+**Audit externe (2026-09-23)** : PASS local sur AC1–AC3/AC5 ; AC4 non exécuté (branche non poussée). Findings
+traités et triés — voir `delivery/rapport-ticket-01-net-restyle-with-font.md`, section « Réponse à l'audit ».
