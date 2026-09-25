@@ -6,13 +6,13 @@ Le switch central du dispatcher devient un registry : chaque verbe est enregistr
 
 **Acceptance criteria:**
 
-- [ ] Une map verbe → handler remplace le switch ; les 8 handlers d'inspect sont enregistrés tels quels
-- [ ] Les chemins non-verbaux passent par le même mécanisme de sortie centralisée
-- [ ] Zéro appel direct d'exit dans le flux normal : `process.exitCode` + retour naturel ; l'aide s'affiche intégralement (régression de troncature impossible)
-- [ ] Tous les codes d'exit existants sont préservés à l'identique (vérifié par le golden-output)
+- [x] Une map verbe → handler remplace le switch ; les 8 handlers d'inspect sont enregistrés tels quels
+- [x] Les chemins non-verbaux passent par le même mécanisme de sortie centralisée
+- [x] Zéro appel direct d'exit dans le flux normal : `process.exitCode` + retour naturel ; l'aide s'affiche intégralement (régression de troncature impossible)
+- [x] Tous les codes d'exit existants sont préservés à l'identique (vérifié par le golden-output)
 - [ ] Les tests au comportement inchangé passent, coverage ≥80 %, CI 15/15
 
-**Status:** ready-for-agent
+**Status:** in-progress
 
 **Blocked by:** 01 - golden-output
 
