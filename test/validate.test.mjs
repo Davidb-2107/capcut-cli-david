@@ -12,6 +12,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
 import { runValidate, reportExitCode } from "../dist/commands/validate.js";
+import { cmdValidate } from "../dist/commands/validate-cli.js";
 import { runCli } from "./helpers/spawn-cli.mjs";
 
 // Write an arbitrary draft object to draft_content.json in a fresh tmp dir.
@@ -55,6 +56,12 @@ function makeDraft(overrides = {}) {
 function findingsFor(report, id) {
   return report.findings.filter((f) => f.id === id);
 }
+
+test("cmdValidate: the CLI seam returns the domain report's exit code", () => {
+  const draft = makeDraft({ fps: 0 });
+  const filePath = join(tmpdir(), "absent-validate-draft.json");
+  strictEqual(cmdValidate(draft, filePath, filePath, { quiet: true, human: false, strict: true }), 2);
+});
 
 // ===========================================================================
 // materials.dangling_ref — segment.material_id must resolve to a real material

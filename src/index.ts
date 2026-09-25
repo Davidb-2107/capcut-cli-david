@@ -42,7 +42,7 @@ import { cmdSyncTimelines } from "./commands/sync-timelines-cli.js";
 import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template-cli.js";
 import { cmdUi } from "./commands/ui-cli.js";
 import { cmdValidate } from "./commands/validate-cli.js";
-import { cmdValidateFix } from "./commands/validate-fix.js";
+import { cmdValidateFix } from "./commands/validate-fix-cli.js";
 import { type Draft, LocalDraftStore } from "./draft.js";
 import { assertCapCutClosed, WRITE_COMMANDS } from "./utils/capcut-guard.js";
 import { die, type Flags, requireArgs } from "./utils/cli.js";
