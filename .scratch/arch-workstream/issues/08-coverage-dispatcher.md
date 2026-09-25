@@ -8,10 +8,10 @@
 
 - [x] Le rapport de couverture inclut le dispatcher `dist/index.js` et les utilitaires CLI pertinents de `dist/utils`
 - [x] Les chemins de dispatch, d'aide, d'erreur de parsing et de code d'exit sont exercés par des tests comportementaux
-- [ ] Le seuil de couverture protège explicitement ces cibles et la CI reste verte (gate local vert ; CI en attente de PR)
+- [x] Le seuil de couverture protège explicitement ces cibles et la CI reste verte (PR #14 : CI 15/15)
 - [x] Les sorties et codes d'exit observés par le golden-output restent identiques
 
-**Status:** in-progress
+**Status:** done
 
 **Blocked by:** None (follow-up à l'audit du ticket 03)
 
