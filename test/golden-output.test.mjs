@@ -7,9 +7,10 @@
 // — and the baseline-diff semantics that decide pass/fail.
 
 import { deepStrictEqual, notStrictEqual, ok, strictEqual } from "node:assert";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-import { canonicalHash, canonicalize, diffBaselines } from "../scripts/golden-output.mjs";
+import { canonicalHash, canonicalize, diffBaselines, FIXTURE_KEYS } from "../scripts/golden-output.mjs";
 
 const TOKENS = [
   ["<FIXTURES>", "C:\\repo\\test-fixtures\\fixtures"],
@@ -174,7 +175,49 @@ test("diffBaselines: round-trip canonicalStable divergence is reported (M1 UUID-
   deepStrictEqual(diffBaselines(exp, baseline([], [rt()])), []);
 });
 
+test("diffBaselines: validate-fix write and backup invariants cannot drift", () => {
+  const rt = {
+    id: "roundtrip/validate-fix/orphans",
+    stableBytes: true,
+    contentSha256: "abc",
+    backupEqualsOriginal: true,
+    orphansRemoved: true,
+    residualClean: true,
+  };
+  for (const field of ["backupEqualsOriginal", "orphansRemoved", "residualClean"]) {
+    const changed = { ...rt, [field]: false };
+    ok(diffBaselines(baseline([], [rt]), baseline([], [changed])).some((d) => d.includes(field)));
+  }
+});
+
 test("diffBaselines: skipped captures compare equal", () => {
   const skipped = cap("x/segment", { argv: [], exit: null, stdout: "", stderr: "", skipped: "no segment in fixture" });
   deepStrictEqual(diffBaselines(baseline([skipped]), baseline([{ ...skipped }])), []);
+});
+
+test("golden baseline pins validate --fix previews, deterministic apply, and blocked refusal", () => {
+  const golden = JSON.parse(readFileSync(new URL("../test-fixtures/golden/baseline.json", import.meta.url), "utf-8"));
+  const captures = new Map(golden.captures.map((c) => [c.id, c]));
+  for (const key of FIXTURE_KEYS) {
+    const preview = captures.get(`${key}/validate-fix`);
+    ok(preview, `missing --fix preview for ${key}`);
+    strictEqual(preview.exit, 0);
+    strictEqual(JSON.parse(preview.stdout).fix.applied, false);
+  }
+  const a = captures.get("validate-fix/orphans/apply#a");
+  const b = captures.get("validate-fix/orphans/apply#b");
+  ok(a && b, "missing two-copy apply captures");
+  deepStrictEqual([a.exit, a.stdout, a.stderr], [b.exit, b.stdout, b.stderr]);
+  strictEqual(
+    JSON.parse(a.stdout).fix.residual.findings.some((f) => f.id.startsWith("materials.orphan_")),
+    false,
+  );
+  const blocked = captures.get("validate-fix/blocked/apply");
+  strictEqual(blocked?.exit, 2);
+  strictEqual(JSON.parse(blocked.stdout).fix.blocked, true);
+  const write = golden.roundtrips.find((r) => r.id === "roundtrip/validate-fix/orphans");
+  ok(
+    write?.stableBytes && write?.backupEqualsOriginal && write?.orphansRemoved,
+    "apply must persist identical clean bytes and preserve the backup",
+  );
 });
