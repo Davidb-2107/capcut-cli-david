@@ -10,10 +10,12 @@ Le switch central du dispatcher devient un registry : chaque verbe est enregistr
 - [x] Les chemins non-verbaux passent par le même mécanisme de sortie centralisée
 - [x] Zéro appel direct d'exit dans le flux normal : `process.exitCode` + retour naturel ; l'aide s'affiche intégralement (régression de troncature impossible)
 - [x] Tous les codes d'exit existants sont préservés à l'identique (vérifié par le golden-output)
-- [ ] Les tests au comportement inchangé passent, coverage ≥80 %, CI 15/15
+- [x] Les tests au comportement inchangé passent, coverage ≥80 %, CI 15/15
 
-**Status:** in-progress
+**Status:** done
 
 **Blocked by:** 01 - golden-output
 
 **Spec:** voir `00-spec-chantier-arch.md` (ce dossier)
+
+**Evidence:** PR #9, CI run 36102066764 (15/15) ; golden-output : 428 captures et 116 round-trips identiques.
