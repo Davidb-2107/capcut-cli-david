@@ -52,5 +52,5 @@ justification ; les 89 autres cas et les autres verbes sont inchangés. Détail 
 ## Consequences
 
 - Le registry doit couvrir les 34 cases **et les chemins non-verbaux** (`--help`, version, capabilities, erreurs de parsing) : 10 des 14 `process.exit` vivent avant le switch — c'est là que se cachent les exits oubliés.
-- La PR validate doit conserver l'export `hasBlockingErrors` depuis `./validate.js` (consommé par `remove-segment.ts`), sous peine de contaminer une PR adjacente.
+- La PR validate doit conserver l'export `hasBlockingErrors` depuis `./validate.js` (consommé par le jumeau CLI `remove-segment-cli.ts`), sous peine de contaminer une PR adjacente.
 - À la clôture du chantier DraftStore, la façade `@deprecated` (`saveDraft`/`loadDraft`, `draft.ts:169-186` incluant `loadedByPath`) est **supprimée** — décision à confirmer au moment du ticket ; les call sites sont alors tous sur le store.

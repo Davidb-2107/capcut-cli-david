@@ -11,7 +11,8 @@ export function applyRemoveSegment(draft: Draft, segId: string) {
   const trackRemoved = track.segments.length === 0;
   if (trackRemoved) draft.tracks = draft.tracks.filter((t) => t !== track);
 
-  // Sweep only orphaned text/video/audio materials via gc's shared plan.
+  // gc's shared plan only sweeps text/video/audio materials and preserves
+  // anything still referenced by another segment.
   const plan = planGc(draft);
   applyGc(draft, plan);
 
