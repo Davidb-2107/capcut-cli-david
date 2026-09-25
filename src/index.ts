@@ -40,7 +40,7 @@ import { cmdRemoveSegment } from "./commands/remove-segment.js";
 import { cmdRestyle } from "./commands/restyle-cli.js";
 import { cmdSyncTimelines } from "./commands/sync-timelines-cli.js";
 import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template-cli.js";
-import { cmdUi } from "./commands/ui.js";
+import { cmdUi } from "./commands/ui-cli.js";
 import { cmdValidate } from "./commands/validate-cli.js";
 import { cmdValidateFix } from "./commands/validate-fix.js";
 import { type Draft, LocalDraftStore } from "./draft.js";

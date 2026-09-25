@@ -6,13 +6,15 @@ Le plus petit des modules monolithiques restants est splitté selon le pattern m
 
 **Acceptance criteria:**
 
-- [ ] Logique pure dans le module domaine, adhésion CLI dans le jumeau `-cli`, zéro IO/console dans le domaine (standard des paires existantes)
-- [ ] Le verbe conserve nom, contrats JSON, codes d'exit (golden-output identique)
-- [ ] Les tests au comportement inchangé passent ; nouveaux tests domaine au seam unitaire existant
-- [ ] Coverage ≥80 % maintenue, CI 15/15
+- [x] Logique pure dans le module domaine, adhésion CLI dans le jumeau `-cli`, zéro IO/console dans le domaine (standard des paires existantes)
+- [x] Le verbe conserve nom, contrats JSON, codes d'exit (golden-output identique)
+- [x] Les tests au comportement inchangé passent ; nouveaux tests domaine au seam unitaire existant
+- [x] Coverage ≥80 % maintenue, CI 15/15
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Blocked by:** 03 - registry
 
 **Spec:** voir `00-spec-chantier-arch.md` (ce dossier)
+
+**Done (2026-09-25) :** PR #10 ; CI 15/15 ; golden-output : 434 captures et 116 round-trips identiques.
