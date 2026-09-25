@@ -98,6 +98,16 @@ test("CLI remove-segment: unknown segment-id → exit 1, {error}, no write", (t)
   ok(readFileSync(filePath).equals(before), "failed remove must not write");
 });
 
+test("CLI remove-segment: blocking validation error refuses before writing", (t) => {
+  const draft = makeDraft({ tracks: [track("v", "video", [seg("s1", "MISSING")])] });
+  const { filePath } = writeDraftDir(t, draft);
+  const before = readFileSync(filePath);
+  const r = runCli(["remove-segment", filePath, "s1"]);
+  strictEqual(r.status, 1);
+  ok(/remove-segment refuses/.test(r.stderr), `expected refusal, got ${r.stderr}`);
+  ok(readFileSync(filePath).equals(before), "blocked remove must not write");
+});
+
 test("CLI remove-segment: missing segment-id → exit 1, usage", (t) => {
   const draft = makeDraft({
     materials: { ...makeDraft().materials, videos: [vid("V1")] },
