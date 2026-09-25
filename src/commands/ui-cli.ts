@@ -18,7 +18,7 @@ export function cmdUi(printPathOnly: boolean): void {
   // dist/commands/ui-cli.js → dist/ui/index.html
   const htmlPath = fileURLToPath(new URL("../ui/index.html", import.meta.url));
   if (!existsSync(htmlPath)) die(`page capacités introuvable (${htmlPath}) — build incomplet ?`);
-  const { openBrowser, output } = planUi(printPathOnly, htmlPath);
-  if (openBrowser) openInBrowser(htmlPath);
-  console.log(output);
+  const action = planUi(printPathOnly);
+  if (action === "open-browser") openInBrowser(htmlPath);
+  console.log(action === "open-browser" ? `ouvert : ${htmlPath}` : htmlPath);
 }

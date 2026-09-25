@@ -17,4 +17,4 @@ Le plus petit des modules monolithiques restants est splitté selon le pattern m
 
 **Spec:** voir `00-spec-chantier-arch.md` (ce dossier)
 
-**Done (2026-09-25) :** PR #10 ; CI run `36115174419` : 15/15 ; golden-output : 434 captures et 116 round-trips identiques.
+**Done (2026-09-25) :** PR #10 ; CI 15/15 ; golden-output : 434 captures et 116 round-trips identiques.
