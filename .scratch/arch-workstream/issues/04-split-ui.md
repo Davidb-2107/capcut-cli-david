@@ -11,7 +11,7 @@ Le plus petit des modules monolithiques restants est splitté selon le pattern m
 - [ ] Les tests au comportement inchangé passent ; nouveaux tests domaine au seam unitaire existant
 - [ ] Coverage ≥80 % maintenue, CI 15/15
 
-**Status:** ready-for-agent
+**Status:** in-progress
 
 **Blocked by:** 03 - registry
 
