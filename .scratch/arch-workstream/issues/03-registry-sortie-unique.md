@@ -6,14 +6,16 @@ Le switch central du dispatcher devient un registry : chaque verbe est enregistr
 
 **Acceptance criteria:**
 
-- [ ] Une map verbe → handler remplace le switch ; les 8 handlers d'inspect sont enregistrés tels quels
-- [ ] Les chemins non-verbaux passent par le même mécanisme de sortie centralisée
-- [ ] Zéro appel direct d'exit dans le flux normal : `process.exitCode` + retour naturel ; l'aide s'affiche intégralement (régression de troncature impossible)
-- [ ] Tous les codes d'exit existants sont préservés à l'identique (vérifié par le golden-output)
-- [ ] Les tests au comportement inchangé passent, coverage ≥80 %, CI 15/15
+- [x] Une map verbe → handler remplace le switch ; les 8 handlers d'inspect sont enregistrés tels quels
+- [x] Les chemins non-verbaux passent par le même mécanisme de sortie centralisée
+- [x] Zéro appel direct d'exit dans le flux normal : `process.exitCode` + retour naturel ; l'aide s'affiche intégralement (régression de troncature impossible)
+- [x] Tous les codes d'exit existants sont préservés à l'identique (vérifié par le golden-output)
+- [x] Les tests au comportement inchangé passent, coverage ≥80 %, CI 15/15
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Blocked by:** 01 - golden-output
 
 **Spec:** voir `00-spec-chantier-arch.md` (ce dossier)
+
+**Done (2026-09-25) :** PR #9 ; correctif d'audit F1 `cd21f02` (aide reconnue uniquement en premier argument), six captures golden supplémentaires. CI run `36105427312` : 15/15 ; golden-output : 434 captures et 116 round-trips identiques.

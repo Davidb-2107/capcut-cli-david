@@ -44,6 +44,26 @@ test("binary --help prints usage", () => {
   ok(r.stdout.includes("Usage:"));
 });
 
+test("help is only recognized as the first raw argument", () => {
+  const noArgs = spawnSync(process.execPath, [BIN], { encoding: "utf-8" });
+  strictEqual(noArgs.status, 0);
+  ok(noArgs.stdout.includes("Usage:"));
+
+  const fixture = resolve(__dirname, "..", "test-fixtures", "fixtures", "minimal-draft.json");
+  for (const [args, error] of [
+    [["-q", "--help"], "Missing project path"],
+    [["-H", "-h"], "Missing project path"],
+    [["--out", "x", "--help"], "Missing project path"],
+    [[""], "Missing project path"],
+    [["", fixture], "Unknown command: ."],
+  ]) {
+    const r = spawnSync(process.execPath, [BIN, ...args], { encoding: "utf-8" });
+    strictEqual(r.status, 1, `argv=${JSON.stringify(args)}`);
+    strictEqual(r.stdout, "", `argv=${JSON.stringify(args)}`);
+    ok(r.stderr.includes(error), `argv=${JSON.stringify(args)}: ${r.stderr}`);
+  }
+});
+
 test("binary info on minimal fixture returns JSON with id+duration", () => {
   const fixture = resolve(__dirname, "..", "test-fixtures", "fixtures", "minimal-draft.json");
   const r = spawnSync(process.execPath, [BIN, "info", fixture], { encoding: "utf-8" });

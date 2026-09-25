@@ -360,7 +360,7 @@ export function cmdValidateFix(
   // D4: re-validate through the SAME store so an injected (in-memory) store is
   // honoured end-to-end; LocalDraftStore.load re-reads the fresh disk state, so
   // content + FS checks still uniformly see
-  // the committed result. Inert: nothing writes after this (index.ts process.exits on return).
+  // the committed result. Inert: nothing writes after this (index.ts returns the exit code).
   const { draft: fresh } = store.load(filePath);
   const residual = runValidate(fresh, draftDir, opts);
   emitApply(results, residual);

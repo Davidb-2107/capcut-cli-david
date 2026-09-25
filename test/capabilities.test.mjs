@@ -11,12 +11,11 @@ import { runCli } from "./helpers/spawn-cli.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-/** Verbes réellement dispatchés par src/index.ts : cmd === "x" et case "x": */
+/** Verbes réellement enregistrés dans le registry de src/index.ts. */
 function dispatchedVerbs() {
   const src = readFileSync(resolve(ROOT, "src/index.ts"), "utf-8");
   const verbs = new Set();
-  for (const m of src.matchAll(/cmd === "([a-z-]+)"/g)) verbs.add(m[1]);
-  for (const m of src.matchAll(/^\s*case "([a-z-]+)":/gm)) verbs.add(m[1]);
+  for (const m of src.matchAll(/^\s*\[\s*"([a-z][a-z-]*)",/gm)) verbs.add(m[1]);
   return verbs;
 }
 

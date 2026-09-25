@@ -43,9 +43,9 @@ import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template-cli.js";
 import { cmdUi } from "./commands/ui.js";
 import { cmdValidate } from "./commands/validate-cli.js";
 import { cmdValidateFix } from "./commands/validate-fix.js";
-import { LocalDraftStore } from "./draft.js";
+import { type Draft, LocalDraftStore } from "./draft.js";
 import { assertCapCutClosed, WRITE_COMMANDS } from "./utils/capcut-guard.js";
-import { CliError, die, type Flags, requireArgs } from "./utils/cli.js";
+import { die, type Flags, requireArgs } from "./utils/cli.js";
 
 const HELP = `capcut-david — CapCut/JianYing draft CLI (fork of capcut-cli)
 
@@ -483,124 +483,102 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
   return { positional, flags };
 }
 
-async function main(): Promise<void> {
-  const raw = process.argv.slice(2);
-  if (raw.length === 0 || raw[0] === "--help" || raw[0] === "-h") {
-    // writeSync, pas console.log : sur macOS un pipe est asynchrone, et le
-    // process.exit() qui suit coupait l'aide à la taille du tampon (~8 ko) —
-    // tout ce qui vient après la section Add disparaissait quand la sortie
-    // était redirigée. Invisible sur Windows et Linux, où le pipe est sync.
-    writeSync(1, `${HELP}\n`);
-    process.exit(0);
-  }
+type Context = { positional: string[]; flags: Flags; projectPath: string | undefined };
+// biome-ignore lint/suspicious/noConfusingVoidType: existing handlers return void; exit-aware handlers return a number.
+type Handler = (ctx: Context) => number | void;
+type ProjectContext = Context & { projectPath: string };
+// biome-ignore lint/suspicious/noConfusingVoidType: preserve the return types of existing command functions.
+type ProjectHandler = (draft: Draft, filePath: string, ctx: ProjectContext) => number | void;
 
-  const { positional, flags } = parseFlags(raw);
-  const cmd = positional[0];
-  const projectPath = positional[1];
+function withDraft(handler: ProjectHandler): Handler {
+  return (ctx) => {
+    if (!ctx.projectPath) die("Missing project path. Run 'capcut-david --help' for usage.");
+    const { draft, filePath } = new LocalDraftStore().load(ctx.projectPath);
+    return handler(draft, filePath, { ...ctx, projectPath: ctx.projectPath });
+  };
+}
 
-  // Preflight: refuse to write while CapCut is open (silent-overwrite footgun).
-  if (WRITE_COMMANDS.has(cmd)) assertCapCutClosed(flags);
-
-  if (cmd === "init") {
-    cmdInit(positional, flags);
-    process.exit(0);
-  }
-
-  if (cmd === "psycho-build") {
-    cmdPsychoBuild(positional, flags);
-    process.exit(0);
-  }
-
-  if (cmd === "register") {
-    cmdRegister(positional, flags);
-    process.exit(0);
-  }
-
-  if (cmd === "init-meta") {
-    cmdInitMeta(positional, flags);
-    process.exit(0);
-  }
-
-  if (cmd === "query") {
-    process.exit(cmdQuery(positional, flags));
-  }
-
-  if (cmd === "catalogue") {
-    // exitCode plutôt qu'exit() : même piège que l'aide ci-dessus, un catalogue
-    // de plusieurs centaines d'entrées en -H serait tronqué sur macOS.
-    process.exitCode = cmdCatalogue(flags);
-    return;
-  }
-
-  if (cmd === "make-preset") {
-    process.exit(cmdMakePreset(flags));
-  }
-
-  if (cmd === "ui") {
-    cmdUi(positional.includes("--print-path"));
-    process.exit(0);
-  }
-
-  if (!projectPath) die("Missing project path. Run 'capcut-david --help' for usage.");
-
-  const { draft, filePath } = new LocalDraftStore().load(projectPath);
-
-  switch (cmd) {
-    case "info":
-      cmdInfo(draft, flags);
-      break;
-    case "tracks":
-      cmdTracks(draft, flags);
-      break;
-    case "segments":
-      cmdSegments(draft, flags);
-      break;
-    case "texts":
-      cmdTexts(draft, flags);
-      break;
-    case "set-text":
-      requireArgs(positional, 4, "capcut-david set-text <project> <id> <text>");
-      cmdSetText(draft, filePath, positional[2], positional.slice(3).join(" "), flags);
-      break;
-    case "shift":
-      requireArgs(positional, 4, "capcut-david shift <project> <id> <offset>");
-      cmdShift(draft, filePath, positional[2], positional[3], flags);
-      break;
-    case "shift-all":
-      requireArgs(positional, 3, "capcut-david shift-all <project> <offset> [--track <type>]");
-      cmdShiftAll(draft, filePath, positional[2], flags);
-      break;
-    case "speed":
-      requireArgs(positional, 4, "capcut-david speed <project> <id> <multiplier>");
-      cmdSpeed(draft, filePath, positional[2], positional[3], flags);
-      break;
-    case "volume":
-      requireArgs(positional, 4, "capcut-david volume <project> <id> <level>");
-      cmdVolume(draft, filePath, positional[2], positional[3], flags);
-      break;
-    case "trim":
-      requireArgs(positional, 5, "capcut-david trim <project> <id> <start> <duration>");
-      cmdTrim(draft, filePath, positional[2], positional[3], positional[4], flags);
-      break;
-    case "opacity":
-      requireArgs(positional, 4, "capcut-david opacity <project> <id> <alpha>");
-      cmdOpacity(draft, filePath, positional[2], positional[3], flags);
-      break;
-    case "export-srt":
-      cmdExportSrt(draft);
-      break;
-    case "materials":
-      cmdMaterials(draft, flags);
-      break;
-    case "segment":
+const handlers = new Map<string, Handler>([
+  ["init", ({ positional, flags }) => cmdInit(positional, flags)],
+  ["psycho-build", ({ positional, flags }) => cmdPsychoBuild(positional, flags)],
+  ["register", ({ positional, flags }) => cmdRegister(positional, flags)],
+  ["init-meta", ({ positional, flags }) => cmdInitMeta(positional, flags)],
+  ["query", ({ positional, flags }) => cmdQuery(positional, flags)],
+  ["catalogue", ({ flags }) => cmdCatalogue(flags)],
+  ["make-preset", ({ flags }) => cmdMakePreset(flags)],
+  ["ui", ({ positional }) => cmdUi(positional.includes("--print-path"))],
+  ["info", withDraft((draft, _filePath, { flags }) => cmdInfo(draft, flags))],
+  ["tracks", withDraft((draft, _filePath, { flags }) => cmdTracks(draft, flags))],
+  ["segments", withDraft((draft, _filePath, { flags }) => cmdSegments(draft, flags))],
+  ["texts", withDraft((draft, _filePath, { flags }) => cmdTexts(draft, flags))],
+  ["materials", withDraft((draft, _filePath, { flags }) => cmdMaterials(draft, flags))],
+  ["export-srt", withDraft((draft) => cmdExportSrt(draft))],
+  [
+    "segment",
+    withDraft((draft, _filePath, { positional, flags }) => {
       requireArgs(positional, 3, "capcut-david segment <project> <id>");
       cmdSegmentDetail(draft, positional[2], flags);
-      break;
-    case "material":
+    }),
+  ],
+  [
+    "material",
+    withDraft((draft, _filePath, { positional, flags }) => {
       requireArgs(positional, 3, "capcut-david material <project> <id>");
       cmdMaterialDetail(draft, positional[2], flags);
-      break;
-    case "add-audio":
+    }),
+  ],
+  [
+    "set-text",
+    withDraft((draft, filePath, { positional, flags }) => {
+      requireArgs(positional, 4, "capcut-david set-text <project> <id> <text>");
+      cmdSetText(draft, filePath, positional[2], positional.slice(3).join(" "), flags);
+    }),
+  ],
+  [
+    "shift",
+    withDraft((draft, filePath, { positional, flags }) => {
+      requireArgs(positional, 4, "capcut-david shift <project> <id> <offset>");
+      cmdShift(draft, filePath, positional[2], positional[3], flags);
+    }),
+  ],
+  [
+    "shift-all",
+    withDraft((draft, filePath, { positional, flags }) => {
+      requireArgs(positional, 3, "capcut-david shift-all <project> <offset> [--track <type>]");
+      cmdShiftAll(draft, filePath, positional[2], flags);
+    }),
+  ],
+  [
+    "speed",
+    withDraft((draft, filePath, { positional, flags }) => {
+      requireArgs(positional, 4, "capcut-david speed <project> <id> <multiplier>");
+      cmdSpeed(draft, filePath, positional[2], positional[3], flags);
+    }),
+  ],
+  [
+    "volume",
+    withDraft((draft, filePath, { positional, flags }) => {
+      requireArgs(positional, 4, "capcut-david volume <project> <id> <level>");
+      cmdVolume(draft, filePath, positional[2], positional[3], flags);
+    }),
+  ],
+  [
+    "trim",
+    withDraft((draft, filePath, { positional, flags }) => {
+      requireArgs(positional, 5, "capcut-david trim <project> <id> <start> <duration>");
+      cmdTrim(draft, filePath, positional[2], positional[3], positional[4], flags);
+    }),
+  ],
+  [
+    "opacity",
+    withDraft((draft, filePath, { positional, flags }) => {
+      requireArgs(positional, 4, "capcut-david opacity <project> <id> <alpha>");
+      cmdOpacity(draft, filePath, positional[2], positional[3], flags);
+    }),
+  ],
+  [
+    "add-audio",
+    withDraft((draft, filePath, { positional, flags }) => {
       if (flags.batch !== undefined) {
         if (positional.length > 2) die("--batch cannot be combined with a positional file");
         cmdAddAudioBatch(draft, filePath, flags);
@@ -608,8 +586,11 @@ async function main(): Promise<void> {
         requireArgs(positional, 5, "capcut-david add-audio <project> <file> <start> <duration>");
         cmdAddAudio(draft, filePath, positional, flags);
       }
-      break;
-    case "add-video":
+    }),
+  ],
+  [
+    "add-video",
+    withDraft((draft, filePath, { positional, flags }) => {
       if (flags.batch !== undefined) {
         if (positional.length > 2) die("--batch cannot be combined with a positional file");
         cmdAddVideoBatch(draft, filePath, flags);
@@ -617,102 +598,156 @@ async function main(): Promise<void> {
         requireArgs(positional, 5, "capcut-david add-video <project> <file> <start> <duration>");
         cmdAddVideo(draft, filePath, positional, flags);
       }
-      break;
-    case "add-text":
+    }),
+  ],
+  [
+    "add-text",
+    withDraft((draft, filePath, { positional, flags }) => {
       requireArgs(positional, 5, "capcut-david add-text <project> <start> <duration> <text>");
       cmdAddText(draft, filePath, positional, flags);
-      break;
-    case "import-captions":
+    }),
+  ],
+  [
+    "import-captions",
+    withDraft((draft, filePath, { positional, flags }) => {
       requireArgs(positional, 3, "capcut-david import-captions <project> <captions.json>");
       cmdImportCaptions(draft, filePath, positional, flags);
-      break;
-    case "cascade-words":
+    }),
+  ],
+  [
+    "cascade-words",
+    withDraft((draft, filePath, { positional, flags }) => {
       requireArgs(positional, 3, "capcut-david cascade-words <project> <cards.json> --guide-track <name>");
       cmdCascadeWords(draft, filePath, positional, flags);
-      break;
-    case "cut":
+    }),
+  ],
+  [
+    "cut",
+    withDraft((draft, filePath, { positional, flags }) => {
       requireArgs(positional, 4, "capcut-david cut <project> <start> <end> --out <path>");
       cmdCut(draft, filePath, positional, flags);
-      break;
-    case "save-template":
+    }),
+  ],
+  [
+    "save-template",
+    withDraft((draft, _filePath, { positional, flags }) => {
       requireArgs(positional, 4, "capcut-david save-template <project> <id> <name> --out <path>");
       cmdSaveTemplate(draft, positional, flags);
-      break;
-    case "apply-template":
+    }),
+  ],
+  [
+    "apply-template",
+    withDraft((draft, filePath, { positional, flags }) => {
       requireArgs(positional, 5, "capcut-david apply-template <project> <template.json> <start> <duration>");
       cmdApplyTemplate(draft, filePath, positional, flags);
-      break;
-    case "batch":
-      // Audit CLI-M6: partial save is by design, but the exit code must not
-      // claim success when ops failed (ok:false + exit 1 keeps report honest).
-      process.exit(cmdBatch(draft, filePath, flags));
-      break;
-    case "add-keyframe":
-      if (flags.batch !== undefined) {
-        cmdAddKeyframeBatch(draft, filePath, flags);
-      } else {
+    }),
+  ],
+  ["batch", withDraft((draft, filePath, { flags }) => cmdBatch(draft, filePath, flags))],
+  [
+    "add-keyframe",
+    withDraft((draft, filePath, { positional, flags }) => {
+      if (flags.batch !== undefined) cmdAddKeyframeBatch(draft, filePath, flags);
+      else {
         requireArgs(positional, 4, "capcut-david add-keyframe <project> <id> <time> --property <p> --value <v>");
         cmdAddKeyframe(draft, filePath, positional[2], positional[3], flags.property, flags.value, flags.curve, flags);
       }
-      break;
-    case "ken-burns":
+    }),
+  ],
+  [
+    "ken-burns",
+    withDraft((draft, filePath, { positional, flags }) => {
       requireArgs(positional, 3, "capcut-david ken-burns <project> <id> --from <scale> --to <scale>");
       cmdKenBurns(draft, filePath, positional[2], flags.from, flags.to, flags.curve, flags);
-      break;
-    case "add-effect":
+    }),
+  ],
+  [
+    "add-effect",
+    withDraft((draft, filePath, { positional, flags }) => {
       requireArgs(
         positional,
         flags.full ? 4 : 6,
         "capcut-david add-effect <project> <resource-id> <name> (<start> <duration> | --full) [--value <n>] [--bind <segment-id>]",
       );
       cmdAddEffect(draft, filePath, positional, flags);
-      break;
-    case "add-filter":
+    }),
+  ],
+  [
+    "add-filter",
+    withDraft((draft, filePath, { positional, flags }) => {
       requireArgs(
         positional,
         flags.full ? 4 : 6,
         "capcut-david add-filter <project> <resource-id> <name> (<start> <duration> | --full) [--value <n>]",
       );
       cmdAddFilter(draft, filePath, positional, flags);
-      break;
-    case "add-transition":
+    }),
+  ],
+  [
+    "add-transition",
+    withDraft((draft, filePath, { positional, flags }) => {
       requireArgs(
         positional,
         5,
         "capcut-david add-transition <project> <segment-id> <resource-id> <name> [--duration <t>]",
       );
       cmdAddTransition(draft, filePath, positional, flags);
-      break;
-    case "restyle":
+    }),
+  ],
+  [
+    "restyle",
+    withDraft((draft, filePath, { positional, flags }) => {
       requireArgs(positional, 2, "capcut-david restyle <project> --preset <preset.json> [--track-name <name>]");
       cmdRestyle(draft, filePath, positional, flags);
-      break;
-    case "validate":
-      if (flags.fix) process.exit(cmdValidateFix(draft, filePath, projectPath, flags));
-      process.exit(cmdValidate(draft, filePath, projectPath, flags));
-      break;
-    case "sync-timelines":
-      cmdSyncTimelines(draft, filePath, positional, flags);
-      break;
-    case "gc":
-      cmdGc(draft, filePath, positional, flags);
-      break;
-    case "remove-segment":
+    }),
+  ],
+  [
+    "validate",
+    withDraft((draft, filePath, { projectPath, flags }) =>
+      flags.fix
+        ? cmdValidateFix(draft, filePath, projectPath, flags)
+        : cmdValidate(draft, filePath, projectPath, flags),
+    ),
+  ],
+  [
+    "sync-timelines",
+    withDraft((draft, filePath, { positional, flags }) => cmdSyncTimelines(draft, filePath, positional, flags)),
+  ],
+  ["gc", withDraft((draft, filePath, { positional, flags }) => cmdGc(draft, filePath, positional, flags))],
+  [
+    "remove-segment",
+    withDraft((draft, filePath, { positional, flags }) => {
       requireArgs(positional, 3, "capcut-david remove-segment <project> <segment-id>");
       cmdRemoveSegment(draft, filePath, positional, flags);
-      break;
-    default:
-      die(`Unknown command: ${cmd}. Run 'capcut-david --help' for usage.`);
+    }),
+  ],
+]);
+
+function main(): number {
+  const raw = process.argv.slice(2);
+  if (raw.length === 0 || raw[0] === "--help" || raw[0] === "-h") {
+    writeSync(1, `${HELP}\n`);
+    return 0;
   }
+  const { positional, flags } = parseFlags(raw);
+  const cmd = positional[0];
+  const ctx: Context = { positional, flags, projectPath: positional[1] };
+
+  // Preflight precedes draft loading, as it did in the switch dispatcher.
+  if (WRITE_COMMANDS.has(cmd)) assertCapCutClosed(flags);
+
+  const handler = handlers.get(cmd);
+  if (!handler) {
+    if (!ctx.projectPath) die("Missing project path. Run 'capcut-david --help' for usage.");
+    new LocalDraftStore().load(ctx.projectPath);
+    die(`Unknown command: ${cmd}. Run 'capcut-david --help' for usage.`);
+  }
+  return handler(ctx) ?? 0;
 }
 
 try {
-  await main();
+  process.exitCode = main();
 } catch (e) {
   const msg = e instanceof Error ? e.message : String(e);
-  if (!(e instanceof CliError)) {
-    // Unexpected error — still print, but we exit nonzero either way.
-  }
   process.stderr.write(`${JSON.stringify({ error: msg })}\n`);
-  process.exit(1);
+  process.exitCode = 1;
 }
