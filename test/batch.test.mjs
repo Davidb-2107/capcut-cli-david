@@ -5,8 +5,8 @@
 // stdin; instead we drive the built CLI via runCli with `input` (stdin).
 //
 // Per-op execution failures (bad cmd, missing fields, malformed JSON, op-level
-// die()) are counted in `failed` and reported to stderr. The command exits 1
-// when any operation fails, including the empty-stdin guard.
+// die()) are counted in `failed` and reported to stderr. The exit code is the
+// number of failed operations; the empty-stdin guard exits 1.
 
 import { test } from "node:test";
 import { strictEqual, deepStrictEqual, ok, match } from "node:assert";
@@ -287,5 +287,21 @@ test("batch: mixed valid + invalid ops yields succeeded=1, failed=1", (t) => {
   ok(
     r.stderr.includes("batch shift-all requires offset"),
     `stderr should mention missing offset, got: ${r.stderr}`,
+  );
+});
+
+test("batch: two failed ops return exit 2 and preserve error order", (t) => {
+  const { filePath } = tmpDraft(FIXTURES.MINIMAL, t);
+  const input = '{"cmd":"first-unknown"}\n{"cmd":"second-unknown"}\n';
+  const r = runCli(["batch", filePath], { input });
+
+  strictEqual(r.status, 2);
+  deepStrictEqual(r.json, { ok: false, succeeded: 0, failed: 2 });
+  deepStrictEqual(
+    r.stderr.trim().split("\n").map((line) => JSON.parse(line)),
+    [
+      { error: "Unknown batch command: first-unknown", line: '{"cmd":"first-unknown"}' },
+      { error: "Unknown batch command: second-unknown", line: '{"cmd":"second-unknown"}' },
+    ],
   );
 });
