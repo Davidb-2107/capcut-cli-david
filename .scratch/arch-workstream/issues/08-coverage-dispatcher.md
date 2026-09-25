@@ -6,12 +6,12 @@
 
 **Acceptance criteria:**
 
-- [ ] Le rapport de couverture inclut le dispatcher `dist/index.js` et les utilitaires CLI pertinents de `dist/utils`
-- [ ] Les chemins de dispatch, d'aide, d'erreur de parsing et de code d'exit sont exercés par des tests comportementaux
-- [ ] Le seuil de couverture protège explicitement ces cibles et la CI reste verte
-- [ ] Les sorties et codes d'exit observés par le golden-output restent identiques
+- [x] Le rapport de couverture inclut le dispatcher `dist/index.js` et les utilitaires CLI pertinents de `dist/utils`
+- [x] Les chemins de dispatch, d'aide, d'erreur de parsing et de code d'exit sont exercés par des tests comportementaux
+- [ ] Le seuil de couverture protège explicitement ces cibles et la CI reste verte (gate local vert ; CI en attente de PR)
+- [x] Les sorties et codes d'exit observés par le golden-output restent identiques
 
-**Status:** ready-for-agent
+**Status:** in-progress
 
 **Blocked by:** None (follow-up à l'audit du ticket 03)
 
