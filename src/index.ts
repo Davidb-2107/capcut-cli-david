@@ -484,8 +484,10 @@ function parseFlags(args: string[]): { positional: string[]; flags: Flags } {
 }
 
 type Context = { positional: string[]; flags: Flags; projectPath: string | undefined };
+// biome-ignore lint/suspicious/noConfusingVoidType: existing handlers return void; exit-aware handlers return a number.
 type Handler = (ctx: Context) => number | void;
 type ProjectContext = Context & { projectPath: string };
+// biome-ignore lint/suspicious/noConfusingVoidType: preserve the return types of existing command functions.
 type ProjectHandler = (draft: Draft, filePath: string, ctx: ProjectContext) => number | void;
 
 function withDraft(handler: ProjectHandler): Handler {
@@ -497,24 +499,6 @@ function withDraft(handler: ProjectHandler): Handler {
 }
 
 const handlers = new Map<string, Handler>([
-  [
-    "",
-    () => {
-      writeSync(1, `${HELP}\n`);
-    },
-  ],
-  [
-    "--help",
-    () => {
-      writeSync(1, `${HELP}\n`);
-    },
-  ],
-  [
-    "-h",
-    () => {
-      writeSync(1, `${HELP}\n`);
-    },
-  ],
   ["init", ({ positional, flags }) => cmdInit(positional, flags)],
   ["psycho-build", ({ positional, flags }) => cmdPsychoBuild(positional, flags)],
   ["register", ({ positional, flags }) => cmdRegister(positional, flags)],
@@ -740,9 +724,12 @@ const handlers = new Map<string, Handler>([
 
 function main(): number {
   const raw = process.argv.slice(2);
-  const help = raw.length === 0 || raw[0] === "--help" || raw[0] === "-h";
-  const { positional, flags } = help ? { positional: [], flags: { human: false, quiet: false } } : parseFlags(raw);
-  const cmd = help ? (raw[0] ?? "") : positional[0];
+  if (raw.length === 0 || raw[0] === "--help" || raw[0] === "-h") {
+    writeSync(1, `${HELP}\n`);
+    return 0;
+  }
+  const { positional, flags } = parseFlags(raw);
+  const cmd = positional[0];
   const ctx: Context = { positional, flags, projectPath: positional[1] };
 
   // Preflight precedes draft loading, as it did in the switch dispatcher.

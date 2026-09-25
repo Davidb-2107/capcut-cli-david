@@ -402,6 +402,7 @@ function captureAll() {
 
     // -- Global read-only surface ------------------------------------------
     cap("global/help", ["--help"]);
+    cap("global/help-no-args", []);
     // No version path exists yet (00-spec line 28 requires the registry to
     // cover "aide, version, erreurs de parsing") — this pins the CURRENT
     // behaviour so ticket 03's registry can't silently change it.
@@ -414,6 +415,11 @@ function captureAll() {
     // Dispatch error paths — the registry refactor must preserve these.
     cap("errors/unknown-verb", ["definitely-not-a-verb", join(FIXTURES_DIR, "minimal-draft.json")]);
     cap("errors/missing-project-path", ["info"]);
+    cap("errors/empty-verb", [""]);
+    cap("errors/empty-verb-with-project", ["", join(FIXTURES_DIR, "minimal-draft.json")]);
+    cap("errors/help-after-quiet", ["-q", "--help"]);
+    cap("errors/help-after-human", ["-H", "--help"]);
+    cap("errors/short-help-after-human", ["-H", "-h"]);
 
     // -- Per-fixture read-only commands --------------------------------------
     const READ_ONLY = ["info", "tracks", "segments", "texts", "materials", "export-srt"];
