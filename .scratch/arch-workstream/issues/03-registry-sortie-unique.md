@@ -18,4 +18,4 @@ Le switch central du dispatcher devient un registry : chaque verbe est enregistr
 
 **Spec:** voir `00-spec-chantier-arch.md` (ce dossier)
 
-**Evidence:** PR #9, CI run 36102066764 (15/15) ; golden-output : 428 captures et 116 round-trips identiques.
+**Done (2026-09-25) :** PR #9 ; correctif d'audit F1 `cd21f02` (aide reconnue uniquement en premier argument), six captures golden supplémentaires. CI run `36105427312` : 15/15 ; golden-output : 434 captures et 116 round-trips identiques.
