@@ -12,6 +12,7 @@ import { join, resolve, basename } from "node:path";
 
 import { runCli } from "./helpers/spawn-cli.mjs";
 import { planValidateFix } from "../dist/commands/validate-fix.js";
+import { cmdValidateFix } from "../dist/commands/validate-fix-cli.js";
 import { runValidate } from "../dist/commands/validate.js";
 import { planInitMeta, applyInitMeta } from "../dist/commands/init-meta.js";
 
@@ -30,6 +31,29 @@ const vid = (id) => ({ id, path: "x.mp4", material_name: "x", type: "video", dur
 const mats = (over = {}) => ({ ...makeDraft().materials, ...over });
 
 const CONTENT = (over = {}) => JSON.stringify(makeDraft(over));
+
+test("cmdValidateFix: the injected store is reloaded for the residual report", (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "capcut-vfix-store-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const filePath = join(dir, "draft_content.json");
+  const draft = makeDraft({ materials: mats({ texts: [txt("ORPH")] }) });
+  let saved;
+  let loads = 0;
+  const store = {
+    save(loaded) { saved = structuredClone(loaded.draft); },
+    load(path) {
+      strictEqual(path, filePath);
+      loads++;
+      return { draft: saved, filePath, raw: "" };
+    },
+  };
+  t.mock.method(process.stderr, "write", () => true);
+  const code = cmdValidateFix(draft, filePath, filePath, { apply: true, force: true, quiet: true, human: false }, store);
+  strictEqual(code, 0);
+  strictEqual(loads, 1);
+  strictEqual(saved.materials.texts.length, 0);
+  strictEqual(existsSync(filePath), false, "the injected store avoids a disk write");
+});
 
 // dir with a draft_content.json; optional sidecar + optional Timelines mirror.
 function setupDir(t, { content = CONTENT(), meta, mirrorSig } = {}) {
