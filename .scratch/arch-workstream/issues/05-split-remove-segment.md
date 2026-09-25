@@ -6,12 +6,12 @@ Le module remove-segment est splitté selon le même pattern (logique pure au do
 
 **Acceptance criteria:**
 
-- [ ] Logique pure au domaine, adhésion CLI au jumeau, conformes au pattern des paires existantes
-- [ ] L'import de la fonction partagée de validate reste au chemin actuel (aucune contamination croisée avec le ticket validate)
-- [ ] Le verbe conserve nom, contrats JSON, codes d'exit (golden-output identique)
+- [x] Logique pure au domaine, adhésion CLI au jumeau, conformes au pattern des paires existantes
+- [x] L'import de la fonction partagée de validate reste au chemin actuel (aucune contamination croisée avec le ticket validate)
+- [x] Le verbe conserve nom, contrats JSON, codes d'exit (golden-output identique)
 - [ ] Coverage ≥80 % maintenue, CI 15/15
 
-**Status:** ready-for-agent
+**Status:** in-progress
 
 **Blocked by:** 03 - registry
 
