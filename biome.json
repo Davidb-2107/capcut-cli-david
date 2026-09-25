@@ -14,6 +14,7 @@
       "*.json",
       "packages/**/*.json",
       "scripts/golden-output.mjs",
+      "scripts/coverage-gate.mjs",
       "test/golden-output.test.mjs"
     ]
   },

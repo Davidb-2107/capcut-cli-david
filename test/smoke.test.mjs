@@ -40,14 +40,21 @@ test("formatDuration: human-readable seconds", () => {
 test("binary --help prints usage", () => {
   const r = spawnSync(process.execPath, [BIN, "--help"], { encoding: "utf-8" });
   strictEqual(r.status, 0);
+  strictEqual(r.stderr, "");
   ok(r.stdout.includes("capcut-david"));
   ok(r.stdout.includes("Usage:"));
+  ok(r.stdout.endsWith("IDs: first 6+ chars of segment/material ID (prefix match)\n"));
+  const short = spawnSync(process.execPath, [BIN, "-h"], { encoding: "utf-8" });
+  strictEqual(short.status, 0);
+  strictEqual(short.stderr, "");
+  strictEqual(short.stdout, r.stdout);
 });
 
 test("help is only recognized as the first raw argument", () => {
   const noArgs = spawnSync(process.execPath, [BIN], { encoding: "utf-8" });
   strictEqual(noArgs.status, 0);
-  ok(noArgs.stdout.includes("Usage:"));
+  strictEqual(noArgs.stderr, "");
+  strictEqual(noArgs.stdout, spawnSync(process.execPath, [BIN, "--help"], { encoding: "utf-8" }).stdout);
 
   const fixture = resolve(__dirname, "..", "test-fixtures", "fixtures", "minimal-draft.json");
   for (const [args, error] of [
@@ -68,6 +75,7 @@ test("binary info on minimal fixture returns JSON with id+duration", () => {
   const fixture = resolve(__dirname, "..", "test-fixtures", "fixtures", "minimal-draft.json");
   const r = spawnSync(process.execPath, [BIN, "info", fixture], { encoding: "utf-8" });
   strictEqual(r.status, 0);
+  strictEqual(r.stderr, "");
   const data = JSON.parse(r.stdout);
   ok(typeof data.id === "string");
   ok(typeof data.duration_us === "number");
@@ -77,5 +85,19 @@ test("binary unknown command exits 1 with error JSON", () => {
   const fixture = resolve(__dirname, "..", "test-fixtures", "fixtures", "minimal-draft.json");
   const r = spawnSync(process.execPath, [BIN, "bogus", fixture], { encoding: "utf-8" });
   strictEqual(r.status, 1);
-  ok(r.stderr.includes("Unknown command"), `stderr was: ${r.stderr}`);
+  strictEqual(r.stdout, "");
+  strictEqual(r.stderr, '{"error":"Unknown command: bogus. Run \'capcut-david --help\' for usage."}\n');
+});
+
+test("parser errors exit 1 with JSON on stderr before dispatch", () => {
+  const fixture = resolve(__dirname, "..", "test-fixtures", "fixtures", "minimal-draft.json");
+  for (const [args, error] of [
+    [["info", fixture, "--kind=font"], '--kind takes a space-separated value (use --kind <k>), got "--kind=font"'],
+    [["info", fixture, "--transform-y", "NaN"], '--transform-y must be a finite number, got "NaN"'],
+  ]) {
+    const r = spawnSync(process.execPath, [BIN, ...args], { encoding: "utf-8" });
+    strictEqual(r.status, 1);
+    strictEqual(r.stdout, "");
+    strictEqual(r.stderr, `${JSON.stringify({ error })}\n`);
+  }
 });

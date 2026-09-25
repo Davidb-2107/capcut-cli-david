@@ -88,8 +88,8 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # Coverage gate — runs node:test coverage on a single Node 22 / ubuntu slot.
-  # Threshold: ≥80% lines AND ≥80% functions on src/commands/* and src/draft.ts
-  # (the modules promised stable by Phase B). Node 18 lacks
+  # Threshold: ≥80% aggregate lines/functions on the measured files, and ≥80%
+  # individually on the dispatcher and its CLI utilities. Node 18 lacks
   # --experimental-test-coverage, so we don't run this on the full matrix.
   # ---------------------------------------------------------------------------
   coverage:
