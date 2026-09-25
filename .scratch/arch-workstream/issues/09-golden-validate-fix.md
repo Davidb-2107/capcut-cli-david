@@ -8,13 +8,13 @@ Cette extension prépare les futurs refactors de `--fix` ; sa nouvelle baseline 
 
 **Acceptance criteria:**
 
-- [ ] `validate --fix` sans `--apply` est capturé sur chaque fixture du corpus ; stdout, stderr et exit sont stables, et la commande n'écrit rien
-- [ ] Un `--fix --apply` sur deux copies fraîches d'un draft avec orphelins text et media capture stdout/stderr/exit, supprime les orphelins et rapporte le résiduel après re-validation ; les sorties canonicalisées et les octets finaux sont identiques entre copies
-- [ ] Le cas bloqué (orphelin + référence pendante ou id dupliqué) sort avec le code 2 et laisse le draft intact, sans `.bak` ; sa sortie est capturée
-- [ ] `--write` refuse une capture non déterministe ; la baseline ajoutée est justifiée dans la PR et `--check` passe sans régénération
-- [ ] Aucun code de production modifié ; comportement des tests existants inchangé ; CI 15/15
+- [x] `validate --fix` sans `--apply` est capturé sur chaque fixture du corpus ; stdout, stderr et exit sont stables, et la commande n'écrit rien
+- [x] Un `--fix --apply` sur deux copies fraîches d'un draft avec orphelins text et media capture stdout/stderr/exit, supprime les orphelins et rapporte le résiduel après re-validation ; les sorties canonicalisées et les octets finaux sont identiques entre copies
+- [x] Le cas bloqué (orphelin + référence pendante ou id dupliqué) sort avec le code 2 et laisse le draft intact, sans `.bak` ; sa sortie est capturée
+- [x] `--write` refuse une capture non déterministe ; la baseline ajoutée est justifiée dans la PR et `--check` passe sans régénération
+- [x] Aucun code de production modifié ; comportement des tests existants inchangé ; CI 15/15 (PR #15)
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Blocked by:** None (follow-up indépendant des tickets 07 et 08)
 
