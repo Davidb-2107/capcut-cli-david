@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { writeSync } from "node:fs";
-import { cmdBatch } from "./commands/batch.js";
+import { cmdBatch } from "./commands/batch-cli.js";
 import { cmdCascadeWords } from "./commands/cascade-words-cli.js";
 import { cmdCatalogue } from "./commands/catalogue-cli.js";
 import {
