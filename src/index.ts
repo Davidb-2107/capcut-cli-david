@@ -36,7 +36,7 @@ import { cmdPsychoBuild } from "./commands/pipeline-cli.js";
 import { KINDS_PIPE } from "./commands/query.js";
 import { cmdQuery } from "./commands/query-cli.js";
 import { cmdRegister } from "./commands/register-cli.js";
-import { cmdRemoveSegment } from "./commands/remove-segment.js";
+import { cmdRemoveSegment } from "./commands/remove-segment-cli.js";
 import { cmdRestyle } from "./commands/restyle-cli.js";
 import { cmdSyncTimelines } from "./commands/sync-timelines-cli.js";
 import { cmdApplyTemplate, cmdSaveTemplate } from "./commands/template-cli.js";
