@@ -9,10 +9,12 @@ Le module remove-segment est splitté selon le même pattern (logique pure au do
 - [x] Logique pure au domaine, adhésion CLI au jumeau, conformes au pattern des paires existantes
 - [x] L'import de la fonction partagée de validate reste au chemin actuel (aucune contamination croisée avec le ticket validate)
 - [x] Le verbe conserve nom, contrats JSON, codes d'exit (golden-output identique)
-- [ ] Coverage ≥80 % maintenue, CI 15/15
+- [x] Coverage ≥80 % maintenue, CI 15/15
 
-**Status:** in-progress
+**Status:** done
 
 **Blocked by:** 03 - registry
 
 **Spec:** voir `00-spec-chantier-arch.md` (ce dossier)
+
+**Done (2026-09-25) :** PR #11 ; CI run `36125286218` : 15/15 ; golden-output : 434 captures et 116 round-trips identiques.
