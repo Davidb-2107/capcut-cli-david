@@ -16,7 +16,7 @@ C'est la plus grosse PR du chantier : le golden-output et le crescendo des petit
 
 **Status:** in-progress
 
-**Validation locale (2026-09-25) :** 78 tests ciblés verts ; golden-output : 434 captures + 116 round-trips identiques ; coverage : 95,32 % lignes, 98,24 % fonctions. CI en attente du push.
+**Validation locale (2026-09-25) :** 78 tests ciblés verts ; golden-output : 434 captures + 116 round-trips identiques pour les commandes couvertes, dont `validate` sans `--fix`. La re-validation après `--fix --apply` est vérifiée par le test `[D4]` (relecture disque) et le test au store injecté ; le golden ne couvre pas `--fix`. Coverage : 95,32 % lignes sous Node 24 lors de l'implémentation, 95,16 % sous Node 22 lors de l'audit indépendant ; 98,24 % fonctions dans les deux cas. CI 15/15 en attente d'une PR vers `master` : un simple push de `codex/**` ne déclenche pas le workflow.
 
 **Blocked by:** 03 - registry ; 05 - remove-segment (contrainte d'export partagé)
 
