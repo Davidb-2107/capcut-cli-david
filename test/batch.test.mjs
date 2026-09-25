@@ -1,12 +1,12 @@
-// Tests for src/commands/batch.ts (cmdBatch).
+// Tests for src/commands/batch-cli.ts (cmdBatch).
 //
 // cmdBatch reads JSONL from fd 0 (stdin) and dispatches each op to the
 // underlying edit commands. Direct in-process testing would require faking
 // stdin; instead we drive the built CLI via runCli with `input` (stdin).
 //
 // Per-op execution failures (bad cmd, missing fields, malformed JSON, op-level
-// die()) are counted in `failed` and reported to stderr — the outer command
-// still exits 0. Only the empty-stdin guard exits non-zero.
+// die()) are counted in `failed` and reported to stderr. The command exits 1
+// when any operation fails, including the empty-stdin guard.
 
 import { test } from "node:test";
 import { strictEqual, deepStrictEqual, ok, match } from "node:assert";

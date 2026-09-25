@@ -1,0 +1,62 @@
+import { type Draft, type DraftStore, LocalDraftStore, persistDraft } from "../draft.js";
+import { die, type Flags, out } from "../utils/cli.js";
+import { readStdinCapped } from "../utils/safe-io.js";
+import { type BatchOp, runBatch } from "./batch.js";
+import { cmdOpacity, cmdSetText, cmdShift, cmdShiftAll, cmdSpeed, cmdTrim, cmdVolume } from "./edit-cli.js";
+
+// Editors are called with save=false: only the single cmdBatch save below
+// persists. The store is forwarded anyway so a future save=true op cannot silently
+// drift onto a different persistence backend than the rest of the command.
+function execBatchOp(draft: Draft, filePath: string, op: BatchOp, flags: Flags, store: DraftStore): void {
+  const silent = { ...flags, quiet: true };
+  switch (op.cmd) {
+    case "set-text":
+      if (!op.id || op.text === undefined) die("batch set-text requires id and text");
+      cmdSetText(draft, filePath, op.id, op.text, silent, false, store);
+      break;
+    case "shift":
+      if (!op.id || !op.offset) die("batch shift requires id and offset");
+      cmdShift(draft, filePath, op.id, op.offset, silent, false, store);
+      break;
+    case "shift-all":
+      if (!op.offset) die("batch shift-all requires offset");
+      cmdShiftAll(draft, filePath, op.offset, { ...silent, track: op.track }, false, store);
+      break;
+    case "speed":
+      if (!op.id || op.speed === undefined) die("batch speed requires id and speed");
+      cmdSpeed(draft, filePath, op.id, String(op.speed), silent, false, store);
+      break;
+    case "volume":
+      if (!op.id || op.volume === undefined) die("batch volume requires id and volume");
+      cmdVolume(draft, filePath, op.id, String(op.volume), silent, false, store);
+      break;
+    case "opacity":
+      if (!op.id || op.opacity === undefined) die("batch opacity requires id and opacity");
+      cmdOpacity(draft, filePath, op.id, String(op.opacity), silent, false, store);
+      break;
+    case "trim":
+      if (!op.id || !op.start || !op.duration) die("batch trim requires id, start, duration");
+      cmdTrim(draft, filePath, op.id, op.start, op.duration, silent, false, store);
+      break;
+    default:
+      die(`Unknown batch command: ${op.cmd}`);
+  }
+}
+
+export function cmdBatch(
+  draft: Draft,
+  filePath: string,
+  flags: Flags,
+  store: DraftStore = new LocalDraftStore(),
+): number {
+  // fd 0 = stdin, cross-platform (Windows lacks /dev/stdin path).
+  // Audit CLI-N10: unbounded stdin freezes the process on a huge payload.
+  const input = readStdinCapped().trim();
+  if (!input) die("No input on stdin");
+  const { summary, errors } = runBatch(input, (op) => execBatchOp(draft, filePath, op, flags, store));
+  for (const error of errors) process.stderr.write(`${JSON.stringify(error)}\n`);
+  persistDraft(store, filePath, draft);
+  // Audit CLI-M6: ok must reflect reality; the caller maps fail>0 to exit 1.
+  out(summary, flags);
+  return summary.failed;
+}
