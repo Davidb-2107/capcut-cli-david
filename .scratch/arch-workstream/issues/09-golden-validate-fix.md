@@ -8,13 +8,20 @@ Cette extension prépare les futurs refactors de `--fix` ; sa nouvelle baseline 
 
 **Acceptance criteria:**
 
-- [ ] `validate --fix` sans `--apply` est capturé sur chaque fixture du corpus ; stdout, stderr et exit sont stables, et la commande n'écrit rien
-- [ ] Un `--fix --apply` sur deux copies fraîches d'un draft avec orphelins text et media capture stdout/stderr/exit, supprime les orphelins et rapporte le résiduel après re-validation ; les sorties canonicalisées et les octets finaux sont identiques entre copies
-- [ ] Le cas bloqué (orphelin + référence pendante ou id dupliqué) sort avec le code 2 et laisse le draft intact, sans `.bak` ; sa sortie est capturée
-- [ ] `--write` refuse une capture non déterministe ; la baseline ajoutée est justifiée dans la PR et `--check` passe sans régénération
-- [ ] Aucun code de production modifié ; comportement des tests existants inchangé ; CI 15/15
+- [x] `validate --fix` sans `--apply` est capturé sur chaque fixture du corpus ; stdout, stderr et exit sont stables, et la commande n'écrit rien
+- [x] Un `--fix --apply` sur deux copies fraîches d'un draft avec orphelins text et media capture stdout/stderr/exit, supprime les orphelins et rapporte le résiduel après re-validation ; les sorties canonicalisées et les octets finaux sont identiques entre copies
+- [x] Le cas bloqué (orphelin + référence pendante ou id dupliqué) sort avec le code 2 et laisse le draft intact, sans `.bak` ; sa sortie est capturée
+- [x] `--write` refuse une capture non déterministe ; la baseline ajoutée est justifiée dans la PR et `--check` passe sans régénération
+- [x] Aucun code de production modifié ; comportement des tests existants inchangé ; CI 15/15 (PR #15)
 
-**Status:** ready-for-agent
+**Status:** done
+
+**Preuve complémentaire du refus `--write` (2026-09-26) :**
+
+- Injection temporaire d'une capture `audit/controlled-divergence` dans `captureAll()` : stdout `pass-1` à la première passe, `pass-2` à la seconde.
+- `node scripts/golden-output.mjs --write` a quitté avec le code 1 et `Refusing to write a non-deterministic baseline`, en signalant la divergence de stdout avant l'écriture.
+- `test-fixtures/golden/baseline.json` est resté identique avant/après : SHA-256 `cc27f550f7f06853a2af13fca373d117547cb2f86636aff3c86301cd17ea7628`, 359216 octets et horodatage inchangé.
+- Pendant le test, Git ne signalait que l'injection volontaire dans `scripts/golden-output.mjs`. Après restauration, le script avait retrouvé son SHA-256 initial (`615c5d5719430fc525988dd5937f4b310552b2f01fc734a81338a0471f969b60`) et `git status --porcelain=v1` était vide ; HEAD est resté `baf2cda`.
 
 **Blocked by:** None (follow-up indépendant des tickets 07 et 08)
 

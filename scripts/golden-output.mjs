@@ -4,13 +4,14 @@
 // Captures, for every anonymized fixture in test-fixtures/fixtures/:
 //   - stdout / stderr / exit code of every read-only command
 //     (info, tracks, segments, texts, materials, segment, material, export-srt,
-//     validate without --fix, query, --help, plus the capabilities surface via
+//     validate, validate --fix previews, query, --help, plus the capabilities surface via
 //     `ui --print-path` and the dispatch error paths the registry must preserve)
 //   - write round-trips on temp copies covering the in-place persistence
 //     surface (M1): shift-all/shift/opacity/volume/speed/trim as byte-stable
 //     pairs, remove-segment/set-text as two-copy determinism, and the
 //     UUID-generating creators (add-text/add-keyframe/ken-burns/add-effect/
-//     add-filter/add-transition/cut) as two-copy canonical-hash determinism.
+//     add-filter/add-transition/cut) as two-copy canonical-hash determinism,
+//     plus validate --fix --apply on orphaned and blocked drafts.
 //
 // Captures are canonicalized before comparison — generated UUIDs become <UUID>,
 // repo/tmp/fixture paths become <ROOT>/<TMP>/<FIXTURES> tokens (precedent:
@@ -27,6 +28,7 @@
 // Requires a prior `npm run build` (the net drives dist/index.js, the real
 // process boundary — the highest seam).
 
+import { strict as assert } from "node:assert";
 import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
@@ -151,6 +153,9 @@ export function diffBaselines(expected, actual) {
         `${id}: round-trip canonicalStable ${exp.canonicalStable} → ${act.canonicalStable}` +
           " (UUID-generating write no longer canonically deterministic)",
       );
+    for (const field of ["backupEqualsOriginal", "orphansRemoved", "residualClean", "backupAbsent"]) {
+      if ((exp[field] ?? null) !== (act[field] ?? null)) diffs.push(`${id}: ${field} ${exp[field]} → ${act[field]}`);
+    }
     if (exp.contentSha256 !== act.contentSha256)
       diffs.push(`${id}: round-trip contentSha256 diverged (${exp.contentSha256} → ${act.contentSha256})`);
   }
@@ -386,15 +391,17 @@ function captureAll() {
     ];
     const canon = (s) => canonicalize(s ?? "", pathTokens);
 
-    const run = (argv) => {
+    const run = (argv, normalize = canon) => {
       // runCli bypasses the "CapCut is open" guard (CAPCUT_DAVID_FORCE=1).
       const r = runCli(argv);
-      return { exit: r.status, stdout: canon(r.stdout), stderr: canon(r.stderr) };
+      return { exit: r.status, stdout: normalize(r.stdout ?? ""), stderr: normalize(r.stderr ?? "") };
     };
 
     const captures = [];
-    const cap = (id, argv) => {
-      captures.push({ id, argv: argv.map((a) => canon(a)), ...run(argv) });
+    const cap = (id, argv, normalize = canon) => {
+      const capture = { id, argv: argv.map((a) => normalize(a)), ...run(argv, normalize) };
+      captures.push(capture);
+      return capture;
     };
     const skip = (id, reason) => {
       captures.push({ id, argv: [], exit: null, stdout: "", stderr: "", skipped: reason });
@@ -427,6 +434,12 @@ function captureAll() {
       const fp = join(FIXTURES_DIR, `${key}.json`);
       for (const verb of READ_ONLY) cap(`${key}/${verb}`, [verb, fp]);
       cap(`${key}/validate`, ["validate", fp, "--projects-root", emptyRoot]);
+      const preview = join(tmpRoot, `dry-${key}.json`);
+      copyFileSync(fp, preview);
+      const before = readFileSync(preview);
+      cap(`${key}/validate-fix`, ["validate", preview, "--fix", "--projects-root", emptyRoot]);
+      assert.ok(readFileSync(preview).equals(before), `${key}: validate --fix wrote draft bytes`);
+      assert.ok(!existsSync(`${preview}.bak`), `${key}: validate --fix wrote a backup`);
       const fx = JSON.parse(readFileSync(fp, "utf-8"));
       const segId = firstSegmentId(fx);
       if (segId) cap(`${key}/segment`, ["segment", fp, segId]);
@@ -513,6 +526,82 @@ function captureAll() {
         }
       }
     }
+
+    // A bare-file input limits --fix to gc, so this pins the destructive path
+    // and its re-validation without involving machine-local meta stores.
+    const source = JSON.parse(readFileSync(join(FIXTURES_DIR, "minimal-draft.json"), "utf-8"));
+    source.materials.texts.push({ id: "golden-orphan-text", type: "text", content: "{}" });
+    source.materials.videos.push({ id: "golden-orphan-video", type: "video", path: "golden-orphan.mp4" });
+    const applyDir = join(tmpRoot, "validate-fix");
+    mkdirSync(applyDir);
+    const a = join(applyDir, "orphan-a.json");
+    const b = join(applyDir, "orphan-b.json");
+    const pristine = Buffer.from(`${JSON.stringify(source, null, 2)}\n`);
+    writeFileSync(a, pristine);
+    writeFileSync(b, pristine);
+    const apply = (path, suffix) => {
+      const normalize = (s) => canonicalize(s, [["<DRAFT>", path], ...pathTokens]);
+      return cap(
+        `validate-fix/orphans/apply#${suffix}`,
+        ["validate", path, "--fix", "--apply", "--projects-root", emptyRoot],
+        normalize,
+      );
+    };
+    const appliedA = apply(a, "a");
+    const appliedB = apply(b, "b");
+    assert.deepEqual(
+      [appliedA.exit, appliedA.stdout, appliedA.stderr],
+      [appliedB.exit, appliedB.stdout, appliedB.stderr],
+      "validate --fix --apply output differs between fresh copies",
+    );
+    assert.equal(appliedA.exit, 0, "validate --fix --apply failed");
+    const bytesA = readFileSync(a);
+    const bytesB = readFileSync(b);
+    assert.ok(bytesA.equals(bytesB), "validate --fix --apply wrote different bytes between fresh copies");
+    const post = JSON.parse(bytesA.toString("utf-8"));
+    const residual = JSON.parse(appliedA.stdout).fix.residual;
+    const orphansRemoved =
+      !post.materials.texts.some((m) => m.id === "golden-orphan-text") &&
+      !post.materials.videos.some((m) => m.id === "golden-orphan-video");
+    const residualClean = residual && !residual.findings.some((f) => f.id.startsWith("materials.orphan_"));
+    const backupEqualsOriginal = readFileSync(`${a}.bak`).equals(pristine) && readFileSync(`${b}.bak`).equals(pristine);
+    assert.ok(
+      orphansRemoved && residualClean && backupEqualsOriginal,
+      "validate --fix --apply left orphans or lost backup bytes",
+    );
+    roundtrips.push({
+      id: "roundtrip/validate-fix/orphans",
+      mode: "twice",
+      stableBytes: bytesA.equals(bytesB),
+      matchesOriginal: bytesA.equals(pristine),
+      contentSha256: canonicalHash(bytesA.toString("utf-8"), pathTokens),
+      backupEqualsOriginal,
+      orphansRemoved,
+      residualClean: Boolean(residualClean),
+    });
+
+    // Duplicate material id blocks the same gc candidate before any write.
+    const blocked = join(applyDir, "blocked.json");
+    source.materials.texts.push({ id: "golden-orphan-text", type: "text", content: "{}" });
+    const blockedBytes = Buffer.from(`${JSON.stringify(source, null, 2)}\n`);
+    writeFileSync(blocked, blockedBytes);
+    const blockedCapture = cap(
+      "validate-fix/blocked/apply",
+      ["validate", blocked, "--fix", "--apply", "--projects-root", emptyRoot],
+      (s) => canonicalize(s, [["<DRAFT>", blocked], ...pathTokens]),
+    );
+    assert.equal(blockedCapture.exit, 2, "validate --fix --apply did not refuse duplicate id");
+    assert.equal(JSON.parse(blockedCapture.stdout).fix.blocked, true, "validate --fix --apply did not report blocked");
+    assert.ok(readFileSync(blocked).equals(blockedBytes), "blocked validate --fix --apply wrote draft bytes");
+    assert.ok(!existsSync(`${blocked}.bak`), "blocked validate --fix --apply wrote a backup");
+    roundtrips.push({
+      id: "roundtrip/validate-fix/blocked",
+      mode: "refusal",
+      stableBytes: true,
+      matchesOriginal: true,
+      contentSha256: canonicalHash(blockedBytes.toString("utf-8"), pathTokens),
+      backupAbsent: true,
+    });
 
     return { version: 1, captures, roundtrips };
   } finally {

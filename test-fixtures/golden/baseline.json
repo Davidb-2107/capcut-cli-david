@@ -189,6 +189,19 @@
       "stderr": ""
     },
     {
+      "id": "minimal-draft/validate-fix",
+      "argv": [
+        "validate",
+        "<TMP>/dry-minimal-draft.json",
+        "--fix",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>\",\"draft_file\":\"<TMP>/dry-minimal-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[],\"fix\":{\"applied\":false,\"blocked\":false,\"blocked_reason\":null,\"note\":\"a bare draft_content.json file was passed (not a directory): the meta/register/sync fixers need a draft directory, so only gc can run.\",\"order\":[\"gc\",\"init-meta\",\"register\",\"sync-timelines\"],\"plan\":[],\"unfixable\":[],\"excluded\":[]}}\n",
+      "stderr": ""
+    },
+    {
       "id": "minimal-draft/segment",
       "argv": [],
       "exit": null,
@@ -274,6 +287,19 @@
       ],
       "exit": 0,
       "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<FIXTURES>\",\"draft_file\":\"<FIXTURES>/ken-burns-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "ken-burns-draft/validate-fix",
+      "argv": [
+        "validate",
+        "<TMP>/dry-ken-burns-draft.json",
+        "--fix",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>\",\"draft_file\":\"<TMP>/dry-ken-burns-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[],\"fix\":{\"applied\":false,\"blocked\":false,\"blocked_reason\":null,\"note\":\"a bare draft_content.json file was passed (not a directory): the meta/register/sync fixers need a draft directory, so only gc can run.\",\"order\":[\"gc\",\"init-meta\",\"register\",\"sync-timelines\"],\"plan\":[],\"unfixable\":[],\"excluded\":[]}}\n",
       "stderr": ""
     },
     {
@@ -371,6 +397,19 @@
       "stderr": ""
     },
     {
+      "id": "effects-draft/validate-fix",
+      "argv": [
+        "validate",
+        "<TMP>/dry-effects-draft.json",
+        "--fix",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>\",\"draft_file\":\"<TMP>/dry-effects-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[],\"fix\":{\"applied\":false,\"blocked\":false,\"blocked_reason\":null,\"note\":\"a bare draft_content.json file was passed (not a directory): the meta/register/sync fixers need a draft directory, so only gc can run.\",\"order\":[\"gc\",\"init-meta\",\"register\",\"sync-timelines\"],\"plan\":[],\"unfixable\":[],\"excluded\":[]}}\n",
+      "stderr": ""
+    },
+    {
       "id": "effects-draft/segment",
       "argv": [
         "segment",
@@ -462,6 +501,19 @@
       ],
       "exit": 0,
       "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<FIXTURES>\",\"draft_file\":\"<FIXTURES>/subtitles-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "subtitles-draft/validate-fix",
+      "argv": [
+        "validate",
+        "<TMP>/dry-subtitles-draft.json",
+        "--fix",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>\",\"draft_file\":\"<TMP>/dry-subtitles-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[],\"fix\":{\"applied\":false,\"blocked\":false,\"blocked_reason\":null,\"note\":\"a bare draft_content.json file was passed (not a directory): the meta/register/sync fixers need a draft directory, so only gc can run.\",\"order\":[\"gc\",\"init-meta\",\"register\",\"sync-timelines\"],\"plan\":[],\"unfixable\":[],\"excluded\":[]}}\n",
       "stderr": ""
     },
     {
@@ -559,6 +611,19 @@
       "stderr": ""
     },
     {
+      "id": "full-psycho-draft/validate-fix",
+      "argv": [
+        "validate",
+        "<TMP>/dry-full-psycho-draft.json",
+        "--fix",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>\",\"draft_file\":\"<TMP>/dry-full-psycho-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[],\"fix\":{\"applied\":false,\"blocked\":false,\"blocked_reason\":null,\"note\":\"a bare draft_content.json file was passed (not a directory): the meta/register/sync fixers need a draft directory, so only gc can run.\",\"order\":[\"gc\",\"init-meta\",\"register\",\"sync-timelines\"],\"plan\":[],\"unfixable\":[],\"excluded\":[]}}\n",
+      "stderr": ""
+    },
+    {
       "id": "full-psycho-draft/segment",
       "argv": [
         "segment",
@@ -650,6 +715,19 @@
       ],
       "exit": 0,
       "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<FIXTURES>\",\"draft_file\":\"<FIXTURES>/animations-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "animations-draft/validate-fix",
+      "argv": [
+        "validate",
+        "<TMP>/dry-animations-draft.json",
+        "--fix",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>\",\"draft_file\":\"<TMP>/dry-animations-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[],\"fix\":{\"applied\":false,\"blocked\":false,\"blocked_reason\":null,\"note\":\"a bare draft_content.json file was passed (not a directory): the meta/register/sync fixers need a draft directory, so only gc can run.\",\"order\":[\"gc\",\"init-meta\",\"register\",\"sync-timelines\"],\"plan\":[],\"unfixable\":[],\"excluded\":[]}}\n",
       "stderr": ""
     },
     {
@@ -747,6 +825,19 @@
       "stderr": ""
     },
     {
+      "id": "stickers-draft/validate-fix",
+      "argv": [
+        "validate",
+        "<TMP>/dry-stickers-draft.json",
+        "--fix",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>\",\"draft_file\":\"<TMP>/dry-stickers-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[],\"fix\":{\"applied\":false,\"blocked\":false,\"blocked_reason\":null,\"note\":\"a bare draft_content.json file was passed (not a directory): the meta/register/sync fixers need a draft directory, so only gc can run.\",\"order\":[\"gc\",\"init-meta\",\"register\",\"sync-timelines\"],\"plan\":[],\"unfixable\":[],\"excluded\":[]}}\n",
+      "stderr": ""
+    },
+    {
       "id": "stickers-draft/segment",
       "argv": [
         "segment",
@@ -841,6 +932,19 @@
       "stderr": ""
     },
     {
+      "id": "transitions-draft/validate-fix",
+      "argv": [
+        "validate",
+        "<TMP>/dry-transitions-draft.json",
+        "--fix",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>\",\"draft_file\":\"<TMP>/dry-transitions-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[],\"fix\":{\"applied\":false,\"blocked\":false,\"blocked_reason\":null,\"note\":\"a bare draft_content.json file was passed (not a directory): the meta/register/sync fixers need a draft directory, so only gc can run.\",\"order\":[\"gc\",\"init-meta\",\"register\",\"sync-timelines\"],\"plan\":[],\"unfixable\":[],\"excluded\":[]}}\n",
+      "stderr": ""
+    },
+    {
       "id": "transitions-draft/segment",
       "argv": [
         "segment",
@@ -932,6 +1036,19 @@
       ],
       "exit": 0,
       "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<FIXTURES>\",\"draft_file\":\"<FIXTURES>/masks-filters-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "id": "masks-filters-draft/validate-fix",
+      "argv": [
+        "validate",
+        "<TMP>/dry-masks-filters-draft.json",
+        "--fix",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>\",\"draft_file\":\"<TMP>/dry-masks-filters-draft.json\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[],\"fix\":{\"applied\":false,\"blocked\":false,\"blocked_reason\":null,\"note\":\"a bare draft_content.json file was passed (not a directory): the meta/register/sync fixers need a draft directory, so only gc can run.\",\"order\":[\"gc\",\"init-meta\",\"register\",\"sync-timelines\"],\"plan\":[],\"unfixable\":[],\"excluded\":[]}}\n",
       "stderr": ""
     },
     {
@@ -5165,6 +5282,48 @@
       "exit": 0,
       "stdout": "{\"ok\":true,\"kept\":2,\"removed\":0,\"duration_us\":500000,\"out\":\"<TMP>/rt-masks-filters-draft/cut-b.json\"}\n",
       "stderr": ""
+    },
+    {
+      "id": "validate-fix/orphans/apply#a",
+      "argv": [
+        "validate",
+        "<DRAFT>",
+        "--fix",
+        "--apply",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/validate-fix\",\"draft_file\":\"<DRAFT>\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[],\"fix\":{\"applied\":true,\"blocked\":false,\"blocked_reason\":null,\"note\":\"a bare draft_content.json file was passed (not a directory): the meta/register/sync fixers need a draft directory, so only gc can run.\",\"results\":[{\"fixer\":\"gc\",\"status\":\"wrote\",\"finding_ids\":[\"materials.orphan_text\",\"materials.orphan_media\"],\"wrote\":true,\"bak\":[\"<DRAFT>.bak\"],\"detail\":\"removed 2 orphan material(s)\",\"error\":null}],\"residual\":{\"ok\":true,\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}}}\n",
+      "stderr": "WARNING validate --fix --apply: applying 1 fixer(s) incl. DESTRUCTIVE gc removal — backups written. Re-validating after.\n"
+    },
+    {
+      "id": "validate-fix/orphans/apply#b",
+      "argv": [
+        "validate",
+        "<DRAFT>",
+        "--fix",
+        "--apply",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":true,\"project\":\"<TMP>/validate-fix\",\"draft_file\":\"<DRAFT>\",\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[],\"fix\":{\"applied\":true,\"blocked\":false,\"blocked_reason\":null,\"note\":\"a bare draft_content.json file was passed (not a directory): the meta/register/sync fixers need a draft directory, so only gc can run.\",\"results\":[{\"fixer\":\"gc\",\"status\":\"wrote\",\"finding_ids\":[\"materials.orphan_text\",\"materials.orphan_media\"],\"wrote\":true,\"bak\":[\"<DRAFT>.bak\"],\"detail\":\"removed 2 orphan material(s)\",\"error\":null}],\"residual\":{\"ok\":true,\"summary\":{\"errors\":0,\"warnings\":0,\"info\":0,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[]}}}\n",
+      "stderr": "WARNING validate --fix --apply: applying 1 fixer(s) incl. DESTRUCTIVE gc removal — backups written. Re-validating after.\n"
+    },
+    {
+      "id": "validate-fix/blocked/apply",
+      "argv": [
+        "validate",
+        "<DRAFT>",
+        "--fix",
+        "--apply",
+        "--projects-root",
+        "<TMP>/empty-projects-root"
+      ],
+      "exit": 2,
+      "stdout": "{\"schema\":\"capcut-david/validate@1\",\"ok\":false,\"project\":\"<TMP>/validate-fix\",\"draft_file\":\"<DRAFT>\",\"summary\":{\"errors\":1,\"warnings\":0,\"info\":3,\"checks_run\":10,\"checks_skipped\":6},\"findings\":[{\"id\":\"materials.duplicate_id\",\"severity\":\"error\",\"message\":\"material id golden-orphan-text appears more than once\",\"location\":{\"kind\":\"material\",\"ref\":\"golden-orphan-text\"},\"fixable\":false,\"fix_hint\":null},{\"id\":\"materials.orphan_text\",\"severity\":\"info\",\"message\":\"text material golden-orphan-text is referenced by no segment\",\"location\":{\"kind\":\"material\",\"ref\":\"golden-orphan-text\"},\"fixable\":true,\"fix_hint\":\"run `capcut-david gc <project>`\"},{\"id\":\"materials.orphan_text\",\"severity\":\"info\",\"message\":\"text material golden-orphan-text is referenced by no segment\",\"location\":{\"kind\":\"material\",\"ref\":\"golden-orphan-text\"},\"fixable\":true,\"fix_hint\":\"run `capcut-david gc <project>`\"},{\"id\":\"materials.orphan_media\",\"severity\":\"info\",\"message\":\"video material golden-orphan-video is referenced by no segment\",\"location\":{\"kind\":\"material\",\"ref\":\"golden-orphan-video\"},\"fixable\":true,\"fix_hint\":\"run `capcut-david gc <project>`\"}],\"fix\":{\"applied\":false,\"blocked\":true,\"blocked_reason\":\"draft has error-level problems (dangling reference or duplicate material id) — fix them first; --fix refuses to run any fixer (a destructive gc on an inconsistent draft is unsafe).\",\"note\":\"a bare draft_content.json file was passed (not a directory): the meta/register/sync fixers need a draft directory, so only gc can run.\",\"results\":[],\"residual\":null}}\n",
+      "stderr": ""
     }
   ],
   "roundtrips": [
@@ -6166,6 +6325,24 @@
       "canonicalStable": true,
       "matchesOriginal": false,
       "contentSha256": "bbcdd3247053fe30defe04a51daf2b407d2d0915f1c49f2fd3bdf9a79d099f86"
+    },
+    {
+      "id": "roundtrip/validate-fix/orphans",
+      "mode": "twice",
+      "stableBytes": true,
+      "matchesOriginal": false,
+      "contentSha256": "7bb779f07f09e6c804298a9a8f174690cf943238e17a05a74628cf2bff02017a",
+      "backupEqualsOriginal": true,
+      "orphansRemoved": true,
+      "residualClean": true
+    },
+    {
+      "id": "roundtrip/validate-fix/blocked",
+      "mode": "refusal",
+      "stableBytes": true,
+      "matchesOriginal": true,
+      "contentSha256": "7f11ec89e7b1d8dbfaab0bf2c17e04ef067ee65498d5013d1efd5c7ea682b449",
+      "backupAbsent": true
     }
   ]
 }
