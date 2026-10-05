@@ -30,3 +30,6 @@ temp/
 .env
 .env.*
 !.env.example
+
+# kilo agent worktrees (local)
+.kilo/
