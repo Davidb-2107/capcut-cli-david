@@ -54,3 +54,32 @@ justification ; les 89 autres cas et les autres verbes sont inchangés. Détail 
 - Le registry doit couvrir les 34 cases **et les chemins non-verbaux** (`--help`, version, capabilities, erreurs de parsing) : 10 des 14 `process.exit` vivent avant le switch — c'est là que se cachent les exits oubliés.
 - La PR validate doit conserver l'export `hasBlockingErrors` depuis `./validate.js` (consommé par le jumeau CLI `remove-segment-cli.ts`), sous peine de contaminer une PR adjacente.
 - À la clôture du chantier DraftStore, la façade `@deprecated` (`saveDraft`/`loadDraft`, `draft.ts:169-186` incluant `loadedByPath`) est **supprimée** — décision à confirmer au moment du ticket ; les call sites sont alors tous sur le store.
+
+## Clôture (2026-09-26)
+
+Chantier terminé : 9/9 tickets `done` (spec `00` + tickets `01`–`09` sous
+`.scratch/arch-workstream/issues/`), aucune évolution de comportement hors les
+deux exceptions bornées ci-dessus (post-ticket 02 et bak-rollback-integrity).
+
+- **01 golden-output (PR 0)** : PR #5 (`c2efb07`) + extension M1 PR #8
+  (`887b107`/`6197b65`, merge `ed7720d`).
+- **02 DraftStore** : PR #5 (merge `6e1ff81`) — 10 fichiers migrés, façade
+  `saveDraft`/`loadDraft`/`loadedByPath` supprimée (0 call site résiduel) ;
+  follow-ups `5af48a7`.
+- **03 registry/sortie unique** : PR #9 + correctif F1 `cd21f02` (aide reconnue
+  uniquement en premier argument, +6 captures golden) ; CI `36105427312` 15/15.
+- **04 split ui** : PR #10 ; **05 split remove-segment** : PR #11
+  (`36125286218`) ; **06 split batch** : PR #12 (`36143178388`) ;
+  **07 split validate** : PR #13 (`36166218419`, coverage 95,01 % lignes /
+  98,24 % fonctions).
+- **08 coverage dispatcher (follow-up audit 03)** : PR #14 — gate étendu à
+  `dist/index.js` + `dist/utils`.
+- **09 golden validate --fix (follow-up audit 07)** : PR #15 (HEAD `9e130fb`) —
+  `--fix` dry-run + `--fix --apply` + cas bloqué figés ; refus `--write`
+  non-déterministe vérifié (baseline `cc27f550…`, 359216 octets).
+
+État final : `scripts/golden-output.mjs` = **434 captures + 116 round-trips
+identiques**, CI **15/15**, coverage ≥80 % maintenue. Exclusions confirmées :
+`inspect` (handlers enregistrés tels quels) et `pipeline` (lot ARCH-B5)
+hors split. Ne pas réintroduire l'écriture compacte `edit` ni d'`exit()`
+dispersé.
